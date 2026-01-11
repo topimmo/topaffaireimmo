@@ -1,0 +1,65 @@
+import { Suspense, lazy } from "react";
+import { Routes, Route } from "react-router-dom";
+import Home from "./components/home";
+import MobileFAB from "./components/layout/MobileFAB";
+
+// Lazy load pages
+const SearchResults = lazy(() => import("./pages/SearchResults"));
+const PropertyDetails = lazy(() => import("./pages/PropertyDetails"));
+const AddListing = lazy(() => import("./pages/AddListing"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const EditListing = lazy(() => import("./pages/EditListing"));
+const Advertising = lazy(() => import("./pages/Advertising"));
+const NewAdRequest = lazy(() => import("./pages/NewAdRequest"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const Agencies = lazy(() => import("./pages/Agencies"));
+const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+
+function LoadingSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/buy" element={<SearchResults />} />
+          <Route path="/rent" element={<SearchResults />} />
+          <Route path="/property/:id" element={<PropertyDetails />} />
+          <Route path="/add-listing" element={<AddListing />} />
+          <Route path="/edit-listing/:id" element={<EditListing />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/agencies" element={<Agencies />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/advertising" element={<Advertising />} />
+          <Route path="/advertising/new" element={<NewAdRequest />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/commercial-dashboard" element={<CommercialDashboard />} />
+        </Routes>
+      </Suspense>
+      <MobileFAB />
+    </>
+  );
+}
+
+export default App;
