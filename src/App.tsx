@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import MobileFAB from "./components/layout/MobileFAB";
+import ProtectedRoute from "./components/Route/ProtectedRoute";
 
 // Lazy load pages
 const SearchResults = lazy(() => import("./pages/SearchResults"));
@@ -35,6 +36,7 @@ function App() {
     <>
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/buy" element={<SearchResults />} />
@@ -50,13 +52,55 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/advertising" element={<Advertising />} />
-          <Route path="/advertising/new" element={<NewAdRequest />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/commercial-dashboard" element={<CommercialDashboard />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["real_estate_advertiser"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/advertising"
+            element={
+              <ProtectedRoute allowedRoles={["commercial_advertiser"]}>
+                <Advertising />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/advertising/new"
+            element={
+              <ProtectedRoute allowedRoles={["commercial_advertiser"]}>
+                <NewAdRequest />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/commercial-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["commercial_advertiser"]}>
+                <CommercialDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Suspense>
+
       <MobileFAB />
     </>
   );
