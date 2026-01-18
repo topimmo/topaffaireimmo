@@ -1,8 +1,9 @@
+// src/App.tsx
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import MobileFAB from "./components/layout/MobileFAB";
-import ProtectedRoute from "./components/ProtectedRoute"; // تم تصحيح المسار
+import ProtectedRoute from "./components/ProtectedRoute"; // تم تعديل المسار
 
 // Lazy load pages
 const SearchResults = lazy(() => import("./pages/SearchResults"));
