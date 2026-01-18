@@ -1,11 +1,23 @@
+import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 
-export default function ProtectedRoute({ children, allowedRoles }) {
+// نوع props
+interface ProtectedRouteProps {
+  children: ReactNode;
+  allowedRoles?: string[];
+}
+
+export default function ProtectedRoute({
+  children,
+  allowedRoles,
+}: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>;
+    return (
+      <div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>
+    );
   }
 
   if (!user) {
@@ -20,5 +32,5 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }
