@@ -8,7 +8,8 @@ interface Profile {
   full_name?: string
   phone?: string
   company_name?: string
-  user_role?: 'real_estate_advertiser' | 'commercial_advertiser'
+  user_role?: 'real_estate_advertiser' | 'commercial_advertiser' | 'admin'
+  is_admin?: boolean
 }
 
 interface AuthContextType {

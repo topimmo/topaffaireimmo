@@ -1,42 +1,12 @@
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 export interface UserProfile {
   user_role?: string;
+  is_admin?: boolean;
   // أضف خصائص أخرى إذا احتجت
-}
-
-export interface AuthContext {
-  user: any | null;
-  profile: UserProfile | null;
-  loading: boolean;
-}
-
-export function useAuth(): AuthContext {
-  const [user, setUser] = useState<any | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", currentUser.id)
-          .single()
-          .then(({ data }) => {
-            setProfile(data);
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
-      }
-    });
-  }, []);
-
-  return { user, profile, loading };
 }
