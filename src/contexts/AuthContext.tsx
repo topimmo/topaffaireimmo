@@ -79,6 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userRole?: string,
     companyName?: string
   ): Promise<{ error: AuthError | null }> => {
+    if (!isSupabaseConfigured) {
+      return { error: { message: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement.' } as AuthError }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -93,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     if (data?.user && !error) {
-      await supabase.from('profiles').upsert([{
+      const { error: profileError } = await supabase.from('profiles').upsert([{
         id: data.user.id,
         email,
         full_name: fullName,
@@ -101,17 +105,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         company_name: companyName,
         user_role: userRole || 'real_estate_advertiser',
       }])
+
+      if (profileError) {
+        return { error: { message: `Erreur de base de données lors de l'enregistrement du nouvel utilisateur: ${profileError.message}` } as AuthError }
+      }
     }
 
     return { error: error || null }
   }
 
   const signIn = async (email: string, password: string): Promise<{ error: AuthError | null }> => {
+    if (!isSupabaseConfigured) {
+      return { error: { message: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement.' } as AuthError }
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error || null }
   }
 
   const signOut = async () => {
+    if (!isSupabaseConfigured) {
+      return
+    }
     await supabase.auth.signOut()
     setProfile(null)
   }
