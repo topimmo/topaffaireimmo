@@ -17,6 +17,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const EditListing = lazy(() => import("./pages/EditListing"));
+const Advertise = lazy(() => import("./pages/Advertise"));
 const Advertising = lazy(() => import("./pages/Advertising"));
 const NewAdRequest = lazy(() => import("./pages/NewAdRequest"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
@@ -50,6 +51,7 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/agencies" element={<Agencies />} />
+          <Route path="/advertise" element={<Advertise />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/reset-password" element={<ResetPassword />} />
