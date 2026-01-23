@@ -239,6 +239,7 @@ export default function EditListing() {
         description_ar: formData.descriptionAr,
         images: uploadedImages,
         phone: formData.phone,
+        contact_phone: formData.phone, // Also set contact_phone for compatibility
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
