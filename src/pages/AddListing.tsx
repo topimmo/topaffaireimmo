@@ -247,6 +247,7 @@ export default function AddListing() {
         description_ar: formData.descriptionAr || null,
         images: uploadedImages.length > 0 ? uploadedImages : [],
         phone: formData.phone || null,
+        contact_phone: formData.phone || null, // Also set contact_phone for compatibility
         status: 'pending', // Always pending for admin review
       };
 
@@ -258,6 +259,7 @@ export default function AddListing() {
       if (error) {
         console.error('Error creating property:', error);
         console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Insert data sent:', JSON.stringify(insertData, null, 2));
         
         // Provide more specific error messages
         let errorMessage = isRTL 
@@ -272,9 +274,17 @@ export default function AddListing() {
           errorMessage = isRTL 
             ? 'بيانات غير صالحة. يرجى التحقق من جميع الحقول.' 
             : 'Données invalides. Veuillez vérifier tous les champs.';
+        } else if (error.message?.includes('duplicate') || error.code === '23505') {
+          errorMessage = isRTL 
+            ? 'هذا الإعلان موجود بالفعل.' 
+            : 'Cette annonce existe déjà.';
+        } else if (error.message?.includes('not null') || error.code === '23502') {
+          errorMessage = isRTL 
+            ? 'حقول مطلوبة مفقودة. يرجى ملء جميع الحقول المطلوبة.' 
+            : 'Champs requis manquants. Veuillez remplir tous les champs obligatoires.';
         }
         
-        alert(errorMessage + '\n\nDétails: ' + (error.message || error.code || 'Unknown error'));
+        alert(errorMessage + '\n\n' + (import.meta.env.DEV ? 'Détails: ' + (error.message || error.code || 'Unknown error') : ''));
         setIsSubmitting(false);
         return;
       }
