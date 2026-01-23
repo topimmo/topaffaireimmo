@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         full_name: fullName,
         phone,
         company_name: companyName,
-        user_role: userRole,
+        user_role: userRole || 'real_estate_advertiser',
       }])
     }
 
