@@ -96,20 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     })
 
-    if (data?.user && !error) {
-      const { error: profileError } = await supabase.from('profiles').upsert([{
-        id: data.user.id,
-        email,
-        full_name: fullName,
-        phone,
-        company_name: companyName,
-        user_role: userRole || 'real_estate_advertiser',
-      }])
-
-      if (profileError) {
-        return { error: { message: `Erreur de base de données lors de l'enregistrement du nouvel utilisateur: ${profileError.message}` } as AuthError }
-      }
-    }
+    // Profile is automatically created by database trigger (handle_new_user)
+    // No need to manually insert/upsert the profile record here
 
     return { error: error || null }
   }
