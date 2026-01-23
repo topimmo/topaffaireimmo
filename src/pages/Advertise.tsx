@@ -56,7 +56,6 @@ export default function Advertise() {
             email: formData.email,
             phone: formData.phone || null,
             message: formData.message,
-            created_at: new Date().toISOString(),
           }
         ]);
 
@@ -324,7 +323,7 @@ export default function Advertise() {
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
-                      <Mail className="h-4 w-4 mr-2" />
+                      <Mail className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                       {isRTL ? 'إرسال الطلب' : 'Envoyer la demande'}
                     </>
                   )}
