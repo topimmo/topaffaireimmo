@@ -52,6 +52,40 @@ const propertyTypes = [
   { value: 'land', icon: Trees },
 ];
 
+/**
+ * Formats a database error into a user-friendly message
+ */
+function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
+  let message = isRTL 
+    ? 'حدث خطأ أثناء إنشاء الإعلان.' 
+    : 'Une erreur s\'est produite lors de la création de l\'annonce.';
+  
+  if (error.message?.includes('permission') || error.code === '42501') {
+    message = isRTL 
+      ? 'ليس لديك صلاحية لإنشاء إعلان. تأكد من تسجيل الدخول كمعلن عقاري.' 
+      : 'Vous n\'avez pas la permission de créer une annonce. Assurez-vous d\'être connecté en tant qu\'annonceur immobilier.';
+  } else if (error.message?.includes('violates') || error.code === '23503') {
+    message = isRTL 
+      ? 'بيانات غير صالحة. يرجى التحقق من جميع الحقول.' 
+      : 'Données invalides. Veuillez vérifier tous les champs.';
+  } else if (error.message?.includes('duplicate') || error.code === '23505') {
+    message = isRTL 
+      ? 'هذا الإعلان موجود بالفعل.' 
+      : 'Cette annonce existe déjà.';
+  } else if (error.message?.includes('not null') || error.code === '23502') {
+    message = isRTL 
+      ? 'حقول مطلوبة مفقودة. يرجى ملء جميع الحقول المطلوبة.' 
+      : 'Champs requis manquants. Veuillez remplir tous les champs obligatoires.';
+  }
+  
+  // Only show technical details in development mode
+  if (isDev) {
+    message += '\n\nDétails: ' + (error.message || error.code || 'Unknown error');
+  }
+  
+  return message;
+}
+
 export default function AddListing() {
   const { t, language, isRTL } = useLanguage();
   const { user, profile, loading: authLoading } = useAuth();
@@ -261,30 +295,8 @@ export default function AddListing() {
         console.error('Error details:', JSON.stringify(error, null, 2));
         console.error('Insert data sent:', JSON.stringify(insertData, null, 2));
         
-        // Provide more specific error messages
-        let errorMessage = isRTL 
-          ? 'حدث خطأ أثناء إنشاء الإعلان.' 
-          : 'Une erreur s\'est produite lors de la création de l\'annonce.';
-        
-        if (error.message?.includes('permission') || error.code === '42501') {
-          errorMessage = isRTL 
-            ? 'ليس لديك صلاحية لإنشاء إعلان. تأكد من تسجيل الدخول كمعلن عقاري.' 
-            : 'Vous n\'avez pas la permission de créer une annonce. Assurez-vous d\'être connecté en tant qu\'annonceur immobilier.';
-        } else if (error.message?.includes('violates') || error.code === '23503') {
-          errorMessage = isRTL 
-            ? 'بيانات غير صالحة. يرجى التحقق من جميع الحقول.' 
-            : 'Données invalides. Veuillez vérifier tous les champs.';
-        } else if (error.message?.includes('duplicate') || error.code === '23505') {
-          errorMessage = isRTL 
-            ? 'هذا الإعلان موجود بالفعل.' 
-            : 'Cette annonce existe déjà.';
-        } else if (error.message?.includes('not null') || error.code === '23502') {
-          errorMessage = isRTL 
-            ? 'حقول مطلوبة مفقودة. يرجى ملء جميع الحقول المطلوبة.' 
-            : 'Champs requis manquants. Veuillez remplir tous les champs obligatoires.';
-        }
-        
-        alert(errorMessage + '\n\n' + (import.meta.env.DEV ? 'Détails: ' + (error.message || error.code || 'Unknown error') : ''));
+        const errorMessage = getErrorMessage(error, isRTL, import.meta.env.DEV);
+        alert(errorMessage);
         setIsSubmitting(false);
         return;
       }

@@ -12,7 +12,7 @@ ALTER TABLE public.properties
 UPDATE public.properties SET title_en = title_fr WHERE title_en IS NULL;
 UPDATE public.properties SET description_en = description_fr WHERE description_en IS NULL;
 
--- 2. Ensure is_admin column exists in profiles table
+-- 2. Add phone column to properties table for compatibility
 ALTER TABLE public.properties 
   ADD COLUMN IF NOT EXISTS phone TEXT;
 
@@ -56,22 +56,27 @@ DROP POLICY IF EXISTS "properties_insert_real_estate" ON public.properties;
 DROP POLICY IF EXISTS "realtor_insert" ON public.properties;
 DROP POLICY IF EXISTS "properties_insert_authenticated" ON public.properties;
 
+-- Create optimized helper function for checking user role
+CREATE OR REPLACE FUNCTION public.can_insert_property(user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Allow if user is authenticated and (no profile yet OR has correct role OR is admin)
+  RETURN user_id IS NOT NULL AND (
+    NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = user_id) OR
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = user_id 
+      AND (user_role IN ('real_estate_advertiser', 'admin') OR is_admin = true)
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
 CREATE POLICY "properties_insert_authenticated" ON public.properties
   FOR INSERT TO authenticated
   WITH CHECK (
     owner_id = auth.uid() AND
-    -- Allow if no profile exists yet OR profile has correct role OR is admin
-    (
-      NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()) OR
-      EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid() 
-        AND (
-          user_role IN ('real_estate_advertiser', 'admin') OR 
-          is_admin = true
-        )
-      )
-    )
+    public.can_insert_property(auth.uid())
   );
 
 -- 5. Add helpful indexes for phone field
