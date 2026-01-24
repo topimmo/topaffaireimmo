@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { translateAuthError } from '@/lib/authErrors';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -52,15 +53,26 @@ export default function Login() {
     setLoading(true);
     setError('');
 
-    const { error: signInError } = await signIn(email, password);
+    console.log('🔐 Login attempt for:', email);
 
-    if (signInError) {
-      setError(signInError.message);
+    try {
+      const { error: signInError } = await signIn(email, password);
+
+      if (signInError) {
+        console.error('❌ Login error:', signInError);
+        // Use centralized error translation
+        setError(translateAuthError(signInError, isRTL));
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Login successful, redirecting to:', from);
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.error('❌ Unexpected error during login:', err);
+      setError(translateAuthError(err as Error, isRTL));
       setLoading(false);
-      return;
     }
-
-    navigate(from, { replace: true });
   };
 
   return (

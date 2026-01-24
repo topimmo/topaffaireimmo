@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { translateAuthError } from '@/lib/authErrors';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ export default function Register() {
     setLoading(true);
     setError('');
 
+    console.log('📋 Register form submitted');
+
     if (formData.password !== formData.confirmPassword) {
       setError(isRTL ? 'كلمات المرور غير متطابقة' : 'Les mots de passe ne correspondent pas');
       setLoading(false);
@@ -47,23 +50,32 @@ export default function Register() {
       return;
     }
 
-    const { error: signUpError } = await signUp(
-      formData.email,
-      formData.password,
-      formData.fullName,
-      formData.phone,
-      'real_estate_advertiser',
-      formData.companyName
-    );
+    try {
+      const { error: signUpError } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        formData.phone,
+        'real_estate_advertiser',
+        formData.companyName
+      );
 
-    if (signUpError) {
-      setError(signUpError.message);
+      if (signUpError) {
+        console.error('📋 Register page received error:', signUpError);
+        // Use centralized error translation
+        setError(translateAuthError(signUpError, isRTL));
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Register page: signup successful');
+      setSuccess(true);
       setLoading(false);
-      return;
+    } catch (err) {
+      console.error('❌ Unexpected error during registration:', err);
+      setError(translateAuthError(err as Error, isRTL));
+      setLoading(false);
     }
-
-    setSuccess(true);
-    setLoading(false);
   };
 
   return (
