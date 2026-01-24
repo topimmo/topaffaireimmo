@@ -74,8 +74,8 @@ The project uses TypeScript with the following settings:
 The production build generates:
 - Optimized and minified JavaScript bundles
 - Code-split chunks for better performance:
-  - Vendor chunk (React, React Router)
-  - Supabase chunk
+  - Vendor chunk (react, react-dom, react-router-dom)
+  - Supabase chunk (@supabase/supabase-js)
   - Dynamic route-based chunks
 - CSS with Tailwind utilities
 - Assets optimized with Vite
