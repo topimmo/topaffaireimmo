@@ -59,12 +59,7 @@ BEGIN
     NEW.raw_user_meta_data->>'company_name',
     true
   )
-  ON CONFLICT (id) DO UPDATE SET
-    email = EXCLUDED.email,
-    full_name = COALESCE(EXCLUDED.full_name, profiles.full_name),
-    phone = COALESCE(EXCLUDED.phone, profiles.phone),
-    user_role = COALESCE(EXCLUDED.user_role, profiles.user_role),
-    company_name = COALESCE(EXCLUDED.company_name, profiles.company_name);
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
