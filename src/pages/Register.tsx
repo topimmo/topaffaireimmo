@@ -36,19 +36,33 @@ export default function Register() {
     setLoading(true);
     setError('');
 
-    console.log('📋 Register form submitted');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('📋 REGISTER FORM SUBMITTED')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('Form data:')
+    console.log('  - Email:', formData.email)
+    console.log('  - Full Name:', formData.fullName)
+    console.log('  - Phone:', formData.phone || '(not provided)')
+    console.log('  - Company Name:', formData.companyName || '(not provided)')
 
+    // Validation: Check passwords match
     if (formData.password !== formData.confirmPassword) {
+      console.error('❌ Validation failed: Passwords do not match')
       setError(isRTL ? 'كلمات المرور غير متطابقة' : 'Les mots de passe ne correspondent pas');
       setLoading(false);
       return;
     }
 
+    // Validation: Check password length
     if (formData.password.length < 6) {
+      console.error('❌ Validation failed: Password too short')
       setError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 6 caractères');
       setLoading(false);
       return;
     }
+
+    console.log('✅ Form validation passed')
+    console.log('Calling AuthContext.signUp()...')
 
     try {
       const { error: signUpError } = await signUp(
@@ -61,18 +75,33 @@ export default function Register() {
       );
 
       if (signUpError) {
-        console.error('📋 Register page received error:', signUpError);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.error('❌ REGISTER PAGE: Signup returned error')
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.error('Error object:', signUpError)
+        console.error('Error message:', signUpError.message)
         // Use centralized error translation
-        setError(translateAuthError(signUpError, isRTL));
+        const translatedError = translateAuthError(signUpError, isRTL)
+        console.error('Translated error:', translatedError)
+        setError(translatedError);
         setLoading(false);
         return;
       }
 
-      console.log('✅ Register page: signup successful');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('✅ REGISTER PAGE: Signup completed successfully')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('Showing success screen to user')
+      console.log('User should check email for confirmation link')
       setSuccess(true);
       setLoading(false);
     } catch (err) {
-      console.error('❌ Unexpected error during registration:', err);
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.error('❌ UNEXPECTED ERROR during registration')
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.error('Exception:', err)
+      console.error('Exception type:', typeof err)
+      console.error('Exception details:', JSON.stringify(err, null, 2))
       setError(translateAuthError(err as Error, isRTL));
       setLoading(false);
     }
