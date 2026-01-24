@@ -23,7 +23,4 @@ export const supabase: SupabaseClient = isSupabaseConfigured
 if (!isSupabaseConfigured) {
   console.error('❌ CRITICAL: Missing Supabase environment variables!')
   console.error('   Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
-  console.error('   Current values:')
-  console.error('   - VITE_SUPABASE_URL:', supabaseUrl || 'undefined')
-  console.error('   - VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'exists but empty' : 'undefined')
 }

@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('  - Phone:', phone || '(not provided)')
     console.log('  - User Role:', userRole || 'real_estate_advertiser (default)')
     console.log('  - Company Name:', companyName || '(not provided)')
-    console.log('  - Password length:', password.length, 'characters')
+    console.log('  - Password validation:', password.length >= 6 ? 'OK' : 'Too short')
 
     // Step 3: Prepare metadata
     const metadata = {
@@ -111,8 +111,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     console.log('Step 3: User metadata prepared:', JSON.stringify(metadata, null, 2))
 
-    // Step 4: Call Supabase signup
-    console.log('Step 4: Calling supabase.auth.signUp()...')
+    // Step 4: Determine email redirect URL
+    const emailRedirectTo = typeof window !== 'undefined' && window.location.origin 
+      ? `${window.location.origin}/login` 
+      : undefined
+    if (emailRedirectTo) {
+      console.log('Step 4: Email redirect URL:', emailRedirectTo)
+    }
+
+    // Step 5: Call Supabase signup
+    console.log('Step 5: Calling supabase.auth.signUp()...')
     const signUpStartTime = Date.now()
     
     const { data, error } = await supabase.auth.signUp({
@@ -120,18 +128,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: metadata,
-        // emailRedirectTo can be omitted - Supabase will use default from dashboard
-        // or we can set it explicitly for production
-        ...(typeof window !== 'undefined' && window.location.origin ? {
-          emailRedirectTo: `${window.location.origin}/login`
-        } : {})
+        ...(emailRedirectTo ? { emailRedirectTo } : {})
       },
     })
     
     const signUpDuration = Date.now() - signUpStartTime
-    console.log(`Step 5: Signup API call completed in ${signUpDuration}ms`)
+    console.log(`Step 6: Signup API call completed in ${signUpDuration}ms`)
 
-    // Step 6: Handle response
+    // Step 7: Handle response
     if (error) {
       console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       console.error('❌ SIGNUP FAILED')

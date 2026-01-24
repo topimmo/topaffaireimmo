@@ -55,7 +55,7 @@ export default function Register() {
 
     // Validation: Check password length
     if (formData.password.length < 6) {
-      console.error('❌ Validation failed: Password too short (', formData.password.length, 'chars, need 6+)')
+      console.error('❌ Validation failed: Password too short')
       setError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 6 caractères');
       setLoading(false);
       return;
