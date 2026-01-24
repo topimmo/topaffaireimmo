@@ -79,38 +79,106 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userRole?: string,
     companyName?: string
   ): Promise<{ error: AuthError | null }> => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('🔐 SIGNUP PROCESS STARTED')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    
+    // Step 1: Verify Supabase is configured
+    console.log('Step 1: Checking Supabase configuration...')
+    console.log('  - isSupabaseConfigured:', isSupabaseConfigured)
     if (!isSupabaseConfigured) {
-      console.error('❌ Supabase not configured - missing env vars')
+      console.error('❌ SIGNUP BLOCKED: Supabase not configured')
+      console.error('   Environment variables are missing!')
       return { error: { message: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement.' } as AuthError }
     }
+    console.log('  ✅ Supabase is configured')
 
-    console.log('🔐 Starting signup process for:', email)
-    console.log('📝 User metadata:', { full_name: fullName, phone, user_role: userRole || 'real_estate_advertiser', company_name: companyName })
+    // Step 2: Log signup attempt details
+    console.log('Step 2: Signup attempt details')
+    console.log('  - Email:', email)
+    console.log('  - Full Name:', fullName)
+    console.log('  - Phone:', phone || '(not provided)')
+    console.log('  - User Role:', userRole || 'real_estate_advertiser (default)')
+    console.log('  - Company Name:', companyName || '(not provided)')
+    console.log('  - Password length:', password.length, 'characters')
 
+    // Step 3: Prepare metadata
+    const metadata = {
+      full_name: fullName,
+      phone: phone || null,
+      user_role: userRole || 'real_estate_advertiser',
+      company_name: companyName || null,
+    }
+    console.log('Step 3: User metadata prepared:', JSON.stringify(metadata, null, 2))
+
+    // Step 4: Call Supabase signup
+    console.log('Step 4: Calling supabase.auth.signUp()...')
+    const signUpStartTime = Date.now()
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          full_name: fullName,
-          phone: phone || null,
-          user_role: userRole || 'real_estate_advertiser',
-          company_name: companyName || null,
-        },
+        data: metadata,
+        // emailRedirectTo can be omitted - Supabase will use default from dashboard
+        // or we can set it explicitly for production
+        ...(typeof window !== 'undefined' && window.location.origin ? {
+          emailRedirectTo: `${window.location.origin}/login`
+        } : {})
       },
     })
+    
+    const signUpDuration = Date.now() - signUpStartTime
+    console.log(`Step 5: Signup API call completed in ${signUpDuration}ms`)
 
+    // Step 6: Handle response
     if (error) {
-      console.error('❌ Signup error:', error)
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.error('❌ SIGNUP FAILED')
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.error('Error object:', error)
       console.error('Error message:', error.message)
-      console.error('Error details:', (error as any).__isAuthError ? 'Auth error' : error)
-    } else {
-      console.log('✅ Signup successful!')
-      console.log('User ID:', data.user?.id)
-      console.log('User email:', data.user?.email)
-      console.log('Email confirmation required:', data.user?.email_confirmed_at ? 'No' : 'Yes')
-      console.log('ℹ️ Profile will be created automatically by database trigger')
+      console.error('Error status:', (error as any).status)
+      console.error('Error name:', error.name)
+      console.error('Full error:', JSON.stringify(error, null, 2))
+      return { error: error || null }
     }
+
+    // Success logging
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('✅ SIGNUP API CALL SUCCESSFUL')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('Response data:', {
+      user_id: data.user?.id,
+      user_email: data.user?.email,
+      email_confirmed_at: data.user?.email_confirmed_at,
+      created_at: data.user?.created_at,
+      session: data.session ? 'Session created' : 'No session (email confirmation required)',
+    })
+    
+    if (data.user) {
+      console.log('✅ User created in Supabase Auth')
+      console.log('   - User ID:', data.user.id)
+      console.log('   - Email:', data.user.email)
+      console.log('   - Email confirmed:', data.user.email_confirmed_at ? 'Yes ✓' : 'No (confirmation email sent)')
+      console.log('   - Created at:', data.user.created_at)
+      console.log('   - User metadata:', data.user.user_metadata)
+    } else {
+      console.warn('⚠️ No user object in response (may indicate duplicate email)')
+    }
+
+    if (data.session) {
+      console.log('✅ Session created immediately (email confirmation disabled)')
+    } else {
+      console.log('ℹ️ No session yet - email confirmation required')
+      console.log('   User should check their email for confirmation link')
+    }
+
+    console.log('ℹ️ Profile creation:')
+    console.log('   - Profile will be created automatically by database trigger (handle_new_user)')
+    console.log('   - Trigger fires on auth.users INSERT')
+    console.log('   - Check Supabase Dashboard → Database → profiles table to verify')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     // Profile is automatically created by database trigger (handle_new_user)
     // No need to manually insert/upsert the profile record here
@@ -119,21 +187,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string): Promise<{ error: AuthError | null }> => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('🔐 SIGNIN PROCESS STARTED')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    
     if (!isSupabaseConfigured) {
-      console.error('❌ Supabase not configured - missing env vars')
+      console.error('❌ SIGNIN BLOCKED: Supabase not configured')
       return { error: { message: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement.' } as AuthError }
     }
     
-    console.log('🔐 Attempting sign in for:', email)
+    console.log('Attempting sign in for:', email)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     
     if (error) {
-      console.error('❌ Sign in error:', error)
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.error('❌ SIGNIN FAILED')
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       console.error('Error message:', error.message)
+      console.error('Error status:', (error as any).status)
+      console.error('Full error:', JSON.stringify(error, null, 2))
     } else {
-      console.log('✅ Sign in successful!')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('✅ SIGNIN SUCCESSFUL')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       console.log('User ID:', data.user?.id)
-      console.log('Session:', data.session ? 'Created' : 'Not created')
+      console.log('Session created:', data.session ? 'Yes ✓' : 'No')
     }
     
     return { error: error || null }
