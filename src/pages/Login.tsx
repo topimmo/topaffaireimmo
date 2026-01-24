@@ -52,15 +52,45 @@ export default function Login() {
     setLoading(true);
     setError('');
 
-    const { error: signInError } = await signIn(email, password);
+    console.log('🔐 Login attempt for:', email);
 
-    if (signInError) {
-      setError(signInError.message);
+    try {
+      const { error: signInError } = await signIn(email, password);
+
+      if (signInError) {
+        console.error('❌ Login error:', signInError);
+        
+        // Provide user-friendly error messages
+        let userMessage = signInError.message;
+        
+        if (signInError.message.includes('Invalid login credentials')) {
+          userMessage = isRTL 
+            ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' 
+            : 'Email ou mot de passe incorrect';
+        } else if (signInError.message.includes('Email not confirmed')) {
+          userMessage = isRTL 
+            ? 'يرجى تأكيد بريدك الإلكتروني أولاً' 
+            : 'Veuillez confirmer votre email d\'abord';
+        } else if (signInError.message.includes('network')) {
+          userMessage = isRTL 
+            ? 'خطأ في الاتصال بالشبكة' 
+            : 'Erreur de connexion réseau';
+        }
+        
+        setError(userMessage);
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Login successful, redirecting to:', from);
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.error('❌ Unexpected error during login:', err);
+      setError(isRTL 
+        ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' 
+        : 'Une erreur inattendue s\'est produite. Veuillez réessayer.');
       setLoading(false);
-      return;
     }
-
-    navigate(from, { replace: true });
   };
 
   return (

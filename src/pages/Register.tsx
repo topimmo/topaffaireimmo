@@ -35,6 +35,8 @@ export default function Register() {
     setLoading(true);
     setError('');
 
+    console.log('📋 Register form submitted');
+
     if (formData.password !== formData.confirmPassword) {
       setError(isRTL ? 'كلمات المرور غير متطابقة' : 'Les mots de passe ne correspondent pas');
       setLoading(false);
@@ -47,23 +49,56 @@ export default function Register() {
       return;
     }
 
-    const { error: signUpError } = await signUp(
-      formData.email,
-      formData.password,
-      formData.fullName,
-      formData.phone,
-      'real_estate_advertiser',
-      formData.companyName
-    );
+    try {
+      const { error: signUpError } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        formData.phone,
+        'real_estate_advertiser',
+        formData.companyName
+      );
 
-    if (signUpError) {
-      setError(signUpError.message);
+      if (signUpError) {
+        console.error('📋 Register page received error:', signUpError);
+        
+        // Provide user-friendly error messages
+        let userMessage = signUpError.message;
+        
+        // Common error translations
+        if (signUpError.message.includes('already registered')) {
+          userMessage = isRTL 
+            ? 'هذا البريد الإلكتروني مسجل بالفعل' 
+            : 'Cet email est déjà enregistré';
+        } else if (signUpError.message.includes('invalid email')) {
+          userMessage = isRTL 
+            ? 'البريد الإلكتروني غير صالح' 
+            : 'Email invalide';
+        } else if (signUpError.message.includes('weak password')) {
+          userMessage = isRTL 
+            ? 'كلمة المرور ضعيفة جداً' 
+            : 'Mot de passe trop faible';
+        } else if (signUpError.message.includes('network')) {
+          userMessage = isRTL 
+            ? 'خطأ في الاتصال بالشبكة' 
+            : 'Erreur de connexion réseau';
+        }
+        
+        setError(userMessage);
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Register page: signup successful');
+      setSuccess(true);
       setLoading(false);
-      return;
+    } catch (err) {
+      console.error('❌ Unexpected error during registration:', err);
+      setError(isRTL 
+        ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' 
+        : 'Une erreur inattendue s\'est produite. Veuillez réessayer.');
+      setLoading(false);
     }
-
-    setSuccess(true);
-    setLoading(false);
   };
 
   return (

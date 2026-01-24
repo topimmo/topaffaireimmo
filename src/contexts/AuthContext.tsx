@@ -80,8 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     companyName?: string
   ): Promise<{ error: AuthError | null }> => {
     if (!isSupabaseConfigured) {
+      console.error('❌ Supabase not configured - missing env vars')
       return { error: { message: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement.' } as AuthError }
     }
+
+    console.log('🔐 Starting signup process for:', email)
+    console.log('📝 User metadata:', { full_name: fullName, phone, user_role: userRole || 'real_estate_advertiser', company_name: companyName })
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -96,6 +100,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     })
 
+    if (error) {
+      console.error('❌ Signup error:', error)
+      console.error('Error message:', error.message)
+      console.error('Error details:', (error as any).__isAuthError ? 'Auth error' : error)
+    } else {
+      console.log('✅ Signup successful!')
+      console.log('User ID:', data.user?.id)
+      console.log('User email:', data.user?.email)
+      console.log('Email confirmation required:', data.user?.email_confirmed_at ? 'No' : 'Yes')
+      
+      // Check if profile was created (after a short delay to allow trigger to complete)
+      if (data.user?.id) {
+        setTimeout(async () => {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single()
+          
+          if (profileError) {
+            console.error('❌ Profile fetch error:', profileError)
+          } else {
+            console.log('✅ Profile created successfully:', profile)
+          }
+        }, 1000)
+      }
+    }
+
     // Profile is automatically created by database trigger (handle_new_user)
     // No need to manually insert/upsert the profile record here
 
@@ -104,9 +136,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string): Promise<{ error: AuthError | null }> => {
     if (!isSupabaseConfigured) {
+      console.error('❌ Supabase not configured - missing env vars')
       return { error: { message: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement.' } as AuthError }
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    
+    console.log('🔐 Attempting sign in for:', email)
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    
+    if (error) {
+      console.error('❌ Sign in error:', error)
+      console.error('Error message:', error.message)
+    } else {
+      console.log('✅ Sign in successful!')
+      console.log('User ID:', data.user?.id)
+      console.log('Session:', data.session ? 'Created' : 'Not created')
+    }
+    
     return { error: error || null }
   }
 
