@@ -65,9 +65,11 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ### TypeScript Configuration
 
 The project uses TypeScript with the following settings:
-- TypeScript 5.8
-- Strict mode: `false` (for compatibility)
-- `noEmitOnError: false` (allows builds with type warnings)
+- TypeScript 5.8.2
+- Strict mode: `false` (for compatibility with existing codebase and dependencies)
+- `noEmitOnError: false` (allows builds to complete even with type warnings, ensuring deployment isn't blocked by non-critical type issues)
+
+**Note**: While TypeScript checks run during the build process, the configuration prioritizes deployability over strict type safety. Consider enabling strict mode and fixing type issues incrementally for better long-term code quality.
 
 ### Build Output
 
