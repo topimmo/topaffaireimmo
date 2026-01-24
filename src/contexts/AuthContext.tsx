@@ -109,23 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('User ID:', data.user?.id)
       console.log('User email:', data.user?.email)
       console.log('Email confirmation required:', data.user?.email_confirmed_at ? 'No' : 'Yes')
-      
-      // Check if profile was created (after a short delay to allow trigger to complete)
-      if (data.user?.id) {
-        setTimeout(async () => {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single()
-          
-          if (profileError) {
-            console.error('❌ Profile fetch error:', profileError)
-          } else {
-            console.log('✅ Profile created successfully:', profile)
-          }
-        }, 1000)
-      }
+      console.log('ℹ️ Profile will be created automatically by database trigger')
     }
 
     // Profile is automatically created by database trigger (handle_new_user)

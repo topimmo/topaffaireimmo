@@ -31,19 +31,13 @@ export function stripHtml(dirty: string | undefined | null): string {
 
 /**
  * Sanitizes text for use in titles and short text fields
- * Removes all HTML and special characters that could be used for XSS
+ * Removes all HTML tags
  */
 export function sanitizeText(text: string | undefined | null): string {
   if (!text) return '';
   
-  // Strip HTML first
-  const stripped = stripHtml(text);
-  
-  // Remove any remaining script-like patterns
-  return stripped
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '');
+  // DOMPurify handles all XSS patterns comprehensively
+  return stripHtml(text);
 }
 
 /**

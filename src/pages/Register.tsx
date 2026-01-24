@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { translateAuthError } from '@/lib/authErrors';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -61,30 +62,8 @@ export default function Register() {
 
       if (signUpError) {
         console.error('📋 Register page received error:', signUpError);
-        
-        // Provide user-friendly error messages
-        let userMessage = signUpError.message;
-        
-        // Common error translations
-        if (signUpError.message.includes('already registered')) {
-          userMessage = isRTL 
-            ? 'هذا البريد الإلكتروني مسجل بالفعل' 
-            : 'Cet email est déjà enregistré';
-        } else if (signUpError.message.includes('invalid email')) {
-          userMessage = isRTL 
-            ? 'البريد الإلكتروني غير صالح' 
-            : 'Email invalide';
-        } else if (signUpError.message.includes('weak password')) {
-          userMessage = isRTL 
-            ? 'كلمة المرور ضعيفة جداً' 
-            : 'Mot de passe trop faible';
-        } else if (signUpError.message.includes('network')) {
-          userMessage = isRTL 
-            ? 'خطأ في الاتصال بالشبكة' 
-            : 'Erreur de connexion réseau';
-        }
-        
-        setError(userMessage);
+        // Use centralized error translation
+        setError(translateAuthError(signUpError, isRTL));
         setLoading(false);
         return;
       }
@@ -94,9 +73,7 @@ export default function Register() {
       setLoading(false);
     } catch (err) {
       console.error('❌ Unexpected error during registration:', err);
-      setError(isRTL 
-        ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' 
-        : 'Une erreur inattendue s\'est produite. Veuillez réessayer.');
+      setError(translateAuthError(err as Error, isRTL));
       setLoading(false);
     }
   };

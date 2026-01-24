@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { translateAuthError } from '@/lib/authErrors';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -59,25 +60,8 @@ export default function Login() {
 
       if (signInError) {
         console.error('❌ Login error:', signInError);
-        
-        // Provide user-friendly error messages
-        let userMessage = signInError.message;
-        
-        if (signInError.message.includes('Invalid login credentials')) {
-          userMessage = isRTL 
-            ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' 
-            : 'Email ou mot de passe incorrect';
-        } else if (signInError.message.includes('Email not confirmed')) {
-          userMessage = isRTL 
-            ? 'يرجى تأكيد بريدك الإلكتروني أولاً' 
-            : 'Veuillez confirmer votre email d\'abord';
-        } else if (signInError.message.includes('network')) {
-          userMessage = isRTL 
-            ? 'خطأ في الاتصال بالشبكة' 
-            : 'Erreur de connexion réseau';
-        }
-        
-        setError(userMessage);
+        // Use centralized error translation
+        setError(translateAuthError(signInError, isRTL));
         setLoading(false);
         return;
       }
@@ -86,9 +70,7 @@ export default function Login() {
       navigate(from, { replace: true });
     } catch (err) {
       console.error('❌ Unexpected error during login:', err);
-      setError(isRTL 
-        ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' 
-        : 'Une erreur inattendue s\'est produite. Veuillez réessayer.');
+      setError(translateAuthError(err as Error, isRTL));
       setLoading(false);
     }
   };
