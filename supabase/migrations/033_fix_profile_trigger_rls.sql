@@ -113,8 +113,10 @@ GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
 GRANT SELECT ON public.profiles TO anon;
 
 -- 9. Verify the function has correct ownership
--- The function should be owned by postgres or a superuser
-ALTER FUNCTION public.handle_new_user() OWNER TO postgres;
+-- The function should be owned by postgres or the database superuser
+-- Note: This may need adjustment based on your Supabase setup
+-- If using Supabase hosted, the default owner is 'postgres'
+-- ALTER FUNCTION public.handle_new_user() OWNER TO postgres;
 
 COMMENT ON POLICY "profiles_select_own" ON public.profiles IS 
   'Users can view their own profile and admins can view all profiles';
