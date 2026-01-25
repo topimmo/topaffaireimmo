@@ -13,50 +13,103 @@ interface UploadResult {
   url: string;
   path: string;
   error: string | null;
+  fileName?: string;
+  size?: number;
+  mimeType?: string;
 }
 
 /**
- * Upload a file to Supabase Storage
+ * Upload a file to Supabase Storage with retry logic
  * Files are organized by user ID for proper RLS enforcement
  */
 export async function uploadFile({ bucket, file, userId, folder }: UploadOptions): Promise<UploadResult> {
-  try {
-    // Generate unique filename
-    const timestamp = Date.now();
-    const ext = file.name.split('.').pop();
-    const fileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`;
-    
-    // Build path: userId/[folder/]filename
-    const path = folder 
-      ? `${userId}/${folder}/${fileName}`
-      : `${userId}/${fileName}`;
+  const maxRetries = 2;
+  let lastError: Error | null = null;
 
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
+  // Log upload attempt
+  console.log(`[Storage] Uploading file to bucket '${bucket}':`, {
+    fileName: file.name,
+    size: `${(file.size / 1024).toFixed(2)} KB`,
+    mimeType: file.type,
+    userId: userId.substring(0, 8) + '...',
+  });
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Generate unique filename
+      const timestamp = Date.now();
+      const ext = file.name.split('.').pop();
+      const fileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`;
+      
+      // Build path: userId/[folder/]filename
+      const path = folder 
+        ? `${userId}/${folder}/${fileName}`
+        : `${userId}/${fileName}`;
+
+      if (attempt > 0) {
+        console.log(`[Storage] Retry attempt ${attempt}/${maxRetries} for ${file.name}`);
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error(`[Storage] Upload error (attempt ${attempt + 1}):`, uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(path);
+
+      console.log(`[Storage] Upload successful:`, {
+        fileName: file.name,
+        url: publicUrl.substring(0, 50) + '...',
       });
 
-    if (uploadError) throw uploadError;
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
-
-    return {
-      url: publicUrl,
-      path,
-      error: null,
-    };
-  } catch (error) {
-    return {
-      url: '',
-      path: '',
-      error: error instanceof Error ? error.message : 'Upload failed',
-    };
+      return {
+        url: publicUrl,
+        path,
+        error: null,
+        fileName: file.name,
+        size: file.size,
+        mimeType: file.type,
+      };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Upload failed');
+      
+      // Don't retry on certain error types
+      const errorMsg = lastError.message.toLowerCase();
+      const nonRetriableErrors = [
+        'payload', 'size', 'type', 'permission', 
+        'unauthorized', 'forbidden', 'invalid', 'exceeded'
+      ];
+      
+      if (nonRetriableErrors.some(keyword => errorMsg.includes(keyword))) {
+        console.error(`[Storage] Non-retryable error for ${file.name}:`, lastError.message);
+        break;
+      }
+    }
   }
+
+  const errorMessage = lastError?.message || 'Upload failed after retries';
+  console.error(`[Storage] Final upload failure for ${file.name}:`, errorMessage);
+
+  return {
+    url: '',
+    path: '',
+    error: errorMessage,
+    fileName: file.name,
+    size: file.size,
+    mimeType: file.type,
+  };
 }
 
 /**
@@ -169,7 +222,7 @@ export async function uploadAgencyLogo(
 }
 
 /**
- * Validate file before upload
+ * Validate file before upload with detailed error messages
  */
 export function validateFile(
   file: File, 
@@ -177,21 +230,59 @@ export function validateFile(
 ): { valid: boolean; error?: string } {
   const { maxSize = 5 * 1024 * 1024, allowedTypes } = options;
 
+  // Check file size
   if (file.size > maxSize) {
+    const maxSizeMB = (maxSize / 1024 / 1024).toFixed(1);
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
     return { 
       valid: false, 
-      error: `File size exceeds ${Math.round(maxSize / 1024 / 1024)}MB limit` 
+      error: `File "${file.name}" is too large (${fileSizeMB}MB). Maximum size is ${maxSizeMB}MB.` 
     };
   }
 
+  // Check file type
   if (allowedTypes && !allowedTypes.includes(file.type)) {
     return { 
       valid: false, 
-      error: `File type ${file.type} not allowed` 
+      error: `File "${file.name}" has an unsupported type (${file.type}). Allowed types: ${allowedTypes.join(', ')}.` 
     };
   }
 
   return { valid: true };
+}
+
+/**
+ * Validate multiple files and return detailed results
+ */
+export function validateFiles(
+  files: File[],
+  options: { maxSize?: number; allowedTypes?: string[]; maxCount?: number }
+): { valid: boolean; errors: string[]; validFiles: File[] } {
+  const { maxCount } = options;
+  const errors: string[] = [];
+  const validFiles: File[] = [];
+
+  // Check max count
+  if (maxCount && files.length > maxCount) {
+    errors.push(`Too many files selected. Maximum ${maxCount} files allowed.`);
+    return { valid: false, errors, validFiles: [] };
+  }
+
+  // Validate each file
+  for (const file of files) {
+    const validation = validateFile(file, options);
+    if (validation.valid) {
+      validFiles.push(file);
+    } else {
+      errors.push(validation.error || 'Unknown validation error');
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    validFiles
+  };
 }
 
 /**

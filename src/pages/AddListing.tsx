@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { uploadPropertyImages, validateFile, BUCKET_CONFIG } from '@/lib/storage';
+import { uploadPropertyImages, validateFiles, BUCKET_CONFIG } from '@/lib/storage';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -106,6 +106,7 @@ export default function AddListing() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageUploadStatus, setImageUploadStatus] = useState<('pending' | 'uploading' | 'success' | 'error')[]>([]);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showCustomNeighborhood, setShowCustomNeighborhood] = useState(false);
 
@@ -238,39 +239,57 @@ export default function AddListing() {
     const maxImages = 6;
     const remainingSlots = maxImages - uploadedImages.length;
     
+    // Check if we've reached the limit
     if (remainingSlots === 0) {
       alert(isRTL 
         ? 'الحد الأقصى 6 صور مسموح به' 
         : 'Maximum 6 images autorisées'
       );
+      // Reset input
+      e.target.value = '';
       return;
     }
     
+    // Check if too many files selected
     if (filesArray.length > remainingSlots) {
       alert(isRTL 
         ? `يمكنك تحميل ${remainingSlots} صورة إضافية فقط` 
         : `Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s)`
       );
+      // Reset input
+      e.target.value = '';
       return;
     }
 
-    // Validate each file
+    // Validate files using the enhanced validation
     const bucketConfig = BUCKET_CONFIG['property-images'];
-    for (const file of filesArray) {
-      const validation = validateFile(file, bucketConfig);
-      if (!validation.valid) {
-        alert(isRTL 
-          ? `خطأ في الملف المحدد: ${validation.error}` 
-          : `Erreur dans le fichier sélectionné: ${validation.error}`
-        );
-        return;
-      }
+    const validation = validateFiles(filesArray, {
+      ...bucketConfig,
+      maxCount: remainingSlots,
+    });
+
+    // Show errors if validation failed
+    if (!validation.valid) {
+      const errorMessage = validation.errors.join('\n');
+      alert(isRTL 
+        ? `خطأ في الملفات المحددة:\n\n${errorMessage}` 
+        : `Erreur dans les fichiers sélectionnés:\n\n${errorMessage}`
+      );
+      // Reset input
+      e.target.value = '';
+      return;
     }
 
-    // Store files and preview URLs
-    const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
-    setImageFiles((prev) => [...prev, ...filesArray]);
+    // All files are valid - store them and create preview URLs
+    const newPreviews = validation.validFiles.map((file) => URL.createObjectURL(file));
+    const newStatuses = validation.validFiles.map(() => 'pending' as const);
+    
+    setImageFiles((prev) => [...prev, ...validation.validFiles]);
     setUploadedImages((prev) => [...prev, ...newPreviews]);
+    setImageUploadStatus((prev) => [...prev, ...newStatuses]);
+    
+    // Reset input to allow selecting the same file again if needed
+    e.target.value = '';
   };
 
   const removeImage = (index: number) => {
@@ -278,6 +297,7 @@ export default function AddListing() {
     URL.revokeObjectURL(uploadedImages[index]);
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageUploadStatus((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -323,34 +343,75 @@ export default function AddListing() {
     setUploadProgress('');
 
     try {
-      // Step 1: Upload images to Supabase Storage
+      // Step 1: Upload images to Supabase Storage with progress tracking
       let imageUrls: string[] = [];
       
       if (imageFiles.length > 0) {
         setUploadProgress(isRTL 
-          ? `جاري تحميل الصور... (${imageFiles.length})` 
-          : `Téléchargement des images... (${imageFiles.length})`
+          ? `جاري تحميل الصور... (0/${imageFiles.length})` 
+          : `Téléchargement des images... (0/${imageFiles.length})`
         );
         
-        if (import.meta.env.DEV) {
-          console.log(`Uploading ${imageFiles.length} images to Supabase Storage...`);
+        console.log(`[AddListing] Starting upload of ${imageFiles.length} images...`);
+        
+        // Upload images one by one with progress tracking
+        const uploadResults = [];
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
+          setImageUploadStatus((prev) => {
+            const updated = [...prev];
+            updated[i] = 'uploading';
+            return updated;
+          });
+          
+          setUploadProgress(isRTL 
+            ? `جاري تحميل الصور... (${i + 1}/${imageFiles.length})` 
+            : `Téléchargement des images... (${i + 1}/${imageFiles.length})`
+          );
+          
+          const result = await uploadPropertyImages([file], user.id);
+          uploadResults.push(result[0]);
+          
+          if (result[0].error) {
+            console.error(`[AddListing] Failed to upload image ${i + 1}:`, result[0].error);
+            setImageUploadStatus((prev) => {
+              const updated = [...prev];
+              updated[i] = 'error';
+              return updated;
+            });
+          } else {
+            console.log(`[AddListing] Successfully uploaded image ${i + 1}`);
+            setImageUploadStatus((prev) => {
+              const updated = [...prev];
+              updated[i] = 'success';
+              return updated;
+            });
+          }
         }
-        const uploadResults = await uploadPropertyImages(imageFiles, user.id);
         
         // Check for upload errors
         const failedUploads = uploadResults.filter(r => r.error);
         if (failedUploads.length > 0) {
-          console.error('Image upload errors:', failedUploads);
-          throw new Error(isRTL 
-            ? `فشل تحميل ${failedUploads.length} صورة. يرجى المحاولة مرة أخرى.` 
-            : `Échec du téléchargement de ${failedUploads.length} image(s). Veuillez réessayer.`
+          console.error('[AddListing] Image upload errors:', failedUploads);
+          
+          // Allow user to decide whether to continue or retry
+          const continueAnyway = window.confirm(
+            isRTL 
+              ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nهل تريد المتابعة بالصور المتبقية؟\n\n(اختر "إلغاء" للعودة وإعادة المحاولة)` 
+              : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nVoulez-vous continuer avec les images restantes?\n\n(Cliquez sur "Annuler" pour revenir et réessayer)`
           );
+          
+          if (!continueAnyway) {
+            // User wants to retry - reset submitting state
+            setIsSubmitting(false);
+            setUploadProgress('');
+            return;
+          }
         }
         
-        imageUrls = uploadResults.map(r => r.url);
-        if (import.meta.env.DEV) {
-          console.log('Images uploaded successfully:', imageUrls);
-        }
+        // Use only successful uploads
+        imageUrls = uploadResults.filter(r => !r.error).map(r => r.url);
+        console.log(`[AddListing] ${imageUrls.length} images uploaded successfully out of ${imageFiles.length}`);
       }
 
       // Step 2: Create property listing
@@ -813,12 +874,36 @@ export default function AddListing() {
                     <img
                       src={image}
                       alt={`Upload ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className={cn(
+                        "w-full h-full object-cover",
+                        imageUploadStatus[index] === 'error' && "opacity-50"
+                      )}
                     />
+                    {/* Upload status indicator */}
+                    {imageUploadStatus[index] === 'uploading' && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 text-white animate-spin" />
+                      </div>
+                    )}
+                    {imageUploadStatus[index] === 'error' && (
+                      <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                        <div className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+                          {isRTL ? 'فشل' : 'Échec'}
+                        </div>
+                      </div>
+                    )}
+                    {imageUploadStatus[index] === 'success' && (
+                      <div className="absolute top-2 left-2">
+                        <div className="bg-green-500 text-white p-1 rounded-full">
+                          <CheckCircle className="h-4 w-4" />
+                        </div>
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className={`absolute top-2 ${isRTL ? 'left-2' : 'right-2'} p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors`}
+                      disabled={imageUploadStatus[index] === 'uploading'}
+                      className={`absolute top-2 ${isRTL ? 'left-2' : 'right-2'} p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -832,7 +917,8 @@ export default function AddListing() {
                     </span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
                       className="hidden"
                       onChange={handleImageUpload}
                     />

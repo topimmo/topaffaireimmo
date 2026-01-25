@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { uploadPropertyImages, validateFiles, BUCKET_CONFIG, deleteFiles } from '@/lib/storage';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -72,7 +73,11 @@ export default function EditListing() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageUploadStatus, setImageUploadStatus] = useState<('pending' | 'uploading' | 'success' | 'error')[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showCustomNeighborhood, setShowCustomNeighborhood] = useState(false);
+  const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     transactionType: 'sale',
@@ -200,16 +205,68 @@ export default function EditListing() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map((file) =>
-        URL.createObjectURL(file)
+    if (!files) return;
+
+    const filesArray = Array.from(files);
+    const maxImages = 6;
+    const remainingSlots = maxImages - uploadedImages.length;
+    
+    if (remainingSlots === 0) {
+      alert(isRTL 
+        ? 'الحد الأقصى 6 صور مسموح به' 
+        : 'Maximum 6 images autorisées'
       );
-      setUploadedImages((prev) => [...prev, ...newImages].slice(0, 6));
+      e.target.value = '';
+      return;
     }
+    
+    if (filesArray.length > remainingSlots) {
+      alert(isRTL 
+        ? `يمكنك تحميل ${remainingSlots} صورة إضافية فقط` 
+        : `Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s)`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Validate files
+    const bucketConfig = BUCKET_CONFIG['property-images'];
+    const validation = validateFiles(filesArray, {
+      ...bucketConfig,
+      maxCount: remainingSlots,
+    });
+
+    if (!validation.valid) {
+      const errorMessage = validation.errors.join('\n');
+      alert(isRTL 
+        ? `خطأ في الملفات المحددة:\n\n${errorMessage}` 
+        : `Erreur dans les fichiers sélectionnés:\n\n${errorMessage}`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Store files and preview URLs
+    const newPreviews = validation.validFiles.map((file) => URL.createObjectURL(file));
+    const newStatuses = validation.validFiles.map(() => 'pending' as const);
+    
+    setImageFiles((prev) => [...prev, ...validation.validFiles]);
+    setUploadedImages((prev) => [...prev, ...newPreviews]);
+    setImageUploadStatus((prev) => [...prev, ...newStatuses]);
+    
+    e.target.value = '';
   };
 
   const removeImage = (index: number) => {
+    // Check if this is an existing image URL (not a blob)
+    const imageUrl = uploadedImages[index];
+    if (imageUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(imageUrl);
+    }
+    
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageUploadStatus((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,41 +274,134 @@ export default function EditListing() {
     if (!user || !id) return;
 
     setIsSubmitting(true);
+    setUploadProgress('');
 
-    const { error } = await supabase
-      .from('properties')
-      .update({
-        transaction_type: formData.transactionType,
-        property_type: formData.propertyType,
-        city_id: parseInt(formData.cityId),
-        neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
-        custom_neighborhood: formData.customNeighborhood || null,
-        address: formData.address,
-        price: parseFloat(formData.price),
-        area: formData.area ? parseFloat(formData.area) : null,
-        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-        title_en: formData.titleFr,
-        title_fr: formData.titleFr,
-        title_ar: formData.titleAr,
-        description_en: formData.descriptionFr,
-        description_fr: formData.descriptionFr,
-        description_ar: formData.descriptionAr,
-        images: uploadedImages,
-        phone: formData.phone,
-        contact_phone: formData.phone, // Also set contact_phone for compatibility
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .eq('owner_id', user.id);
+    try {
+      // Step 1: Upload new images to Supabase Storage
+      let finalImageUrls: string[] = [...uploadedImages.filter(url => !url.startsWith('blob:'))];
+      
+      if (imageFiles.length > 0) {
+        setUploadProgress(isRTL 
+          ? `جاري تحميل الصور... (0/${imageFiles.length})` 
+          : `Téléchargement des images... (0/${imageFiles.length})`
+        );
+        
+        console.log(`[EditListing] Uploading ${imageFiles.length} new images...`);
+        
+        // Upload images one by one with progress tracking
+        const uploadResults = [];
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
+          setImageUploadStatus((prev) => {
+            const updated = [...prev];
+            updated[i] = 'uploading';
+            return updated;
+          });
+          
+          setUploadProgress(isRTL 
+            ? `جاري تحميل الصور... (${i + 1}/${imageFiles.length})` 
+            : `Téléchargement des images... (${i + 1}/${imageFiles.length})`
+          );
+          
+          const result = await uploadPropertyImages([file], user.id, id);
+          uploadResults.push(result[0]);
+          
+          if (result[0].error) {
+            console.error(`[EditListing] Failed to upload image ${i + 1}:`, result[0].error);
+            setImageUploadStatus((prev) => {
+              const updated = [...prev];
+              updated[i] = 'error';
+              return updated;
+            });
+          } else {
+            console.log(`[EditListing] Successfully uploaded image ${i + 1}`);
+            setImageUploadStatus((prev) => {
+              const updated = [...prev];
+              updated[i] = 'success';
+              return updated;
+            });
+          }
+        }
+        
+        // Check for upload errors
+        const failedUploads = uploadResults.filter(r => r.error);
+        if (failedUploads.length > 0) {
+          console.error('[EditListing] Image upload errors:', failedUploads);
+          
+          const continueAnyway = window.confirm(
+            isRTL 
+              ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nهل تريد المتابعة بالصور المتبقية?` 
+              : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nVoulez-vous continuer avec les images restantes?`
+          );
+          
+          if (!continueAnyway) {
+            setIsSubmitting(false);
+            setUploadProgress('');
+            return;
+          }
+        }
+        
+        // Add successful uploads to final image URLs
+        const newUrls = uploadResults.filter(r => !r.error).map(r => r.url);
+        finalImageUrls = [...finalImageUrls, ...newUrls];
+        console.log(`[EditListing] Final image URLs: ${finalImageUrls.length} total`);
+      }
 
-    setIsSubmitting(false);
+      // Step 2: Update property listing
+      setUploadProgress(isRTL ? 'جاري حفظ التغييرات...' : 'Enregistrement des modifications...');
+      
+      const { error } = await supabase
+        .from('properties')
+        .update({
+          transaction_type: formData.transactionType,
+          property_type: formData.propertyType,
+          city_id: parseInt(formData.cityId),
+          neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
+          custom_neighborhood: formData.customNeighborhood || null,
+          address: formData.address,
+          price: parseFloat(formData.price),
+          area: formData.area ? parseFloat(formData.area) : null,
+          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+          title_en: formData.titleFr,
+          title_fr: formData.titleFr,
+          title_ar: formData.titleAr,
+          description_en: formData.descriptionFr,
+          description_fr: formData.descriptionFr,
+          description_ar: formData.descriptionAr,
+          images: finalImageUrls,
+          phone: formData.phone,
+          contact_phone: formData.phone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .eq('owner_id', user.id);
 
-    if (!error) {
+      if (error) {
+        console.error('Error updating property:', error);
+        throw error;
+      }
+
+      // Cleanup blob URLs
+      uploadedImages.forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+
       setIsSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
+    } catch (err) {
+      console.error('Error during submission:', err);
+      alert(isRTL 
+        ? 'حدث خطأ أثناء تحديث الإعلان. يرجى المحاولة مرة أخرى.' 
+        : 'Une erreur s\'est produite lors de la mise à jour de l\'annonce. Veuillez réessayer.'
+      );
+    } finally {
+      setIsSubmitting(false);
+      setUploadProgress('');
     }
   };
 
@@ -568,12 +718,36 @@ export default function EditListing() {
                     <img
                       src={image}
                       alt={`Upload ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className={cn(
+                        "w-full h-full object-cover",
+                        imageUploadStatus[index] === 'error' && "opacity-50"
+                      )}
                     />
+                    {/* Upload status indicator */}
+                    {imageUploadStatus[index] === 'uploading' && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 text-white animate-spin" />
+                      </div>
+                    )}
+                    {imageUploadStatus[index] === 'error' && (
+                      <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                        <div className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+                          {isRTL ? 'فشل' : 'Échec'}
+                        </div>
+                      </div>
+                    )}
+                    {imageUploadStatus[index] === 'success' && (
+                      <div className="absolute top-2 left-2">
+                        <div className="bg-green-500 text-white p-1 rounded-full">
+                          <CheckCircle className="h-4 w-4" />
+                        </div>
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className={`absolute top-2 ${isRTL ? 'left-2' : 'right-2'} p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors`}
+                      disabled={imageUploadStatus[index] === 'uploading'}
+                      className={`absolute top-2 ${isRTL ? 'left-2' : 'right-2'} p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -587,7 +761,8 @@ export default function EditListing() {
                     </span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
                       className="hidden"
                       onChange={handleImageUpload}
                     />
@@ -620,11 +795,20 @@ export default function EditListing() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  {uploadProgress || (isRTL ? 'جاري المعالجة...' : 'Traitement...')}
+                </span>
               ) : (
                 t('common.save')
               )}
             </Button>
+
+            {uploadProgress && (
+              <p className="text-sm text-muted-foreground text-center animate-pulse">
+                {uploadProgress}
+              </p>
+            )}
           </form>
         </div>
       </main>
