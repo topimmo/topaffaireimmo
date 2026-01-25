@@ -207,6 +207,26 @@ export default function EditListing() {
     const files = e.target.files;
     if (!files) return;
 
+    // Validate user profile before allowing upload
+    if (!user || !profile) {
+      alert(isRTL 
+        ? 'يرجى تسجيل الدخول أولاً' 
+        : 'Veuillez vous connecter d\'abord'
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Check if user has the correct role for uploading property images
+    if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
+      alert(isRTL 
+        ? 'ليس لديك صلاحية لتحميل الصور. يجب أن تكون معلن عقاري.' 
+        : 'Vous n\'avez pas la permission de télécharger des images. Vous devez être un annonceur immobilier.'
+      );
+      e.target.value = '';
+      return;
+    }
+
     const filesArray = Array.from(files);
     const maxImages = 6;
     const remainingSlots = maxImages - uploadedImages.length;
@@ -273,6 +293,23 @@ export default function EditListing() {
     e.preventDefault();
     if (!user || !id) return;
 
+    // Validate user profile exists and has correct role
+    if (!profile) {
+      alert(isRTL 
+        ? 'ملفك الشخصي غير محمل. يرجى تحديث الصفحة وإعادة المحاولة.' 
+        : 'Votre profil n\'est pas chargé. Veuillez actualiser la page et réessayer.'
+      );
+      return;
+    }
+
+    if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
+      alert(isRTL 
+        ? 'ليس لديك صلاحية لتعديل الإعلانات العقارية. يجب أن يكون لديك حساب معلن عقاري.' 
+        : 'Vous n\'avez pas la permission de modifier des annonces immobilières. Vous devez avoir un compte d\'annonceur immobilier.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     setUploadProgress('');
 
@@ -328,11 +365,18 @@ export default function EditListing() {
         if (failedUploads.length > 0) {
           console.error('[EditListing] Image upload errors:', failedUploads);
           
-          const continueAnyway = window.confirm(
-            isRTL 
-              ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nهل تريد المتابعة بالصور المتبقية?` 
-              : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nVoulez-vous continuer avec les images restantes?`
-          );
+          // Show specific error messages for failed uploads
+          const errorDetails = failedUploads.map((r, idx) => 
+            `${idx + 1}. ${r.fileName}: ${r.error}`
+          ).join('\n');
+          
+          console.log('[EditListing] Error details:', errorDetails);
+          
+          const message = isRTL 
+            ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nالأخطاء:\n${errorDetails}\n\nهل تريد المتابعة بالصور المتبقية?` 
+            : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nErreurs:\n${errorDetails}\n\nVoulez-vous continuer avec les images restantes?`;
+          
+          const continueAnyway = window.confirm(message);
           
           if (!continueAnyway) {
             setIsSubmitting(false);
