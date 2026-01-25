@@ -268,7 +268,10 @@ This prevents infinite URL combinations while still allowing users to filter.
 - Appartement, Villa, Maison, Commercial, Terrain
 
 **Transaction Types**: 2 types
-- Acheter (Sale), Louer (Rent)
+- Acheter (Sale) - slug: `acheter`, id: `sale`, display: "à vendre"
+- Louer (Rent) - slug: `louer`, id: `rent`, display: "à louer"
+
+Note: URLs use French verb forms (acheter/louer) while internal logic uses English IDs (sale/rent) for database compatibility.
 
 ### URL Generation Matrix
 - Total static + city pages: ~50 URLs
