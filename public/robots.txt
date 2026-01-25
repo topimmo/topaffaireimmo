@@ -1,0 +1,27 @@
+# TopAffaireImmo - Robots.txt
+# Allow all bots to index public pages
+
+User-agent: *
+Allow: /
+
+# Disallow private pages
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /account
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+
+# Allow property listings and search
+Allow: /properties
+Allow: /search
+Allow: /cities
+Allow: /about
+Allow: /contact
+Allow: /advertise
+
+# Sitemap location
+Sitemap: https://topaffaireimmo.vercel.app/sitemap.xml
+
+# Crawl rate (be nice to the server)
+Crawl-delay: 1

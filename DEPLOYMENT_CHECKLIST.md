@@ -28,7 +28,7 @@ supabase db push
 
 **⚠️ CRITICAL MIGRATIONS:**
 - `020_full_rebuild.sql` - Complete schema rebuild (most comprehensive)
-- `035_fix_signup_rls_policy.sql` - **MUST RUN** - Fixes signup trigger RLS issue
+- `033_fix_profile_trigger_rls.sql` - **MUST RUN** - Fixes signup trigger RLS issue (LATEST FIX)
 
 ### 3. Verify Database Setup
 
@@ -174,7 +174,7 @@ SELECT * FROM pg_policies
 WHERE tablename = 'profiles' 
 AND policyname = 'profiles_insert_system_or_own';
 
--- If not found, run migration 035_fix_signup_rls_policy.sql
+-- If not found, run migration 033_fix_profile_trigger_rls.sql
 ```
 
 #### Issue: User in Auth but no profile row
@@ -276,5 +276,5 @@ If issues persist:
 - **Register Page:** `src/pages/Register.tsx`
 - **Login Page:** `src/pages/Login.tsx`
 - **Supabase Client:** `src/lib/supabase.ts`
-- **Latest Migration:** `supabase/migrations/035_fix_signup_rls_policy.sql`
-- **Trigger Function:** In migration 035 (or 033/034 - use 035 version)
+- **Latest Migration:** `supabase/migrations/033_fix_profile_trigger_rls.sql`
+- **Trigger Function:** In migration 033 (use this version - most up to date)
