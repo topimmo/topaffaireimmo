@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
+import { sendFacebookWebhook } from '@/lib/facebookWebhook';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Eye, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Property {
   id: string;
@@ -89,14 +91,63 @@ export default function AdminListings() {
 
   const handleStatusChange = async (propertyId: string, newStatus: string) => {
     setActionLoading(propertyId);
-    const { error } = await supabase
-      .from('properties')
-      .update({ status: newStatus })
-      .eq('id', propertyId);
+    
+    try {
+      // Get current user for approved_by field
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Prepare update data
+      const updateData: any = { status: newStatus };
+      
+      // If approving, set approval fields
+      if (newStatus === 'approved') {
+        const now = new Date().toISOString();
+        updateData.approved_at = now;
+        updateData.approved_by = user?.id || null;
+        updateData.published_at = now;
+      }
+      
+      // Update the listing
+      const { error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', propertyId);
 
-    if (!error) {
-      await fetchProperties();
+      if (error) {
+        toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
+      } else {
+        // If approved, send Facebook webhook
+        if (newStatus === 'approved') {
+          try {
+            await sendFacebookWebhook(propertyId);
+            toast.success(
+              isRTL 
+                ? 'تم اعتماد الإعلان ونشره على فيسبوك' 
+                : 'Listing approved and posted to Facebook'
+            );
+          } catch (webhookError) {
+            console.error('Webhook error:', webhookError);
+            toast.warning(
+              isRTL 
+                ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' 
+                : 'Listing approved but Facebook posting failed'
+            );
+          }
+        } else {
+          toast.success(
+            isRTL
+              ? `تم ${newStatus === 'rejected' ? 'رفض' : 'تحديث'} الإعلان`
+              : `Listing ${newStatus === 'rejected' ? 'rejected' : 'updated'}`
+          );
+        }
+        
+        await fetchProperties();
+      }
+    } catch (error) {
+      console.error('Status change error:', error);
+      toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
     }
+    
     setActionLoading(null);
   };
 

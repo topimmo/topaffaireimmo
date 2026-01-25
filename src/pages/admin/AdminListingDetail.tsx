@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
+import { sendFacebookWebhook, retryFacebookPost } from '@/lib/facebookWebhook';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ import {
   Mail,
   Phone,
   Share2,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -52,6 +54,13 @@ interface PropertyDetail {
   images: string[];
   created_at: string;
   updated_at: string;
+  approved_at: string | null;
+  approved_by: string | null;
+  published_at: string | null;
+  facebook_posted: boolean;
+  facebook_posted_at: string | null;
+  facebook_post_id: string | null;
+  facebook_post_error: string | null;
   city: { name_fr: string; name_ar: string } | null;
   neighborhood: { name_fr: string; name_ar: string } | null;
   owner: { 
@@ -104,20 +113,80 @@ export default function AdminListingDetail() {
     if (!property) return;
 
     setActionLoading(true);
-    const { error } = await supabase
-      .from('properties')
-      .update({ status: newStatus })
-      .eq('id', property.id);
+    
+    try {
+      // Get current user for approved_by field
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Prepare update data
+      const updateData: any = { status: newStatus };
+      
+      // If approving, set approval fields
+      if (newStatus === 'approved') {
+        const now = new Date().toISOString();
+        updateData.approved_at = now;
+        updateData.approved_by = user?.id || null;
+        updateData.published_at = now;
+      }
+      
+      // Update the listing
+      const { error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', property.id);
 
-    if (error) {
+      if (error) {
+        toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
+        setActionLoading(false);
+        return;
+      }
+
+      // If approved, send Facebook webhook
+      if (newStatus === 'approved') {
+        try {
+          const webhookResult = await sendFacebookWebhook(property.id);
+          
+          if (webhookResult.already_posted) {
+            toast.info(
+              isRTL 
+                ? 'تم نشر الإعلان على فيسبوك مسبقاً' 
+                : 'Already posted to Facebook'
+            );
+          } else if (webhookResult.skipped) {
+            toast.warning(
+              isRTL 
+                ? 'لم يتم تكوين رابط الويب هوك' 
+                : 'Webhook URL not configured'
+            );
+          } else if (webhookResult.success) {
+            toast.success(
+              isRTL 
+                ? 'تم اعتماد الإعلان ونشره على فيسبوك' 
+                : 'Listing approved and posted to Facebook'
+            );
+          }
+        } catch (webhookError) {
+          console.error('Webhook error:', webhookError);
+          toast.warning(
+            isRTL 
+              ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' 
+              : 'Listing approved but Facebook posting failed'
+          );
+        }
+      } else {
+        toast.success(
+          isRTL
+            ? `تم ${newStatus === 'approved' ? 'اعتماد' : 'رفض'} الإعلان`
+            : `Listing ${newStatus === 'approved' ? 'approved' : 'rejected'}`
+        );
+      }
+
+      // Refresh the property data
+      await fetchPropertyDetail();
+      
+    } catch (error) {
+      console.error('Status change error:', error);
       toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
-    } else {
-      toast.success(
-        isRTL
-          ? `تم ${newStatus === 'approved' ? 'اعتماد' : 'رفض'} الإعلان`
-          : `Listing ${newStatus === 'approved' ? 'approved' : 'rejected'}`
-      );
-      setProperty({ ...property, status: newStatus });
     }
 
     setActionLoading(false);
@@ -128,6 +197,43 @@ export default function AdminListingDetail() {
       style: 'decimal',
       maximumFractionDigits: 0,
     }).format(price);
+  };
+
+  const handleRetryFacebookPost = async () => {
+    if (!property) return;
+
+    setActionLoading(true);
+    
+    try {
+      const result = await retryFacebookPost(property.id);
+      
+      if (result.success) {
+        toast.success(
+          isRTL 
+            ? 'تم نشر الإعلان على فيسبوك بنجاح' 
+            : 'Successfully posted to Facebook'
+        );
+      } else {
+        toast.error(
+          isRTL 
+            ? 'فشل النشر على فيسبوك' 
+            : 'Failed to post to Facebook'
+        );
+      }
+      
+      // Refresh the property data
+      await fetchPropertyDetail();
+      
+    } catch (error) {
+      console.error('Retry error:', error);
+      toast.error(
+        isRTL 
+          ? 'خطأ في إعادة المحاولة' 
+          : 'Error retrying Facebook post'
+      );
+    }
+
+    setActionLoading(false);
   };
 
   const formatDate = (date: string) => {
@@ -232,6 +338,61 @@ export default function AdminListingDetail() {
               {isRTL ? 'رفض' : 'Reject'}
             </Button>
           </div>
+        )}
+
+        {/* Facebook Posting Status & Retry */}
+        {property.status === 'approved' && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-blue-900">
+                    {isRTL ? 'حالة النشر على فيسبوك' : 'Facebook Posting Status'}
+                  </h3>
+                  {property.facebook_posted ? (
+                    <p className="text-sm text-blue-700 mt-1">
+                      {isRTL 
+                        ? `تم النشر بنجاح في ${property.facebook_posted_at ? formatDate(property.facebook_posted_at) : '-'}`
+                        : `Posted successfully on ${property.facebook_posted_at ? formatDate(property.facebook_posted_at) : '-'}`
+                      }
+                      {property.facebook_post_id && (
+                        <span className="block text-xs text-blue-600 mt-1">
+                          Post ID: {property.facebook_post_id}
+                        </span>
+                      )}
+                    </p>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-orange-700 mt-1">
+                        {isRTL ? 'لم يتم النشر بعد' : 'Not posted yet'}
+                      </p>
+                      {property.facebook_post_error && (
+                        <p className="text-xs text-red-600 mt-1">
+                          {isRTL ? 'خطأ: ' : 'Error: '}{property.facebook_post_error}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {!property.facebook_posted && (
+                  <Button
+                    onClick={handleRetryFacebookPost}
+                    disabled={actionLoading}
+                    size="sm"
+                    variant="outline"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    {actionLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    {isRTL ? 'إعادة المحاولة' : 'Retry Post'}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <div className="grid gap-6 md:grid-cols-3">
