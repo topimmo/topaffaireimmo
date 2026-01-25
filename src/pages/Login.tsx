@@ -66,8 +66,34 @@ export default function Login() {
         return;
       }
 
-      console.log('✅ Login successful, redirecting to:', from);
-      navigate(from, { replace: true });
+      // Fetch user profile to determine role
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_role')
+          .eq('id', user.id)
+          .single();
+
+        // Redirect based on user role
+        let redirectTo = from;
+        if (profile?.user_role === 'admin') {
+          redirectTo = '/admin';
+        } else if (from === '/dashboard' || from === '/login') {
+          // Default redirect for non-admin users
+          if (profile?.user_role === 'commercial_advertiser') {
+            redirectTo = '/commercial-dashboard';
+          } else {
+            redirectTo = '/dashboard';
+          }
+        }
+
+        console.log('✅ Login successful, redirecting to:', redirectTo);
+        
+        // Scroll to top on navigation
+        window.scrollTo(0, 0);
+        navigate(redirectTo, { replace: true });
+      }
     } catch (err) {
       console.error('❌ Unexpected error during login:', err);
       setError(translateAuthError(err as Error, isRTL));

@@ -1,6 +1,6 @@
 // src/App.tsx
-import { Suspense, lazy } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Suspense, lazy, useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./components/home";
 import MobileFAB from "./components/layout/MobileFAB";
 import ProtectedRoute from "./components/ProtectedRoute"; // تم تعديل المسار
@@ -25,6 +25,11 @@ const Agencies = lazy(() => import("./pages/Agencies"));
 const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
+// New Admin Pages
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminListings = lazy(() => import("./pages/admin/AdminListings"));
+const AdminListingDetail = lazy(() => import("./pages/admin/AdminListingDetail"));
+
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
 const TransactionPage = lazy(() => import("./pages/TransactionPage"));
@@ -40,9 +45,20 @@ function LoadingSpinner() {
   );
 }
 
+function ScrollToTop() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <>
+      <ScrollToTop />
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           {/* Public Routes */}
@@ -153,8 +169,37 @@ function App() {
             }
           />
 
+          {/* Admin Routes - New Structure */}
           <Route
             path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/listings"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminListings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/listings/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminListingDetail />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Legacy Admin Route - Redirect to new structure */}
+          <Route
+            path="/admin-panel"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminPanel />
