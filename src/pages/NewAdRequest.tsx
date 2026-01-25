@@ -48,7 +48,7 @@ const pricing: Record<number, number> = {
 
 export default function NewAdRequest() {
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedSlot = searchParams.get('slot');
@@ -74,10 +74,10 @@ export default function NewAdRequest() {
 
   // Redirect real estate advertisers away from commercial advertising
   useEffect(() => {
-    if (!authLoading && profile && profile.user_role === 'real_estate_advertiser') {
+    if (!authLoading && !profileLoading && profile && profile.user_role === 'real_estate_advertiser') {
       navigate('/dashboard');
     }
-  }, [authLoading, profile, navigate]);
+  }, [authLoading, profileLoading, profile, navigate]);
 
   useEffect(() => {
     if (profile) {
@@ -170,7 +170,7 @@ export default function NewAdRequest() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

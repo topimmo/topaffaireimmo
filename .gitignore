@@ -34,3 +34,7 @@ core
 
 **/tempobook/**
 .env
+
+# Compiled JavaScript files from TypeScript
+src/**/*.js
+!src/**/*.config.js

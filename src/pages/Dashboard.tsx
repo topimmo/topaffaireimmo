@@ -64,7 +64,7 @@ const statusColors: Record<string, string> = {
 
 export default function Dashboard() {
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const navigate = useNavigate();
 
   const [properties, setProperties] = useState<Property[]>([]);
@@ -73,14 +73,14 @@ export default function Dashboard() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !profileLoading && !user) {
       navigate('/login', { state: { from: '/dashboard' } });
     }
     // Redirect commercial advertisers to their dedicated dashboard
-    if (!authLoading && profile && profile.user_role === 'commercial_advertiser') {
+    if (!authLoading && !profileLoading && profile && profile.user_role === 'commercial_advertiser') {
       navigate('/commercial-dashboard');
     }
-  }, [user, authLoading, navigate, profile]);
+  }, [user, authLoading, profileLoading, navigate, profile]);
 
   useEffect(() => {
     if (user) {
@@ -147,7 +147,7 @@ export default function Dashboard() {
     }).format(price);
   };
 
-  if (authLoading) {
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

@@ -223,7 +223,7 @@ const statusIcons: Record<string, typeof Clock> = {
 export default function CommercialDashboard() {
   const { language, isRTL } = useLanguage();
   const c = content[language];
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const navigate = useNavigate();
 
   const [requests, setRequests] = useState<BannerRequest[]>([]);
@@ -250,14 +250,14 @@ export default function CommercialDashboard() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !profileLoading && !user) {
       navigate('/login', { state: { from: '/commercial-dashboard' } });
     }
     // Redirect real estate advertisers to their dashboard
-    if (!authLoading && profile && profile.user_role === 'real_estate_advertiser') {
+    if (!authLoading && !profileLoading && profile && profile.user_role === 'real_estate_advertiser') {
       navigate('/dashboard');
     }
-  }, [user, authLoading, navigate, profile]);
+  }, [user, authLoading, profileLoading, navigate, profile]);
 
   useEffect(() => {
     if (user && profile) {
@@ -424,7 +424,7 @@ export default function CommercialDashboard() {
   // Check if user is a commercial advertiser
   const isCommercialAdvertiser = profile?.user_role === 'commercial_advertiser' || profile?.user_role === 'admin';
 
-  if (authLoading || loading) {
+  if (authLoading || profileLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

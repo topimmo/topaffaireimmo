@@ -116,7 +116,7 @@ const propertyStatusColors: Record<string, string> = {
 
 export default function AdminPanel() {
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState<'properties' | 'ads' | 'content' | 'users'>('properties');
@@ -134,17 +134,17 @@ export default function AdminPanel() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && profile) {
+    if (!authLoading && !profileLoading && profile) {
       if (!profile.is_admin) {
         navigate('/');
       } else {
         fetchRequests();
         fetchProperties();
       }
-    } else if (!authLoading && !user) {
+    } else if (!authLoading && !profileLoading && !user) {
       navigate('/login');
     }
-  }, [user, profile, authLoading, navigate]);
+  }, [user, profile, authLoading, profileLoading, navigate]);
 
   const fetchRequests = async () => {
     const { data } = await supabase
@@ -316,7 +316,7 @@ export default function AdminPanel() {
     return labels[type]?.[language] || type;
   };
 
-  if (authLoading || loading) {
+  if (authLoading || profileLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
