@@ -13,6 +13,8 @@ export interface Property {
   type: string;
   city: string;
   cityAr?: string;
+  neighborhood?: string;
+  neighborhoodAr?: string;
   address: string;
   bedrooms?: number;
   bathrooms?: number;
@@ -43,6 +45,7 @@ export default function PropertyCard({
   
   const displayTitle = language === 'ar' && property.titleAr ? property.titleAr : property.title;
   const displayCity = language === 'ar' && property.cityAr ? property.cityAr : property.city;
+  const displayNeighborhood = language === 'ar' && property.neighborhoodAr ? property.neighborhoodAr : property.neighborhood;
 
   return (
     <Link
@@ -121,7 +124,13 @@ export default function PropertyCard({
         <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
           <MapPin className="h-4 w-4 flex-shrink-0" />
           <p className="text-sm line-clamp-1">
-            {property.address}, {displayCity}
+            {displayNeighborhood && (
+              <>
+                <span className="font-medium text-foreground">{displayNeighborhood}</span>
+                <span className="mx-1.5">•</span>
+              </>
+            )}
+            {displayCity}
           </p>
         </div>
 

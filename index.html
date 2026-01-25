@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr" dir="ltr">
+<html lang="fr-MA" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -9,14 +9,19 @@
     <title>TopAffaireImmo - Trouvez votre propriété parfaite au Maroc</title>
     <meta name="title" content="TopAffaireImmo - Trouvez votre propriété parfaite au Maroc" />
     <meta name="description" content="TopAffaireImmo est la plateforme immobilière de référence au Maroc. Trouvez des appartements, maisons, villas et propriétés commerciales à vendre ou à louer à Casablanca, Rabat, Marrakech et plus." />
-    <meta name="keywords" content="immobilier Maroc, propriété Maroc, appartements Maroc, maisons Maroc, villas Maroc, location Maroc, vente Maroc, Casablanca, Rabat, Marrakech, Tanger, Agadir, Fès, annonces immobilières, real estate Morocco" />
+    <meta name="keywords" content="immobilier Maroc, propriété Maroc, appartements Maroc, maisons Maroc, villas Maroc, location Maroc, vente Maroc, Casablanca, Rabat, Marrakech, Tanger, Agadir, Fès, annonces immobilières, real estate Morocco, quartier, Maarif, Agdal, Anfa" />
     <meta name="author" content="TopAffaireImmo" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="language" content="French" />
     <meta name="revisit-after" content="7 days" />
     
-    <!-- Canonical URL -->
+    <!-- Canonical URL - Will be updated dynamically by SEO component -->
     <link rel="canonical" href="https://topaffaireimmo.vercel.app/" />
+    
+    <!-- Hreflang tags for Morocco locales -->
+    <link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/" />
+    <link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://topaffaireimmo.vercel.app/" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -37,11 +42,15 @@
     <meta name="twitter:description" content="Plateforme immobilière de référence au Maroc. Trouvez des appartements, maisons, villas et propriétés commerciales à vendre ou à louer." />
     <meta name="twitter:image" content="https://topaffaireimmo.vercel.app/og-image.jpg" />
     
-    <!-- Geographic Tags -->
+    <!-- Geographic Tags for Morocco -->
     <meta name="geo.region" content="MA" />
     <meta name="geo.placename" content="Morocco" />
     <meta name="geo.position" content="33.9716;-6.8498" />
     <meta name="ICBM" content="33.9716, -6.8498" />
+    
+    <!-- Business & Currency -->
+    <meta name="currency" content="MAD" />
+    <meta name="country" content="Morocco" />
     
     <!-- Mobile App Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -61,7 +70,7 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     
-    <!-- Structured Data - Organization Schema -->
+    <!-- Structured Data - Organization/RealEstateAgent Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -72,26 +81,66 @@
       "description": "Plateforme immobilière de référence au Maroc pour trouver des propriétés à vendre et à louer",
       "address": {
         "@type": "PostalAddress",
-        "addressCountry": "MA"
+        "addressCountry": "MA",
+        "addressLocality": "Morocco"
       },
-      "areaServed": {
-        "@type": "Country",
-        "name": "Morocco"
-      },
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Casablanca",
+          "addressCountry": "MA"
+        },
+        {
+          "@type": "City",
+          "name": "Rabat",
+          "addressCountry": "MA"
+        },
+        {
+          "@type": "City",
+          "name": "Marrakech",
+          "addressCountry": "MA"
+        },
+        {
+          "@type": "City",
+          "name": "Tanger",
+          "addressCountry": "MA"
+        },
+        {
+          "@type": "City",
+          "name": "Agadir",
+          "addressCountry": "MA"
+        },
+        {
+          "@type": "City",
+          "name": "Fès",
+          "addressCountry": "MA"
+        }
+      ],
+      "serviceType": [
+        "Vente Immobilière",
+        "Location Immobilière",
+        "Annonces Immobilières"
+      ],
+      "priceRange": "MAD",
       "sameAs": []
     }
     </script>
     
-    <!-- Structured Data - WebSite Schema -->
+    <!-- Structured Data - WebSite Schema with SearchAction -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "TopAffaireImmo",
+      "alternateName": "Top Affaire Immo",
       "url": "https://topaffaireimmo.vercel.app",
+      "inLanguage": ["fr-MA", "ar-MA"],
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://topaffaireimmo.vercel.app/search?q={search_term_string}",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://topaffaireimmo.vercel.app/search?q={search_term_string}"
+        },
         "query-input": "required name=search_term_string"
       }
     }

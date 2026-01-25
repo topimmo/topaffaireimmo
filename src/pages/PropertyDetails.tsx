@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AdBanner from "@/components/home/AdBanner";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -42,6 +43,7 @@ const propertyData = {
   priceType: "sale" as "sale" | "rent",
   type: "Apartment",
   city: "Casablanca",
+  neighborhood: "Aïn Diab",
   address: "Corniche Ain Diab, Boulevard de la Corniche",
   bedrooms: 4,
   bathrooms: 3,
@@ -88,8 +90,59 @@ export default function PropertyDetails() {
     );
   };
 
+  // Generate SEO metadata
+  const seoTitle = `${property.title} - ${property.neighborhood ? property.neighborhood + ', ' : ''}${property.city} | TopAffaireImmo`;
+  const seoDescription = `${property.type} ${property.priceType === 'sale' ? 'à vendre' : 'à louer'} à ${property.neighborhood ? property.neighborhood + ', ' : ''}${property.city}. ${property.bedrooms} chambres, ${property.area}m². Prix: ${formatPrice(property.price)} MAD.`;
+  
+  // Price validity period in days
+  const PRICE_VALIDITY_DAYS = 90;
+  const priceValidUntil = new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  
+  // Structured data for property
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": property.title,
+    "description": property.description,
+    "offers": {
+      "@type": "Offer",
+      "price": property.price,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "priceValidUntil": priceValidUntil
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": property.city,
+      "addressRegion": property.neighborhood || property.city,
+      "addressCountry": "MA"
+    },
+    "geo": {
+      "@type": "Place",
+      "name": property.neighborhood || property.city
+    },
+    "numberOfRooms": property.bedrooms,
+    "numberOfBathroomsTotal": property.bathrooms,
+    "floorSize": {
+      "@type": "QuantitativeValue",
+      "value": property.area,
+      "unitCode": "MTK"
+    },
+    "image": property.images
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        ogImage={property.images[0]}
+        ogType="product"
+        structuredData={structuredData}
+        canonical={`/property/${property.id}`}
+      />
+      
+      <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
       <main className="flex-1 pt-20">
@@ -172,7 +225,13 @@ export default function PropertyDetails() {
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-5 w-5" />
                   <p className="text-lg">
-                    {property.address}, {property.city}
+                    {property.neighborhood && (
+                      <>
+                        <span className="font-semibold text-foreground">{property.neighborhood}</span>
+                        <span className="mx-2">•</span>
+                      </>
+                    )}
+                    {property.city}
                   </p>
                 </div>
               </div>
@@ -319,5 +378,6 @@ export default function PropertyDetails() {
 
       <Footer />
     </div>
+    </>
   );
 }
