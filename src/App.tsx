@@ -30,6 +30,7 @@ const CityPage = lazy(() => import("./pages/CityPage"));
 const TransactionPage = lazy(() => import("./pages/TransactionPage"));
 const CityImmobilierPage = lazy(() => import("./pages/CityImmobilierPage"));
 const NeighborhoodPage = lazy(() => import("./pages/NeighborhoodPage"));
+const PropertyTypeNeighborhoodPage = lazy(() => import("./pages/PropertyTypeNeighborhoodPage"));
 
 function LoadingSpinner() {
   return (
@@ -73,6 +74,10 @@ function App() {
           {/* SEO Landing Pages - Immobilier Routes with City/Neighborhood */}
           {/* /immobilier/[city] - City overview with neighborhoods */}
           <Route path="/immobilier/:city" element={<CityImmobilierPage />} />
+          {/* /immobilier/[city]/[neighborhood]/[propertyType]/[transactionType] - Full SEO route */}
+          <Route path="/immobilier/:city/:neighborhood/:propertyType/:transactionType" element={<PropertyTypeNeighborhoodPage />} />
+          {/* /immobilier/[city]/[neighborhood]/[propertyType] - Property type in neighborhood */}
+          <Route path="/immobilier/:city/:neighborhood/:propertyType" element={<PropertyTypeNeighborhoodPage />} />
           {/* /immobilier/[city]/[neighborhood] - Neighborhood pages */}
           <Route path="/immobilier/:city/:neighborhood" element={<NeighborhoodPage />} />
 

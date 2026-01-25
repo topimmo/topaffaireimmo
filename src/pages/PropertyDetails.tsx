@@ -7,6 +7,14 @@ import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
+import {
   MapPin,
   Bed,
   Bath,
@@ -202,6 +210,39 @@ export default function PropertyDetails() {
       <Header />
 
       <main className="flex-1 pt-20">
+        {/* Breadcrumb Navigation */}
+        <section className="container pt-6 pb-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Accueil</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/search">Immobilier</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/immobilier/${citySlug}`}>{property.city}</BreadcrumbLink>
+              </BreadcrumbItem>
+              {property.neighborhood && neighborhoodSlug && (
+                <>
+                  <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={`/immobilier/${citySlug}/${neighborhoodSlug}`}>
+                      {property.neighborhood}
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
+              <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{property.title}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </section>
+
         {/* Image Gallery */}
         <section className="relative bg-foreground">
           <div className="relative h-[50vh] md:h-[70vh] overflow-hidden">
