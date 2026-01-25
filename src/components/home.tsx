@@ -4,7 +4,7 @@ import HeroSearch from "@/components/home/HeroSearch";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import AdBanner from "@/components/home/AdBanner";
 import LatestListings from "@/components/home/LatestListings";
-import CTASection from "@/components/home/CTASection";
+import ExploreCities from "@/components/home/ExploreCities";
 
 function Home() {
   return (
@@ -15,7 +15,7 @@ function Home() {
         <FeaturedProperties />
         <AdBanner page="home" position="after_featured" />
         <LatestListings />
-        <CTASection />
+        <ExploreCities />
         <AdBanner page="home" position="before_footer" className="bg-muted/30" />
       </main>
       <Footer />
