@@ -85,11 +85,14 @@ export async function uploadFile({ bucket, file, userId, folder }: UploadOptions
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Upload failed');
       
-      // Don't retry on certain errors
-      if (lastError.message.includes('payload') || 
-          lastError.message.includes('size') ||
-          lastError.message.includes('type') ||
-          lastError.message.includes('permission')) {
+      // Don't retry on certain error types
+      const errorMsg = lastError.message.toLowerCase();
+      const nonRetriableErrors = [
+        'payload', 'size', 'type', 'permission', 
+        'unauthorized', 'forbidden', 'invalid', 'exceeded'
+      ];
+      
+      if (nonRetriableErrors.some(keyword => errorMsg.includes(keyword))) {
         console.error(`[Storage] Non-retryable error for ${file.name}:`, lastError.message);
         break;
       }
