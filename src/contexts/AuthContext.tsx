@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!error && data) {
         setProfile(data as Profile)
-        console.log('✅ Profile loaded successfully:', data.email)
+        console.log('✅ Profile loaded successfully')
       } else if (error) {
         console.error('❌ Error fetching profile:', error)
         
@@ -88,8 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       }
 
-      console.log('Creating fallback profile for user:', user.email)
-      console.log('User metadata:', user.user_metadata)
+      console.log('Creating fallback profile for user ID:', userId)
 
       // Insert profile with metadata from auth user
       const { data, error } = await supabase
@@ -112,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       }
 
-      console.log('✅ Fallback profile created:', data)
+      console.log('✅ Fallback profile created successfully')
       return data as Profile
     } catch (err) {
       console.error('Exception creating fallback profile:', err)

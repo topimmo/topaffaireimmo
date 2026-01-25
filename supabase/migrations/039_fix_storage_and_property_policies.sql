@@ -50,11 +50,11 @@ COMMENT ON POLICY "banner_images_commercial_insert" ON storage.objects IS
    Frontend restricts access to commercial advertisers only.';
 
 -- =====================================================
--- 3. AGENCY LOGOS - Keep more restrictive
+-- 3. AGENCY LOGOS - More restrictive with time constraint
 -- =====================================================
 
--- For agency logos, we can keep profile check since it's less critical
--- But make it more permissive to handle missing profiles gracefully
+-- For agency logos, keep profile check but be more permissive for new users
+-- Add a time constraint to prevent abuse if profile creation is delayed
 DROP POLICY IF EXISTS "agency_logos_agency_insert" ON storage.objects;
 
 CREATE POLICY "agency_logos_agency_insert" ON storage.objects
@@ -71,14 +71,23 @@ CREATE POLICY "agency_logos_agency_insert" ON storage.objects
         AND advertiser_type = 'agency'
       )
       OR
-      -- Also allow if no profile exists yet (will be created by trigger)
-      NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid())
+      -- Also allow if no profile exists yet BUT auth user was created recently (< 5 minutes ago)
+      -- This prevents abuse if trigger fails for old users
+      (
+        NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid())
+        AND EXISTS (
+          SELECT 1 FROM auth.users
+          WHERE id = auth.uid()
+          AND created_at > NOW() - INTERVAL '5 minutes'
+        )
+      )
     )
   );
 
 COMMENT ON POLICY "agency_logos_agency_insert" ON storage.objects IS
   'Allows real estate advertisers (agencies) to upload logos.
-   Also allows if profile does not exist yet (trigger may be delayed).';
+   Also allows if profile does not exist yet AND user was created within last 5 minutes.
+   Time constraint prevents abuse if profile creation is delayed.';
 
 -- =====================================================
 -- 4. PROPERTIES TABLE - Improve INSERT policy

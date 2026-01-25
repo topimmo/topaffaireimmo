@@ -43,7 +43,7 @@ DECLARE
   v_company_name TEXT;
 BEGIN
   -- Log trigger execution for debugging
-  RAISE LOG 'handle_new_user triggered for user ID: %, email: %', NEW.id, NEW.email;
+  RAISE LOG 'handle_new_user triggered for user ID: %', NEW.id;
   
   -- Extract metadata with safe defaults
   v_user_role := COALESCE(NEW.raw_user_meta_data->>'user_role', 'real_estate_advertiser');
@@ -51,8 +51,7 @@ BEGIN
   v_phone := NEW.raw_user_meta_data->>'phone';
   v_company_name := NEW.raw_user_meta_data->>'company_name';
   
-  RAISE LOG 'Extracted metadata - Role: %, Name: %, Phone: %, Company: %', 
-    v_user_role, v_full_name, v_phone, v_company_name;
+  RAISE LOG 'Extracted metadata - Role: %', v_user_role;
   
   -- Insert profile with conflict handling
   INSERT INTO public.profiles (
@@ -100,8 +99,8 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     -- Log the error but don't fail the auth user creation
-    RAISE WARNING 'Failed to create profile for user % (email: %): % - %', 
-      NEW.id, NEW.email, SQLERRM, SQLSTATE;
+    RAISE WARNING 'Failed to create profile for user %: % - %', 
+      NEW.id, SQLERRM, SQLSTATE;
     
     -- Attempt to insert a minimal profile as fallback
     BEGIN
@@ -255,12 +254,12 @@ BEGIN
       );
       
       v_count := v_count + 1;
-      RAISE LOG 'Created profile for existing user: % (%)', v_user.email, v_user.id;
+      RAISE LOG 'Created profile for existing user ID: %', v_user.id;
       
     EXCEPTION
       WHEN OTHERS THEN
-        RAISE WARNING 'Failed to backfill profile for user % (%): %', 
-          v_user.email, v_user.id, SQLERRM;
+        RAISE WARNING 'Failed to backfill profile for user %: %', 
+          v_user.id, SQLERRM;
     END;
   END LOOP;
   
