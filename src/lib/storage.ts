@@ -66,11 +66,11 @@ export async function uploadFile({ bucket, file, userId, folder }: UploadOptions
         if (uploadError.message?.toLowerCase().includes('permission') || 
             uploadError.message?.toLowerCase().includes('unauthorized') ||
             uploadError.message?.toLowerCase().includes('forbidden')) {
-          console.error(`[Storage] Permission denied. Possible causes:
-  1. User profile does not exist in the profiles table
-  2. User role is not 'real_estate_advertiser' or 'admin'
-  3. User is not authenticated (auth.uid() is null)
-  4. Storage bucket RLS policy is blocking the upload`);
+          console.error('[Storage] Permission denied. Possible causes:');
+          console.error('  1. User profile does not exist in the profiles table');
+          console.error('  2. User role is not \'real_estate_advertiser\' or \'admin\'');
+          console.error('  3. User is not authenticated (auth.uid() is null)');
+          console.error('  4. Storage bucket RLS policy is blocking the upload');
         }
         
         throw uploadError;
