@@ -1,26 +1,38 @@
 # TopAffaireImmo - Robots.txt
-# Allow all bots to index public pages
+# Morocco Real Estate Platform - SEO Configuration
+
+# IMPORTANT: This robots.txt is for PRODUCTION domain only
+# Vercel preview deployments are blocked via X-Robots-Tag header
 
 User-agent: *
-Allow: /
 
-# Disallow private pages
+# Allow public pages
+Allow: /
+Allow: /search
+Allow: /buy
+Allow: /rent
+Allow: /property/
+Allow: /acheter
+Allow: /louer
+Allow: /about
+Allow: /contact
+Allow: /advertise
+Allow: /agencies
+
+# Disallow private/admin pages
 Disallow: /admin
 Disallow: /dashboard
 Disallow: /account
 Disallow: /login
 Disallow: /register
 Disallow: /reset-password
+Disallow: /edit-listing
 
-# Allow property listings and search
-Allow: /properties
-Allow: /search
-Allow: /cities
-Allow: /about
-Allow: /contact
-Allow: /advertise
+# Disallow Vercel-specific URLs (should be blocked via header, but added for safety)
+Disallow: /*?vercel
+Disallow: /*?utm_source=vercel
 
-# Sitemap location
+# Sitemap location (will be updated to production domain)
 Sitemap: https://topaffaireimmo.vercel.app/sitemap.xml
 
 # Crawl rate (be nice to the server)

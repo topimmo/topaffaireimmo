@@ -8,84 +8,197 @@
     <loc>https://topaffaireimmo.vercel.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/" />
   </url>
   
-  <!-- Property Listings -->
-  <url>
-    <loc>https://topaffaireimmo.vercel.app/properties</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <!-- Search Page -->
+  <!-- Main Search Pages -->
   <url>
     <loc>https://topaffaireimmo.vercel.app/search</loc>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/search" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/search" />
+  </url>
+  
+  <!-- Transaction Type Pages -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/acheter" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/acheter" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/louer</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/louer" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/louer" />
+  </url>
+  
+  <!-- Property Type + Transaction Pages -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter-appartement</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- About Page -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter-villa</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter-maison</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/louer-appartement</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/louer-villa</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Major Cities Landing Pages -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/casablanca</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/casablanca" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/casablanca" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/rabat</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/rabat" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/rabat" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/marrakech</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/marrakech" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/marrakech" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/tanger</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/tanger" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/tanger" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/agadir</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/agadir" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/agadir" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/fes</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/fes" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/fes" />
+  </url>
+  
+  <!-- Transaction + City Pages (Casablanca) -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter-casablanca</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/louer-casablanca</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter-appartement-casablanca</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/louer-appartement-casablanca</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Transaction + City Pages (Rabat) -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter-rabat</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/louer-rabat</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Transaction + City Pages (Marrakech) -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/acheter-marrakech</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/louer-marrakech</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Static Pages -->
   <url>
     <loc>https://topaffaireimmo.vercel.app/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Contact Page -->
   <url>
     <loc>https://topaffaireimmo.vercel.app/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Advertise Page -->
   <url>
     <loc>https://topaffaireimmo.vercel.app/advertise</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
-  <!-- Major Cities -->
   <url>
-    <loc>https://topaffaireimmo.vercel.app/cities/casablanca</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://topaffaireimmo.vercel.app/cities/rabat</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://topaffaireimmo.vercel.app/cities/marrakech</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://topaffaireimmo.vercel.app/cities/tangier</loc>
+    <loc>https://topaffaireimmo.vercel.app/agencies</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
-  <url>
-    <loc>https://topaffaireimmo.vercel.app/cities/agadir</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://topaffaireimmo.vercel.app/cities/fes</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- Note: Individual property URLs should be dynamically added -->
-  <!-- This is a base sitemap. Consider generating dynamic sitemaps for: -->
-  <!-- - Individual property listings -->
-  <!-- - Agency profiles -->
-  <!-- - Neighborhood pages -->
+  <!-- Note: Individual property URLs and neighborhood pages should be dynamically added -->
+  <!-- This is the base sitemap for pre-launch SEO structure -->
+  <!-- When properties are added, generate dynamic sitemap indices for: -->
+  <!-- - Individual property listings (sitemap-properties.xml) -->
+  <!-- - Neighborhood pages (sitemap-neighborhoods.xml) -->
+  <!-- - Agency profiles (sitemap-agencies.xml) -->
   
 </urlset>
