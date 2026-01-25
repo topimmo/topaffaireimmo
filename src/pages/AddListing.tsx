@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { uploadPropertyImages, validateFile, BUCKET_CONFIG } from '@/lib/storage';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -104,6 +105,8 @@ export default function AddListing() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showCustomNeighborhood, setShowCustomNeighborhood] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -229,23 +232,51 @@ export default function AddListing() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map((file) =>
-        URL.createObjectURL(file)
+    if (!files) return;
+
+    const filesArray = Array.from(files);
+    const maxImages = 6;
+    const remainingSlots = maxImages - uploadedImages.length;
+    
+    if (filesArray.length > remainingSlots) {
+      alert(isRTL 
+        ? `يمكنك تحميل ${remainingSlots} صورة فقط` 
+        : `Vous ne pouvez télécharger que ${remainingSlots} image(s)`
       );
-      setUploadedImages((prev) => [...prev, ...newImages].slice(0, 6));
+      return;
     }
+
+    // Validate each file
+    const bucketConfig = BUCKET_CONFIG['property-images'];
+    for (const file of filesArray) {
+      const validation = validateFile(file, bucketConfig);
+      if (!validation.valid) {
+        alert(isRTL 
+          ? `خطأ في الملف ${file.name}: ${validation.error}` 
+          : `Erreur fichier ${file.name}: ${validation.error}`
+        );
+        return;
+      }
+    }
+
+    // Store files and preview URLs
+    const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
+    setImageFiles((prev) => [...prev, ...filesArray]);
+    setUploadedImages((prev) => [...prev, ...newPreviews]);
   };
 
   const removeImage = (index: number) => {
+    // Revoke blob URL to prevent memory leak
+    URL.revokeObjectURL(uploadedImages[index]);
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    // Minimal validation - only require property type and city
+    // Enhanced validation
     if (!formData.propertyType) {
       alert(isRTL ? 'يرجى اختيار نوع العقار' : 'Veuillez sélectionner un type de bien');
       return;
@@ -256,9 +287,62 @@ export default function AddListing() {
       return;
     }
 
+    // Validate phone number if provided
+    if (formData.phone && formData.phone.trim()) {
+      const phoneRegex = /^(\+212|0)[5-7]\d{8}$/;
+      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
+        alert(isRTL 
+          ? 'رقم الهاتف غير صالح. يجب أن يكون بالشكل: +212 6XX XX XX XX أو 06XX XX XX XX' 
+          : 'Numéro de téléphone invalide. Format attendu: +212 6XX XX XX XX ou 06XX XX XX XX'
+        );
+        return;
+      }
+    }
+
+    // Validate numeric fields
+    if (formData.price && parseFloat(formData.price) <= 0) {
+      alert(isRTL ? 'السعر يجب أن يكون أكبر من الصفر' : 'Le prix doit être supérieur à zéro');
+      return;
+    }
+
+    if (formData.area && parseFloat(formData.area) <= 0) {
+      alert(isRTL ? 'المساحة يجب أن تكون أكبر من الصفر' : 'La surface doit être supérieure à zéro');
+      return;
+    }
+
     setIsSubmitting(true);
+    setUploadProgress('');
 
     try {
+      // Step 1: Upload images to Supabase Storage
+      let imageUrls: string[] = [];
+      
+      if (imageFiles.length > 0) {
+        setUploadProgress(isRTL 
+          ? `جاري تحميل الصور... (${imageFiles.length})` 
+          : `Téléchargement des images... (${imageFiles.length})`
+        );
+        
+        console.log(`Uploading ${imageFiles.length} images to Supabase Storage...`);
+        const uploadResults = await uploadPropertyImages(imageFiles, user.id);
+        
+        // Check for upload errors
+        const failedUploads = uploadResults.filter(r => r.error);
+        if (failedUploads.length > 0) {
+          console.error('Image upload errors:', failedUploads);
+          throw new Error(isRTL 
+            ? `فشل تحميل ${failedUploads.length} صورة. يرجى المحاولة مرة أخرى.` 
+            : `Échec du téléchargement de ${failedUploads.length} image(s). Veuillez réessayer.`
+          );
+        }
+        
+        imageUrls = uploadResults.map(r => r.url);
+        console.log('Images uploaded successfully:', imageUrls);
+      }
+
+      // Step 2: Create property listing
+      setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : 'Enregistrement de l\'annonce...');
+      
       // Build insert data - only include fields that exist in the database
       const insertData: Record<string, unknown> = {
         owner_id: user.id,
@@ -279,16 +363,14 @@ export default function AddListing() {
         description_en: formData.descriptionFr || null,
         description_fr: formData.descriptionFr || null,
         description_ar: formData.descriptionAr || null,
-        images: uploadedImages.length > 0 ? uploadedImages : [],
+        images: imageUrls, // Use uploaded image URLs
         phone: formData.phone || null,
-        contact_phone: formData.phone || null, // Also set contact_phone for compatibility
-        status: 'pending', // Always pending for admin review
+        contact_phone: formData.phone || null,
+        status: 'pending',
       };
 
       console.log('Submitting property:', insertData);
       const { data, error } = await supabase.from('properties').insert(insertData).select();
-
-      setIsSubmitting(false);
 
       if (error) {
         console.error('Error creating property:', error);
@@ -296,23 +378,28 @@ export default function AddListing() {
         console.error('Insert data sent:', JSON.stringify(insertData, null, 2));
         
         const errorMessage = getErrorMessage(error, isRTL, import.meta.env.DEV);
-        alert(errorMessage);
-        setIsSubmitting(false);
-        return;
+        throw new Error(errorMessage);
       }
 
       console.log('Property created successfully:', data);
+      
+      // Cleanup blob URLs
+      uploadedImages.forEach(url => URL.revokeObjectURL(url));
+      
       setIsSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
       }, 3000);
     } catch (err) {
-      setIsSubmitting(false);
-      console.error('Error:', err);
-      alert(isRTL 
-        ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' 
-        : 'Une erreur inattendue s\'est produite. Veuillez réessayer.'
+      console.error('Error during submission:', err);
+      const message = err instanceof Error ? err.message : (
+        isRTL 
+          ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' 
+          : 'Une erreur inattendue s\'est produite. Veuillez réessayer.'
       );
+      alert(message);
+      setIsSubmitting(false);
+      setUploadProgress('');
     }
   };
 
@@ -694,6 +781,12 @@ export default function AddListing() {
               <h2 className="font-display text-xl font-semibold mb-4">
                 {t('addListing.images')}
               </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                {isRTL 
+                  ? 'يمكنك تحميل حتى 6 صور (بحد أقصى 5 ميجابايت لكل صورة، JPEG/PNG/WebP)'
+                  : 'Vous pouvez télécharger jusqu\'à 6 images (max 5 Mo par image, JPEG/PNG/WebP)'
+                }
+              </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {uploadedImages.map((image, index) => (
                   <div
@@ -755,11 +848,20 @@ export default function AddListing() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  {uploadProgress || (isRTL ? 'جاري المعالجة...' : 'Traitement...')}
+                </span>
               ) : (
                 t('addListing.submit')
               )}
             </Button>
+
+            {uploadProgress && (
+              <p className="text-sm text-muted-foreground text-center animate-pulse">
+                {uploadProgress}
+              </p>
+            )}
 
             <p className="text-sm text-muted-foreground text-center">
               {isRTL ? (
