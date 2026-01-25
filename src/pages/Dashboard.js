@@ -26,21 +26,21 @@ const statusColors = {
 };
 export default function Dashboard() {
     const { t, language, isRTL } = useLanguage();
-    const { user, profile, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading, profileLoading } = useAuth();
     const navigate = useNavigate();
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deleteId, setDeleteId] = useState(null);
     const [deleting, setDeleting] = useState(false);
     useEffect(() => {
-        if (!authLoading && !user) {
+        if (!authLoading && !profileLoading && !user) {
             navigate('/login', { state: { from: '/dashboard' } });
         }
         // Redirect commercial advertisers to their dedicated dashboard
-        if (!authLoading && profile && profile.user_role === 'commercial_advertiser') {
+        if (!authLoading && !profileLoading && profile && profile.user_role === 'commercial_advertiser') {
             navigate('/commercial-dashboard');
         }
-    }, [user, authLoading, navigate, profile]);
+    }, [user, authLoading, profileLoading, navigate, profile]);
     useEffect(() => {
         if (user) {
             fetchProperties();
@@ -98,7 +98,7 @@ export default function Dashboard() {
             maximumFractionDigits: 0,
         }).format(price);
     };
-    if (authLoading) {
+    if (authLoading || profileLoading) {
         return (_jsx("div", { className: "min-h-screen flex items-center justify-center bg-background", children: _jsx(Loader2, { className: "h-10 w-10 animate-spin text-primary" }) }));
     }
     return (_jsxs("div", { className: `min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`, children: [_jsx(Header, {}), _jsx("main", { className: "flex-1 pt-24 pb-16", children: _jsxs("div", { className: "container max-w-5xl", children: [_jsxs("div", { className: "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8", children: [_jsxs("div", { children: [_jsx("h1", { className: "font-display text-3xl font-semibold text-foreground", children: t('dashboard.title') }), profile && (_jsxs("p", { className: "text-muted-foreground mt-1", children: [isRTL ? 'مرحباً' : 'Bienvenue', ", ", profile.full_name || profile.email] }))] }), _jsx(Button, { asChild: true, children: _jsxs(Link, { to: "/add-listing", children: [_jsx(Plus, { className: "h-4 w-4" }), t('dashboard.addNew')] }) })] }), loading ? (_jsx("div", { className: "flex items-center justify-center py-20", children: _jsx(Loader2, { className: "h-10 w-10 animate-spin text-primary" }) })) : properties.length === 0 ? (_jsxs("div", { className: "bg-white rounded-2xl border p-12 text-center", children: [_jsx("div", { className: "w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4", children: _jsx(Home, { className: "h-8 w-8 text-muted-foreground" }) }), _jsx("h2", { className: "font-display text-xl font-semibold text-foreground mb-2", children: t('dashboard.noListings') }), _jsx("p", { className: "text-muted-foreground mb-6", children: t('dashboard.createFirst') }), _jsx(Button, { asChild: true, children: _jsxs(Link, { to: "/add-listing", children: [_jsx(Plus, { className: "h-4 w-4" }), t('dashboard.addNew')] }) })] })) : (_jsx("div", { className: "space-y-4", children: properties.map((property) => {

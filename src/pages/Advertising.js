@@ -32,25 +32,25 @@ const pricing = [
 ];
 export default function Advertising() {
     const { t, language, isRTL } = useLanguage();
-    const { user, profile, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading, profileLoading } = useAuth();
     const navigate = useNavigate();
     const [slots, setSlots] = useState([]);
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     // Redirect real estate advertisers away from commercial advertising
     useEffect(() => {
-        if (!authLoading && profile && profile.user_role === 'real_estate_advertiser') {
+        if (!authLoading && !profileLoading && profile && profile.user_role === 'real_estate_advertiser') {
             navigate('/dashboard');
         }
-    }, [authLoading, profile, navigate]);
+    }, [authLoading, profileLoading, profile, navigate]);
     useEffect(() => {
         if (user) {
             fetchData();
         }
-        else if (!authLoading) {
+        else if (!authLoading && !profileLoading) {
             setLoading(false);
         }
-    }, [user, authLoading]);
+    }, [user, authLoading, profileLoading]);
     const fetchData = async () => {
         setLoading(true);
         const [slotsRes, requestsRes] = await Promise.all([
@@ -100,7 +100,7 @@ export default function Advertising() {
         };
         return labels[page]?.[language === 'ar' ? 'ar' : 'fr'] || page;
     };
-    if (authLoading || loading) {
+    if (authLoading || profileLoading || loading) {
         return (_jsx("div", { className: "min-h-screen flex items-center justify-center bg-background", children: _jsx(Loader2, { className: "h-10 w-10 animate-spin text-primary" }) }));
     }
     // Show login message for non-authenticated users

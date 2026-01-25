@@ -56,15 +56,15 @@ const propertyTypes = [
 export default function EditListing() {
   const { id } = useParams<{ id: string }>();
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const navigate = useNavigate();
 
   // Redirect commercial advertisers - they cannot edit property listings
   useEffect(() => {
-    if (!authLoading && profile && profile.user_role === 'commercial_advertiser') {
+    if (!authLoading && !profileLoading && profile && profile.user_role === 'commercial_advertiser') {
       navigate('/commercial-dashboard');
     }
-  }, [authLoading, profile, navigate]);
+  }, [authLoading, profileLoading, profile, navigate]);
 
   const [cities, setCities] = useState<City[]>([]);
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
@@ -449,7 +449,7 @@ export default function EditListing() {
     }
   };
 
-  if (authLoading || loading) {
+  if (authLoading || profileLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

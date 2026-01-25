@@ -29,7 +29,7 @@ const propertyStatusColors = {
 };
 export default function AdminPanel() {
     const { t, language, isRTL } = useLanguage();
-    const { user, profile, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading, profileLoading } = useAuth();
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('properties');
     const [requests, setRequests] = useState([]);
@@ -45,7 +45,7 @@ export default function AdminPanel() {
     const [processing, setProcessing] = useState(false);
     const [previewUrl, setPreviewUrl] = useState(null);
     useEffect(() => {
-        if (!authLoading && profile) {
+        if (!authLoading && !profileLoading && profile) {
             if (!profile.is_admin) {
                 navigate('/');
             }
@@ -54,10 +54,10 @@ export default function AdminPanel() {
                 fetchProperties();
             }
         }
-        else if (!authLoading && !user) {
+        else if (!authLoading && !profileLoading && !user) {
             navigate('/login');
         }
-    }, [user, profile, authLoading, navigate]);
+    }, [user, profile, authLoading, profileLoading, navigate]);
     const fetchRequests = async () => {
         const { data } = await supabase
             .from('banner_requests')
@@ -214,7 +214,7 @@ export default function AdminPanel() {
         };
         return labels[type]?.[language] || type;
     };
-    if (authLoading || loading) {
+    if (authLoading || profileLoading || loading) {
         return (_jsx("div", { className: "min-h-screen flex items-center justify-center bg-background", children: _jsx(Loader2, { className: "h-10 w-10 animate-spin text-primary" }) }));
     }
     if (!profile?.is_admin) {

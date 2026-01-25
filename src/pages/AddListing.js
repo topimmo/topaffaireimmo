@@ -56,14 +56,15 @@ function getErrorMessage(error, isRTL, isDev) {
 }
 export default function AddListing() {
     const { t, language, isRTL } = useLanguage();
-    const { user, profile, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading, profileLoading } = useAuth();
     const navigate = useNavigate();
     // Redirect commercial advertisers - they cannot add property listings
     useEffect(() => {
-        if (!authLoading && profile && profile.user_role === 'commercial_advertiser') {
+        // Wait for both auth and profile to load before redirecting
+        if (!authLoading && !profileLoading && profile && profile.user_role === 'commercial_advertiser') {
             navigate('/commercial-dashboard');
         }
-    }, [authLoading, profile, navigate]);
+    }, [authLoading, profileLoading, profile, navigate]);
     const [cities, setCities] = useState([]);
     const [neighborhoods, setNeighborhoods] = useState([]);
     const [filteredNeighborhoods, setFilteredNeighborhoods] = useState([]);
@@ -424,7 +425,7 @@ export default function AddListing() {
             setUploadProgress('');
         }
     };
-    if (authLoading) {
+    if (authLoading || profileLoading) {
         return (_jsx("div", { className: "min-h-screen flex items-center justify-center bg-background", children: _jsx(Loader2, { className: "h-10 w-10 animate-spin text-primary" }) }));
     }
     if (!user) {

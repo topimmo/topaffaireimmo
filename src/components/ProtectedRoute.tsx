@@ -12,11 +12,11 @@ export default function ProtectedRoute({
   children,
   allowedRoles,
 }: ProtectedRouteProps) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, profileLoading } = useAuth();
   const location = useLocation();
 
-  // أثناء التحميل
-  if (loading) {
+  // Wait for both auth and profile to finish loading
+  if (loading || profileLoading) {
     return (
       <div style={{ padding: "2rem", textAlign: "center" }}>
         Loading...
@@ -24,13 +24,15 @@ export default function ProtectedRoute({
     );
   }
 
-  // إذا لم يسجل المستخدم دخوله
+  // Redirect to login if no user
   if (!user) {
     // Save the current location to redirect back after login
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // إذا المستخدم لا يملك الدور المطلوب
+  // Check role only if allowedRoles is specified AND profile is loaded
+  // If profile isn't loaded yet (shouldn't happen due to loading check above), 
+  // but just in case, we allow access if user is authenticated
   if (
     allowedRoles &&
     profile?.user_role &&
