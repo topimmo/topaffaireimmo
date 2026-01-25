@@ -12,12 +12,16 @@ Allow: /search
 Allow: /buy
 Allow: /rent
 Allow: /property/
+Allow: /annonce/
 Allow: /acheter
 Allow: /louer
 Allow: /about
 Allow: /contact
 Allow: /advertise
 Allow: /agencies
+
+# Allow SEO-friendly immobilier routes
+Allow: /immobilier/
 
 # Disallow private/admin pages
 Disallow: /admin
@@ -27,13 +31,21 @@ Disallow: /login
 Disallow: /register
 Disallow: /reset-password
 Disallow: /edit-listing
+Disallow: /advertising
+
+# Disallow filtered search pages (use noindex meta instead)
+# Allow base search but discourage deep filter combinations
+Disallow: /search?*&*
 
 # Disallow Vercel-specific URLs (should be blocked via header, but added for safety)
 Disallow: /*?vercel
 Disallow: /*?utm_source=vercel
 
-# Sitemap location (will be updated to production domain)
+# Sitemap locations
 Sitemap: https://topaffaireimmo.vercel.app/sitemap.xml
+Sitemap: https://topaffaireimmo.vercel.app/sitemaps/static.xml
+Sitemap: https://topaffaireimmo.vercel.app/sitemaps/cities.xml
+Sitemap: https://topaffaireimmo.vercel.app/sitemaps/neighborhoods.xml
 
 # Crawl rate (be nice to the server)
 Crawl-delay: 1
