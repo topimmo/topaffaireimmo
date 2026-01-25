@@ -238,10 +238,18 @@ export default function AddListing() {
     const maxImages = 6;
     const remainingSlots = maxImages - uploadedImages.length;
     
+    if (remainingSlots === 0) {
+      alert(isRTL 
+        ? 'الحد الأقصى 6 صور مسموح به' 
+        : 'Maximum 6 images autorisées'
+      );
+      return;
+    }
+    
     if (filesArray.length > remainingSlots) {
       alert(isRTL 
-        ? `يمكنك تحميل ${remainingSlots} صورة فقط` 
-        : `Vous ne pouvez télécharger que ${remainingSlots} image(s)`
+        ? `يمكنك تحميل ${remainingSlots} صورة إضافية فقط` 
+        : `Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s)`
       );
       return;
     }
@@ -252,8 +260,8 @@ export default function AddListing() {
       const validation = validateFile(file, bucketConfig);
       if (!validation.valid) {
         alert(isRTL 
-          ? `خطأ في الملف ${file.name}: ${validation.error}` 
-          : `Erreur fichier ${file.name}: ${validation.error}`
+          ? `خطأ في الملف المحدد: ${validation.error}` 
+          : `Erreur dans le fichier sélectionné: ${validation.error}`
         );
         return;
       }
@@ -289,6 +297,7 @@ export default function AddListing() {
 
     // Validate phone number if provided
     if (formData.phone && formData.phone.trim()) {
+      // Moroccan phone format: mobile (06/07) or landline (05)
       const phoneRegex = /^(\+212|0)[5-7]\d{8}$/;
       if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
         alert(isRTL 
@@ -323,7 +332,9 @@ export default function AddListing() {
           : `Téléchargement des images... (${imageFiles.length})`
         );
         
-        console.log(`Uploading ${imageFiles.length} images to Supabase Storage...`);
+        if (import.meta.env.DEV) {
+          console.log(`Uploading ${imageFiles.length} images to Supabase Storage...`);
+        }
         const uploadResults = await uploadPropertyImages(imageFiles, user.id);
         
         // Check for upload errors
@@ -337,7 +348,9 @@ export default function AddListing() {
         }
         
         imageUrls = uploadResults.map(r => r.url);
-        console.log('Images uploaded successfully:', imageUrls);
+        if (import.meta.env.DEV) {
+          console.log('Images uploaded successfully:', imageUrls);
+        }
       }
 
       // Step 2: Create property listing
@@ -374,14 +387,18 @@ export default function AddListing() {
 
       if (error) {
         console.error('Error creating property:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        console.error('Insert data sent:', JSON.stringify(insertData, null, 2));
+        if (import.meta.env.DEV) {
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          console.error('Insert data sent:', JSON.stringify(insertData, null, 2));
+        }
         
         const errorMessage = getErrorMessage(error, isRTL, import.meta.env.DEV);
         throw new Error(errorMessage);
       }
 
-      console.log('Property created successfully:', data);
+      if (import.meta.env.DEV) {
+        console.log('Property created successfully:', data);
+      }
       
       // Cleanup blob URLs
       uploadedImages.forEach(url => URL.revokeObjectURL(url));
