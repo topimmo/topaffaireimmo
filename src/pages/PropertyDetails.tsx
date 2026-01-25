@@ -94,6 +94,10 @@ export default function PropertyDetails() {
   const seoTitle = `${property.title} - ${property.neighborhood ? property.neighborhood + ', ' : ''}${property.city} | TopAffaireImmo`;
   const seoDescription = `${property.type} ${property.priceType === 'sale' ? 'à vendre' : 'à louer'} à ${property.neighborhood ? property.neighborhood + ', ' : ''}${property.city}. ${property.bedrooms} chambres, ${property.area}m². Prix: ${formatPrice(property.price)} MAD.`;
   
+  // Price validity period in days
+  const PRICE_VALIDITY_DAYS = 90;
+  const priceValidUntil = new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  
   // Structured data for property
   const structuredData = {
     "@context": "https://schema.org",
@@ -105,7 +109,7 @@ export default function PropertyDetails() {
       "price": property.price,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      "priceValidUntil": priceValidUntil
     },
     "address": {
       "@type": "PostalAddress",

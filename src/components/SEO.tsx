@@ -76,9 +76,14 @@ export function useSEO(props: SEOProps) {
     updateMetaTag('robots', robotsContent);
 
     // Canonical URL
-    const canonicalUrl = canonical ? getCanonicalUrl(canonical) : (
-      typeof window !== 'undefined' ? getCanonicalUrl(window.location.pathname) : getCanonicalUrl('/')
-    );
+    let canonicalUrl: string;
+    if (canonical) {
+      canonicalUrl = getCanonicalUrl(canonical);
+    } else if (typeof window !== 'undefined') {
+      canonicalUrl = getCanonicalUrl(window.location.pathname);
+    } else {
+      canonicalUrl = getCanonicalUrl('/');
+    }
     updateLinkTag('canonical', canonicalUrl);
 
     // Open Graph tags

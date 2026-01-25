@@ -1,4 +1,5 @@
 import { useParams, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import SEO from '../components/SEO';
 import { TRANSACTION_TYPES, PROPERTY_TYPES, MOROCCO_CITIES, getCanonicalUrl } from '../lib/seo';
@@ -17,13 +18,16 @@ import MobileFAB from '../components/layout/MobileFAB';
 export default function TransactionPage() {
   const params = useParams();
   const { language, t } = useLanguage();
+  const [fullSlug, setFullSlug] = useState('');
 
-  // Get the current path and extract slug
-  // For routes like /acheter or /louer, we use the path itself
-  // For routes like /acheter-appartement-casablanca, we get the full path
-  const pathParts = window.location.pathname.split('/').filter(Boolean);
-  const fullSlug = pathParts[0] || '';
-  
+  useEffect(() => {
+    // Extract slug from current path (client-side only)
+    if (typeof window !== 'undefined') {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      setFullSlug(pathParts[0] || '');
+    }
+  }, []);
+
   // Parse the slug to extract transaction, property type, city, neighborhood
   const parts = fullSlug.toLowerCase().split('-');
   
