@@ -76,7 +76,9 @@ export function useSEO(props: SEOProps) {
     updateMetaTag('robots', robotsContent);
 
     // Canonical URL
-    const canonicalUrl = canonical ? getCanonicalUrl(canonical) : getCanonicalUrl(window.location.pathname);
+    const canonicalUrl = canonical ? getCanonicalUrl(canonical) : (
+      typeof window !== 'undefined' ? getCanonicalUrl(window.location.pathname) : getCanonicalUrl('/')
+    );
     updateLinkTag('canonical', canonicalUrl);
 
     // Open Graph tags

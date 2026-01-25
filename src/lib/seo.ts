@@ -160,6 +160,11 @@ export function generatePageTitle(
  * Check if current environment is a Vercel preview deployment
  */
 export function isVercelPreview(): boolean {
+  // Check if running in browser
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  
   const url = window.location.hostname;
   return url.includes('vercel.app') && !url.includes('topaffaireimmo.vercel.app');
 }
@@ -168,6 +173,11 @@ export function isVercelPreview(): boolean {
  * Check if we should allow indexing
  */
 export function shouldAllowIndexing(): boolean {
+  // Check if running in browser
+  if (typeof window === 'undefined') {
+    return true; // Default to allowing indexing on server
+  }
+  
   const domain = getProductionDomain();
   const currentUrl = window.location.origin;
   

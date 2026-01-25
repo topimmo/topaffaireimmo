@@ -1,7 +1,7 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import SEO from '../components/SEO';
-import { TRANSACTION_TYPES, PROPERTY_TYPES, MOROCCO_CITIES } from '../lib/seo';
+import { TRANSACTION_TYPES, PROPERTY_TYPES, MOROCCO_CITIES, getCanonicalUrl } from '../lib/seo';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import MobileFAB from '../components/layout/MobileFAB';
@@ -12,14 +12,20 @@ import MobileFAB from '../components/layout/MobileFAB';
  * - /acheter, /louer
  * - /acheter-appartement, /louer-villa
  * - /acheter-casablanca, /louer-rabat
- * - /acheter-appartement-casablanca-maarif
+ * - /acheter-appartement-casablanca
  */
 export default function TransactionPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams();
   const { language, t } = useLanguage();
 
+  // Get the current path and extract slug
+  // For routes like /acheter or /louer, we use the path itself
+  // For routes like /acheter-appartement-casablanca, we get the full path
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const fullSlug = pathParts[0] || '';
+  
   // Parse the slug to extract transaction, property type, city, neighborhood
-  const parts = slug?.toLowerCase().split('-') || [];
+  const parts = fullSlug.toLowerCase().split('-');
   
   // First part is always transaction type
   const transactionSlug = parts[0];
@@ -89,7 +95,7 @@ export default function TransactionPage() {
     "@type": "SearchResultsPage",
     "name": title,
     "description": description,
-    "url": `https://topaffaireimmo.vercel.app/${slug}`,
+    "url": getCanonicalUrl(`/${fullSlug}`),
     "about": {
       "@type": "Offer",
       "itemOffered": {
@@ -113,7 +119,7 @@ export default function TransactionPage() {
         title={title}
         description={description}
         keywords={`${propertyTypeName} ${transactionVerb}, immobilier ${cityName || 'Maroc'}, ${transactionName}`}
-        canonical={`/${slug}`}
+        canonical={`/${fullSlug}`}
         structuredData={structuredData}
       />
       
