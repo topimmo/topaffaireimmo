@@ -93,29 +93,66 @@ export default function TransactionPage() {
   }
   description += `. Annonces vérifiées, photos HD, prix transparents et contact direct avec les propriétaires.`;
 
-  // Structured data
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "SearchResultsPage",
-    "name": title,
-    "description": description,
-    "url": getCanonicalUrl(`/${fullSlug}`),
-    "about": {
-      "@type": "Offer",
-      "itemOffered": {
-        "@type": "RealEstateListing",
-        "name": propertyTypeName
-      },
-      "areaServed": city ? {
-        "@type": "City",
-        "name": city.name_fr,
-        "addressCountry": "MA"
-      } : {
-        "@type": "Country",
-        "name": "Morocco"
+  // Enhanced structured data with BreadcrumbList
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "SearchResultsPage",
+      "name": title,
+      "description": description,
+      "url": getCanonicalUrl(`/${fullSlug}`),
+      "about": {
+        "@type": "Offer",
+        "priceCurrency": "MAD",
+        "itemOffered": {
+          "@type": "RealEstateListing",
+          "name": propertyTypeName,
+          "category": propertyType?.name_fr || "Propriété"
+        },
+        "areaServed": city ? {
+          "@type": "City",
+          "name": city.name_fr,
+          "alternateName": city.name_ar,
+          "addressCountry": "MA"
+        } : {
+          "@type": "Country",
+          "name": "Morocco",
+          "alternateName": "المغرب"
+        }
       }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": getCanonicalUrl("/")
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": transactionName,
+          "item": getCanonicalUrl(`/${transaction.slug}`)
+        },
+        ...(propertyType ? [{
+          "@type": "ListItem",
+          "position": 3,
+          "name": propertyTypeName,
+          "item": getCanonicalUrl(`/${transaction.slug}-${propertyType.slug}`)
+        }] : []),
+        ...(city ? [{
+          "@type": "ListItem",
+          "position": propertyType ? 4 : 3,
+          "name": cityName,
+          "item": getCanonicalUrl(`/${fullSlug}`)
+        }] : [])
+      ]
     }
-  };
+  ];
+
 
   return (
     <>

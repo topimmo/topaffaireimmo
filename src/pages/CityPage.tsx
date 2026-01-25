@@ -27,21 +27,43 @@ export default function CityPage() {
   const pageTitle = `Immobilier ${cityName} - Vente et Location | TopAffaireImmo`;
   const pageDescription = `Découvrez les meilleures offres immobilières à ${cityName}, Maroc. Appartements, villas, maisons et terrains à vendre ou à louer. Annonces vérifiées et prix transparents.`;
 
-  // Structured data for the city
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Place",
-    "name": cityData.name_fr,
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": cityData.name_fr,
-      "addressCountry": "MA"
+  // Enhanced structured data for the city with BreadcrumbList
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Place",
+      "name": cityData.name_fr,
+      "alternateName": cityData.name_ar,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": cityData.name_fr,
+        "addressCountry": "MA"
+      },
+      "containedInPlace": {
+        "@type": "Country",
+        "name": "Morocco",
+        "alternateName": "المغرب"
+      }
     },
-    "geo": {
-      "@type": "GeoCoordinates",
-      // Add approximate coordinates for each city
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": "https://topaffaireimmo.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": cityName,
+          "item": `https://topaffaireimmo.vercel.app/${cityData.slug}`
+        }
+      ]
     }
-  };
+  ];
 
   return (
     <>

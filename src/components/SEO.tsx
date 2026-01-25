@@ -11,7 +11,7 @@ export interface SEOProps {
   ogImage?: string;
   ogType?: string;
   noindex?: boolean;
-  structuredData?: object;
+  structuredData?: object | object[];
 }
 
 /**
