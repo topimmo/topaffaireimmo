@@ -15,6 +15,39 @@ VITE_SUPABASE_URL=<your_project_url>
 VITE_SUPABASE_ANON_KEY=<your_anon_key>
 ```
 
+### 1.1. Email Configuration (Hostinger SMTP)
+
+⚠️ **IMPORTANT**: Configure custom SMTP to send emails from your domain instead of Supabase default.
+
+**📧 Email Addresses:**
+- Main mailbox: `contact@topaffaireimmo.com`
+- Auth emails: `noreply@topaffaireimmo.com`
+- Support: `support@topaffaireimmo.com`
+- Info: `info@topaffaireimmo.com`
+
+**🔧 SMTP Settings (Hostinger):**
+```
+Host: smtp.hostinger.com
+Port: 465
+Encryption: SSL
+Sender: noreply@topaffaireimmo.com
+Sender Name: TopAffaireImmo
+```
+
+**📝 Configuration Steps:**
+
+1. Go to Supabase Dashboard → **Settings** → **Auth** → **SMTP Settings**
+2. Enable **Custom SMTP**
+3. Enter the SMTP settings above
+4. **SMTP Password**: Add manually (not in repository)
+5. Click **Save** and **Send Test Email**
+6. Verify email arrives at `contact@topaffaireimmo.com`
+
+**📚 Detailed Documentation:**
+- See `/docs/EMAIL_CONFIGURATION.md` for complete setup guide
+- See `/supabase/templates/` for email templates
+- See `/supabase/config.toml` for configuration reference
+
 ### 2. Database Initialization
 
 ✅ **Migrations Run** (in order):
@@ -213,6 +246,10 @@ npm run build
 - JWT token validation
 - Auto logout on token expiry
 - Secure session management
+- Custom SMTP (Hostinger) for all emails
+  - Authentication emails from: noreply@topaffaireimmo.com
+  - Support emails from: support@topaffaireimmo.com
+  - See `/docs/EMAIL_CONFIGURATION.md` for setup details
 
 ## 📊 Analytics
 

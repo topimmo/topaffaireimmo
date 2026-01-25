@@ -1,0 +1,109 @@
+# Supabase Configuration for TopAffaireImmo
+# This file configures the local Supabase instance
+# For production settings, configure directly in Supabase Dashboard
+
+[auth]
+# Email authentication settings
+enabled = true
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+# Email confirmation (can be disabled for testing, enabled for production)
+enable_confirmations = true
+double_confirm_changes = true
+
+# External OAuth providers (disabled for now)
+[auth.external.google]
+enabled = false
+
+[auth.external.facebook]
+enabled = false
+
+# Email template settings
+[auth.email]
+# Enable custom SMTP (configured in dashboard with sensitive credentials)
+enable_signup = true
+double_confirm_changes = true
+secure_password_change = true
+
+# SMTP Configuration (Hostinger)
+# ⚠️ IMPORTANT: Configure these settings in Supabase Dashboard → Settings → Auth → SMTP Settings
+# Do NOT add sensitive credentials (password) in this file
+# 
+# SMTP Settings for Production (Hostinger):
+# - SMTP Host: smtp.hostinger.com
+# - Port: 465
+# - Encryption: SSL
+# - Sender Email: noreply@topaffaireimmo.com (for auth emails)
+# - Sender Name: TopAffaireImmo
+# 
+# Email Addresses (configured on Hostinger):
+# - Main: contact@topaffaireimmo.com (main mailbox)
+# - Aliases (all forward to contact@):
+#   - info@topaffaireimmo.com
+#   - support@topaffaireimmo.com (for support communications)
+#   - noreply@topaffaireimmo.com (for authentication emails)
+#
+# The SMTP password must be added manually by the owner in:
+# Supabase Dashboard → Settings → Auth → SMTP Settings
+
+# Email templates - customize these in Supabase Dashboard
+[auth.email.template.invite]
+subject = "Vous avez été invité à rejoindre TopAffaireImmo"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.confirmation]
+subject = "Confirmez votre inscription à TopAffaireImmo"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Réinitialisez votre mot de passe TopAffaireImmo"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Votre lien de connexion TopAffaireImmo"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.email_change]
+subject = "Confirmez votre changement d'email TopAffaireImmo"
+content_path = "./supabase/templates/email_change.html"
+
+# Site URL configuration
+[auth.site_url]
+# Update this with your production URL
+# For Vercel: https://your-app.vercel.app
+# For custom domain: https://topaffaireimmo.com
+
+# Additional redirect URLs (if needed)
+[auth.additional_redirect_urls]
+# Add any additional redirect URLs here
+# e.g., ["https://app.topaffaireimmo.com", "http://localhost:5173"]
+
+# JWT settings
+[auth.jwt]
+# JWT expiry (default: 3600 seconds = 1 hour)
+exp = 3600
+
+# Database connection
+[db]
+# These are automatically configured by Supabase
+
+# Storage
+[storage]
+# File upload settings
+file_size_limit = "50MB"
+
+# API
+[api]
+# Enable if needed
+enabled = true
+
+# Studio
+[studio]
+# Supabase Studio local access
+enabled = true
+port = 54323
+
+# Analytics
+[analytics]
+enabled = false

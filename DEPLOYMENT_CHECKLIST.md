@@ -55,7 +55,55 @@ AND cmd = 'INSERT';
 - ✅ All 3 tables have `rowsecurity = true`
 - ✅ Profiles has INSERT policy allowing `auth.uid() IS NULL OR id = auth.uid()`
 
-### 4. Enable Email Confirmation (Optional)
+### 4. Configure Custom SMTP (Hostinger Email)
+
+⚠️ **CRITICAL FOR PRODUCTION**: Must configure custom SMTP to send emails from your domain.
+
+**Step 1: Access SMTP Settings**
+1. Go to Supabase Dashboard → **Settings** → **Auth** → **SMTP Settings**
+2. Toggle **Enable Custom SMTP** to ON
+
+**Step 2: Enter Hostinger SMTP Configuration**
+```
+SMTP Host: smtp.hostinger.com
+SMTP Port: 465
+SMTP User: noreply@topaffaireimmo.com
+SMTP Password: [Add manually - NOT in repository]
+SMTP Sender Email: noreply@topaffaireimmo.com
+SMTP Sender Name: TopAffaireImmo
+```
+
+**Step 3: Test Email Delivery**
+1. Click **Send Test Email** in SMTP Settings
+2. Check inbox at `contact@topaffaireimmo.com`
+3. Verify sender shows as "TopAffaireImmo <noreply@topaffaireimmo.com>"
+
+**Step 4: Configure Email Templates**
+1. Go to **Authentication** → **Email Templates**
+2. For each template type (Confirmation, Recovery, Magic Link, etc.):
+   - Set Sender: `noreply@topaffaireimmo.com`
+   - Copy HTML from `/supabase/templates/[template-name].html`
+   - Paste into template editor
+   - Save changes
+
+**Step 5: Configure URL Settings**
+1. Go to **Settings** → **Auth** → **URL Configuration**
+2. Set Site URL: `https://topaffaireimmo.com` (or your production URL)
+3. Add Redirect URLs:
+   - `https://topaffaireimmo.com/*`
+   - `http://localhost:5173/*` (for development)
+   - `https://*.vercel.app/*` (if using Vercel)
+
+**Verification:**
+- [ ] SMTP settings saved successfully
+- [ ] Test email received at contact@topaffaireimmo.com
+- [ ] Email shows correct sender (noreply@topaffaireimmo.com)
+- [ ] All email templates updated with custom HTML
+- [ ] URL configuration set correctly
+
+📚 **Detailed Documentation**: See `/docs/EMAIL_CONFIGURATION.md` for complete guide
+
+### 5. Enable Email Confirmation (Optional)
 
 **Option A: Disable Email Confirmation (for testing)**
 1. Go to Authentication → Settings → Email Auth

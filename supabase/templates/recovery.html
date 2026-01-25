@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réinitialisez votre mot de passe</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FAF8F5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #C86A4A; border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">TopAffaireImmo</h1>
+                            <p style="margin: 10px 0 0 0; color: #FAF8F5; font-size: 14px;">Votre plateforme immobilière au Maroc</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <h2 style="margin: 0 0 20px 0; color: #1A1A1A; font-size: 24px; font-weight: 600;">Réinitialisation de mot de passe</h2>
+                            
+                            <p style="margin: 0 0 20px 0; color: #4A4A4A; font-size: 16px; line-height: 1.6;">
+                                Vous avez demandé à réinitialiser votre mot de passe TopAffaireImmo. Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe.
+                            </p>
+                            
+                            <!-- CTA Button -->
+                            <table role="presentation" style="margin: 30px 0; width: 100%;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 40px; background-color: #C86A4A; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: 600; transition: background-color 0.3s;">
+                                            Réinitialiser mon mot de passe
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 20px 0 0 0; color: #666666; font-size: 14px; line-height: 1.6;">
+                                Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :
+                            </p>
+                            <p style="margin: 10px 0 0 0; color: #C86A4A; font-size: 14px; word-break: break-all;">
+                                {{ .ConfirmationURL }}
+                            </p>
+                            
+                            <div style="margin: 30px 0; padding: 20px; background-color: #FFF3E0; border-left: 4px solid #FF9800; border-radius: 4px;">
+                                <p style="margin: 0; color: #E65100; font-size: 14px; font-weight: 600;">
+                                    ⚠️ Important
+                                </p>
+                                <p style="margin: 10px 0 0 0; color: #666666; font-size: 14px; line-height: 1.6;">
+                                    Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email. Votre mot de passe actuel restera inchangé.
+                                </p>
+                            </div>
+                            
+                            <hr style="margin: 30px 0; border: none; border-top: 1px solid #E5E5E5;">
+                            
+                            <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.6;">
+                                <strong>En arabe:</strong><br>
+                                لقد طلبت إعادة تعيين كلمة المرور الخاصة بك. انقر على الزر أعلاه لإنشاء كلمة مرور جديدة.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px 40px; background-color: #FAF8F5; border-radius: 0 0 8px 8px; text-align: center;">
+                            <p style="margin: 0 0 10px 0; color: #666666; font-size: 12px;">
+                                Ce lien est valable pendant 1 heure pour des raisons de sécurité.
+                            </p>
+                            <p style="margin: 0; color: #666666; font-size: 12px;">
+                                © 2026 TopAffaireImmo. Tous droits réservés.
+                            </p>
+                            <p style="margin: 10px 0 0 0; color: #666666; font-size: 12px;">
+                                <a href="{{ .SiteURL }}" style="color: #C86A4A; text-decoration: none;">Visiter le site</a> | 
+                                <a href="mailto:support@topaffaireimmo.com" style="color: #C86A4A; text-decoration: none;">Support</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
