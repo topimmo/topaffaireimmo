@@ -74,11 +74,16 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "RealEstateAgent",
+      "@type": "Organization",
+      "@id": "https://topaffaireimmo.vercel.app/#organization",
       "name": "TopAffaireImmo",
+      "legalName": "TopAffaireImmo",
       "url": "https://topaffaireimmo.vercel.app",
-      "logo": "https://topaffaireimmo.vercel.app/logo.png",
-      "description": "Plateforme immobilière de référence au Maroc pour trouver des propriétés à vendre et à louer",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://topaffaireimmo.vercel.app/logo.png"
+      },
+      "description": "Plateforme immobilière de référence au Maroc pour trouver des propriétés à vendre et à louer. Découvrez appartements, villas, maisons et terrains dans toutes les grandes villes du Maroc.",
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "MA",
@@ -88,41 +93,59 @@
         {
           "@type": "City",
           "name": "Casablanca",
+          "alternateName": "الدار البيضاء",
           "addressCountry": "MA"
         },
         {
           "@type": "City",
           "name": "Rabat",
+          "alternateName": "الرباط",
           "addressCountry": "MA"
         },
         {
           "@type": "City",
           "name": "Marrakech",
+          "alternateName": "مراكش",
           "addressCountry": "MA"
         },
         {
           "@type": "City",
           "name": "Tanger",
+          "alternateName": "طنجة",
           "addressCountry": "MA"
         },
         {
           "@type": "City",
           "name": "Agadir",
+          "alternateName": "أكادير",
           "addressCountry": "MA"
         },
         {
           "@type": "City",
           "name": "Fès",
+          "alternateName": "فاس",
           "addressCountry": "MA"
         }
       ],
       "serviceType": [
         "Vente Immobilière",
         "Location Immobilière",
-        "Annonces Immobilières"
+        "Annonces Immobilières",
+        "Immobilier Résidentiel",
+        "Immobilier Commercial"
       ],
       "priceRange": "MAD",
-      "sameAs": []
+      "currenciesAccepted": "MAD",
+      "paymentAccepted": "Cash, Bank Transfer",
+      "sameAs": [],
+      "knowsAbout": [
+        "Real Estate",
+        "Property Sales",
+        "Property Rentals",
+        "Morocco Real Estate",
+        "Residential Properties",
+        "Commercial Properties"
+      ]
     }
     </script>
     

@@ -67,6 +67,85 @@ export const TRANSACTION_TYPES = [
 ] as const;
 
 /**
+ * Major neighborhoods (quartiers) by city for SEO
+ * These are the most popular/searched neighborhoods in each city
+ */
+export const MOROCCO_NEIGHBORHOODS = {
+  casablanca: [
+    { id: 'maarif', name_fr: 'Maarif', name_ar: 'المعاريف', slug: 'maarif', city_id: 'casablanca' },
+    { id: 'anfa', name_fr: 'Anfa', name_ar: 'أنفا', slug: 'anfa', city_id: 'casablanca' },
+    { id: 'gauthier', name_fr: 'Gauthier', name_ar: 'غوتيي', slug: 'gauthier', city_id: 'casablanca' },
+    { id: 'ain-diab', name_fr: 'Aïn Diab', name_ar: 'عين الذياب', slug: 'ain-diab', city_id: 'casablanca' },
+    { id: 'bourgogne', name_fr: 'Bourgogne', name_ar: 'بورغون', slug: 'bourgogne', city_id: 'casablanca' },
+    { id: 'sidi-maarouf', name_fr: 'Sidi Maarouf', name_ar: 'سيدي معروف', slug: 'sidi-maarouf', city_id: 'casablanca' },
+    { id: 'hay-hassani', name_fr: 'Hay Hassani', name_ar: 'الحي الحسني', slug: 'hay-hassani', city_id: 'casablanca' },
+    { id: 'californie', name_fr: 'Californie', name_ar: 'كاليفورنيا', slug: 'californie', city_id: 'casablanca' },
+  ],
+  rabat: [
+    { id: 'agdal', name_fr: 'Agdal', name_ar: 'أكدال', slug: 'agdal', city_id: 'rabat' },
+    { id: 'hay-riad', name_fr: 'Hay Riad', name_ar: 'حي الرياض', slug: 'hay-riad', city_id: 'rabat' },
+    { id: 'hassan', name_fr: 'Hassan', name_ar: 'حسان', slug: 'hassan', city_id: 'rabat' },
+    { id: 'souissi', name_fr: 'Souissi', name_ar: 'سويسي', slug: 'souissi', city_id: 'rabat' },
+    { id: 'aviation', name_fr: 'Aviation', name_ar: 'الطيران', slug: 'aviation', city_id: 'rabat' },
+    { id: 'hay-nahda', name_fr: 'Hay Nahda', name_ar: 'حي النهضة', slug: 'hay-nahda', city_id: 'rabat' },
+  ],
+  marrakech: [
+    { id: 'gueliz', name_fr: 'Guéliz', name_ar: 'كليز', slug: 'gueliz', city_id: 'marrakech' },
+    { id: 'hivernage', name_fr: 'Hivernage', name_ar: 'هيفيرناج', slug: 'hivernage', city_id: 'marrakech' },
+    { id: 'medina', name_fr: 'Médina', name_ar: 'المدينة', slug: 'medina', city_id: 'marrakech' },
+    { id: 'palmeraie', name_fr: 'Palmeraie', name_ar: 'النخيل', slug: 'palmeraie', city_id: 'marrakech' },
+    { id: 'targa', name_fr: 'Targa', name_ar: 'تارجا', slug: 'targa', city_id: 'marrakech' },
+  ],
+  tanger: [
+    { id: 'malabata', name_fr: 'Malabata', name_ar: 'ملاباطا', slug: 'malabata', city_id: 'tanger' },
+    { id: 'centre-ville', name_fr: 'Centre Ville', name_ar: 'وسط المدينة', slug: 'centre-ville', city_id: 'tanger' },
+    { id: 'california', name_fr: 'California', name_ar: 'كاليفورنيا', slug: 'california', city_id: 'tanger' },
+    { id: 'medina', name_fr: 'Médina', name_ar: 'المدينة', slug: 'medina', city_id: 'tanger' },
+  ],
+  agadir: [
+    { id: 'founty', name_fr: 'Founty', name_ar: 'فونتي', slug: 'founty', city_id: 'agadir' },
+    { id: 'hay-dakhla', name_fr: 'Hay Dakhla', name_ar: 'حي الداخلة', slug: 'hay-dakhla', city_id: 'agadir' },
+    { id: 'centre-ville', name_fr: 'Centre Ville', name_ar: 'وسط المدينة', slug: 'centre-ville', city_id: 'agadir' },
+    { id: 'secteur-touristique', name_fr: 'Secteur Touristique', name_ar: 'القطاع السياحي', slug: 'secteur-touristique', city_id: 'agadir' },
+  ],
+  fes: [
+    { id: 'medina', name_fr: 'Médina', name_ar: 'المدينة', slug: 'medina', city_id: 'fes' },
+    { id: 'ville-nouvelle', name_fr: 'Ville Nouvelle', name_ar: 'المدينة الجديدة', slug: 'ville-nouvelle', city_id: 'fes' },
+    { id: 'narjiss', name_fr: 'Narjiss', name_ar: 'نرجس', slug: 'narjiss', city_id: 'fes' },
+    { id: 'bensouda', name_fr: 'Bensouda', name_ar: 'بن سودة', slug: 'bensouda', city_id: 'fes' },
+  ],
+} as const;
+
+/**
+ * Get all neighborhoods as flat array
+ */
+export function getAllNeighborhoods() {
+  return Object.values(MOROCCO_NEIGHBORHOODS).flat();
+}
+
+/**
+ * Get neighborhoods for a specific city
+ */
+export function getNeighborhoodsByCity(citySlug: string) {
+  return MOROCCO_NEIGHBORHOODS[citySlug as keyof typeof MOROCCO_NEIGHBORHOODS] || [];
+}
+
+/**
+ * Find a neighborhood by slug across all cities
+ */
+export function findNeighborhood(slug: string) {
+  return getAllNeighborhoods().find(n => n.slug === slug);
+}
+
+/**
+ * Find a neighborhood by city and slug
+ */
+export function findNeighborhoodInCity(citySlug: string, neighborhoodSlug: string) {
+  const neighborhoods = getNeighborhoodsByCity(citySlug);
+  return neighborhoods.find(n => n.slug === neighborhoodSlug);
+}
+
+/**
  * Generate SEO-friendly URL for property search
  * Examples: /acheter-appartement-casablanca, /louer-villa-rabat-agdal
  */

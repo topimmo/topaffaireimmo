@@ -28,6 +28,8 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
 const TransactionPage = lazy(() => import("./pages/TransactionPage"));
+const CityImmobilierPage = lazy(() => import("./pages/CityImmobilierPage"));
+const NeighborhoodPage = lazy(() => import("./pages/NeighborhoodPage"));
 
 function LoadingSpinner() {
   return (
@@ -67,6 +69,12 @@ function App() {
           <Route path="/tanger" element={<CityPage />} />
           <Route path="/agadir" element={<CityPage />} />
           <Route path="/fes" element={<CityPage />} />
+
+          {/* SEO Landing Pages - Immobilier Routes with City/Neighborhood */}
+          {/* /immobilier/[city] - City overview with neighborhoods */}
+          <Route path="/immobilier/:city" element={<CityImmobilierPage />} />
+          {/* /immobilier/[city]/[neighborhood] - Neighborhood pages */}
+          <Route path="/immobilier/:city/:neighborhood" element={<NeighborhoodPage />} />
 
           {/* SEO Landing Pages - Transactions with various combinations */}
           {/* /acheter, /louer */}

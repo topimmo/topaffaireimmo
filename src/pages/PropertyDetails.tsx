@@ -98,38 +98,88 @@ export default function PropertyDetails() {
   const PRICE_VALIDITY_DAYS = 90;
   const priceValidUntil = new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   
-  // Structured data for property
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "RealEstateListing",
-    "name": property.title,
-    "description": property.description,
-    "offers": {
-      "@type": "Offer",
-      "price": property.price,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": priceValidUntil
+  // Enhanced structured data for property with comprehensive schemas
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "RealEstateListing",
+      "@id": `https://topaffaireimmo.vercel.app/property/${property.id}`,
+      "name": property.title,
+      "description": property.description,
+      "url": `https://topaffaireimmo.vercel.app/property/${property.id}`,
+      "offers": {
+        "@type": "Offer",
+        "price": property.price,
+        "priceCurrency": "MAD",
+        "availability": "https://schema.org/InStock",
+        "priceValidUntil": priceValidUntil,
+        "seller": {
+          "@type": property.agent.type === "agency" ? "RealEstateAgent" : "Person",
+          "name": property.agent.name,
+          "telephone": property.agent.phone
+        }
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": property.address,
+        "addressLocality": property.neighborhood || property.city,
+        "addressRegion": property.city,
+        "addressCountry": "MA"
+      },
+      "geo": {
+        "@type": "Place",
+        "name": property.neighborhood ? `${property.neighborhood}, ${property.city}` : property.city,
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": property.city,
+          "addressCountry": "MA"
+        }
+      },
+      "numberOfRooms": property.bedrooms,
+      "numberOfBathroomsTotal": property.bathrooms,
+      "floorSize": {
+        "@type": "QuantitativeValue",
+        "value": property.area,
+        "unitCode": "MTK",
+        "unitText": "m²"
+      },
+      "datePosted": new Date().toISOString(),
+      "image": property.images.map((img, index) => ({
+        "@type": "ImageObject",
+        "url": img,
+        "name": `${property.title} - Image ${index + 1}`
+      }))
     },
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": property.city,
-      "addressRegion": property.neighborhood || property.city,
-      "addressCountry": "MA"
-    },
-    "geo": {
-      "@type": "Place",
-      "name": property.neighborhood || property.city
-    },
-    "numberOfRooms": property.bedrooms,
-    "numberOfBathroomsTotal": property.bathrooms,
-    "floorSize": {
-      "@type": "QuantitativeValue",
-      "value": property.area,
-      "unitCode": "MTK"
-    },
-    "image": property.images
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": "https://topaffaireimmo.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": property.city,
+          "item": `https://topaffaireimmo.vercel.app/immobilier/${property.city.toLowerCase()}`
+        },
+        ...(property.neighborhood ? [{
+          "@type": "ListItem",
+          "position": 3,
+          "name": property.neighborhood,
+          "item": `https://topaffaireimmo.vercel.app/immobilier/${property.city.toLowerCase()}/${property.neighborhood.toLowerCase().replace(/\s+/g, '-')}`
+        }] : []),
+        {
+          "@type": "ListItem",
+          "position": property.neighborhood ? 4 : 3,
+          "name": property.title
+        }
+      ]
+    }
+  ];
 
   return (
     <>
