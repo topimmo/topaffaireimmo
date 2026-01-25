@@ -235,6 +235,26 @@ export default function AddListing() {
     const files = e.target.files;
     if (!files) return;
 
+    // Validate user profile before allowing upload
+    if (!user || !profile) {
+      alert(isRTL 
+        ? 'يرجى تسجيل الدخول أولاً' 
+        : 'Veuillez vous connecter d\'abord'
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Check if user has the correct role for uploading property images
+    if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
+      alert(isRTL 
+        ? 'ليس لديك صلاحية لتحميل الصور. يجب أن تكون معلن عقاري.' 
+        : 'Vous n\'avez pas la permission de télécharger des images. Vous devez être un annonceur immobilier.'
+      );
+      e.target.value = '';
+      return;
+    }
+
     const filesArray = Array.from(files);
     const maxImages = 6;
     const remainingSlots = maxImages - uploadedImages.length;
@@ -303,6 +323,23 @@ export default function AddListing() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Validate user profile exists and has correct role
+    if (!profile) {
+      alert(isRTL 
+        ? 'ملفك الشخصي غير محمل. يرجى تحديث الصفحة وإعادة المحاولة.' 
+        : 'Votre profil n\'est pas chargé. Veuillez actualiser la page et réessayer.'
+      );
+      return;
+    }
+
+    if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
+      alert(isRTL 
+        ? 'ليس لديك صلاحية لإنشاء إعلان عقاري. يجب أن يكون لديك حساب معلن عقاري.' 
+        : 'Vous n\'avez pas la permission de créer une annonce immobilière. Vous devez avoir un compte d\'annonceur immobilier.'
+      );
+      return;
+    }
 
     // Enhanced validation
     if (!formData.propertyType) {
@@ -394,12 +431,19 @@ export default function AddListing() {
         if (failedUploads.length > 0) {
           console.error('[AddListing] Image upload errors:', failedUploads);
           
+          // Show specific error messages for failed uploads
+          const errorDetails = failedUploads.map((r, idx) => 
+            `${idx + 1}. ${r.fileName}: ${r.error}`
+          ).join('\n');
+          
+          console.log('[AddListing] Error details:', errorDetails);
+          
           // Allow user to decide whether to continue or retry
-          const continueAnyway = window.confirm(
-            isRTL 
-              ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nهل تريد المتابعة بالصور المتبقية؟\n\n(اختر "إلغاء" للعودة وإعادة المحاولة)` 
-              : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nVoulez-vous continuer avec les images restantes?\n\n(Cliquez sur "Annuler" pour revenir et réessayer)`
-          );
+          const message = isRTL 
+            ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nالأخطاء:\n${errorDetails}\n\nهل تريد المتابعة بالصور المتبقية؟\n\n(اختر "إلغاء" للعودة وإعادة المحاولة)` 
+            : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nErreurs:\n${errorDetails}\n\nVoulez-vous continuer avec les images restantes?\n\n(Cliquez sur "Annuler" pour revenir et réessayer)`;
+          
+          const continueAnyway = window.confirm(message);
           
           if (!continueAnyway) {
             // User wants to retry - reset submitting state
