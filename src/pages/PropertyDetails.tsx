@@ -22,6 +22,7 @@ import {
   Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 
 // Mock property data
 const propertyData = {
@@ -98,6 +99,11 @@ export default function PropertyDetails() {
   const PRICE_VALIDITY_DAYS = 90;
   const priceValidUntil = new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   
+  // Get proper city slug for URLs
+  const cityData = MOROCCO_CITIES.find(c => c.name_fr.toLowerCase() === property.city.toLowerCase());
+  const citySlug = cityData?.slug || slugify(property.city);
+  const neighborhoodSlug = property.neighborhood ? slugify(property.neighborhood) : '';
+  
   // Enhanced structured data for property with comprehensive schemas
   const structuredData = [
     {
@@ -164,13 +170,13 @@ export default function PropertyDetails() {
           "@type": "ListItem",
           "position": 2,
           "name": property.city,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${property.city.toLowerCase()}`
+          "item": `https://topaffaireimmo.vercel.app/immobilier/${citySlug}`
         },
-        ...(property.neighborhood ? [{
+        ...(property.neighborhood && neighborhoodSlug ? [{
           "@type": "ListItem",
           "position": 3,
           "name": property.neighborhood,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${property.city.toLowerCase()}/${property.neighborhood.toLowerCase().replace(/\s+/g, '-')}`
+          "item": `https://topaffaireimmo.vercel.app/immobilier/${citySlug}/${neighborhoodSlug}`
         }] : []),
         {
           "@type": "ListItem",

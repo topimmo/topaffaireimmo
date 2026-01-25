@@ -247,15 +247,61 @@ npm run preview
 - ✅ Hreflang tags (fr-MA, ar-MA)
 - ✅ Morocco geo-targeting
 - ✅ City landing pages (6 major cities)
+- ✅ City immobilier pages with neighborhood listings (/immobilier/[city])
+- ✅ Neighborhood pages (/immobilier/[city]/[neighborhood])
+- ✅ 35+ neighborhoods data across 6 cities
 - ✅ Transaction pages (buy/rent)
 - ✅ Neighborhoods database ready
 - ✅ Neighborhood display in UI
-- ✅ Structured data (3+ schemas)
-- ✅ Dynamic sitemap
+- ✅ Structured data (5+ schemas: Organization, WebSite, RealEstateListing, Place, BreadcrumbList)
+- ✅ BreadcrumbList on all major pages
+- ✅ Dynamic sitemap with neighborhood routes
 - ✅ Clean SEO URLs
-- ✅ Multi-language support
-- ⏳ Neighborhood selector (planned)
-- ⏳ Dynamic sitemap generation (planned)
+- ✅ Multi-language support (French/Arabic)
+- ✅ Enhanced PostalAddress with neighborhoods
+- ✅ SEO utility functions for neighborhoods
+- ⏳ Dynamic sitemap generation for individual properties (planned)
+
+## 🆕 Recent Enhancements (January 2026)
+
+### New Features Added
+
+1. **Dynamic Neighborhood Routes**
+   - `/immobilier/[city]` - City overview pages
+   - `/immobilier/[city]/[neighborhood]` - Neighborhood-specific pages
+   - 35+ neighborhoods across 6 major cities
+
+2. **BreadcrumbList Schema**
+   - Added to PropertyDetails, CityPage, TransactionPage, CityImmobilierPage, NeighborhoodPage
+   - Improves search result display and navigation understanding
+
+3. **Enhanced Structured Data**
+   - Organization schema with more properties
+   - ImageObject arrays for better image representation
+   - Seller information in property listings
+   - Arabic alternateName for all geographic entities
+
+4. **Neighborhood Utilities**
+   - `getAllNeighborhoods()` - Get all neighborhoods
+   - `getNeighborhoodsByCity(citySlug)` - Get city neighborhoods
+   - `findNeighborhood(slug)` - Find by slug
+   - `findNeighborhoodInCity(citySlug, neighborhoodSlug)` - Find in specific city
+
+### Files Added
+- `src/pages/CityImmobilierPage.tsx`
+- `src/pages/NeighborhoodPage.tsx`
+
+### How to Add More Neighborhoods
+
+Add to `MOROCCO_NEIGHBORHOODS` in `src/lib/seo.ts`:
+```typescript
+casablanca: [
+  // ... existing
+  { id: 'new-area', name_fr: 'New Area', name_ar: 'المنطقة الجديدة', slug: 'new-area', city_id: 'casablanca' },
+]
+```
+
+The route `/immobilier/casablanca/new-area` will automatically work!
 
 ## 🎯 Next Steps (Post-Launch)
 
