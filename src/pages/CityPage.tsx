@@ -2,7 +2,7 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import SEO from '../components/SEO';
 import { generateMetaDescription, generatePageTitle, MOROCCO_CITIES } from '../lib/seo';
-import Navbar from '../components/layout/Navbar';
+import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import MobileFAB from '../components/layout/MobileFAB';
 
@@ -54,7 +54,7 @@ export default function CityPage() {
       />
       
       <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
+        <Header />
         
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
