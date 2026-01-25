@@ -10,6 +10,8 @@ interface Profile {
   company_name?: string
   user_role?: 'real_estate_advertiser' | 'commercial_advertiser' | 'admin'
   is_admin?: boolean
+  is_active?: boolean
+  is_verified?: boolean
 }
 
 interface AuthContextType {
@@ -39,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [profileLoading, setProfileLoading] = useState(false)
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retryCount = 0) => {
     setProfileLoading(true)
     try {
       const { data, error } = await supabase
@@ -47,14 +49,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('id', userId)
         .single()
+      
       if (!error && data) {
         setProfile(data as Profile)
+        console.log('✅ Profile loaded successfully:', data.email)
       } else if (error) {
-        console.error('Error fetching profile:', error)
-        setProfile(null)
+        console.error('❌ Error fetching profile:', error)
+        
+        // PGRST116 = "not found" error - profile doesn't exist
+        if (error.code === 'PGRST116' && retryCount === 0) {
+          console.warn('⚠️ Profile not found for authenticated user. Attempting to create fallback profile...')
+          
+          // Try to create a fallback profile
+          const createdProfile = await createFallbackProfile(userId)
+          if (createdProfile) {
+            setProfile(createdProfile)
+            console.log('✅ Fallback profile created successfully')
+          } else {
+            // If creation fails, retry fetching once more (in case trigger is delayed)
+            console.log('⏳ Retrying profile fetch after delay...')
+            setTimeout(() => fetchProfile(userId, retryCount + 1), 2000)
+          }
+        } else {
+          setProfile(null)
+        }
       }
     } finally {
       setProfileLoading(false)
+    }
+  }
+
+  const createFallbackProfile = async (userId: string): Promise<Profile | null> => {
+    try {
+      // Get user data from auth
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        console.error('Cannot create fallback profile: user not found')
+        return null
+      }
+
+      console.log('Creating fallback profile for user:', user.email)
+      console.log('User metadata:', user.user_metadata)
+
+      // Insert profile with metadata from auth user
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || '',
+          phone: user.user_metadata?.phone || null,
+          user_role: user.user_metadata?.user_role || 'real_estate_advertiser',
+          company_name: user.user_metadata?.company_name || null,
+          is_active: true,
+          is_verified: !!user.email_confirmed_at,
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Failed to create fallback profile:', error)
+        return null
+      }
+
+      console.log('✅ Fallback profile created:', data)
+      return data as Profile
+    } catch (err) {
+      console.error('Exception creating fallback profile:', err)
+      return null
     }
   }
 
