@@ -31,27 +31,55 @@ export default function CityImmobilierPage() {
   const pageTitle = `Immobilier ${cityName} - Quartiers et Propriétés | TopAffaireImmo`;
   const pageDescription = `Explorez l'immobilier à ${cityName}, Maroc. Découvrez tous les quartiers : ${neighborhoods.slice(0, 3).map(n => n.name_fr).join(', ')} et plus. Appartements, villas, maisons à vendre ou à louer.`;
 
-  // Structured data for the city with neighborhoods
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Place",
-    "name": cityData.name_fr,
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": cityData.name_fr,
-      "addressCountry": "MA"
-    },
-    "containsPlace": neighborhoods.map(n => ({
+  // Enhanced structured data for the city with neighborhoods and BreadcrumbList
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
       "@type": "Place",
-      "name": n.name_fr,
+      "name": cityData.name_fr,
+      "alternateName": cityData.name_ar,
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": n.name_fr,
-        "addressRegion": cityData.name_fr,
+        "addressLocality": cityData.name_fr,
         "addressCountry": "MA"
-      }
-    }))
-  };
+      },
+      "containsPlace": neighborhoods.map(n => ({
+        "@type": "Place",
+        "name": n.name_fr,
+        "alternateName": n.name_ar,
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": n.name_fr,
+          "addressRegion": cityData.name_fr,
+          "addressCountry": "MA"
+        }
+      }))
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": "https://topaffaireimmo.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Immobilier",
+          "item": "https://topaffaireimmo.vercel.app/search"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": cityName,
+          "item": `https://topaffaireimmo.vercel.app/immobilier/${cityData.slug}`
+        }
+      ]
+    }
+  ];
 
   return (
     <>

@@ -194,11 +194,106 @@
     <priority>0.7</priority>
   </url>
   
-  <!-- Note: Individual property URLs and neighborhood pages should be dynamically added -->
+  <!-- Immobilier City Pages -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/casablanca</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/immobilier/casablanca" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/immobilier/casablanca" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/rabat</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/immobilier/rabat" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/immobilier/rabat" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/marrakech</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr-MA" href="https://topaffaireimmo.vercel.app/immobilier/marrakech" />
+    <xhtml:link rel="alternate" hreflang="ar-MA" href="https://topaffaireimmo.vercel.app/immobilier/marrakech" />
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/tanger</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/agadir</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/fes</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Major Neighborhood Pages (High Priority) -->
+  <!-- Casablanca Neighborhoods -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/casablanca/maarif</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/casablanca/anfa</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/casablanca/gauthier</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/casablanca/ain-diab</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Rabat Neighborhoods -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/rabat/agdal</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/rabat/hay-riad</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Marrakech Neighborhoods -->
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/marrakech/gueliz</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://topaffaireimmo.vercel.app/immobilier/marrakech/hivernage</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Note: Individual property URLs and additional neighborhood pages should be dynamically added -->
   <!-- This is the base sitemap for pre-launch SEO structure -->
   <!-- When properties are added, generate dynamic sitemap indices for: -->
   <!-- - Individual property listings (sitemap-properties.xml) -->
-  <!-- - Neighborhood pages (sitemap-neighborhoods.xml) -->
+  <!-- - All neighborhood pages (sitemap-neighborhoods.xml) -->
   <!-- - Agency profiles (sitemap-agencies.xml) -->
   
 </urlset>
