@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) {
         console.log('   - User ID:', session.user.id)
         console.log('   - User Email:', session.user.email)
-        console.log('   - Session Expires:', new Date(session.expires_at! * 1000).toLocaleString())
+        console.log('   - Session Expires:', session.expires_at ? new Date(session.expires_at * 1000).toLocaleString() : 'Unknown')
       }
       
       setSession(session)

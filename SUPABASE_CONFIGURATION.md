@@ -160,10 +160,26 @@ Sender Name: TopAffaireImmo
 
 **Required DNS records:**
 
+**Important:** Vercel IP addresses can change. Always verify current IPs in the Vercel documentation at: https://vercel.com/docs/projects/domains/working-with-domains
+
+For most users, we recommend using **CNAME records** instead of A records:
+
+```
+Type: CNAME
+Name: @
+Value: cname.vercel-dns.com
+
+Type: CNAME
+Name: www
+Value: cname.vercel-dns.com
+```
+
+**Note:** Some DNS providers don't support CNAME on the root domain (@). In that case, use Vercel's nameservers or A records:
+
 ```
 Type: A
 Name: @
-Value: 76.76.21.21 (Vercel IP)
+Value: 76.76.21.21 (Check Vercel docs for current IP)
 
 Type: CNAME
 Name: www
