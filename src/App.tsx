@@ -29,6 +29,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminListings = lazy(() => import("./pages/admin/AdminListings"));
 const AdminListingDetail = lazy(() => import("./pages/admin/AdminListingDetail"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -193,6 +194,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminListingDetail />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminUsers />
               </ProtectedRoute>
             }
           />

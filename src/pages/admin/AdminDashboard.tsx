@@ -32,17 +32,17 @@ export default function AdminDashboard() {
     setLoading(true);
 
     // Fetch listings by status
-    const { data: pendingData } = await supabase
+    const { count: pendingCount } = await supabase
       .from('properties')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');
 
-    const { data: approvedData } = await supabase
+    const { count: approvedCount } = await supabase
       .from('properties')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'approved');
 
-    const { data: rejectedData } = await supabase
+    const { count: rejectedCount } = await supabase
       .from('properties')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'rejected');
@@ -53,9 +53,9 @@ export default function AdminDashboard() {
       .select('id', { count: 'exact', head: true });
 
     setStats({
-      pendingListings: (pendingData as any)?.length || 0,
-      approvedListings: (approvedData as any)?.length || 0,
-      rejectedListings: (rejectedData as any)?.length || 0,
+      pendingListings: pendingCount || 0,
+      approvedListings: approvedCount || 0,
+      rejectedListings: rejectedCount || 0,
       totalUsers: usersCount || 0,
     });
 

@@ -44,10 +44,17 @@ export default function AdminListings() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
+
+  useEffect(() => {
+    setPage(1); // Reset to first page when filter changes
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchProperties();
-  }, [statusFilter]);
+  }, [statusFilter, page]);
 
   const fetchProperties = async () => {
     setLoading(true);
@@ -65,16 +72,18 @@ export default function AdminListings() {
         created_at,
         city:cities(name_fr, name_ar),
         neighborhood:neighborhoods(name_fr, name_ar)
-      `)
-      .order('created_at', { ascending: false });
+      `, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
     }
 
-    const { data } = await query;
+    const { data, count } = await query;
 
     if (data) setProperties(data as unknown as Property[]);
+    if (count !== null) setTotalCount(count);
     setLoading(false);
   };
 
@@ -188,72 +197,103 @@ export default function AdminListings() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{isRTL ? 'العنوان' : 'Title'}</TableHead>
-                  <TableHead>{isRTL ? 'المدينة' : 'City'}</TableHead>
-                  <TableHead>{isRTL ? 'الحي' : 'Neighborhood'}</TableHead>
-                  <TableHead>{isRTL ? 'السعر' : 'Price'}</TableHead>
-                  <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead>{isRTL ? 'التاريخ' : 'Date'}</TableHead>
-                  <TableHead className="text-right">{isRTL ? 'الإجراءات' : 'Actions'}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {properties.map((property) => (
-                  <TableRow key={property.id}>
-                    <TableCell className="font-medium max-w-xs truncate">
-                      {getTitle(property)}
-                    </TableCell>
-                    <TableCell>{getCityName(property.city)}</TableCell>
-                    <TableCell>{getNeighborhoodName(property.neighborhood)}</TableCell>
-                    <TableCell>{formatPrice(property.price)} DH</TableCell>
-                    <TableCell>{getStatusBadge(property.status)}</TableCell>
-                    <TableCell>{formatDate(property.created_at)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-2">
-                        <Link to={`/admin/listings/${property.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        {property.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStatusChange(property.id, 'approved')}
-                              disabled={actionLoading === property.id}
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                            >
-                              {actionLoading === property.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStatusChange(property.id, 'rejected')}
-                              disabled={actionLoading === property.id}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              {actionLoading === property.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <XCircle className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{isRTL ? 'العنوان' : 'Title'}</TableHead>
+                    <TableHead>{isRTL ? 'المدينة' : 'City'}</TableHead>
+                    <TableHead>{isRTL ? 'الحي' : 'Neighborhood'}</TableHead>
+                    <TableHead>{isRTL ? 'السعر' : 'Price'}</TableHead>
+                    <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
+                    <TableHead>{isRTL ? 'التاريخ' : 'Date'}</TableHead>
+                    <TableHead className="text-right">{isRTL ? 'الإجراءات' : 'Actions'}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {properties.map((property) => (
+                    <TableRow key={property.id}>
+                      <TableCell className="font-medium max-w-xs truncate">
+                        {getTitle(property)}
+                      </TableCell>
+                      <TableCell>{getCityName(property.city)}</TableCell>
+                      <TableCell>{getNeighborhoodName(property.neighborhood)}</TableCell>
+                      <TableCell>{formatPrice(property.price)} DH</TableCell>
+                      <TableCell>{getStatusBadge(property.status)}</TableCell>
+                      <TableCell>{formatDate(property.created_at)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Link to={`/admin/listings/${property.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          {property.status === 'pending' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleStatusChange(property.id, 'approved')}
+                                disabled={actionLoading === property.id}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              >
+                                {actionLoading === property.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleStatusChange(property.id, 'rejected')}
+                                disabled={actionLoading === property.id}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                {actionLoading === property.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <XCircle className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination */}
+              {totalCount > pageSize && (
+                <div className="flex items-center justify-between border-t px-4 py-3">
+                  <div className="text-sm text-muted-foreground">
+                    {isRTL
+                      ? `عرض ${(page - 1) * pageSize + 1}-${Math.min(page * pageSize, totalCount)} من ${totalCount}`
+                      : `Showing ${(page - 1) * pageSize + 1}-${Math.min(page * pageSize, totalCount)} of ${totalCount}`}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      {isRTL ? 'السابق' : 'Previous'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page * pageSize >= totalCount}
+                    >
+                      {isRTL ? 'التالي' : 'Next'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

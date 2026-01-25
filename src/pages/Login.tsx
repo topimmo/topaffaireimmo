@@ -13,7 +13,7 @@ import { Building2, Mail, Lock, Loader2, ArrowLeft, CheckCircle } from 'lucide-r
 
 export default function Login() {
   const { t, isRTL } = useLanguage();
-  const { signIn } = useAuth();
+  const { signIn, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -66,10 +66,13 @@ export default function Login() {
         return;
       }
 
-      // Fetch user profile to determine role
+      // Wait a brief moment for the auth context to update with profile
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Fetch profile to determine redirect
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
+        const { data: userProfile } = await supabase
           .from('profiles')
           .select('user_role')
           .eq('id', user.id)
@@ -77,11 +80,11 @@ export default function Login() {
 
         // Redirect based on user role
         let redirectTo = from;
-        if (profile?.user_role === 'admin') {
+        if (userProfile?.user_role === 'admin') {
           redirectTo = '/admin';
         } else if (from === '/dashboard' || from === '/login') {
           // Default redirect for non-admin users
-          if (profile?.user_role === 'commercial_advertiser') {
+          if (userProfile?.user_role === 'commercial_advertiser') {
             redirectTo = '/commercial-dashboard';
           } else {
             redirectTo = '/dashboard';
