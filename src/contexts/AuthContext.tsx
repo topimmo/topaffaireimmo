@@ -126,7 +126,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    console.log('🔐 Initializing auth state...')
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('📦 Session retrieved:', session ? 'Active session found' : 'No active session')
+      if (session) {
+        console.log('   - User ID:', session.user.id)
+        console.log('   - User Email:', session.user.email)
+        console.log('   - Session Expires:', new Date(session.expires_at! * 1000).toLocaleString())
+      }
+      
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
@@ -134,6 +143,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 Auth state changed:', _event)
+      if (session) {
+        console.log('   - New session for user:', session.user.email)
+      } else {
+        console.log('   - Session cleared/logged out')
+      }
+      
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
