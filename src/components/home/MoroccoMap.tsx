@@ -2,23 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { MapPin } from "lucide-react";
-
-interface City {
-  name: string;
-  nameAr: string;
-  slug: string;
-  x: number; // percentage position on SVG
-  y: number; // percentage position on SVG
-}
-
-const cities: City[] = [
-  { name: "Tanger", nameAr: "طنجة", slug: "tanger", x: 32, y: 8 },
-  { name: "Casablanca", nameAr: "الدار البيضاء", slug: "casablanca", x: 25, y: 45 },
-  { name: "Rabat", nameAr: "الرباط", slug: "rabat", x: 28, y: 38 },
-  { name: "Fès", nameAr: "فاس", slug: "fes", x: 42, y: 32 },
-  { name: "Marrakech", nameAr: "مراكش", slug: "marrakech", x: 35, y: 65 },
-  { name: "Agadir", nameAr: "أكادير", slug: "agadir", x: 20, y: 85 },
-];
+import { CITIES_WITH_MAP_COORDINATES } from "@/constants/cities";
 
 export default function MoroccoMap() {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
@@ -47,7 +31,7 @@ export default function MoroccoMap() {
         />
 
         {/* Cities as pins */}
-        {cities.map((city) => (
+        {CITIES_WITH_MAP_COORDINATES.map((city) => (
           <g
             key={city.slug}
             onMouseEnter={() => setHoveredCity(city.slug)}

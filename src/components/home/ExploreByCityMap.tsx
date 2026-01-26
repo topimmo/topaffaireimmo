@@ -3,21 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MoroccoMap from "./MoroccoMap";
 import ExploreCities from "./ExploreCities";
-
-interface City {
-  name: string;
-  nameAr: string;
-  slug: string;
-}
-
-const cities: City[] = [
-  { name: "Casablanca", nameAr: "الدار البيضاء", slug: "casablanca" },
-  { name: "Rabat", nameAr: "الرباط", slug: "rabat" },
-  { name: "Marrakech", nameAr: "مراكش", slug: "marrakech" },
-  { name: "Tanger", nameAr: "طنجة", slug: "tanger" },
-  { name: "Agadir", nameAr: "أكادير", slug: "agadir" },
-  { name: "Fès", nameAr: "فاس", slug: "fes" },
-];
+import { FEATURED_CITIES } from "@/constants/cities";
 
 export default function ExploreByCityMap() {
   const [mapError, setMapError] = useState(false);
@@ -34,10 +20,7 @@ export default function ExploreByCityMap() {
   }
 
   return (
-    <section
-      className={`py-16 md:py-24 bg-background noise-texture ${isRTL ? "rtl" : "ltr"}`}
-      onError={() => setMapError(true)}
-    >
+    <section className={`py-16 md:py-24 bg-background noise-texture ${isRTL ? "rtl" : "ltr"}`}>
       <div className="container">
         {/* Section Title */}
         <div className="text-center mb-8">
@@ -57,7 +40,7 @@ export default function ExploreByCityMap() {
             {isRTL ? "المدن الأكثر طلباً" : "Most Requested Cities"}
           </h3>
           <div className="flex flex-wrap justify-center gap-3">
-            {cities.map((city) => (
+            {FEATURED_CITIES.map((city) => (
               <button
                 key={city.slug}
                 onClick={() => handleCityClick(city.slug)}
