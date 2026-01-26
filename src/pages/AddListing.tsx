@@ -236,17 +236,33 @@ export default function AddListing() {
     const files = e.target.files;
     if (!files) return;
 
-    // Validate user profile before allowing upload
-    if (!user || !profile) {
+    // Wait for profile to finish loading before proceeding
+    // This should rarely happen since the route is protected,
+    // but it's good to handle edge cases
+    if (profileLoading) {
       alert(isRTL 
-        ? 'يرجى تسجيل الدخول أولاً' 
-        : 'Veuillez vous connecter d\'abord'
+        ? 'جاري التحميل... يرجى الانتظار' 
+        : 'Chargement en cours... Veuillez patienter'
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Profile should always exist here since route is protected
+    // But check just in case of race conditions
+    if (!profile) {
+      console.error('Profile not loaded despite protected route');
+      alert(isRTL 
+        ? 'خطأ في تحميل الملف الشخصي. يرجى تحديث الصفحة.' 
+        : 'Erreur de chargement du profil. Veuillez rafraîchir la page.'
       );
       e.target.value = '';
       return;
     }
 
     // Check if user has the correct role for uploading property images
+    // This check is redundant since ProtectedRoute already checks role,
+    // but kept for extra safety
     if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
       alert(isRTL 
         ? 'ليس لديك صلاحية لتحميل الصور. يجب أن تكون معلن عقاري.' 

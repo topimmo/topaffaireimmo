@@ -68,8 +68,6 @@ function App() {
           <Route path="/buy" element={<SearchResults />} />
           <Route path="/rent" element={<SearchResults />} />
           <Route path="/property/:id" element={<PropertyDetails />} />
-          <Route path="/add-listing" element={<AddListing />} />
-          <Route path="/edit-listing/:id" element={<EditListing />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
@@ -134,6 +132,24 @@ function App() {
           <Route path="/louer-maison-:city" element={<TransactionPage />} />
 
           {/* Protected Routes */}
+          <Route
+            path="/add-listing"
+            element={
+              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin"]}>
+                <AddListing />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/edit-listing/:id"
+            element={
+              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin"]}>
+                <EditListing />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/dashboard"
             element={

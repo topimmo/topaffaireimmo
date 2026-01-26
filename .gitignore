@@ -34,6 +34,14 @@ core
 
 **/tempobook/**
 .env
+.env.*
+!.env.example
+
+# Never commit env files in migrations
+supabase/migrations/env
+supabase/migrations/env.*
+supabase/migrations/.env
+supabase/migrations/.env.*
 
 # Compiled JavaScript files from TypeScript
 src/**/*.js
