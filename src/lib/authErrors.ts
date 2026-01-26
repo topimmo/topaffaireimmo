@@ -17,6 +17,10 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     fr: 'Cet email est déjà enregistré',
     ar: 'هذا البريد الإلكتروني مسجل بالفعل'
   },
+  'user already registered': {
+    fr: 'Cet email est déjà enregistré',
+    ar: 'هذا البريد الإلكتروني مسجل بالفعل'
+  },
   'invalid email': {
     fr: 'Email invalide',
     ar: 'البريد الإلكتروني غير صالح'
@@ -28,6 +32,34 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
   'password should be at least': {
     fr: 'Le mot de passe doit contenir au moins 6 caractères',
     ar: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
+  },
+  
+  // Email/SMTP errors
+  'email provider': {
+    fr: 'Erreur d\'envoi d\'email. Vérifiez votre adresse email.',
+    ar: 'خطأ في إرسال البريد الإلكتروني. تحقق من عنوان بريدك الإلكتروني.'
+  },
+  'smtp': {
+    fr: 'Erreur du serveur d\'email. Veuillez réessayer dans quelques instants.',
+    ar: 'خطأ في خادم البريد الإلكتروني. يرجى المحاولة مرة أخرى بعد قليل.'
+  },
+  'email rate limit': {
+    fr: 'Trop de demandes. Veuillez patienter avant de réessayer.',
+    ar: 'طلبات كثيرة جداً. يرجى الانتظار قبل المحاولة مرة أخرى.'
+  },
+  'email delivery': {
+    fr: 'Impossible d\'envoyer l\'email de confirmation. Vérifiez votre adresse.',
+    ar: 'تعذر إرسال بريد التأكيد الإلكتروني. تحقق من عنوانك.'
+  },
+  
+  // Redirect/URL errors
+  'redirect': {
+    fr: 'URL de redirection non autorisée. Contactez le support.',
+    ar: 'عنوان URL لإعادة التوجيه غير مصرح به. اتصل بالدعم.'
+  },
+  'redirect_not_allowed': {
+    fr: 'URL de redirection non autorisée. Contactez le support.',
+    ar: 'عنوان URL لإعادة التوجيه غير مصرح به. اتصل بالدعم.'
   },
   
   // Login errors
@@ -55,6 +87,22 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     fr: 'Erreur de base de données. Veuillez réessayer.',
     ar: 'خطأ في قاعدة البيانات. يرجى المحاولة مرة أخرى.'
   },
+  'permission denied': {
+    fr: 'Accès refusé. Veuillez contacter le support.',
+    ar: 'تم رفض الوصول. يرجى الاتصال بالدعم.'
+  },
+  'row level security': {
+    fr: 'Erreur de sécurité. Veuillez contacter le support.',
+    ar: 'خطأ أمني. يرجى الاتصال بالدعم.'
+  },
+  'constraint': {
+    fr: 'Données invalides. Vérifiez les informations saisies.',
+    ar: 'بيانات غير صالحة. تحقق من المعلومات المدخلة.'
+  },
+  'duplicate': {
+    fr: 'Cet enregistrement existe déjà.',
+    ar: 'هذا السجل موجود بالفعل.'
+  },
   
   // Generic fallback
   'default': {
@@ -77,12 +125,26 @@ export function translateAuthError(
   
   const errorMessage = error.message.toLowerCase();
   
+  // Log the raw error for debugging (helps diagnose production issues)
+  console.error('🔍 Translating auth error:', {
+    message: error.message,
+    errorType: error.constructor.name,
+    status: (error as any).status,
+    code: (error as any).code,
+  });
+  
   // Find matching error pattern
   for (const [pattern, translation] of Object.entries(ERROR_MAPPINGS)) {
     if (errorMessage.includes(pattern.toLowerCase())) {
+      console.log('✅ Matched error pattern:', pattern);
       return translation[isRTL ? 'ar' : 'fr'];
     }
   }
+  
+  // If no pattern matched, log for future improvement
+  console.warn('⚠️ No error pattern matched. Using default message.');
+  console.warn('   Original error message:', error.message);
+  console.warn('   Consider adding this pattern to ERROR_MAPPINGS');
   
   // Fallback to default message
   return ERROR_MAPPINGS.default[isRTL ? 'ar' : 'fr'];

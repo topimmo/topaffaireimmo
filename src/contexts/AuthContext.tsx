@@ -284,11 +284,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('Step 3: User metadata prepared:', JSON.stringify(metadata, null, 2))
 
     // Step 4: Determine email redirect URL
-    const emailRedirectTo = typeof window !== 'undefined' && window.location.origin 
-      ? `${window.location.origin}/login` 
-      : undefined
-    if (emailRedirectTo) {
-      console.log('Step 4: Email redirect URL:', emailRedirectTo)
+    // CRITICAL: Use production domain from environment variable for email confirmations
+    // This ensures emails contain the correct domain, not preview URLs
+    const productionDomain = import.meta.env.VITE_PRODUCTION_DOMAIN
+    const emailRedirectTo = productionDomain 
+      ? `${productionDomain}/login` 
+      : (typeof window !== 'undefined' && window.location.origin 
+        ? `${window.location.origin}/login` 
+        : undefined)
+    
+    console.log('Step 4: Email redirect URL configuration')
+    console.log('  - Production domain (env):', productionDomain || '(not set)')
+    console.log('  - Current origin:', typeof window !== 'undefined' ? window.location.origin : '(server-side)')
+    console.log('  - Final emailRedirectTo:', emailRedirectTo || '(not set)')
+    
+    if (!emailRedirectTo) {
+      console.warn('⚠️ WARNING: emailRedirectTo not set - email links may not work correctly')
+    } else if (!productionDomain && typeof window !== 'undefined') {
+      console.warn('⚠️ WARNING: Using current origin for emailRedirectTo. Set VITE_PRODUCTION_DOMAIN env var for production!')
     }
 
     // Step 5: Call Supabase signup
