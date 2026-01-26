@@ -15,9 +15,9 @@ By default, Supabase may generate email confirmation links that:
 ### Step 1: Set Production Domain Environment Variable
 In your Vercel project settings or `.env` file, set:
 ```
-VITE_PRODUCTION_DOMAIN=https://topaffaireimmo.com
+VITE_PRODUCTION_DOMAIN=https://your-domain.com
 ```
-Replace with your actual production domain.
+Replace `your-domain.com` with your actual production domain (e.g., `topaffaireimmo.com`).
 
 ### Step 2: Configure Supabase Dashboard
 
@@ -26,16 +26,16 @@ Replace with your actual production domain.
 
 2. **Set Site URL**
    - Field: "Site URL"
-   - Value: `https://topaffaireimmo.com` (your production domain)
+   - Value: `https://your-domain.com` (your production domain)
    - This is the default redirect for authentication
 
 3. **Add Redirect URLs**
    Add these URLs to the "Redirect URLs" list (one per line):
    
-   **Production URLs:**
+   **Production URLs (replace `your-domain.com` with your actual domain):**
    ```
-   https://topaffaireimmo.com/auth/callback
-   https://topaffaireimmo.com/reset-password
+   https://your-domain.com/auth/callback
+   https://your-domain.com/reset-password
    ```
    
    **Development URLs (for local testing):**
@@ -89,7 +89,7 @@ User clicks email link
     ↓
 Supabase validates token
     ↓
-Redirects to configured URL (/auth/callback)
+Redirects to configured URL (/auth/callback on your-domain.com)
     ↓
 React app handles callback
     ↓
@@ -109,8 +109,8 @@ Redirect to dashboard based on role
 ### Issue: 502 Bad Gateway
 **Cause:** Email link redirects to a Vercel preview domain that doesn't exist
 **Solution:** 
-1. Set VITE_PRODUCTION_DOMAIN environment variable
-2. Configure Site URL in Supabase to production domain
+1. Set VITE_PRODUCTION_DOMAIN environment variable to your production domain
+2. Configure Site URL in Supabase to match your production domain
 3. Regenerate the email confirmation
 
 ### Issue: "Invalid redirect URL"
@@ -131,7 +131,8 @@ VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 
 # Production Domain (Required for production)
-VITE_PRODUCTION_DOMAIN=https://topaffaireimmo.com
+# Replace with your actual domain
+VITE_PRODUCTION_DOMAIN=https://your-domain.com
 ```
 
 ## Security Notes

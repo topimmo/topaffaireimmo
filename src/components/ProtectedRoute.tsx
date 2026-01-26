@@ -35,7 +35,6 @@ export default function ProtectedRoute({
   // but just in case, we allow access if user is authenticated
   if (
     allowedRoles &&
-    allowedRoles.length > 0 &&
     profile
   ) {
     // If profile exists but has no user_role, deny access (data issue)

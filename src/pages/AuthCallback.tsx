@@ -4,6 +4,23 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
+// Timeout constants for consistency
+const SESSION_WAIT_MS = 1000;
+const REDIRECT_DELAY_SHORT_MS = 2000;
+const REDIRECT_DELAY_LONG_MS = 3000;
+
+/**
+ * Redirect user to appropriate dashboard based on their role
+ */
+function getRedirectPath(userRole?: string): string {
+  if (userRole === 'admin') {
+    return '/admin';
+  } else if (userRole === 'commercial_advertiser') {
+    return '/commercial-dashboard';
+  }
+  return '/dashboard';
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -38,8 +55,8 @@ export default function AuthCallback() {
           setStatus('error');
           setMessage(errorDescription || error);
           
-          // Redirect to login after 3 seconds
-          setTimeout(() => navigate('/login'), 3000);
+          // Redirect to login after delay
+          setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
           return;
         }
 
@@ -49,7 +66,7 @@ export default function AuthCallback() {
           console.log(`✅ Email confirmation type: ${type}`);
           
           // Wait a moment for Supabase to process the session
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, SESSION_WAIT_MS));
 
           // Get the current session to verify it was created
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -58,7 +75,7 @@ export default function AuthCallback() {
             console.error('❌ Error getting session:', sessionError);
             setStatus('error');
             setMessage('Failed to confirm email. Please try again.');
-            setTimeout(() => navigate('/login'), 3000);
+            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
             return;
           }
 
@@ -72,28 +89,15 @@ export default function AuthCallback() {
 
             // Wait for profile to load, then redirect based on role
             setTimeout(() => {
-              if (profile) {
-                console.log('User role:', profile.user_role);
-                
-                // Redirect based on user role
-                if (profile.user_role === 'admin') {
-                  navigate('/admin');
-                } else if (profile.user_role === 'commercial_advertiser') {
-                  navigate('/commercial-dashboard');
-                } else {
-                  navigate('/dashboard');
-                }
-              } else {
-                // Fallback to dashboard if profile not loaded yet
-                console.log('Profile not loaded, redirecting to dashboard');
-                navigate('/dashboard');
-              }
-            }, 2000);
+              const redirectPath = getRedirectPath(profile?.user_role);
+              console.log('Redirecting to:', redirectPath);
+              navigate(redirectPath);
+            }, REDIRECT_DELAY_SHORT_MS);
           } else {
             console.warn('⚠️ No session found after confirmation');
             setStatus('error');
             setMessage('Could not create session. Please log in.');
-            setTimeout(() => navigate('/login'), 3000);
+            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
           }
         } else if (accessToken && refreshToken) {
           // Direct token-based auth (legacy or alternative flow)
@@ -102,30 +106,22 @@ export default function AuthCallback() {
           setMessage('Authentication successful! Redirecting...');
           
           setTimeout(() => {
-            if (profile) {
-              if (profile.user_role === 'admin') {
-                navigate('/admin');
-              } else if (profile.user_role === 'commercial_advertiser') {
-                navigate('/commercial-dashboard');
-              } else {
-                navigate('/dashboard');
-              }
-            } else {
-              navigate('/dashboard');
-            }
-          }, 2000);
+            const redirectPath = getRedirectPath(profile?.user_role);
+            console.log('Redirecting to:', redirectPath);
+            navigate(redirectPath);
+          }, REDIRECT_DELAY_SHORT_MS);
         } else {
           // No tokens found - might be a direct navigation to this page
           console.log('ℹ️ No auth tokens in URL, redirecting to login');
           setStatus('error');
           setMessage('No authentication data found.');
-          setTimeout(() => navigate('/login'), 2000);
+          setTimeout(() => navigate('/login'), REDIRECT_DELAY_SHORT_MS);
         }
       } catch (err) {
         console.error('❌ Exception in auth callback:', err);
         setStatus('error');
         setMessage('An unexpected error occurred. Please try logging in.');
-        setTimeout(() => navigate('/login'), 3000);
+        setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
       }
     };
 
