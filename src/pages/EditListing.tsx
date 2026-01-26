@@ -234,6 +234,15 @@ export default function EditListing() {
 
     // Check if user has permission to upload property images
     if (!canUploadPropertyImages(profile)) {
+      console.error('❌ Permission denied for image upload');
+      console.error('Profile details:', {
+        id: profile.id,
+        email: profile.email,
+        user_role: profile.user_role,
+        is_admin: profile.is_admin
+      });
+      console.error('canUploadPropertyImages returned false');
+      console.error('Expected user_role to be "real_estate_advertiser" or "admin"');
       alert(getPermissionDeniedMessage('upload_property_images', language as 'fr' | 'ar'));
       e.target.value = '';
       return;
