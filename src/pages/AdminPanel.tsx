@@ -184,27 +184,73 @@ export default function AdminPanel() {
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (data) setUsers(data as unknown as UserProfile[]);
+    try {
+      console.log('👥 Fetching users from profiles table...')
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Error fetching users:', {
+          code: error.code,
+          message: error.message,
+          details: error.details
+        })
+        // Show error to user but don't crash
+        return
+      }
+      
+      if (data) {
+        console.log(`✅ Fetched ${data.length} users from profiles`)
+        setUsers(data as unknown as UserProfile[])
+      } else {
+        console.warn('⚠️ No users returned from profiles query')
+        setUsers([])
+      }
+    } catch (exception) {
+      console.error('❌ Exception fetching users:', exception)
+      // Allow admin panel to continue with empty user list
+      setUsers([])
+    }
   };
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_active: !currentStatus })
-      .eq('id', userId);
-    if (!error) fetchUsers();
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: !currentStatus })
+        .eq('id', userId);
+      
+      if (error) {
+        console.error('❌ Error toggling user status:', error)
+        return
+      }
+      
+      console.log(`✅ User ${userId} status toggled to ${!currentStatus}`)
+      fetchUsers();
+    } catch (exception) {
+      console.error('❌ Exception toggling user status:', exception)
+    }
   };
 
   const changeUserRole = async (userId: string, newRole: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ user_role: newRole })
-      .eq('id', userId);
-    if (!error) fetchUsers();
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ user_role: newRole })
+        .eq('id', userId);
+      
+      if (error) {
+        console.error('❌ Error changing user role:', error)
+        return
+      }
+      
+      console.log(`✅ User ${userId} role changed to ${newRole}`)
+      fetchUsers();
+    } catch (exception) {
+      console.error('❌ Exception changing user role:', exception)
+    }
   };
 
   const handleAction = async () => {

@@ -45,6 +45,85 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [profileLoading, setProfileLoading] = useState(false)
 
+  /**
+   * Ensure a profile exists for the authenticated user
+   * This function is called after signup/login to guarantee profile existence
+   */
+  const ensureProfile = async (userId: string, userEmail: string, metadata?: Record<string, unknown>): Promise<Profile | null> => {
+    console.log('🔄 ensureProfile: Ensuring profile exists for user:', userId)
+    
+    try {
+      // Try to fetch existing profile first
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle() // Use maybeSingle to avoid error if profile doesn't exist
+      
+      if (existingProfile) {
+        console.log('✅ ensureProfile: Profile already exists')
+        return existingProfile as Profile
+      }
+      
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // PGRST116 is "not found" which is expected if profile doesn't exist
+        console.error('❌ ensureProfile: Error checking for existing profile:', fetchError)
+      }
+      
+      // Profile doesn't exist, create it
+      console.log('📝 ensureProfile: Profile not found, creating new profile...')
+      
+      const profileData = {
+        id: userId,
+        email: userEmail,
+        full_name: metadata?.full_name as string || '',
+        phone: metadata?.phone as string || null,
+        user_role: (metadata?.user_role as string) || 'real_estate_advertiser',
+        company_name: metadata?.company_name as string || null,
+        is_active: true,
+        is_verified: false, // Will be updated when email is verified
+        is_admin: false,
+      }
+      
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .upsert(profileData, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        })
+        .select()
+        .single()
+      
+      if (insertError) {
+        console.error('❌ ensureProfile: Failed to create profile:', {
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details
+        })
+        
+        // If duplicate key error, try fetching the existing profile
+        if (insertError.code === '23505') {
+          console.log('⚠️ ensureProfile: Duplicate key, fetching existing profile...')
+          const { data: retryProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+          return retryProfile as Profile || null
+        }
+        
+        return null
+      }
+      
+      console.log('✅ ensureProfile: Profile created successfully')
+      return newProfile as Profile
+      
+    } catch (error) {
+      console.error('❌ ensureProfile: Exception:', error)
+      return null
+    }
+  }
+
   const fetchProfile = async (userId: string, retryCount = 0) => {
     setProfileLoading(true)
     try {
@@ -71,37 +150,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         
         // PGRST116 = "not found" error - profile doesn't exist
-        if (error.code === 'PGRST116' && retryCount === 0) {
-          console.warn('⚠️ Profile not found (PGRST116) for authenticated user. Attempting to create fallback profile...')
+        if (error.code === 'PGRST116') {
+          console.warn('⚠️ Profile not found (PGRST116) for authenticated user.')
           
-          // Try to create a fallback profile
-          const createdProfile = await createFallbackProfile(userId)
-          if (createdProfile) {
-            setProfile(createdProfile)
-            console.log('✅ Fallback profile created successfully')
+          // Get user data to create profile
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            console.log('🔄 Calling ensureProfile to create missing profile...')
+            const createdProfile = await ensureProfile(userId, user.email || '', user.user_metadata)
+            if (createdProfile) {
+              setProfile(createdProfile)
+              console.log('✅ Profile created via ensureProfile')
+            } else if (retryCount < PROFILE_FETCH_MAX_RETRIES) {
+              // Retry if ensureProfile failed
+              console.log('⏳ Retrying profile fetch after delay...')
+              setTimeout(() => fetchProfile(userId, retryCount + 1), PROFILE_FETCH_RETRY_DELAY_MS)
+            } else {
+              // Allow app to continue with minimal user object
+              console.warn('⚠️ Could not create profile, allowing app to continue with minimal data')
+              setProfile({
+                id: userId,
+                email: user.email || '',
+                full_name: user.user_metadata?.full_name || '',
+                is_active: true,
+                is_verified: false,
+              } as Profile)
+            }
           } else {
-            // If creation fails, retry fetching once more (in case trigger is delayed)
-            console.log('⏳ Retrying profile fetch after delay...')
-            setTimeout(() => fetchProfile(userId, retryCount + 1), PROFILE_FETCH_RETRY_DELAY_MS)
+            setProfile(null)
           }
         } else if (error.code === '42501' || error.message?.includes('permission denied')) {
           // RLS policy violation - permission denied
           console.error('🔒 RLS Policy Error: Permission denied when fetching profile.')
-          console.error('   This indicates an RLS policy issue. Check that:')
-          console.error('   1. User is properly authenticated (auth.uid() is set)')
-          console.error('   2. RLS policy allows SELECT for authenticated users on their own profile')
-          console.error('   3. Migration 041 has been applied correctly')
+          console.error('   Check that migration 041 has been applied correctly.')
           
-          // Try to create fallback profile anyway (in case profile doesn't exist)
-          if (retryCount === 0) {
-            console.warn('⚠️ Attempting fallback profile creation despite RLS error...')
-            const createdProfile = await createFallbackProfile(userId)
-            if (createdProfile) {
-              setProfile(createdProfile)
-              console.log('✅ Fallback profile created successfully')
-            } else {
-              setProfile(null)
-            }
+          // Allow app to continue with minimal user object
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            console.warn('⚠️ RLS error, allowing app to continue with minimal data')
+            setProfile({
+              id: userId,
+              email: user.email || '',
+              full_name: user.user_metadata?.full_name || '',
+              is_active: true,
+              is_verified: false,
+            } as Profile)
           } else {
             setProfile(null)
           }
@@ -110,93 +203,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn(`⏳ Retrying profile fetch (attempt ${retryCount + 1}/${PROFILE_FETCH_MAX_RETRIES}) after delay...`)
           setTimeout(() => fetchProfile(userId, retryCount + 1), PROFILE_FETCH_RETRY_DELAY_MS)
         } else {
-          // Max retries reached
-          console.error(`❌ Max retries (${PROFILE_FETCH_MAX_RETRIES}) reached. Profile loading failed.`)
-          setProfile(null)
+          // Max retries reached - allow app to continue
+          console.error(`❌ Max retries (${PROFILE_FETCH_MAX_RETRIES}) reached.`)
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            console.warn('⚠️ Max retries reached, allowing app to continue with minimal data')
+            setProfile({
+              id: userId,
+              email: user.email || '',
+              full_name: user.user_metadata?.full_name || '',
+              is_active: true,
+              is_verified: false,
+            } as Profile)
+          } else {
+            setProfile(null)
+          }
         }
       }
     } catch (exception) {
       console.error('❌ Exception in fetchProfile:', exception)
-      setProfile(null)
+      // Allow app to continue with minimal user object
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        console.warn('⚠️ Exception occurred, allowing app to continue with minimal data')
+        setProfile({
+          id: user.id,
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || '',
+          is_active: true,
+          is_verified: false,
+        } as Profile)
+      } else {
+        setProfile(null)
+      }
     } finally {
       setProfileLoading(false)
     }
   }
 
-  const createFallbackProfile = async (userId: string): Promise<Profile | null> => {
-    try {
-      // Get user data from auth
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        console.error('❌ Cannot create fallback profile: user not found in auth context')
-        return null
-      }
 
-      console.log('📝 Creating fallback profile for user:', {
-        id: userId,
-        email: user.email,
-        metadata: user.user_metadata
-      })
-
-      // Insert profile with metadata from auth user
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          email: user.email || '',
-          full_name: user.user_metadata?.full_name || '',
-          phone: user.user_metadata?.phone || null,
-          user_role: user.user_metadata?.user_role || 'real_estate_advertiser',
-          company_name: user.user_metadata?.company_name || null,
-          is_active: true,
-          is_verified: !!user.email_confirmed_at,
-          is_admin: false,
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('❌ Failed to create fallback profile:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        })
-        
-        // Check for specific error codes
-        if (error.code === '42501') {
-          console.error('🔒 RLS Policy Error: Permission denied when inserting profile.')
-          console.error('   Check that migration 041 has been applied correctly.')
-          console.error('   The INSERT policy should allow: id = auth.uid()')
-        } else if (error.code === '23505') {
-          console.warn('⚠️ Profile already exists (duplicate key). This may not be an error.')
-          // Profile already exists, try to fetch it
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single()
-          
-          if (existingProfile) {
-            console.log('✅ Retrieved existing profile instead')
-            return existingProfile as Profile
-          }
-        }
-        
-        return null
-      }
-
-      console.log('✅ Fallback profile created successfully:', {
-        id: data.id,
-        email: data.email,
-        role: data.user_role
-      })
-      return data as Profile
-    } catch (err) {
-      console.error('❌ Exception creating fallback profile:', err)
-      return null
-    }
-  }
 
   useEffect(() => {
     // Skip auth initialization if Supabase is not configured
@@ -370,13 +415,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     console.log('ℹ️ Profile creation:')
-    console.log('   - Profile will be created automatically by database trigger (handle_new_user)')
-    console.log('   - Trigger fires on auth.users INSERT')
-    console.log('   - Check Supabase Dashboard → Database → profiles table to verify')
+    console.log('   - Attempting to ensure profile exists via ensureProfile...')
+    
+    // Ensure profile exists (fallback in case trigger didn't fire)
+    if (data.user) {
+      const profile = await ensureProfile(data.user.id, data.user.email || '', metadata)
+      if (profile) {
+        console.log('✅ Profile ensured successfully')
+      } else {
+        console.warn('⚠️ ensureProfile returned null, but signup succeeded')
+        console.warn('   - Profile may be created by database trigger (handle_new_user)')
+        console.warn('   - Profile will be fetched on next login if trigger works')
+      }
+    }
+    
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-
-    // Profile is automatically created by database trigger (handle_new_user)
-    // No need to manually insert/upsert the profile record here
 
     return { error: error || null }
   }
@@ -407,6 +460,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       console.log('User ID:', data.user?.id)
       console.log('Session created:', data.session ? 'Yes ✓' : 'No')
+      
+      // Ensure profile exists after successful login
+      if (data.user) {
+        console.log('🔄 Ensuring profile exists for logged-in user...')
+        const profile = await ensureProfile(data.user.id, data.user.email || '', data.user.user_metadata)
+        if (profile) {
+          console.log('✅ Profile ensured successfully after login')
+        } else {
+          console.warn('⚠️ Profile could not be ensured, but login succeeded')
+          console.warn('   - Profile will be fetched/created by fetchProfile on auth state change')
+        }
+      }
     }
     
     return { error: error || null }

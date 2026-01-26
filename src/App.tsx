@@ -1,9 +1,10 @@
 // src/App.tsx
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./components/home";
 import MobileFAB from "./components/layout/MobileFAB";
 import ProtectedRoute from "./components/ProtectedRoute"; // تم تعديل المسار
+import { runStartupValidation } from "./lib/startup-validation";
 
 // Lazy load pages
 const SearchResults = lazy(() => import("./pages/SearchResults"));
@@ -57,6 +58,20 @@ function ScrollToTop() {
 }
 
 function App() {
+  const [validationComplete, setValidationComplete] = useState(false);
+
+  useEffect(() => {
+    // Run startup validation once on app initialization
+    runStartupValidation().then(() => {
+      setValidationComplete(true);
+    });
+  }, []);
+
+  // Show loading spinner while validation is running
+  if (!validationComplete) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <>
       <ScrollToTop />
