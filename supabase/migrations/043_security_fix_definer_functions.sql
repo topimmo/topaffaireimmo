@@ -153,7 +153,11 @@ GRANT EXECUTE ON FUNCTION public.can_insert_property(UUID) TO service_role;
 -- 1. Check that functions have explicit search_path:
 SELECT 
   p.proname as function_name,
-  CASE WHEN 'search_path' = ANY(string_to_array(pg_options_to_table(p.proconfig), '=')) 
+  CASE 
+    WHEN EXISTS (
+      SELECT 1 FROM unnest(p.proconfig) AS config 
+      WHERE config LIKE 'search_path=%'
+    )
     THEN '✓ Has search_path' 
     ELSE '✗ Missing search_path' 
   END as search_path_status,
