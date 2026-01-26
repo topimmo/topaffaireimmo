@@ -294,9 +294,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         : undefined)
     
     console.log('Step 4: Email redirect URL configuration')
-    console.log('  - Production domain (env):', productionDomain || '(not set)')
-    console.log('  - Current origin:', typeof window !== 'undefined' ? window.location.origin : '(server-side)')
-    console.log('  - Final emailRedirectTo:', emailRedirectTo || '(not set)')
+    // In development, log full details for debugging
+    // In production, log minimal info to avoid exposing configuration
+    if (import.meta.env.DEV) {
+      console.log('  - Production domain (env):', productionDomain || '(not set)')
+      console.log('  - Current origin:', typeof window !== 'undefined' ? window.location.origin : '(server-side)')
+      console.log('  - Final emailRedirectTo:', emailRedirectTo || '(not set)')
+    } else {
+      console.log('  - emailRedirectTo:', emailRedirectTo ? 'configured' : 'not set')
+    }
     
     if (!emailRedirectTo) {
       console.warn('⚠️ WARNING: emailRedirectTo not set - email links may not work correctly')

@@ -125,26 +125,36 @@ export function translateAuthError(
   
   const errorMessage = error.message.toLowerCase();
   
-  // Log the raw error for debugging (helps diagnose production issues)
-  console.error('🔍 Translating auth error:', {
-    message: error.message,
-    errorType: error.constructor.name,
-    status: (error as any).status,
-    code: (error as any).code,
-  });
+  // Log error details only in development for debugging
+  // In production, only log minimal info to avoid exposing system details
+  if (import.meta.env.DEV) {
+    console.error('🔍 Translating auth error:', {
+      message: error.message,
+      errorType: error.constructor.name,
+      status: (error as any).status,
+      code: (error as any).code,
+    });
+  } else {
+    // Production: Log only error type, not full message
+    console.error('Auth error occurred:', error.constructor.name);
+  }
   
   // Find matching error pattern
   for (const [pattern, translation] of Object.entries(ERROR_MAPPINGS)) {
     if (errorMessage.includes(pattern.toLowerCase())) {
-      console.log('✅ Matched error pattern:', pattern);
+      if (import.meta.env.DEV) {
+        console.log('✅ Matched error pattern:', pattern);
+      }
       return translation[isRTL ? 'ar' : 'fr'];
     }
   }
   
-  // If no pattern matched, log for future improvement
-  console.warn('⚠️ No error pattern matched. Using default message.');
-  console.warn('   Original error message:', error.message);
-  console.warn('   Consider adding this pattern to ERROR_MAPPINGS');
+  // If no pattern matched, log for future improvement (dev only)
+  if (import.meta.env.DEV) {
+    console.warn('⚠️ No error pattern matched. Using default message.');
+    console.warn('   Original error message:', error.message);
+    console.warn('   Consider adding this pattern to ERROR_MAPPINGS');
+  }
   
   // Fallback to default message
   return ERROR_MAPPINGS.default[isRTL ? 'ar' : 'fr'];
