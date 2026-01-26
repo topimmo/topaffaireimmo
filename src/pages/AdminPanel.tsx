@@ -185,7 +185,9 @@ export default function AdminPanel() {
 
   const fetchUsers = async () => {
     try {
-      console.log('👥 Fetching users from profiles table...')
+      if (import.meta.env.DEV) {
+        console.log('👥 Fetching users from profiles table...')
+      }
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -202,7 +204,9 @@ export default function AdminPanel() {
       }
       
       if (data) {
-        console.log(`✅ Fetched ${data.length} users from profiles`)
+        if (import.meta.env.DEV) {
+          console.log(`✅ Fetched ${data.length} users from profiles`)
+        }
         setUsers(data as unknown as UserProfile[])
       } else {
         console.warn('⚠️ No users returned from profiles query')
@@ -227,7 +231,9 @@ export default function AdminPanel() {
         return
       }
       
-      console.log(`✅ User ${userId} status toggled to ${!currentStatus}`)
+      if (import.meta.env.DEV) {
+        console.log(`✅ User ${userId} status toggled to ${!currentStatus}`)
+      }
       fetchUsers();
     } catch (exception) {
       console.error('❌ Exception toggling user status:', exception)
@@ -246,7 +252,9 @@ export default function AdminPanel() {
         return
       }
       
-      console.log(`✅ User ${userId} role changed to ${newRole}`)
+      if (import.meta.env.DEV) {
+        console.log(`✅ User ${userId} role changed to ${newRole}`)
+      }
       fetchUsers();
     } catch (exception) {
       console.error('❌ Exception changing user role:', exception)

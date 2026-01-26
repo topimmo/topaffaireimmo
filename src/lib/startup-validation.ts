@@ -54,16 +54,18 @@ async function testDatabaseConnectivity(): Promise<{ errors: string[]; warnings:
   }
   
   try {
-    // Try a simple query to test connectivity
-    const { error } = await supabase.from('profiles').select('id').limit(1)
+    // Simple connectivity test using a basic query that doesn't depend on RLS
+    // This just checks if we can communicate with the database
+    const { error } = await supabase.rpc('current_user')
     
     if (error) {
-      // Check if it's just an empty table (acceptable) vs connection issue
-      if (error.code === 'PGRST116') {
-        // No rows found - this is fine
-        console.log('✅ Database connectivity test passed (empty table)')
+      // If RPC fails, try a simple table query as fallback
+      const { error: tableError } = await supabase.from('profiles').select('id').limit(0)
+      
+      if (tableError && tableError.code !== 'PGRST116') {
+        errors.push(`Database connectivity test failed: ${tableError.message}`)
       } else {
-        errors.push(`Database connectivity test failed: ${error.message}`)
+        console.log('✅ Database connectivity test passed')
       }
     } else {
       console.log('✅ Database connectivity test passed')
