@@ -52,13 +52,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!error && data) {
         setProfile(data as Profile)
-        console.log('✅ Profile loaded successfully')
+        console.log('✅ Profile loaded successfully:', { 
+          id: data.id, 
+          email: data.email, 
+          role: data.user_role,
+          is_admin: data.is_admin 
+        })
       } else if (error) {
-        console.error('❌ Error fetching profile:', error)
+        console.error('❌ Error fetching profile:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
         
         // PGRST116 = "not found" error - profile doesn't exist
         if (error.code === 'PGRST116' && retryCount === 0) {
-          console.warn('⚠️ Profile not found for authenticated user. Attempting to create fallback profile...')
+          console.warn('⚠️ Profile not found (PGRST116) for authenticated user. Attempting to create fallback profile...')
           
           // Try to create a fallback profile
           const createdProfile = await createFallbackProfile(userId)
@@ -70,10 +80,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('⏳ Retrying profile fetch after delay...')
             setTimeout(() => fetchProfile(userId, retryCount + 1), 2000)
           }
+        } else if (error.code === '42501' || error.message?.includes('permission denied')) {
+          // RLS policy violation - permission denied
+          console.error('🔒 RLS Policy Error: Permission denied when fetching profile.')
+          console.error('   This indicates an RLS policy issue. Check that:')
+          console.error('   1. User is properly authenticated (auth.uid() is set)')
+          console.error('   2. RLS policy allows SELECT for authenticated users on their own profile')
+          console.error('   3. Migration 041 has been applied correctly')
+          
+          // Try to create fallback profile anyway (in case profile doesn't exist)
+          if (retryCount === 0) {
+            console.warn('⚠️ Attempting fallback profile creation despite RLS error...')
+            const createdProfile = await createFallbackProfile(userId)
+            if (createdProfile) {
+              setProfile(createdProfile)
+              console.log('✅ Fallback profile created successfully')
+            } else {
+              setProfile(null)
+            }
+          } else {
+            setProfile(null)
+          }
+        } else if (retryCount < 2) {
+          // For other errors, retry with delay (could be network issue or timing)
+          console.warn(`⏳ Retrying profile fetch (attempt ${retryCount + 1}/2) after delay...`)
+          setTimeout(() => fetchProfile(userId, retryCount + 1), 2000)
         } else {
+          // Max retries reached
+          console.error('❌ Max retries reached. Profile loading failed.')
           setProfile(null)
         }
       }
+    } catch (exception) {
+      console.error('❌ Exception in fetchProfile:', exception)
+      setProfile(null)
     } finally {
       setProfileLoading(false)
     }
@@ -84,11 +124,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Get user data from auth
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        console.error('Cannot create fallback profile: user not found')
+        console.error('❌ Cannot create fallback profile: user not found in auth context')
         return null
       }
 
-      console.log('Creating fallback profile for user ID:', userId)
+      console.log('📝 Creating fallback profile for user:', {
+        id: userId,
+        email: user.email,
+        metadata: user.user_metadata
+      })
 
       // Insert profile with metadata from auth user
       const { data, error } = await supabase
@@ -102,19 +146,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           company_name: user.user_metadata?.company_name || null,
           is_active: true,
           is_verified: !!user.email_confirmed_at,
+          is_admin: false,
         })
         .select()
         .single()
 
       if (error) {
-        console.error('Failed to create fallback profile:', error)
+        console.error('❌ Failed to create fallback profile:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
+        
+        // Check for specific error codes
+        if (error.code === '42501') {
+          console.error('🔒 RLS Policy Error: Permission denied when inserting profile.')
+          console.error('   Check that migration 041 has been applied correctly.')
+          console.error('   The INSERT policy should allow: id = auth.uid()')
+        } else if (error.code === '23505') {
+          console.warn('⚠️ Profile already exists (duplicate key). This may not be an error.')
+          // Profile already exists, try to fetch it
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+          
+          if (existingProfile) {
+            console.log('✅ Retrieved existing profile instead')
+            return existingProfile as Profile
+          }
+        }
+        
         return null
       }
 
-      console.log('✅ Fallback profile created successfully')
+      console.log('✅ Fallback profile created successfully:', {
+        id: data.id,
+        email: data.email,
+        role: data.user_role
+      })
       return data as Profile
     } catch (err) {
-      console.error('Exception creating fallback profile:', err)
+      console.error('❌ Exception creating fallback profile:', err)
       return null
     }
   }
