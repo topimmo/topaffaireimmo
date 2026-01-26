@@ -12,6 +12,7 @@ export type UserRole = 'admin' | 'real_estate_advertiser' | 'commercial_advertis
 export interface UserProfile {
   id: string;
   user_role?: UserRole;
+  advertiser_type?: 'owner' | 'broker' | 'agency' | null;
   is_admin?: boolean;
   // Optional fields from full Profile interface (not needed for permission checks)
   email?: string;
@@ -34,12 +35,30 @@ export function canUploadPropertyImages(profile: UserProfile | null): boolean {
     return true;
   }
   
-  // Real estate advertisers can upload
+  // Real estate advertisers can upload if they have a valid advertiser_type
+  // Note: advertiser_type should be set, but we allow upload even if NULL to avoid blocking
+  // The storage policy will handle the final check
   if (profile.user_role === 'real_estate_advertiser') {
     return true;
   }
   
   return false;
+}
+
+/**
+ * Check if a user has a valid advertiser type set
+ * Used to show onboarding prompts
+ */
+export function hasValidAdvertiserType(profile: UserProfile | null): boolean {
+  if (!profile) return false;
+  
+  // Only real estate advertisers need advertiser_type
+  if (profile.user_role === 'real_estate_advertiser') {
+    return profile.advertiser_type !== null && profile.advertiser_type !== undefined;
+  }
+  
+  // Other roles don't need advertiser_type
+  return true;
 }
 
 /**
@@ -86,7 +105,7 @@ export function canCreatePropertyListing(profile: UserProfile | null): boolean {
  * Get a user-friendly error message for permission denial
  */
 export function getPermissionDeniedMessage(
-  action: 'upload_property_images' | 'upload_banner_images' | 'create_listing',
+  action: 'upload_property_images' | 'upload_banner_images' | 'create_listing' | 'missing_advertiser_type',
   language: 'fr' | 'ar' = 'fr'
 ): string {
   const messages = {
@@ -101,6 +120,10 @@ export function getPermissionDeniedMessage(
     create_listing: {
       fr: 'Permission refusée. Seuls les annonceurs immobiliers et les administrateurs peuvent créer des annonces.',
       ar: 'تم رفض الإذن. يمكن فقط للمعلنين العقاريين والمسؤولين إنشاء إعلانات.'
+    },
+    missing_advertiser_type: {
+      fr: 'Veuillez sélectionner votre type d\'annonceur (Propriétaire/Courtier/Agence) dans les paramètres de votre profil avant de télécharger des images.',
+      ar: 'يرجى تحديد نوع المعلن (مالك/وسيط/وكالة) في إعدادات ملفك الشخصي قبل تحميل الصور.'
     }
   };
   
