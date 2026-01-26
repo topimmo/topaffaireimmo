@@ -206,13 +206,31 @@ EXCEPTION
     RAISE WARNING 'Profile creation failed for user % (%). Error: % (%)', 
       NEW.id, NEW.email, SQLERRM, SQLSTATE;
     
-    -- Attempt minimal fallback insert
+    -- Attempt minimal fallback insert with all required fields
     BEGIN
-      INSERT INTO public.profiles (id, email, is_active)
-      VALUES (NEW.id, NEW.email, true)
+      INSERT INTO public.profiles (
+        id, 
+        email, 
+        user_role,
+        is_admin,
+        is_active,
+        is_verified,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        NEW.id, 
+        NEW.email, 
+        'real_estate_advertiser',  -- Safe default role
+        false,                      -- Never auto-grant admin
+        true,                       -- Active by default
+        false,                      -- Not verified (safe default)
+        COALESCE(NEW.created_at, NOW()),
+        NOW()
+      )
       ON CONFLICT (id) DO NOTHING;
       
-      RAISE LOG 'Created minimal fallback profile for user ID: %', NEW.id;
+      RAISE LOG 'Created minimal fallback profile for user ID: % with required fields', NEW.id;
     EXCEPTION
       WHEN OTHERS THEN
         RAISE WARNING 'Even minimal profile creation failed for user %: %', NEW.id, SQLERRM;
