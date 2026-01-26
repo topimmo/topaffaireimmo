@@ -33,15 +33,24 @@ export default function AuthCallback() {
         console.log('🔐 Auth callback triggered');
         console.log('Current URL:', window.location.href);
 
-        // Get the hash fragment from the URL (Supabase uses hash-based routing for PKCE)
+        // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const queryParams = new URLSearchParams(window.location.search);
+        
+        // PKCE flow uses query params with 'code'
+        const code = queryParams.get('code');
+        
+        // Hash-based flow (older or direct token flow)
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type');
-        const error = hashParams.get('error');
-        const errorDescription = hashParams.get('error_description');
+        const type = hashParams.get('type') || queryParams.get('type');
+        
+        // Check for errors in both hash and query
+        const error = hashParams.get('error') || queryParams.get('error');
+        const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
 
-        console.log('Hash parameters:', { 
+        console.log('Auth parameters:', { 
+          hasCode: !!code,
           hasAccessToken: !!accessToken, 
           hasRefreshToken: !!refreshToken, 
           type, 
@@ -55,15 +64,67 @@ export default function AuthCallback() {
           setStatus('error');
           setMessage(errorDescription || error);
           
+          // Log to console for debugging (could be sent to Sentry in production)
+          if (typeof window !== 'undefined' && (window as any).Sentry) {
+            (window as any).Sentry.captureMessage('Auth callback error', {
+              level: 'error',
+              extra: { error, errorDescription, url: window.location.href }
+            });
+          }
+          
           // Redirect to login after delay
           setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
           return;
         }
 
-        // For email confirmations, the session is automatically set by Supabase
-        // when detectSessionInUrl is enabled
+        // PKCE flow: Exchange code for session
+        if (code) {
+          console.log('🔑 PKCE flow detected - exchanging code for session');
+          
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (exchangeError) {
+            console.error('❌ Error exchanging code for session:', exchangeError);
+            setStatus('error');
+            setMessage('Failed to confirm email. Please try again or contact support.');
+            
+            // Log for debugging
+            if (typeof window !== 'undefined' && (window as any).Sentry) {
+              (window as any).Sentry.captureException(exchangeError, {
+                extra: { code: code.substring(0, 10) + '...', url: window.location.href }
+              });
+            }
+            
+            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+            return;
+          }
+          
+          if (data.session) {
+            console.log('✅ Session created via PKCE code exchange');
+            console.log('User ID:', data.session.user.id);
+            console.log('User Email:', data.session.user.email);
+            
+            setStatus('success');
+            setMessage('Email confirmed successfully! Redirecting...');
+
+            // Wait for profile to load, then redirect based on role
+            setTimeout(() => {
+              const redirectPath = getRedirectPath(profile?.user_role);
+              console.log('Redirecting to:', redirectPath);
+              navigate(redirectPath);
+            }, REDIRECT_DELAY_SHORT_MS);
+          } else {
+            console.warn('⚠️ No session returned after code exchange');
+            setStatus('error');
+            setMessage('Could not create session. Please log in.');
+            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+          }
+          return;
+        }
+
+        // Hash-based flow: Session auto-created by Supabase detectSessionInUrl
         if (type === 'signup' || type === 'recovery' || type === 'invite') {
-          console.log(`✅ Email confirmation type: ${type}`);
+          console.log(`✅ Email confirmation type: ${type} (hash-based flow)`);
           
           // Wait a moment for Supabase to process the session
           await new Promise(resolve => setTimeout(resolve, SESSION_WAIT_MS));
@@ -75,6 +136,11 @@ export default function AuthCallback() {
             console.error('❌ Error getting session:', sessionError);
             setStatus('error');
             setMessage('Failed to confirm email. Please try again.');
+            
+            if (typeof window !== 'undefined' && (window as any).Sentry) {
+              (window as any).Sentry.captureException(sessionError);
+            }
+            
             setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
             return;
           }
@@ -121,6 +187,14 @@ export default function AuthCallback() {
         console.error('❌ Exception in auth callback:', err);
         setStatus('error');
         setMessage('An unexpected error occurred. Please try logging in.');
+        
+        // Log exception for debugging
+        if (typeof window !== 'undefined' && (window as any).Sentry) {
+          (window as any).Sentry.captureException(err, {
+            extra: { url: window.location.href }
+          });
+        }
+        
         setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
       }
     };
