@@ -2,6 +2,10 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 
+// Configuration constants for profile loading
+const PROFILE_FETCH_MAX_RETRIES = 2
+const PROFILE_FETCH_RETRY_DELAY_MS = 2000
+
 interface Profile {
   id: string
   email: string
@@ -78,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } else {
             // If creation fails, retry fetching once more (in case trigger is delayed)
             console.log('⏳ Retrying profile fetch after delay...')
-            setTimeout(() => fetchProfile(userId, retryCount + 1), 2000)
+            setTimeout(() => fetchProfile(userId, retryCount + 1), PROFILE_FETCH_RETRY_DELAY_MS)
           }
         } else if (error.code === '42501' || error.message?.includes('permission denied')) {
           // RLS policy violation - permission denied
@@ -101,13 +105,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } else {
             setProfile(null)
           }
-        } else if (retryCount < 2) {
+        } else if (retryCount < PROFILE_FETCH_MAX_RETRIES) {
           // For other errors, retry with delay (could be network issue or timing)
-          console.warn(`⏳ Retrying profile fetch (attempt ${retryCount + 1}/2) after delay...`)
-          setTimeout(() => fetchProfile(userId, retryCount + 1), 2000)
+          console.warn(`⏳ Retrying profile fetch (attempt ${retryCount + 1}/${PROFILE_FETCH_MAX_RETRIES}) after delay...`)
+          setTimeout(() => fetchProfile(userId, retryCount + 1), PROFILE_FETCH_RETRY_DELAY_MS)
         } else {
           // Max retries reached
-          console.error('❌ Max retries reached. Profile loading failed.')
+          console.error(`❌ Max retries (${PROFILE_FETCH_MAX_RETRIES}) reached. Profile loading failed.`)
           setProfile(null)
         }
       }
