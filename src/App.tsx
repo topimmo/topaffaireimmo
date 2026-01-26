@@ -1,9 +1,10 @@
 // src/App.tsx
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./components/home";
 import MobileFAB from "./components/layout/MobileFAB";
 import ProtectedRoute from "./components/ProtectedRoute"; // تم تعديل المسار
+import { runStartupValidation } from "./lib/startup-validation";
 
 // Lazy load pages
 const SearchResults = lazy(() => import("./pages/SearchResults"));
@@ -57,8 +58,47 @@ function ScrollToTop() {
 }
 
 function App() {
+  const [validationComplete, setValidationComplete] = useState(false);
+  const [validationFailed, setValidationFailed] = useState(false);
+
+  useEffect(() => {
+    // Run startup validation once on app initialization
+    runStartupValidation().then((result) => {
+      setValidationComplete(true);
+      
+      // In development, always allow app to continue even with errors
+      // In production, log errors but still allow app to load (non-blocking)
+      if (!result.valid && result.errors.length > 0) {
+        console.error('⚠️ Startup validation found errors, but app will continue');
+        // Set flag for potential UI indication
+        setValidationFailed(true);
+      }
+    });
+  }, []);
+
+  // Show loading spinner while validation is running
+  if (!validationComplete) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <>
+      {validationFailed && import.meta.env.DEV && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: '#FEE2E2',
+          color: '#991B1B',
+          padding: '8px',
+          textAlign: 'center',
+          zIndex: 9999,
+          fontSize: '14px'
+        }}>
+          ⚠️ Configuration warnings detected. Check browser console for details.
+        </div>
+      )}
       <ScrollToTop />
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
