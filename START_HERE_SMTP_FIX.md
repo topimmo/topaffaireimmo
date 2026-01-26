@@ -88,7 +88,7 @@
 - ✅ Data still safe
 - ⚠️ Only change: Users not email-verified (acceptable)
 
-**Used by:** Twitter/X, Discord, Reddit, Slack, and many others
+**Industry practice:** Many platforms allow signup without email confirmation to improve user onboarding
 
 ---
 

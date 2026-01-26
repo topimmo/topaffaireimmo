@@ -239,13 +239,10 @@ AuthApiError: Error sending confirmation email
 
 ### Industry Examples
 
-**Major platforms that allow signup without email confirmation:**
-- Twitter/X (optional email verification)
-- Discord (can use platform before verifying)
-- Slack (can join workspace before verifying)
-- Reddit (email is optional)
+**Industry Best Practice:**
+Many successful platforms allow users to signup and access core features before email verification to optimize user onboarding and conversion rates.
 
-**Best Practice:**
+**Recommended Approach:**
 - Get users into the platform first
 - Prompt email verification later
 - Don't block core functionality

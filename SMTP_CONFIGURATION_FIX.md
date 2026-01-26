@@ -203,8 +203,9 @@ The error occurs during `supabase.auth.signUp()` when Supabase attempts to send 
 2. Navigate to: **Database → Tables → profiles**
 3. Or run SQL query:
    ```sql
+   -- Replace 'test@example.com' with your actual test email
    SELECT * FROM public.profiles 
-   WHERE email = 'your-test-email@example.com';
+   WHERE email = 'test@example.com';
    ```
 
 **Expected Results:**

@@ -78,7 +78,7 @@ Fix the production signup error: `AuthApiError: Error sending confirmation email
 
 All of these should be TRUE:
 
-- [x] Email confirmation is disabled in Supabase
+- [ ] Email confirmation is disabled in Supabase
 - [ ] Test signup completes without errors
 - [ ] User appears in Authentication → Users
 - [ ] Profile appears in Database → profiles table
