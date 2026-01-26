@@ -67,9 +67,9 @@ export async function uploadFile({ bucket, file, userId, folder }: UploadOptions
             uploadError.message?.toLowerCase().includes('unauthorized') ||
             uploadError.message?.toLowerCase().includes('forbidden')) {
           console.error('[Storage] Permission denied. Possible causes:');
-          console.error('  1. User profile does not exist in the profiles table');
-          console.error('  2. User role is not \'real_estate_advertiser\' or \'admin\'');
-          console.error('  3. User is not authenticated (auth.uid() is null)');
+          console.error('  1. User is not authenticated (auth.uid() is null)');
+          console.error('  2. Attempting to upload to a folder that doesn\'t match user ID');
+          console.error('  3. User role does not match bucket requirements (check RLS policies)');
           console.error('  4. Storage bucket RLS policy is blocking the upload');
         }
         
@@ -119,7 +119,8 @@ export async function uploadFile({ bucket, file, userId, folder }: UploadOptions
   if (errorMessage.toLowerCase().includes('permission') || 
       errorMessage.toLowerCase().includes('unauthorized') ||
       errorMessage.toLowerCase().includes('forbidden')) {
-    userFriendlyError = 'Permission denied. Please ensure you are logged in as a real estate advertiser.';
+    // Generic permission error - specific role requirements should be checked in the UI
+    userFriendlyError = 'Permission denied. Please ensure you are logged in and have the required permissions.';
   } else if (errorMessage.toLowerCase().includes('size') || 
              errorMessage.toLowerCase().includes('payload') ||
              errorMessage.toLowerCase().includes('exceeded')) {

@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { uploadPropertyImages, validateFiles, BUCKET_CONFIG, deleteFiles } from '@/lib/storage';
+import { canUploadPropertyImages, getPermissionDeniedMessage } from '@/lib/permissions';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -231,14 +232,9 @@ export default function EditListing() {
       return;
     }
 
-    // Check if user has the correct role for uploading property images
-    // This check is redundant since ProtectedRoute already checks role,
-    // but kept for extra safety
-    if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
-      alert(isRTL 
-        ? 'ليس لديك صلاحية لتحميل الصور. يجب أن تكون معلن عقاري.' 
-        : 'Vous n\'avez pas la permission de télécharger des images. Vous devez être un annonceur immobilier.'
-      );
+    // Check if user has permission to upload property images
+    if (!canUploadPropertyImages(profile)) {
+      alert(getPermissionDeniedMessage('upload_property_images', language as 'fr' | 'ar'));
       e.target.value = '';
       return;
     }
