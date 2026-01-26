@@ -25,6 +25,7 @@ const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Agencies = lazy(() => import("./pages/Agencies"));
 const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 
 // New Admin Pages
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -117,6 +118,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* SEO Landing Pages - Morocco Cities */}
           <Route path="/casablanca" element={<CityPage />} />

@@ -332,9 +332,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // This ensures emails contain the correct domain, not preview URLs
     const productionDomain = import.meta.env.VITE_PRODUCTION_DOMAIN
     const emailRedirectTo = productionDomain 
-      ? `${productionDomain}/login` 
+      ? `${productionDomain}/auth/callback` 
       : (typeof window !== 'undefined' && window.location.origin 
-        ? `${window.location.origin}/login` 
+        ? `${window.location.origin}/auth/callback` 
         : undefined)
     
     console.log('Step 4: Email redirect URL configuration')
