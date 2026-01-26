@@ -34,8 +34,12 @@ export default function Login() {
     setLoading(true);
     setError('');
     
+    // Use production domain from env var if available, otherwise use current origin
+    const productionDomain = import.meta.env.VITE_PRODUCTION_DOMAIN;
+    const redirectOrigin = productionDomain || window.location.origin;
+    
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${redirectOrigin}/reset-password`,
     });
     
     setLoading(false);
