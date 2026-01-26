@@ -5,10 +5,21 @@
 
 export type UserRole = 'admin' | 'real_estate_advertiser' | 'commercial_advertiser';
 
+/**
+ * Minimal user profile interface for permission checks
+ * Compatible with the Profile interface from AuthContext
+ */
 export interface UserProfile {
   id: string;
   user_role?: UserRole;
   is_admin?: boolean;
+  // Optional fields from full Profile interface (not needed for permission checks)
+  email?: string;
+  full_name?: string;
+  phone?: string;
+  company_name?: string;
+  is_active?: boolean;
+  is_verified?: boolean;
 }
 
 /**

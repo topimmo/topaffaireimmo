@@ -26,11 +26,11 @@ CREATE POLICY "property_images_auth_insert" ON storage.objects
     AND auth.uid() IS NOT NULL 
     AND (storage.foldername(name))[1] = auth.uid()::text
     AND (
-      -- Check if user has the correct role
+      -- Check if user has admin role or is a real estate advertiser
       EXISTS (
         SELECT 1 FROM public.profiles
         WHERE id = auth.uid()
-        AND (user_role IN ('admin', 'real_estate_advertiser') OR is_admin = true)
+        AND (is_admin = true OR user_role = 'real_estate_advertiser')
       )
     )
   );
@@ -54,11 +54,11 @@ CREATE POLICY "banner_images_commercial_insert" ON storage.objects
     AND auth.uid() IS NOT NULL 
     AND (storage.foldername(name))[1] = auth.uid()::text
     AND (
-      -- Check if user has the correct role
+      -- Check if user has admin role or is a commercial advertiser
       EXISTS (
         SELECT 1 FROM public.profiles
         WHERE id = auth.uid()
-        AND (user_role IN ('admin', 'commercial_advertiser') OR is_admin = true)
+        AND (is_admin = true OR user_role = 'commercial_advertiser')
       )
     )
   );
@@ -86,8 +86,7 @@ CREATE POLICY "agency_logos_agency_insert" ON storage.objects
         SELECT 1 FROM public.profiles
         WHERE id = auth.uid()
         AND (
-          user_role = 'admin' 
-          OR is_admin = true
+          is_admin = true
           OR (user_role = 'real_estate_advertiser' AND advertiser_type = 'agency')
         )
       )
