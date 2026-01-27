@@ -57,18 +57,6 @@ export default function ProtectedRoute({
       return <Navigate to="/" replace />;
     }
   }
-      }
-      
-      return false;
-    });
-    
-    if (!isAllowed) {
-      console.warn('⚠️ ProtectedRoute: User role not allowed for this route');
-      console.warn('User role:', effectiveRole);
-      console.warn('Allowed roles:', allowedRoles);
-      return <Navigate to="/" replace />;
-    }
-  }
 
   return <>{children}</>;
 }

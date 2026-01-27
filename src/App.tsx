@@ -204,7 +204,7 @@ function App() {
           <Route
             path="/agent"
             element={
-              <ProtectedRoute allowedRoles={["real_estate_advertiser", "agent"]}>
+              <ProtectedRoute allowedRoles={["agent"]}>
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -213,7 +213,7 @@ function App() {
           <Route
             path="/merchant"
             element={
-              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
+              <ProtectedRoute allowedRoles={["merchant"]}>
                 <CommercialDashboard />
               </ProtectedRoute>
             }
@@ -222,7 +222,7 @@ function App() {
           <Route
             path="/advertising"
             element={
-              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
+              <ProtectedRoute allowedRoles={["merchant"]}>
                 <Advertising />
               </ProtectedRoute>
             }
@@ -231,7 +231,7 @@ function App() {
           <Route
             path="/advertising/new"
             element={
-              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
+              <ProtectedRoute allowedRoles={["merchant"]}>
                 <NewAdRequest />
               </ProtectedRoute>
             }
@@ -240,7 +240,7 @@ function App() {
           <Route
             path="/commercial-dashboard"
             element={
-              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
+              <ProtectedRoute allowedRoles={["merchant"]}>
                 <CommercialDashboard />
               </ProtectedRoute>
             }
