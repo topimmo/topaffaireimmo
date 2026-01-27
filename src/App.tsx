@@ -177,7 +177,7 @@ function App() {
           <Route
             path="/add-listing"
             element={
-              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin"]}>
+              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin", "user", "agent", "merchant"]}>
                 <AddListing />
               </ProtectedRoute>
             }
@@ -186,7 +186,7 @@ function App() {
           <Route
             path="/edit-listing/:id"
             element={
-              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin"]}>
+              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin", "user", "agent", "merchant"]}>
                 <EditListing />
               </ProtectedRoute>
             }
@@ -195,8 +195,26 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={["real_estate_advertiser"]}>
+              <ProtectedRoute allowedRoles={["real_estate_advertiser", "user"]}>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/agent"
+            element={
+              <ProtectedRoute allowedRoles={["real_estate_advertiser", "agent"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/merchant"
+            element={
+              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
+                <CommercialDashboard />
               </ProtectedRoute>
             }
           />
@@ -204,7 +222,7 @@ function App() {
           <Route
             path="/advertising"
             element={
-              <ProtectedRoute allowedRoles={["commercial_advertiser"]}>
+              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
                 <Advertising />
               </ProtectedRoute>
             }
@@ -213,7 +231,7 @@ function App() {
           <Route
             path="/advertising/new"
             element={
-              <ProtectedRoute allowedRoles={["commercial_advertiser"]}>
+              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
                 <NewAdRequest />
               </ProtectedRoute>
             }
@@ -222,7 +240,7 @@ function App() {
           <Route
             path="/commercial-dashboard"
             element={
-              <ProtectedRoute allowedRoles={["commercial_advertiser"]}>
+              <ProtectedRoute allowedRoles={["commercial_advertiser", "merchant"]}>
                 <CommercialDashboard />
               </ProtectedRoute>
             }

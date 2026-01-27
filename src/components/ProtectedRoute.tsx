@@ -37,17 +37,38 @@ export default function ProtectedRoute({
     allowedRoles &&
     profile
   ) {
-    // If profile exists but has no user_role, deny access (data issue)
-    if (!profile.user_role) {
-      console.error('❌ ProtectedRoute: Profile loaded but user_role is missing');
+    // Get effective role (prefer new 'role' field, fallback to 'user_role')
+    const effectiveRole = profile.role || profile.user_role;
+    
+    // If profile exists but has no role, deny access (data issue)
+    if (!effectiveRole) {
+      console.error('❌ ProtectedRoute: Profile loaded but role/user_role is missing');
       console.error('Profile details:', profile);
       return <Navigate to="/login" replace />;
     }
     
     // Check if user's role is in the allowed list
-    if (!allowedRoles.includes(profile.user_role)) {
+    // Support both new and old role values
+    const isAllowed = allowedRoles.some(allowedRole => {
+      // Direct match
+      if (allowedRole === effectiveRole) return true;
+      
+      // Map old to new for comparison
+      if (allowedRole === 'real_estate_advertiser' && ['user', 'agent', 'merchant'].includes(effectiveRole)) return true;
+      if (allowedRole === 'commercial_advertiser' && effectiveRole === 'merchant') return true;
+      if (allowedRole === 'admin' && effectiveRole === 'admin') return true;
+      
+      // Map new to old for comparison (if allowedRoles uses new values)
+      if (allowedRole === 'user' && effectiveRole === 'real_estate_advertiser') return true;
+      if (allowedRole === 'agent' && effectiveRole === 'real_estate_advertiser') return true;
+      if (allowedRole === 'merchant' && ['real_estate_advertiser', 'commercial_advertiser'].includes(effectiveRole)) return true;
+      
+      return false;
+    });
+    
+    if (!isAllowed) {
       console.warn('⚠️ ProtectedRoute: User role not allowed for this route');
-      console.warn('User role:', profile.user_role);
+      console.warn('User role:', effectiveRole);
       console.warn('Allowed roles:', allowedRoles);
       return <Navigate to="/" replace />;
     }
