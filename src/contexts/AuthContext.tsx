@@ -12,8 +12,10 @@ interface Profile {
   full_name?: string
   phone?: string
   company_name?: string
-  user_role?: 'real_estate_advertiser' | 'commercial_advertiser' | 'admin'
-  advertiser_type?: 'owner' | 'broker' | 'agency' | null
+  role?: 'user' | 'agent' | 'merchant' | 'admin'
+  announcer_type?: 'proprietaire' | 'courtier' | 'agence' | null
+  user_role?: 'real_estate_advertiser' | 'commercial_advertiser' | 'admin' // Deprecated, kept for backward compatibility
+  advertiser_type?: 'owner' | 'broker' | 'agency' | null // Deprecated, kept for backward compatibility
   is_admin?: boolean
   is_active?: boolean
   is_verified?: boolean
@@ -30,7 +32,8 @@ interface AuthContextType {
     password: string,
     fullName: string,
     phone?: string,
-    userRole?: string,
+    role?: string,
+    announcerType?: string,
     companyName?: string
   ) => Promise<{ error: AuthError | null }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
@@ -79,7 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: userEmail,
         full_name: metadata?.full_name as string || '',
         phone: metadata?.phone as string || null,
-        user_role: (metadata?.user_role as string) || 'real_estate_advertiser',
+        role: (metadata?.role as string) || 'user',
+        announcer_type: (metadata?.announcer_type as string) || null,
+        user_role: (metadata?.user_role as string) || 'real_estate_advertiser', // Backward compatibility
         company_name: metadata?.company_name as string || null,
         is_active: true,
         is_verified: false, // Will be updated when email is verified
@@ -293,7 +298,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     fullName: string,
     phone?: string,
-    userRole?: string,
+    role?: string,
+    announcerType?: string,
     companyName?: string
   ): Promise<{ error: AuthError | null }> => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
@@ -315,7 +321,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('  - Email:', email)
     console.log('  - Full Name:', fullName)
     console.log('  - Phone:', phone || '(not provided)')
-    console.log('  - User Role:', userRole || 'real_estate_advertiser (default)')
+    console.log('  - Role:', role || 'user (default)')
+    console.log('  - Announcer Type:', announcerType || '(not provided)')
     console.log('  - Company Name:', companyName || '(not provided)')
     console.log('  - Password validation:', password.length >= 6 ? 'OK' : 'Too short')
 
@@ -323,8 +330,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const metadata = {
       full_name: fullName,
       phone: phone || null,
-      user_role: userRole || 'real_estate_advertiser',
+      role: role || 'user',
+      announcer_type: announcerType || null,
       company_name: companyName || null,
+      // Keep for backward compatibility
+      user_role: role === 'admin' ? 'admin' : (role === 'merchant' ? 'commercial_advertiser' : 'real_estate_advertiser'),
     }
     console.log('Step 3: User metadata prepared:', JSON.stringify(metadata, null, 2))
 

@@ -342,6 +342,7 @@ export type Database = {
           is_verified: boolean | null
           phone: string | null
           preferred_language: string | null
+          role: string
           updated_at: string | null
           user_role: string
         }
@@ -364,6 +365,7 @@ export type Database = {
           is_verified?: boolean | null
           phone?: string | null
           preferred_language?: string | null
+          role?: string
           updated_at?: string | null
           user_role?: string
         }
@@ -386,6 +388,7 @@ export type Database = {
           is_verified?: boolean | null
           phone?: string | null
           preferred_language?: string | null
+          role?: string
           updated_at?: string | null
           user_role?: string
         }

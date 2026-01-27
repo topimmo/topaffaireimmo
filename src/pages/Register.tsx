@@ -22,6 +22,7 @@ export default function Register() {
     fullName: '',
     phone: '',
     companyName: '',
+    announcerType: 'proprietaire' as 'proprietaire' | 'courtier' | 'agence',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,6 +45,7 @@ export default function Register() {
     console.log('  - Full Name:', formData.fullName)
     console.log('  - Phone:', formData.phone || '(not provided)')
     console.log('  - Company Name:', formData.companyName || '(not provided)')
+    console.log('  - Announcer Type:', formData.announcerType)
 
     // Validation: Check passwords match
     if (formData.password !== formData.confirmPassword) {
@@ -64,13 +66,21 @@ export default function Register() {
     console.log('✅ Form validation passed')
     console.log('Calling AuthContext.signUp()...')
 
+    // Map announcer_type to role
+    const role = formData.announcerType === 'proprietaire' ? 'user' :
+                 formData.announcerType === 'courtier' ? 'agent' :
+                 formData.announcerType === 'agence' ? 'merchant' : 'user';
+    
+    console.log('  - Mapped role:', role)
+
     try {
       const { error: signUpError } = await signUp(
         formData.email,
         formData.password,
         formData.fullName,
         formData.phone,
-        'real_estate_advertiser',
+        role,
+        formData.announcerType,
         formData.companyName
       );
 
@@ -205,6 +215,47 @@ export default function Register() {
                       className={`${isRTL ? 'pr-10' : 'pl-10'} h-11 sm:h-12`}
                       placeholder="+212 6XX XXX XXX"
                     />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    {isRTL ? 'نوع المعلن' : 'Type d\'annonceur'}
+                  </Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, announcerType: 'proprietaire' }))}
+                      className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                        formData.announcerType === 'proprietaire'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background hover:bg-accent border-border'
+                      }`}
+                    >
+                      {isRTL ? 'مالك' : 'Propriétaire'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, announcerType: 'courtier' }))}
+                      className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                        formData.announcerType === 'courtier'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background hover:bg-accent border-border'
+                      }`}
+                    >
+                      {isRTL ? 'سمسار' : 'Courtier'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, announcerType: 'agence' }))}
+                      className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                        formData.announcerType === 'agence'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background hover:bg-accent border-border'
+                      }`}
+                    >
+                      {isRTL ? 'وكالة' : 'Agence'}
+                    </button>
                   </div>
                 </div>
 
