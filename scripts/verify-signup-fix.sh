@@ -254,10 +254,12 @@ if [ -f ".env" ]; then
   fi
   
   # Check for service_role key (security check)
-  if grep -qi "service.*role" .env; then
-    print_result "No service_role key in .env" "WARN" "Service role key should not be in .env (client-side exposure)"
+  if grep -qi "VITE.*service.*role" .env; then
+    print_result "Service role key security check" "FAIL" "VITE_*SERVICE_ROLE* found in .env - SECURITY RISK! Remove immediately."
+  elif grep -qi "service.*role" .env; then
+    print_result "Service role key security check" "WARN" "Service role key mentioned in .env - verify it's not exposed to client"
   else
-    print_result "No service_role key in .env" "PASS"
+    print_result "Service role key security check" "PASS" "No service_role key exposure found"
   fi
 else
   print_result ".env file exists" "WARN" "Create from .env.example for local development"

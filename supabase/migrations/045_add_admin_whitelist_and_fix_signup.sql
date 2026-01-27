@@ -147,20 +147,20 @@ BEGIN
     RAISE NOTICE 'Email % is whitelisted, promoting to admin', NEW.email;
   END IF;
   
-  -- Validate user_role value
+  -- Validate user_role value (log original value before changing it)
   IF user_role_value NOT IN ('user', 'agent', 'merchant', 'admin') THEN
+    RAISE WARNING 'Invalid user_role ''%'' provided, defaulting to ''user''', user_role_value;
     user_role_value := 'user';
-    RAISE WARNING 'Invalid user_role %, defaulting to user', user_role_value;
   END IF;
   
   -- Get announcer_type from metadata
   announcer_type_value := NEW.raw_user_meta_data->>'announcer_type';
   
-  -- Validate announcer_type value
+  -- Validate announcer_type value (log original value before changing it)
   IF announcer_type_value IS NOT NULL 
      AND announcer_type_value NOT IN ('proprietaire', 'courtier', 'agence') THEN
+    RAISE WARNING 'Invalid announcer_type ''%'' provided, setting to NULL', announcer_type_value;
     announcer_type_value := NULL;
-    RAISE WARNING 'Invalid announcer_type %, setting to NULL', announcer_type_value;
   END IF;
   
   -- Set default announcer_type for non-admin users if not provided
@@ -216,7 +216,9 @@ EXCEPTION
     RAISE WARNING 'Failed to create/update profile for user %: % (SQLSTATE: %)', 
       NEW.id, SQLERRM, SQLSTATE;
     RAISE WARNING 'Error detail: %', SQLERRM;
-    RAISE WARNING 'Error hint: %', COALESCE(SQLERRM, 'No hint available');
+    -- Get more diagnostic info from PostgreSQL
+    RAISE WARNING 'Error context: %', 
+      COALESCE(PG_EXCEPTION_CONTEXT, 'No context available');
     -- Return NEW to allow auth.users insert to succeed
     RETURN NEW;
 END;
