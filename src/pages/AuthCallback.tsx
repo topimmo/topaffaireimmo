@@ -10,15 +10,17 @@ const REDIRECT_DELAY_SHORT_MS = 2000;
 const REDIRECT_DELAY_LONG_MS = 3000;
 
 /**
- * Redirect user to appropriate dashboard based on their role
+ * Redirect user to appropriate dashboard based on their user_role
  */
 function getRedirectPath(userRole?: string): string {
   if (userRole === 'admin') {
     return '/admin';
-  } else if (userRole === 'commercial_advertiser') {
-    return '/commercial-dashboard';
+  } else if (userRole === 'merchant') {
+    return '/merchant';
+  } else if (userRole === 'agent') {
+    return '/agent';
   }
-  return '/dashboard';
+  return '/';
 }
 
 export default function AuthCallback() {

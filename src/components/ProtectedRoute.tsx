@@ -37,17 +37,22 @@ export default function ProtectedRoute({
     allowedRoles &&
     profile
   ) {
+    // Get user_role
+    const userRole = profile.user_role;
+    
     // If profile exists but has no user_role, deny access (data issue)
-    if (!profile.user_role) {
+    if (!userRole) {
       console.error('❌ ProtectedRoute: Profile loaded but user_role is missing');
       console.error('Profile details:', profile);
       return <Navigate to="/login" replace />;
     }
     
     // Check if user's role is in the allowed list
-    if (!allowedRoles.includes(profile.user_role)) {
+    const isAllowed = allowedRoles.includes(userRole);
+    
+    if (!isAllowed) {
       console.warn('⚠️ ProtectedRoute: User role not allowed for this route');
-      console.warn('User role:', profile.user_role);
+      console.warn('User role:', userRole);
       console.warn('Allowed roles:', allowedRoles);
       return <Navigate to="/" replace />;
     }

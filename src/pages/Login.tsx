@@ -82,17 +82,19 @@ export default function Login() {
           .eq('id', user.id)
           .single();
 
-        // Redirect based on user role
+        // Redirect based on user_role
         let redirectTo = from;
-        if (userProfile?.user_role === 'admin') {
+        const userRole = userProfile?.user_role;
+        
+        if (userRole === 'admin') {
           redirectTo = '/admin';
+        } else if (userRole === 'merchant') {
+          redirectTo = '/merchant';
+        } else if (userRole === 'agent') {
+          redirectTo = '/agent';
         } else if (from === '/dashboard' || from === '/login') {
-          // Default redirect for non-admin users
-          if (userProfile?.user_role === 'commercial_advertiser') {
-            redirectTo = '/commercial-dashboard';
-          } else {
-            redirectTo = '/dashboard';
-          }
+          // Default redirect for regular users
+          redirectTo = '/';
         }
 
         console.log('✅ Login successful, redirecting to:', redirectTo);
