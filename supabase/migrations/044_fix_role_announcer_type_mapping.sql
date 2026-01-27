@@ -73,10 +73,12 @@ WHERE user_role IN ('admin', 'commercial_advertiser')
   OR role IN ('admin');
 
 -- For real_estate_advertiser users without announcer_type, set default
+-- Only set for real_estate_advertiser users, not for admin or commercial_advertiser
 UPDATE public.profiles
 SET announcer_type = 'proprietaire'
 WHERE user_role = 'real_estate_advertiser'
-  AND announcer_type IS NULL;
+  AND announcer_type IS NULL
+  AND role != 'admin'; -- Don't set for admins even if they have user_role set
 
 -- =====================================================
 -- STEP 3: Update constraints

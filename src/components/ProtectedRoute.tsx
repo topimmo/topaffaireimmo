@@ -54,14 +54,26 @@ export default function ProtectedRoute({
       if (allowedRole === effectiveRole) return true;
       
       // Map old to new for comparison
-      if (allowedRole === 'real_estate_advertiser' && ['user', 'agent', 'merchant'].includes(effectiveRole)) return true;
-      if (allowedRole === 'commercial_advertiser' && effectiveRole === 'merchant') return true;
+      if (allowedRole === 'real_estate_advertiser') {
+        // Only allow merchants with announcer_type (real estate agencies)
+        if (effectiveRole === 'merchant' && (profile.announcer_type === 'agence' || profile.advertiser_type === 'agency')) {
+          return true;
+        }
+        return ['user', 'agent'].includes(effectiveRole);
+      }
+      if (allowedRole === 'commercial_advertiser' && effectiveRole === 'merchant') {
+        // Only allow merchants without announcer_type (pure commercial)
+        return !profile.announcer_type || profile.announcer_type === null;
+      }
       if (allowedRole === 'admin' && effectiveRole === 'admin') return true;
       
       // Map new to old for comparison (if allowedRoles uses new values)
       if (allowedRole === 'user' && effectiveRole === 'real_estate_advertiser') return true;
       if (allowedRole === 'agent' && effectiveRole === 'real_estate_advertiser') return true;
-      if (allowedRole === 'merchant' && ['real_estate_advertiser', 'commercial_advertiser'].includes(effectiveRole)) return true;
+      if (allowedRole === 'merchant') {
+        return ['commercial_advertiser'].includes(effectiveRole) || 
+               (effectiveRole === 'real_estate_advertiser' && (profile.advertiser_type === 'agency' || profile.announcer_type === 'agence'));
+      }
       
       return false;
     });

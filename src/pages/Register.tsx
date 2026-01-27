@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { translateAuthError } from '@/lib/authErrors';
+import { mapAnnouncerTypeToRole, type AnnouncerType } from '@/lib/roleMapping';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ export default function Register() {
     fullName: '',
     phone: '',
     companyName: '',
-    announcerType: 'proprietaire' as 'proprietaire' | 'courtier' | 'agence',
+    announcerType: 'proprietaire' as AnnouncerType,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -66,10 +67,8 @@ export default function Register() {
     console.log('✅ Form validation passed')
     console.log('Calling AuthContext.signUp()...')
 
-    // Map announcer_type to role
-    const role = formData.announcerType === 'proprietaire' ? 'user' :
-                 formData.announcerType === 'courtier' ? 'agent' :
-                 formData.announcerType === 'agence' ? 'merchant' : 'user';
+    // Map announcer_type to role using shared utility
+    const role = mapAnnouncerTypeToRole(formData.announcerType);
     
     console.log('  - Mapped role:', role)
 

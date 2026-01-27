@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { User, Session, AuthError } from '@supabase/supabase-js'
+import { mapRoleToUserRole } from '@/lib/roleMapping'
 
 // Configuration constants for profile loading
 const PROFILE_FETCH_MAX_RETRIES = 2
@@ -333,8 +334,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: role || 'user',
       announcer_type: announcerType || null,
       company_name: companyName || null,
-      // Keep for backward compatibility
-      user_role: role === 'admin' ? 'admin' : (role === 'merchant' ? 'commercial_advertiser' : 'real_estate_advertiser'),
+      // Keep for backward compatibility using shared mapping utility
+      user_role: mapRoleToUserRole(role || 'user'),
     }
     console.log('Step 3: User metadata prepared:', JSON.stringify(metadata, null, 2))
 
