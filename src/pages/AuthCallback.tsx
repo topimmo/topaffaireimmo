@@ -10,14 +10,14 @@ const REDIRECT_DELAY_SHORT_MS = 2000;
 const REDIRECT_DELAY_LONG_MS = 3000;
 
 /**
- * Redirect user to appropriate dashboard based on their role
+ * Redirect user to appropriate dashboard based on their user_role
  */
-function getRedirectPath(role?: string): string {
-  if (role === 'admin') {
+function getRedirectPath(userRole?: string): string {
+  if (userRole === 'admin') {
     return '/admin';
-  } else if (role === 'merchant') {
+  } else if (userRole === 'merchant') {
     return '/merchant';
-  } else if (role === 'agent') {
+  } else if (userRole === 'agent') {
     return '/agent';
   }
   return '/';
@@ -111,7 +111,7 @@ export default function AuthCallback() {
 
             // Wait for profile to load, then redirect based on role
             setTimeout(() => {
-              const redirectPath = getRedirectPath(profile?.role);
+              const redirectPath = getRedirectPath(profile?.user_role);
               console.log('Redirecting to:', redirectPath);
               navigate(redirectPath);
             }, REDIRECT_DELAY_SHORT_MS);
@@ -157,7 +157,7 @@ export default function AuthCallback() {
 
             // Wait for profile to load, then redirect based on role
             setTimeout(() => {
-              const redirectPath = getRedirectPath(profile?.role);
+              const redirectPath = getRedirectPath(profile?.user_role);
               console.log('Redirecting to:', redirectPath);
               navigate(redirectPath);
             }, REDIRECT_DELAY_SHORT_MS);
@@ -174,7 +174,7 @@ export default function AuthCallback() {
           setMessage('Authentication successful! Redirecting...');
           
           setTimeout(() => {
-            const redirectPath = getRedirectPath(profile?.role);
+            const redirectPath = getRedirectPath(profile?.user_role);
             console.log('Redirecting to:', redirectPath);
             navigate(redirectPath);
           }, REDIRECT_DELAY_SHORT_MS);

@@ -177,7 +177,7 @@ function App() {
           <Route
             path="/add-listing"
             element={
-              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin", "user", "agent", "merchant"]}>
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
                 <AddListing />
               </ProtectedRoute>
             }
@@ -186,7 +186,7 @@ function App() {
           <Route
             path="/edit-listing/:id"
             element={
-              <ProtectedRoute allowedRoles={["real_estate_advertiser", "admin", "user", "agent", "merchant"]}>
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
                 <EditListing />
               </ProtectedRoute>
             }
@@ -195,7 +195,7 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={["real_estate_advertiser", "user"]}>
+              <ProtectedRoute allowedRoles={["user"]}>
                 <Dashboard />
               </ProtectedRoute>
             }

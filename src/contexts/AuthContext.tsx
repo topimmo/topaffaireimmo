@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import { mapRoleToUserRole } from '@/lib/roleMapping'
 
 // Configuration constants for profile loading
 const PROFILE_FETCH_MAX_RETRIES = 2
@@ -13,9 +12,8 @@ interface Profile {
   full_name?: string
   phone?: string
   company_name?: string
-  role?: 'user' | 'agent' | 'merchant' | 'admin'
+  user_role?: 'user' | 'agent' | 'merchant' | 'admin'
   announcer_type?: 'proprietaire' | 'courtier' | 'agence' | null
-  user_role?: 'real_estate_advertiser' | 'commercial_advertiser' | 'admin' // Deprecated, kept for backward compatibility
   advertiser_type?: 'owner' | 'broker' | 'agency' | null // Deprecated, kept for backward compatibility
   is_admin?: boolean
   is_active?: boolean
@@ -33,7 +31,7 @@ interface AuthContextType {
     password: string,
     fullName: string,
     phone?: string,
-    role?: string,
+    userRole?: string,
     announcerType?: string,
     companyName?: string
   ) => Promise<{ error: AuthError | null }>
@@ -83,9 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: userEmail,
         full_name: metadata?.full_name as string || '',
         phone: metadata?.phone as string || null,
-        role: (metadata?.role as string) || 'user',
+        user_role: (metadata?.user_role as string) || 'user',
         announcer_type: (metadata?.announcer_type as string) || null,
-        user_role: (metadata?.user_role as string) || 'real_estate_advertiser', // Backward compatibility
         company_name: metadata?.company_name as string || null,
         is_active: true,
         is_verified: false, // Will be updated when email is verified
@@ -299,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     fullName: string,
     phone?: string,
-    role?: string,
+    userRole?: string,
     announcerType?: string,
     companyName?: string
   ): Promise<{ error: AuthError | null }> => {
@@ -322,7 +319,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('  - Email:', email)
     console.log('  - Full Name:', fullName)
     console.log('  - Phone:', phone || '(not provided)')
-    console.log('  - Role:', role || 'user (default)')
+    console.log('  - User Role:', userRole || 'user (default)')
     console.log('  - Announcer Type:', announcerType || '(not provided)')
     console.log('  - Company Name:', companyName || '(not provided)')
     console.log('  - Password validation:', password.length >= 6 ? 'OK' : 'Too short')
@@ -331,11 +328,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const metadata = {
       full_name: fullName,
       phone: phone || null,
-      role: role || 'user',
+      user_role: userRole || 'user',
       announcer_type: announcerType || null,
       company_name: companyName || null,
-      // Keep for backward compatibility using shared mapping utility
-      user_role: mapRoleToUserRole(role || 'user'),
     }
     console.log('Step 3: User metadata prepared:', JSON.stringify(metadata, null, 2))
 

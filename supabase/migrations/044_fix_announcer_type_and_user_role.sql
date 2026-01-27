@@ -1,41 +1,35 @@
 -- =====================================================
--- Migration 044: Fix role & announcer_type signup flow
+-- Migration 044: Fix announcer_type and user_role mapping
 -- =====================================================
 --
 -- OBJECTIVE:
--- Separate technical role from business type (Type d'annonceur)
--- Implement consistent mapping, persist both values in Supabase
+-- Update user_role values to use simplified technical roles
+-- Update announcer_type to use French values
+-- Keep user_role as single source of truth
 --
 -- CHANGES:
--- 1. Add new 'role' column for technical roles (user, agent, merchant, admin)
+-- 1. Update 'user_role' values to: user, agent, merchant, admin
 -- 2. Update 'announcer_type' to use French values (proprietaire, courtier, agence)
 -- 3. Migrate existing data from old to new schema
 -- 4. Update constraints and triggers
 -- 5. Ensure RLS policies work correctly
 --
 -- MAPPING:
--- Old user_role=real_estate_advertiser + advertiser_type=owner  → role=user, announcer_type=proprietaire
--- Old user_role=real_estate_advertiser + advertiser_type=broker → role=agent, announcer_type=courtier
--- Old user_role=real_estate_advertiser + advertiser_type=agency → role=merchant, announcer_type=agence
--- Old user_role=admin                                           → role=admin, announcer_type=null
--- Old user_role=commercial_advertiser                           → role=merchant, announcer_type=null
+-- Old user_role=real_estate_advertiser + advertiser_type=owner  → user_role=user, announcer_type=proprietaire
+-- Old user_role=real_estate_advertiser + advertiser_type=broker → user_role=agent, announcer_type=courtier
+-- Old user_role=real_estate_advertiser + advertiser_type=agency → user_role=merchant, announcer_type=agence
+-- Old user_role=admin                                           → user_role=admin, announcer_type=null
+-- Old user_role=commercial_advertiser                           → user_role=merchant, announcer_type=null
 -- =====================================================
 
 -- =====================================================
--- STEP 1: Add new 'role' column
+-- STEP 1: Migrate existing data to new schema
 -- =====================================================
 
--- Add role column if it doesn't exist
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT;
-
--- =====================================================
--- STEP 2: Migrate existing data to new schema
--- =====================================================
-
--- Update role based on existing user_role and advertiser_type
+-- Update user_role based on existing user_role and advertiser_type
 UPDATE public.profiles
-SET role = CASE
-  -- Admin users
+SET user_role = CASE
+  -- Admin users stay admin
   WHEN user_role = 'admin' THEN 'admin'
   
   -- Real estate advertisers with specific advertiser types
@@ -46,15 +40,15 @@ SET role = CASE
   -- Real estate advertisers without advertiser_type (default to user)
   WHEN user_role = 'real_estate_advertiser' AND advertiser_type IS NULL THEN 'user'
   
-  -- Commercial advertisers
+  -- Commercial advertisers become merchant
   WHEN user_role = 'commercial_advertiser' THEN 'merchant'
   
   -- Default fallback
   ELSE 'user'
 END
-WHERE role IS NULL;
+WHERE user_role IN ('real_estate_advertiser', 'commercial_advertiser');
 
--- Update announcer_type to use French values for real estate advertisers
+-- Update announcer_type to use French values for real estate users
 UPDATE public.profiles
 SET announcer_type = CASE
   WHEN advertiser_type = 'owner' THEN 'proprietaire'
@@ -62,57 +56,50 @@ SET announcer_type = CASE
   WHEN advertiser_type = 'agency' THEN 'agence'
   ELSE advertiser_type
 END
-WHERE user_role = 'real_estate_advertiser'
-  AND advertiser_type IS NOT NULL
+WHERE advertiser_type IS NOT NULL
   AND advertiser_type IN ('owner', 'broker', 'agency');
 
--- Set announcer_type to null for non-real-estate users
+-- Set announcer_type to null for admin users and pure merchants (no real estate business)
 UPDATE public.profiles
 SET announcer_type = NULL
-WHERE user_role IN ('admin', 'commercial_advertiser')
-  OR role IN ('admin');
+WHERE user_role IN ('admin', 'merchant')
+  AND advertiser_type IS NULL;
 
--- For real_estate_advertiser users without announcer_type, set default
--- Only set for real_estate_advertiser users, not for admin or commercial_advertiser
+-- For users without announcer_type who are not admin or pure merchant, set default
 UPDATE public.profiles
 SET announcer_type = 'proprietaire'
-WHERE user_role = 'real_estate_advertiser'
-  AND announcer_type IS NULL
-  AND role != 'admin'; -- Don't set for admins even if they have user_role set
+WHERE user_role = 'user'
+  AND announcer_type IS NULL;
 
 -- =====================================================
--- STEP 3: Update constraints
+-- STEP 2: Update constraints
 -- =====================================================
 
 -- Drop old constraints
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_advertiser_type_check;
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_user_role_check;
 
--- Add new role constraint
-ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check 
-  CHECK (role IN ('user', 'agent', 'merchant', 'admin'));
+-- Add new user_role constraint with updated values
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_user_role_check 
+  CHECK (user_role IN ('user', 'agent', 'merchant', 'admin'));
 
 -- Add new announcer_type constraint (French values)
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_announcer_type_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_announcer_type_check 
   CHECK (
     announcer_type IS NULL 
     OR announcer_type IN ('proprietaire', 'courtier', 'agence')
   );
 
--- Set role as NOT NULL with default
-ALTER TABLE public.profiles ALTER COLUMN role SET DEFAULT 'user';
-ALTER TABLE public.profiles ALTER COLUMN role SET NOT NULL;
-
 -- =====================================================
--- STEP 4: Update trigger function
+-- STEP 3: Update trigger function
 -- =====================================================
 
 -- Drop existing trigger and function
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
--- Create new trigger function with role and announcer_type support
+-- Create new trigger function with user_role and announcer_type support
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -120,15 +107,15 @@ SECURITY DEFINER
 SET search_path = public, auth
 AS $$
 DECLARE
-  role_value TEXT;
+  user_role_value TEXT;
   announcer_type_value TEXT;
 BEGIN
-  -- Get role from metadata, validate and default to 'user'
-  role_value := COALESCE(NEW.raw_user_meta_data->>'role', 'user');
+  -- Get user_role from metadata, validate and default to 'user'
+  user_role_value := COALESCE(NEW.raw_user_meta_data->>'user_role', 'user');
   
-  -- Validate role value
-  IF role_value NOT IN ('user', 'agent', 'merchant', 'admin') THEN
-    role_value := 'user';
+  -- Validate user_role value
+  IF user_role_value NOT IN ('user', 'agent', 'merchant', 'admin') THEN
+    user_role_value := 'user';
   END IF;
   
   -- Get announcer_type from metadata
@@ -141,12 +128,12 @@ BEGIN
   END IF;
   
   -- Set default announcer_type for non-admin users if not provided
-  IF announcer_type_value IS NULL AND role_value != 'admin' THEN
+  IF announcer_type_value IS NULL AND user_role_value != 'admin' THEN
     announcer_type_value := 'proprietaire';
   END IF;
   
   -- Admin users should not have announcer_type
-  IF role_value = 'admin' THEN
+  IF user_role_value = 'admin' THEN
     announcer_type_value := NULL;
   END IF;
 
@@ -156,9 +143,8 @@ BEGIN
     email,
     full_name,
     phone,
-    role,
+    user_role,
     announcer_type,
-    user_role, -- Keep for backward compatibility
     company_name,
     is_active,
     is_verified,
@@ -168,24 +154,18 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
-    role_value,
+    user_role_value,
     announcer_type_value,
-    -- Map role to user_role for backward compatibility
-    CASE role_value
-      WHEN 'admin' THEN 'admin'
-      WHEN 'merchant' THEN 'commercial_advertiser'
-      ELSE 'real_estate_advertiser'
-    END,
     COALESCE(NEW.raw_user_meta_data->>'company_name', NULL),
     true, -- is_active
     false, -- is_verified (will be set to true on email confirmation)
-    CASE WHEN role_value = 'admin' THEN true ELSE false END -- is_admin
+    CASE WHEN user_role_value = 'admin' THEN true ELSE false END -- is_admin
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
     full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
     phone = COALESCE(EXCLUDED.phone, public.profiles.phone),
-    role = EXCLUDED.role,
+    user_role = EXCLUDED.user_role,
     announcer_type = EXCLUDED.announcer_type,
     company_name = COALESCE(EXCLUDED.company_name, public.profiles.company_name);
 
@@ -201,7 +181,7 @@ $$;
 -- Add comment for documentation
 COMMENT ON FUNCTION public.handle_new_user() IS
   'Automatically creates a profile when a new user signs up.
-   Sets role (user/agent/merchant/admin) and announcer_type (proprietaire/courtier/agence).
+   Sets user_role (user/agent/merchant/admin) and announcer_type (proprietaire/courtier/agence).
    SECURITY DEFINER with safe search_path to prevent SQL injection and bypass RLS.';
 
 -- Recreate trigger
@@ -211,17 +191,17 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 COMMENT ON TRIGGER on_auth_user_created ON auth.users IS
-  'Triggers profile creation for new users with role and announcer_type support.';
+  'Triggers profile creation for new users with user_role and announcer_type support.';
 
 -- =====================================================
--- STEP 5: Grant necessary permissions
+-- STEP 4: Grant necessary permissions
 -- =====================================================
 
 -- Ensure the function can be executed
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres, service_role;
 
 -- =====================================================
--- STEP 6: Verify RLS policies are compatible
+-- STEP 5: Verify RLS policies are compatible
 -- =====================================================
 
 -- RLS policies should already be in place from previous migrations
@@ -246,7 +226,7 @@ BEGIN
         OR EXISTS (
           SELECT 1 FROM public.profiles 
           WHERE id = auth.uid() 
-          AND (is_admin = true OR role = 'admin')
+          AND (is_admin = true OR user_role = 'admin')
         )
       );
   END IF;
@@ -285,28 +265,28 @@ END $$;
 
 -- These queries can be used to verify the migration:
 -- 
--- 1. Check all users have a valid role:
---    SELECT id, email, role, announcer_type, user_role 
+-- 1. Check all users have a valid user_role:
+--    SELECT id, email, user_role, announcer_type 
 --    FROM public.profiles 
---    WHERE role IS NULL OR role NOT IN ('user', 'agent', 'merchant', 'admin');
+--    WHERE user_role IS NULL OR user_role NOT IN ('user', 'agent', 'merchant', 'admin');
 --    Expected: 0 rows
 --
 -- 2. Check announcer_type values:
---    SELECT DISTINCT role, announcer_type 
+--    SELECT DISTINCT user_role, announcer_type 
 --    FROM public.profiles 
---    ORDER BY role, announcer_type;
+--    ORDER BY user_role, announcer_type;
 --    Expected: Valid combinations only
 --
--- 3. Check backward compatibility:
---    SELECT role, user_role, COUNT(*) 
+-- 3. Check migration results:
+--    SELECT user_role, announcer_type, COUNT(*) 
 --    FROM public.profiles 
---    GROUP BY role, user_role;
---    Expected: Consistent mappings
+--    GROUP BY user_role, announcer_type;
 
 -- =====================================================
 -- ROLLBACK (if needed)
 -- =====================================================
 -- To rollback this migration:
--- 1. ALTER TABLE public.profiles DROP COLUMN role;
--- 2. UPDATE public.profiles SET advertiser_type = ... (reverse mapping)
--- 3. Restore previous trigger from migration 042
+-- 1. UPDATE public.profiles SET user_role = 'real_estate_advertiser' WHERE user_role IN ('user', 'agent');
+-- 2. UPDATE public.profiles SET user_role = 'commercial_advertiser' WHERE user_role = 'merchant' AND announcer_type IS NULL;
+-- 3. UPDATE public.profiles SET advertiser_type = ... (reverse French mapping)
+-- 4. Restore previous trigger from migration 042

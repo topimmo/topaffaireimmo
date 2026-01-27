@@ -37,42 +37,26 @@ export default function ProtectedRoute({
     allowedRoles &&
     profile
   ) {
-    // Get effective role (prefer new 'role' field, fallback to 'user_role')
-    const effectiveRole = profile.role || profile.user_role;
+    // Get user_role
+    const userRole = profile.user_role;
     
-    // If profile exists but has no role, deny access (data issue)
-    if (!effectiveRole) {
-      console.error('❌ ProtectedRoute: Profile loaded but role/user_role is missing');
+    // If profile exists but has no user_role, deny access (data issue)
+    if (!userRole) {
+      console.error('❌ ProtectedRoute: Profile loaded but user_role is missing');
       console.error('Profile details:', profile);
       return <Navigate to="/login" replace />;
     }
     
     // Check if user's role is in the allowed list
-    // Support both new and old role values
-    const isAllowed = allowedRoles.some(allowedRole => {
-      // Direct match
-      if (allowedRole === effectiveRole) return true;
-      
-      // Map old to new for comparison
-      if (allowedRole === 'real_estate_advertiser') {
-        // Only allow merchants with announcer_type (real estate agencies)
-        if (effectiveRole === 'merchant' && (profile.announcer_type === 'agence' || profile.advertiser_type === 'agency')) {
-          return true;
-        }
-        return ['user', 'agent'].includes(effectiveRole);
-      }
-      if (allowedRole === 'commercial_advertiser' && effectiveRole === 'merchant') {
-        // Only allow merchants without announcer_type (pure commercial)
-        return !profile.announcer_type || profile.announcer_type === null;
-      }
-      if (allowedRole === 'admin' && effectiveRole === 'admin') return true;
-      
-      // Map new to old for comparison (if allowedRoles uses new values)
-      if (allowedRole === 'user' && effectiveRole === 'real_estate_advertiser') return true;
-      if (allowedRole === 'agent' && effectiveRole === 'real_estate_advertiser') return true;
-      if (allowedRole === 'merchant') {
-        return ['commercial_advertiser'].includes(effectiveRole) || 
-               (effectiveRole === 'real_estate_advertiser' && (profile.advertiser_type === 'agency' || profile.announcer_type === 'agence'));
+    const isAllowed = allowedRoles.includes(userRole);
+    
+    if (!isAllowed) {
+      console.warn('⚠️ ProtectedRoute: User role not allowed for this route');
+      console.warn('User role:', userRole);
+      console.warn('Allowed roles:', allowedRoles);
+      return <Navigate to="/" replace />;
+    }
+  }
       }
       
       return false;

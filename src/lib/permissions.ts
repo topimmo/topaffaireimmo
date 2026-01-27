@@ -3,8 +3,7 @@
  * Centralized location for permission logic to keep frontend and backend in sync
  */
 
-export type UserRole = 'admin' | 'real_estate_advertiser' | 'commercial_advertiser';
-export type Role = 'user' | 'agent' | 'merchant' | 'admin';
+export type UserRole = 'user' | 'agent' | 'merchant' | 'admin';
 
 /**
  * Minimal user profile interface for permission checks
@@ -12,12 +11,9 @@ export type Role = 'user' | 'agent' | 'merchant' | 'admin';
  */
 export interface UserProfile {
   id: string;
-  // New role system
-  role?: Role;
-  announcer_type?: 'proprietaire' | 'courtier' | 'agence' | null;
-  // Legacy fields (kept for backward compatibility)
   user_role?: UserRole;
-  advertiser_type?: 'owner' | 'broker' | 'agency' | null;
+  announcer_type?: 'proprietaire' | 'courtier' | 'agence' | null;
+  advertiser_type?: 'owner' | 'broker' | 'agency' | null; // Deprecated, kept for backward compatibility
   is_admin?: boolean;
   // Optional fields from full Profile interface (not needed for permission checks)
   email?: string;
@@ -29,55 +25,92 @@ export interface UserProfile {
 }
 
 /**
- * Helper to get effective role (supports both old and new role fields)
- */
-function getEffectiveRole(profile: UserProfile | null): Role | null {
-  if (!profile) return null;
-  
-  // Prefer new role field
-  if (profile.role) return profile.role;
-  
-  // Fallback to user_role and map it
-  if (profile.user_role === 'admin') return 'admin';
-  if (profile.user_role === 'commercial_advertiser') return 'merchant';
-  if (profile.user_role === 'real_estate_advertiser') {
-    // Map based on advertiser_type if available
-    if (profile.advertiser_type === 'broker') return 'agent';
-    if (profile.advertiser_type === 'agency') return 'merchant';
-    return 'user'; // owner or null
-  }
-  
-  return null;
-}
-
-/**
  * Check if a user can upload property images
- * Only admins and real estate advertisers can upload property images
+ * Only admins and real estate users can upload property images
  */
 export function canUploadPropertyImages(profile: UserProfile | null): boolean {
   if (!profile) return false;
   
-  const role = getEffectiveRole(profile);
-  
   // Admin users can always upload
-  if (profile.is_admin === true || role === 'admin') {
+  if (profile.is_admin === true || profile.user_role === 'admin') {
     return true;
   }
   
   // Real estate users (user, agent, merchant with announcer_type) can upload
-  if (role === 'user' || role === 'agent') {
+  if (profile.user_role === 'user' || profile.user_role === 'agent') {
     return true;
   }
   
-  // Merchants who are real estate advertisers can also upload
-  if (role === 'merchant' && (profile.announcer_type === 'agence' || profile.advertiser_type === 'agency')) {
+  // Merchants who are real estate agencies can also upload
+  if (profile.user_role === 'merchant' && (profile.announcer_type === 'agence' || profile.advertiser_type === 'agency')) {
     return true;
   }
   
-  // Legacy: Real estate advertisers can upload
-  if (profile.user_role === 'real_estate_advertiser') {
+  return false;
+}
+
+/**
+ * Check if a user has a valid advertiser type set
+ * Used to show onboarding prompts
+ */
+export function hasValidAdvertiserType(profile: UserProfile | null): boolean {
+  if (!profile) return false;
+  
+  const userRole = profile.user_role;
+  
+  // Check announcer_type for real estate users
+  if (userRole === 'user' || userRole === 'agent' || (userRole === 'merchant' && profile.announcer_type)) {
+    return profile.announcer_type != null;
+  }
+  
+  // Other roles don't need advertiser_type
+  return true;
+}
+
+/**
+ * Check if a user can upload banner images
+ * Only admins and commercial merchants can upload banner images
+ */
+export function canUploadBannerImages(profile: UserProfile | null): boolean {
+  if (!profile) return false;
+  
+  // Admin users can always upload
+  if (profile.is_admin === true || profile.user_role === 'admin') {
     return true;
   }
+  
+  // Merchants without announcer_type (pure commercial advertisers) can upload
+  if (profile.user_role === 'merchant' && !profile.announcer_type) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Check if a user can create property listings
+ * Only admins and real estate users can create listings
+ */
+export function canCreatePropertyListing(profile: UserProfile | null): boolean {
+  if (!profile) return false;
+  
+  // Admin users can always create
+  if (profile.is_admin === true || profile.user_role === 'admin') {
+    return true;
+  }
+  
+  // Real estate users can create
+  if (profile.user_role === 'user' || profile.user_role === 'agent') {
+    return true;
+  }
+  
+  // Merchants who are real estate agencies can create
+  if (profile.user_role === 'merchant' && (profile.announcer_type === 'agence' || profile.advertiser_type === 'agency')) {
+    return true;
+  }
+  
+  return false;
+}
   
   return false;
 }

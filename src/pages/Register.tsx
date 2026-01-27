@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { translateAuthError } from '@/lib/authErrors';
-import { mapAnnouncerTypeToRole, type AnnouncerType } from '@/lib/roleMapping';
+import { mapAnnouncerTypeToUserRole, type AnnouncerType } from '@/lib/roleMapping';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -67,10 +67,10 @@ export default function Register() {
     console.log('✅ Form validation passed')
     console.log('Calling AuthContext.signUp()...')
 
-    // Map announcer_type to role using shared utility
-    const role = mapAnnouncerTypeToRole(formData.announcerType);
+    // Map announcer_type to user_role using shared utility
+    const userRole = mapAnnouncerTypeToUserRole(formData.announcerType);
     
-    console.log('  - Mapped role:', role)
+    console.log('  - Mapped user_role:', userRole)
 
     try {
       const { error: signUpError } = await signUp(
@@ -78,7 +78,7 @@ export default function Register() {
         formData.password,
         formData.fullName,
         formData.phone,
-        role,
+        userRole,
         formData.announcerType,
         formData.companyName
       );

@@ -1,41 +1,27 @@
 /**
  * Role mapping utilities for the TopAffaireImmo application
- * Provides consistent mapping between announcer types and technical roles
+ * Provides consistent mapping between announcer types and user roles
  */
 
 export type AnnouncerType = 'proprietaire' | 'courtier' | 'agence';
-export type Role = 'user' | 'agent' | 'merchant' | 'admin';
+export type UserRole = 'user' | 'agent' | 'merchant' | 'admin';
 
 /**
- * Map announcer type to technical role
+ * Map announcer type to user_role
  * 
  * Mapping:
  * - proprietaire (owner) → user
  * - courtier (broker/agent) → agent
  * - agence (agency) → merchant
  */
-export function mapAnnouncerTypeToRole(announcerType: AnnouncerType): Role {
-  const mapping: Record<AnnouncerType, Role> = {
+export function mapAnnouncerTypeToUserRole(announcerType: AnnouncerType): UserRole {
+  const mapping: Record<AnnouncerType, UserRole> = {
     'proprietaire': 'user',
     'courtier': 'agent',
     'agence': 'merchant',
   };
   
   return mapping[announcerType] || 'user';
-}
-
-/**
- * Map role to user_role for backward compatibility
- */
-export function mapRoleToUserRole(role: Role): string {
-  const mapping: Record<Role, string> = {
-    'admin': 'admin',
-    'merchant': 'commercial_advertiser',
-    'agent': 'real_estate_advertiser',
-    'user': 'real_estate_advertiser',
-  };
-  
-  return mapping[role] || 'real_estate_advertiser';
 }
 
 /**

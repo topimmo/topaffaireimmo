@@ -78,19 +78,19 @@ export default function Login() {
       if (user) {
         const { data: userProfile } = await supabase
           .from('profiles')
-          .select('role, user_role')
+          .select('user_role')
           .eq('id', user.id)
           .single();
 
-        // Redirect based on user role (prefer new 'role' field)
+        // Redirect based on user_role
         let redirectTo = from;
-        const role = userProfile?.role || userProfile?.user_role;
+        const userRole = userProfile?.user_role;
         
-        if (role === 'admin') {
+        if (userRole === 'admin') {
           redirectTo = '/admin';
-        } else if (role === 'merchant' || role === 'commercial_advertiser') {
+        } else if (userRole === 'merchant') {
           redirectTo = '/merchant';
-        } else if (role === 'agent') {
+        } else if (userRole === 'agent') {
           redirectTo = '/agent';
         } else if (from === '/dashboard' || from === '/login') {
           // Default redirect for regular users
