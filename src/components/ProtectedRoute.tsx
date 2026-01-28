@@ -5,18 +5,17 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: string[];
+  allowedRoles?: string[]; // Deprecated - kept for compatibility but not enforced
 }
 
 export default function ProtectedRoute({
   children,
-  allowedRoles,
 }: ProtectedRouteProps) {
-  const { user, profile, loading, profileLoading } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  // Wait for both auth and profile to finish loading
-  if (loading || profileLoading) {
+  // Wait for auth to finish loading
+  if (loading) {
     return (
       <div style={{ padding: "2rem", textAlign: "center" }}>
         Loading...
@@ -30,33 +29,6 @@ export default function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // Check role only if allowedRoles is specified AND profile is loaded
-  // If profile isn't loaded yet (shouldn't happen due to loading check above), 
-  // but just in case, we allow access if user is authenticated
-  if (
-    allowedRoles &&
-    profile
-  ) {
-    // Get user_role
-    const userRole = profile.user_role;
-    
-    // If profile exists but has no user_role, deny access (data issue)
-    if (!userRole) {
-      console.error('❌ ProtectedRoute: Profile loaded but user_role is missing');
-      console.error('Profile details:', profile);
-      return <Navigate to="/login" replace />;
-    }
-    
-    // Check if user's role is in the allowed list
-    const isAllowed = allowedRoles.includes(userRole);
-    
-    if (!isAllowed) {
-      console.warn('⚠️ ProtectedRoute: User role not allowed for this route');
-      console.warn('User role:', userRole);
-      console.warn('Allowed roles:', allowedRoles);
-      return <Navigate to="/" replace />;
-    }
-  }
-
+  // No role checking - all authenticated users allowed
   return <>{children}</>;
 }

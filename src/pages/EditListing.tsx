@@ -57,15 +57,8 @@ const propertyTypes = [
 export default function EditListing() {
   const { id } = useParams<{ id: string }>();
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
-  // Redirect commercial advertisers - they cannot edit property listings
-  useEffect(() => {
-    if (!authLoading && !profileLoading && profile && profile.user_role === 'commercial_advertiser') {
-      navigate('/commercial-dashboard');
-    }
-  }, [authLoading, profileLoading, profile, navigate]);
 
   const [cities, setCities] = useState<City[]>([]);
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
@@ -208,42 +201,12 @@ export default function EditListing() {
     const files = e.target.files;
     if (!files) return;
 
-    // Wait for profile to finish loading before proceeding
-    // This should rarely happen since the route is protected,
-    // but it's good to handle edge cases
-    if (profileLoading) {
+    // Ensure user is authenticated
+    if (!user) {
       alert(isRTL 
-        ? 'جاري التحميل... يرجى الانتظار' 
-        : 'Chargement en cours... Veuillez patienter'
+        ? 'يجب تسجيل الدخول لتحميل الصور' 
+        : 'Vous devez être connecté pour télécharger des images'
       );
-      e.target.value = '';
-      return;
-    }
-
-    // Profile should always exist here since route is protected
-    // But check just in case of race conditions
-    if (!profile) {
-      console.error('Profile not loaded despite protected route');
-      alert(isRTL 
-        ? 'خطأ في تحميل الملف الشخصي. يرجى تحديث الصفحة.' 
-        : 'Erreur de chargement du profil. Veuillez rafraîchir la page.'
-      );
-      e.target.value = '';
-      return;
-    }
-
-    // Check if user has permission to upload property images
-    if (!canUploadPropertyImages(profile)) {
-      console.error('❌ Permission denied for image upload');
-      console.error('Profile details:', {
-        id: profile.id,
-        email: profile.email,
-        user_role: profile.user_role,
-        is_admin: profile.is_admin
-      });
-      console.error('canUploadPropertyImages returned false');
-      console.error('Expected user_role to be "real_estate_advertiser" or "admin"');
-      alert(getPermissionDeniedMessage('upload_property_images', language as 'fr' | 'ar'));
       e.target.value = '';
       return;
     }
@@ -313,23 +276,6 @@ export default function EditListing() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !id) return;
-
-    // Validate user profile exists and has correct role
-    if (!profile) {
-      alert(isRTL 
-        ? 'ملفك الشخصي غير محمل. يرجى تحديث الصفحة وإعادة المحاولة.' 
-        : 'Votre profil n\'est pas chargé. Veuillez actualiser la page et réessayer.'
-      );
-      return;
-    }
-
-    if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
-      alert(isRTL 
-        ? 'ليس لديك صلاحية لتعديل الإعلانات العقارية. يجب أن يكون لديك حساب معلن عقاري.' 
-        : 'Vous n\'avez pas la permission de modifier des annonces immobilières. Vous devez avoir un compte d\'annonceur immobilier.'
-      );
-      return;
-    }
 
     setIsSubmitting(true);
     setUploadProgress('');
@@ -470,7 +416,7 @@ export default function EditListing() {
     }
   };
 
-  if (authLoading || profileLoading || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

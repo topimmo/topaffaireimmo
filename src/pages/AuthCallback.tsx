@@ -10,22 +10,14 @@ const REDIRECT_DELAY_SHORT_MS = 2000;
 const REDIRECT_DELAY_LONG_MS = 3000;
 
 /**
- * Redirect user to appropriate dashboard based on their user_role
+ * Redirect user to home - no role-based redirect needed
  */
-function getRedirectPath(userRole?: string): string {
-  if (userRole === 'admin') {
-    return '/admin';
-  } else if (userRole === 'merchant') {
-    return '/merchant';
-  } else if (userRole === 'agent') {
-    return '/agent';
-  }
+function getRedirectPath(): string {
   return '/';
 }
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
@@ -109,9 +101,9 @@ export default function AuthCallback() {
             setStatus('success');
             setMessage('Email confirmed successfully! Redirecting...');
 
-            // Wait for profile to load, then redirect based on role
+            // Redirect to home
             setTimeout(() => {
-              const redirectPath = getRedirectPath(profile?.user_role);
+              const redirectPath = getRedirectPath();
               console.log('Redirecting to:', redirectPath);
               navigate(redirectPath);
             }, REDIRECT_DELAY_SHORT_MS);
@@ -155,9 +147,9 @@ export default function AuthCallback() {
             setStatus('success');
             setMessage('Email confirmed successfully! Redirecting...');
 
-            // Wait for profile to load, then redirect based on role
+            // Redirect to home
             setTimeout(() => {
-              const redirectPath = getRedirectPath(profile?.user_role);
+              const redirectPath = getRedirectPath();
               console.log('Redirecting to:', redirectPath);
               navigate(redirectPath);
             }, REDIRECT_DELAY_SHORT_MS);
@@ -174,7 +166,7 @@ export default function AuthCallback() {
           setMessage('Authentication successful! Redirecting...');
           
           setTimeout(() => {
-            const redirectPath = getRedirectPath(profile?.user_role);
+            const redirectPath = getRedirectPath();
             console.log('Redirecting to:', redirectPath);
             navigate(redirectPath);
           }, REDIRECT_DELAY_SHORT_MS);
@@ -202,7 +194,7 @@ export default function AuthCallback() {
     };
 
     handleAuthCallback();
-  }, [navigate, profile]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
