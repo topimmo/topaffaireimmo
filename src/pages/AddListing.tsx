@@ -57,33 +57,31 @@ const propertyTypes = [
  * Formats a database error into a user-friendly message
  */
 function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
-  let message = isRTL 
-    ? 'حدث خطأ أثناء إنشاء الإعلان.' 
-    : 'Une erreur s\'est produite lors de la création de l\'annonce.';
-  
+  let message = isRTL
+    ? 'حدث خطأ أثناء إنشاء الإعلان.'
+    : "Une erreur s'est produite lors de la création de l'annonce.";
+
   if (error.message?.includes('permission') || error.code === '42501') {
-    message = isRTL 
-      ? 'ليس لديك صلاحية لإنشاء إعلان. تأكد من تسجيل الدخول كمعلن عقاري.' 
-      : 'Vous n\'avez pas la permission de créer une annonce. Assurez-vous d\'être connecté en tant qu\'annonceur immobilier.';
+    message = isRTL
+      ? 'ليس لديك صلاحية لإنشاء إعلان. تأكد من تسجيل الدخول كمعلن عقاري.'
+      : "Vous n'avez pas la permission de créer une annonce. Assurez-vous d'être connecté en tant qu'annonceur immobilier.";
   } else if (error.message?.includes('violates') || error.code === '23503') {
-    message = isRTL 
-      ? 'بيانات غير صالحة. يرجى التحقق من جميع الحقول.' 
+    message = isRTL
+      ? 'بيانات غير صالحة. يرجى التحقق من جميع الحقول.'
       : 'Données invalides. Veuillez vérifier tous les champs.';
   } else if (error.message?.includes('duplicate') || error.code === '23505') {
-    message = isRTL 
-      ? 'هذا الإعلان موجود بالفعل.' 
-      : 'Cette annonce existe déjà.';
+    message = isRTL ? 'هذا الإعلان موجود بالفعل.' : 'Cette annonce existe déjà.';
   } else if (error.message?.includes('not null') || error.code === '23502') {
-    message = isRTL 
-      ? 'حقول مطلوبة مفقودة. يرجى ملء جميع الحقول المطلوبة.' 
+    message = isRTL
+      ? 'حقول مطلوبة مفقودة. يرجى ملء جميع الحقول المطلوبة.'
       : 'Champs requis manquants. Veuillez remplir tous les champs obligatoires.';
   }
-  
+
   // Only show technical details in development mode
   if (isDev) {
     message += '\n\nDétails: ' + (error.message || error.code || 'Unknown error');
   }
-  
+
   return message;
 }
 
@@ -99,7 +97,9 @@ export default function AddListing() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imageUploadStatus, setImageUploadStatus] = useState<('pending' | 'uploading' | 'success' | 'error')[]>([]);
+  const [imageUploadStatus, setImageUploadStatus] = useState<
+    ('pending' | 'uploading' | 'success' | 'error')[]
+  >([]);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showCustomNeighborhood, setShowCustomNeighborhood] = useState(false);
 
@@ -129,9 +129,7 @@ export default function AddListing() {
 
   useEffect(() => {
     if (formData.cityId) {
-      const filtered = neighborhoods.filter(
-        (n) => n.city_id === parseInt(formData.cityId)
-      );
+      const filtered = neighborhoods.filter((n) => n.city_id === parseInt(formData.cityId));
       setFilteredNeighborhoods(filtered);
       setFormData((prev) => ({ ...prev, neighborhoodId: '', customNeighborhood: '' }));
       setShowCustomNeighborhood(false);
@@ -155,16 +153,15 @@ export default function AddListing() {
       ]);
       return;
     }
-    
+
     const { data, error } = await supabase
       .from('cities')
       .select('id, name_fr, name_ar, is_active')
       .eq('is_active', true)
       .order('display_order');
-    
+
     if (error) {
       console.error('Error fetching cities:', error);
-      // Fallback cities
       setCities([
         { id: 1, name_fr: 'Casablanca', name_ar: 'الدار البيضاء' },
         { id: 2, name_fr: 'Rabat', name_ar: 'الرباط' },
@@ -172,11 +169,10 @@ export default function AddListing() {
       ]);
       return;
     }
-    
+
     if (data && data.length > 0) {
       setCities(data);
     } else {
-      // Fallback if empty
       setCities([
         { id: 1, name_fr: 'Casablanca', name_ar: 'الدار البيضاء' },
         { id: 2, name_fr: 'Rabat', name_ar: 'الرباط' },
@@ -228,12 +224,8 @@ export default function AddListing() {
     const files = e.target.files;
     if (!files) return;
 
-    // Ensure user is authenticated
     if (!user) {
-      alert(isRTL 
-        ? 'يجب تسجيل الدخول لتحميل الصور' 
-        : 'Vous devez être connecté pour télécharger des images'
-      );
+      alert(isRTL ? 'يجب تسجيل الدخول لتحميل الصور' : 'Vous devez être connecté pour télécharger des images');
       e.target.value = '';
       return;
     }
@@ -241,73 +233,89 @@ export default function AddListing() {
     const filesArray = Array.from(files);
     const maxImages = 6;
     const remainingSlots = maxImages - uploadedImages.length;
-    
-    // Check if we've reached the limit
+
     if (remainingSlots === 0) {
-      alert(isRTL 
-        ? 'الحد الأقصى 6 صور مسموح به' 
-        : 'Maximum 6 images autorisées'
-      );
-      // Reset input
-      e.target.value = '';
-      return;
-    }
-    
-    // Check if too many files selected
-    if (filesArray.length > remainingSlots) {
-      alert(isRTL 
-        ? `يمكنك تحميل ${remainingSlots} صورة إضافية فقط` 
-        : `Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s)`
-      );
-      // Reset input
+      alert(isRTL ? 'الحد الأقصى 6 صور مسموح به' : 'Maximum 6 images autorisées');
       e.target.value = '';
       return;
     }
 
-    // Validate files using the enhanced validation
+    if (filesArray.length > remainingSlots) {
+      alert(
+        isRTL
+          ? `يمكنك تحميل ${remainingSlots} صورة إضافية فقط`
+          : `Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s)`
+      );
+      e.target.value = '';
+      return;
+    }
+
     const bucketConfig = BUCKET_CONFIG['property-images'];
     const validation = validateFiles(filesArray, {
       ...bucketConfig,
       maxCount: remainingSlots,
     });
 
-    // Show errors if validation failed
     if (!validation.valid) {
       const errorMessage = validation.errors.join('\n');
-      alert(isRTL 
-        ? `خطأ في الملفات المحددة:\n\n${errorMessage}` 
-        : `Erreur dans les fichiers sélectionnés:\n\n${errorMessage}`
+      alert(
+        isRTL
+          ? `خطأ في الملفات المحددة:\n\n${errorMessage}`
+          : `Erreur dans les fichiers sélectionnés:\n\n${errorMessage}`
       );
-      // Reset input
       e.target.value = '';
       return;
     }
 
-    // All files are valid - store them and create preview URLs
     const newPreviews = validation.validFiles.map((file) => URL.createObjectURL(file));
     const newStatuses = validation.validFiles.map(() => 'pending' as const);
-    
+
     setImageFiles((prev) => [...prev, ...validation.validFiles]);
     setUploadedImages((prev) => [...prev, ...newPreviews]);
     setImageUploadStatus((prev) => [...prev, ...newStatuses]);
-    
-    // Reset input to allow selecting the same file again if needed
+
     e.target.value = '';
   };
 
   const removeImage = (index: number) => {
-    // Revoke blob URL to prevent memory leak
     URL.revokeObjectURL(uploadedImages[index]);
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
     setImageUploadStatus((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // ✅ NEW: get profile id safely (try id first, then email)
+  const fetchProfileId = async (): Promise<string> => {
+    // 1) Try: profiles.id == auth.users.id
+    const { data: p1, error: e1 } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user!.id)
+      .maybeSingle();
+
+    if (!e1 && p1?.id) return p1.id;
+
+    // 2) Try: by email
+    const email = user?.email;
+    if (!email) throw new Error(isRTL ? 'البريد الإلكتروني غير موجود' : 'Email introuvable');
+
+    const { data: p2, error: e2 } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (e2 || !p2?.id) {
+      throw new Error(isRTL ? 'الملف الشخصي غير موجود' : 'Profil introuvable');
+    }
+
+    return p2.id;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    // Enhanced validation
     if (!formData.propertyType) {
       alert(isRTL ? 'يرجى اختيار نوع العقار' : 'Veuillez sélectionner un type de bien');
       return;
@@ -318,20 +326,18 @@ export default function AddListing() {
       return;
     }
 
-    // Validate phone number if provided
     if (formData.phone && formData.phone.trim()) {
-      // Moroccan phone format: mobile (06/07) or landline (05)
       const phoneRegex = /^(\+212|0)[5-7]\d{8}$/;
       if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-        alert(isRTL 
-          ? 'رقم الهاتف غير صالح. يجب أن يكون بالشكل: +212 6XX XX XX XX أو 06XX XX XX XX' 
-          : 'Numéro de téléphone invalide. Format attendu: +212 6XX XX XX XX ou 06XX XX XX XX'
+        alert(
+          isRTL
+            ? 'رقم الهاتف غير صالح. يجب أن يكون بالشكل: +212 6XX XX XX XX أو 06XX XX XX XX'
+            : 'Numéro de téléphone invalide. Format attendu: +212 6XX XX XX XX ou 06XX XX XX XX'
         );
         return;
       }
     }
 
-    // Validate numeric fields
     if (formData.price && parseFloat(formData.price) <= 0) {
       alert(isRTL ? 'السعر يجب أن يكون أكبر من الصفر' : 'Le prix doit être supérieur à zéro');
       return;
@@ -346,35 +352,39 @@ export default function AddListing() {
     setUploadProgress('');
 
     try {
-      // Step 1: Upload images to Supabase Storage with progress tracking
+      // ✅ IMPORTANT: get profileId
+      const profileId = await fetchProfileId();
+
+      // Step 1: Upload images
       let imageUrls: string[] = [];
-      
+
       if (imageFiles.length > 0) {
-        setUploadProgress(isRTL 
-          ? `جاري تحميل الصور... (0/${imageFiles.length})` 
-          : `Téléchargement des images... (0/${imageFiles.length})`
+        setUploadProgress(
+          isRTL
+            ? `جاري تحميل الصور... (0/${imageFiles.length})`
+            : `Téléchargement des images... (0/${imageFiles.length})`
         );
-        
-        console.log(`[AddListing] Starting upload of ${imageFiles.length} images...`);
-        
-        // Upload images one by one with progress tracking
-        const uploadResults = [];
+
+        const uploadResults: any[] = [];
+
         for (let i = 0; i < imageFiles.length; i++) {
           const file = imageFiles[i];
+
           setImageUploadStatus((prev) => {
             const updated = [...prev];
             updated[i] = 'uploading';
             return updated;
           });
-          
-          setUploadProgress(isRTL 
-            ? `جاري تحميل الصور... (${i + 1}/${imageFiles.length})` 
-            : `Téléchargement des images... (${i + 1}/${imageFiles.length})`
+
+          setUploadProgress(
+            isRTL
+              ? `جاري تحميل الصور... (${i + 1}/${imageFiles.length})`
+              : `Téléchargement des images... (${i + 1}/${imageFiles.length})`
           );
-          
+
           const result = await uploadPropertyImages([file], user.id);
           uploadResults.push(result[0]);
-          
+
           if (result[0].error) {
             console.error(`[AddListing] Failed to upload image ${i + 1}:`, result[0].error);
             setImageUploadStatus((prev) => {
@@ -383,7 +393,6 @@ export default function AddListing() {
               return updated;
             });
           } else {
-            console.log(`[AddListing] Successfully uploaded image ${i + 1}`);
             setImageUploadStatus((prev) => {
               const updated = [...prev];
               updated[i] = 'success';
@@ -391,45 +400,33 @@ export default function AddListing() {
             });
           }
         }
-        
-        // Check for upload errors
-        const failedUploads = uploadResults.filter(r => r.error);
+
+        const failedUploads = uploadResults.filter((r) => r.error);
         if (failedUploads.length > 0) {
-          console.error('[AddListing] Image upload errors:', failedUploads);
-          
-          // Show specific error messages for failed uploads
-          const errorDetails = failedUploads.map((r, idx) => 
-            `${idx + 1}. ${r.fileName}: ${r.error}`
-          ).join('\n');
-          
-          console.log('[AddListing] Error details:', errorDetails);
-          
-          // Allow user to decide whether to continue or retry
-          const message = isRTL 
-            ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nالأخطاء:\n${errorDetails}\n\nهل تريد المتابعة بالصور المتبقية؟\n\n(اختر "إلغاء" للعودة وإعادة المحاولة)` 
-            : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nErreurs:\n${errorDetails}\n\nVoulez-vous continuer avec les images restantes?\n\n(Cliquez sur "Annuler" pour revenir et réessayer)`;
-          
+          const errorDetails = failedUploads
+            .map((r, idx) => `${idx + 1}. ${r.fileName}: ${r.error}`)
+            .join('\n');
+
+          const message = isRTL
+            ? `فشل تحميل ${failedUploads.length} صورة من ${imageFiles.length}.\n\nالأخطاء:\n${errorDetails}\n\nهل تريد المتابعة بالصور المتبقية؟`
+            : `Échec du téléchargement de ${failedUploads.length} image(s) sur ${imageFiles.length}.\n\nErreurs:\n${errorDetails}\n\nVoulez-vous continuer avec les images restantes?`;
+
           const continueAnyway = window.confirm(message);
-          
           if (!continueAnyway) {
-            // User wants to retry - reset submitting state
             setIsSubmitting(false);
             setUploadProgress('');
             return;
           }
         }
-        
-        // Use only successful uploads
-        imageUrls = uploadResults.filter(r => !r.error).map(r => r.url);
-        console.log(`[AddListing] ${imageUrls.length} images uploaded successfully out of ${imageFiles.length}`);
+
+        imageUrls = uploadResults.filter((r) => !r.error).map((r) => r.url);
       }
 
-      // Step 2: Create property listing
-      setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : 'Enregistrement de l\'annonce...');
-      
-      // Build insert data - only include fields that exist in the database
+      // Step 2: Create property
+      setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
+
       const insertData: Record<string, unknown> = {
-        owner_id: user.id,
+        owner_id: profileId, // ✅ FIXED HERE
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         announcer_type: formData.announcerType || 'proprietaire',
@@ -447,44 +444,33 @@ export default function AddListing() {
         description_en: formData.descriptionFr || null,
         description_fr: formData.descriptionFr || null,
         description_ar: formData.descriptionAr || null,
-        images: imageUrls, // Use uploaded image URLs
+        images: imageUrls,
         phone: formData.phone || null,
         contact_phone: formData.phone || null,
         status: 'pending',
       };
 
-      console.log('Submitting property:', insertData);
-      const { data, error } = await supabase.from('properties').insert(insertData).select();
+      const { error } = await supabase.from('properties').insert(insertData).select();
 
       if (error) {
-        console.error('Error creating property:', error);
-        if (import.meta.env.DEV) {
-          console.error('Error details:', JSON.stringify(error, null, 2));
-          console.error('Insert data sent:', JSON.stringify(insertData, null, 2));
-        }
-        
         const errorMessage = getErrorMessage(error, isRTL, import.meta.env.DEV);
         throw new Error(errorMessage);
       }
 
-      if (import.meta.env.DEV) {
-        console.log('Property created successfully:', data);
-      }
-      
-      // Cleanup blob URLs
-      uploadedImages.forEach(url => URL.revokeObjectURL(url));
-      
+      uploadedImages.forEach((url) => URL.revokeObjectURL(url));
+
       setIsSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
       }, 3000);
     } catch (err) {
       console.error('Error during submission:', err);
-      const message = err instanceof Error ? err.message : (
-        isRTL 
-          ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' 
-          : 'Une erreur inattendue s\'est produite. Veuillez réessayer.'
-      );
+      const message =
+        err instanceof Error
+          ? err.message
+          : isRTL
+            ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'
+            : "Une erreur inattendue s'est produite. Veuillez réessayer.";
       alert(message);
       setIsSubmitting(false);
       setUploadProgress('');
@@ -512,9 +498,7 @@ export default function AddListing() {
               {t('addListing.loginRequired')}
             </h1>
             <p className="text-muted-foreground mb-6">
-              {isRTL
-                ? 'يجب تسجيل الدخول للوصول إلى هذه الصفحة'
-                : 'Vous devez être connecté pour accéder à cette page'}
+              {isRTL ? 'يجب تسجيل الدخول للوصول إلى هذه الصفحة' : 'Vous devez être connecté pour accéder à cette page'}
             </p>
             <div className="flex gap-4 justify-center">
               <Button asChild>
@@ -565,16 +549,12 @@ export default function AddListing() {
             <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-4">
               {t('addListing.title')}
             </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              {t('addListing.subtitle')}
-            </p>
+            <p className="text-muted-foreground max-w-xl mx-auto">{t('addListing.subtitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="bg-white rounded-xl border p-6">
-              <h2 className="font-display text-xl font-semibold mb-4">
-                {t('addListing.transactionType')}
-              </h2>
+              <h2 className="font-display text-xl font-semibold mb-4">{t('addListing.transactionType')}</h2>
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -604,9 +584,7 @@ export default function AddListing() {
             </div>
 
             <div className="bg-white rounded-xl border p-6">
-              <h2 className="font-display text-xl font-semibold mb-4">
-                {t('addListing.propertyType')}
-              </h2>
+              <h2 className="font-display text-xl font-semibold mb-4">{t('addListing.propertyType')}</h2>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {propertyTypes.map((type) => (
                   <button
@@ -629,7 +607,7 @@ export default function AddListing() {
 
             <div className="bg-white rounded-xl border p-6">
               <h2 className="font-display text-xl font-semibold mb-4">
-                {isRTL ? 'نوع المعلن' : 'Type d\'annonceur'}
+                {isRTL ? 'نوع المعلن' : "Type d'annonceur"}
               </h2>
               <div className="grid grid-cols-3 gap-3">
                 <button
@@ -645,6 +623,7 @@ export default function AddListing() {
                   <Home className="h-6 w-6 mx-auto mb-2" />
                   <p className="text-sm font-medium">{isRTL ? 'مالك' : 'Propriétaire'}</p>
                 </button>
+
                 <button
                   type="button"
                   onClick={() => handleSelectChange('announcerType', 'courtier')}
@@ -658,6 +637,7 @@ export default function AddListing() {
                   <Building className="h-6 w-6 mx-auto mb-2" />
                   <p className="text-sm font-medium">{isRTL ? 'سمسار' : 'Courtier'}</p>
                 </button>
+
                 <button
                   type="button"
                   onClick={() => handleSelectChange('announcerType', 'agence')}
@@ -678,13 +658,11 @@ export default function AddListing() {
               <h2 className="font-display text-xl font-semibold mb-4">
                 {t('addListing.city')} & {t('addListing.neighborhood')}
               </h2>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">{t('addListing.city')} *</Label>
-                  <Select
-                    value={formData.cityId}
-                    onValueChange={(value) => handleSelectChange('cityId', value)}
-                  >
+                  <Select value={formData.cityId} onValueChange={(value) => handleSelectChange('cityId', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder={t('hero.selectCity')} />
                     </SelectTrigger>
@@ -723,9 +701,7 @@ export default function AddListing() {
 
                 {showCustomNeighborhood && (
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="customNeighborhood">
-                      {t('addListing.customNeighborhood')}
-                    </Label>
+                    <Label htmlFor="customNeighborhood">{t('addListing.customNeighborhood')}</Label>
                     <Input
                       id="customNeighborhood"
                       name="customNeighborhood"
@@ -753,59 +729,32 @@ export default function AddListing() {
               <h2 className="font-display text-xl font-semibold mb-4">
                 {isRTL ? 'تفاصيل العقار' : 'Détails du bien'}
               </h2>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">
-                    {t('addListing.price')}{' '}
-                    {formData.transactionType === 'rent' && t('property.perMonth')}
+                    {t('addListing.price')} {formData.transactionType === 'rent' && t('property.perMonth')}
                   </Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    placeholder="1500000"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                  />
+                  <Input id="price" name="price" type="number" placeholder="1500000" value={formData.price} onChange={handleInputChange} />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="area">{t('addListing.area')}</Label>
-                  <Input
-                    id="area"
-                    name="area"
-                    type="number"
-                    placeholder="120"
-                    value={formData.area}
-                    onChange={handleInputChange}
-                  />
+                  <Input id="area" name="area" type="number" placeholder="120" value={formData.area} onChange={handleInputChange} />
                 </div>
-                {formData.propertyType !== 'land' &&
-                  formData.propertyType !== 'commercial' && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="bedrooms">{t('addListing.bedrooms')}</Label>
-                        <Input
-                          id="bedrooms"
-                          name="bedrooms"
-                          type="number"
-                          placeholder="3"
-                          value={formData.bedrooms}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="bathrooms">{t('addListing.bathrooms')}</Label>
-                        <Input
-                          id="bathrooms"
-                          name="bathrooms"
-                          type="number"
-                          placeholder="2"
-                          value={formData.bathrooms}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </>
-                  )}
+
+                {formData.propertyType !== 'land' && formData.propertyType !== 'commercial' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="bedrooms">{t('addListing.bedrooms')}</Label>
+                      <Input id="bedrooms" name="bedrooms" type="number" placeholder="3" value={formData.bedrooms} onChange={handleInputChange} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="bathrooms">{t('addListing.bathrooms')}</Label>
+                      <Input id="bathrooms" name="bathrooms" type="number" placeholder="2" value={formData.bathrooms} onChange={handleInputChange} />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -813,88 +762,55 @@ export default function AddListing() {
               <h2 className="font-display text-xl font-semibold mb-4">
                 {isRTL ? 'العنوان والوصف' : 'Titre et Description'}
               </h2>
+
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="titleFr">{t('addListing.title_fr')}</Label>
-                    <Input
-                      id="titleFr"
-                      name="titleFr"
-                      value={formData.titleFr}
-                      onChange={handleInputChange}
-                      placeholder="Appartement moderne à Maarif"
-                    />
+                    <Input id="titleFr" name="titleFr" value={formData.titleFr} onChange={handleInputChange} placeholder="Appartement moderne à Maarif" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="titleAr">{t('addListing.title_ar')}</Label>
-                    <Input
-                      id="titleAr"
-                      name="titleAr"
-                      value={formData.titleAr}
-                      onChange={handleInputChange}
-                      placeholder="شقة عصرية في المعاريف"
-                      dir="rtl"
-                    />
+                    <Input id="titleAr" name="titleAr" value={formData.titleAr} onChange={handleInputChange} placeholder="شقة عصرية في المعاريف" dir="rtl" />
                   </div>
                 </div>
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="descriptionFr">{t('addListing.description_fr')}</Label>
-                    <Textarea
-                      id="descriptionFr"
-                      name="descriptionFr"
-                      value={formData.descriptionFr}
-                      onChange={handleInputChange}
-                      placeholder="Décrivez votre bien..."
-                      rows={4}
-                    />
+                    <Textarea id="descriptionFr" name="descriptionFr" value={formData.descriptionFr} onChange={handleInputChange} placeholder="Décrivez votre bien..." rows={4} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="descriptionAr">{t('addListing.description_ar')}</Label>
-                    <Textarea
-                      id="descriptionAr"
-                      name="descriptionAr"
-                      value={formData.descriptionAr}
-                      onChange={handleInputChange}
-                      placeholder="صف عقارك..."
-                      rows={4}
-                      dir="rtl"
-                    />
+                    <Textarea id="descriptionAr" name="descriptionAr" value={formData.descriptionAr} onChange={handleInputChange} placeholder="صف عقارك..." rows={4} dir="rtl" />
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl border p-6">
-              <h2 className="font-display text-xl font-semibold mb-4">
-                {t('addListing.images')}
-              </h2>
+              <h2 className="font-display text-xl font-semibold mb-4">{t('addListing.images')}</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                {isRTL 
+                {isRTL
                   ? 'يمكنك تحميل حتى 6 صور (بحد أقصى 5 ميجابايت لكل صورة، JPEG/PNG/WebP)'
-                  : 'Vous pouvez télécharger jusqu\'à 6 images (max 5 Mo par image, JPEG/PNG/WebP)'
-                }
+                  : "Vous pouvez télécharger jusqu'à 6 images (max 5 Mo par image, JPEG/PNG/WebP)"}
               </p>
+
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {uploadedImages.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-video rounded-lg overflow-hidden bg-muted"
-                  >
+                  <div key={index} className="relative aspect-video rounded-lg overflow-hidden bg-muted">
                     <img
                       src={image}
                       alt={`Upload ${index + 1}`}
-                      className={cn(
-                        "w-full h-full object-cover",
-                        imageUploadStatus[index] === 'error' && "opacity-50"
-                      )}
+                      className={cn('w-full h-full object-cover', imageUploadStatus[index] === 'error' && 'opacity-50')}
                     />
-                    {/* Upload status indicator */}
+
                     {imageUploadStatus[index] === 'uploading' && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <Loader2 className="h-8 w-8 text-white animate-spin" />
                       </div>
                     )}
+
                     {imageUploadStatus[index] === 'error' && (
                       <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
                         <div className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
@@ -902,6 +818,7 @@ export default function AddListing() {
                         </div>
                       </div>
                     )}
+
                     {imageUploadStatus[index] === 'success' && (
                       <div className="absolute top-2 left-2">
                         <div className="bg-green-500 text-white p-1 rounded-full">
@@ -909,6 +826,7 @@ export default function AddListing() {
                         </div>
                       </div>
                     )}
+
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
@@ -919,47 +837,26 @@ export default function AddListing() {
                     </button>
                   </div>
                 ))}
+
                 {uploadedImages.length < 6 && (
                   <label className="aspect-video rounded-lg border-2 border-dashed border-muted hover:border-primary/30 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2">
                     <Upload className="h-8 w-8 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {t('addListing.uploadImages')}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      multiple
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
+                    <span className="text-sm text-muted-foreground">{t('addListing.uploadImages')}</span>
+                    <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleImageUpload} />
                   </label>
                 )}
               </div>
             </div>
 
             <div className="bg-white rounded-xl border p-6">
-              <h2 className="font-display text-xl font-semibold mb-4">
-                {t('addListing.phone')}
-              </h2>
+              <h2 className="font-display text-xl font-semibold mb-4">{t('addListing.phone')}</h2>
               <div className="space-y-2">
                 <Label htmlFor="phone">{t('addListing.phone')}</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="+212 6XX XX XX XX"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                />
+                <Input id="phone" name="phone" type="tel" placeholder="+212 6XX XX XX XX" value={formData.phone} onChange={handleInputChange} />
               </div>
             </div>
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full text-base"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" size="lg" className="w-full text-base" disabled={isSubmitting}>
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -971,9 +868,7 @@ export default function AddListing() {
             </Button>
 
             {uploadProgress && (
-              <p className="text-sm text-muted-foreground text-center animate-pulse">
-                {uploadProgress}
-              </p>
+              <p className="text-sm text-muted-foreground text-center animate-pulse">{uploadProgress}</p>
             )}
 
             <p className="text-sm text-muted-foreground text-center">
