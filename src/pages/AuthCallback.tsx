@@ -10,10 +10,45 @@ const REDIRECT_DELAY_SHORT_MS = 2000;
 const REDIRECT_DELAY_LONG_MS = 3000;
 
 /**
- * Redirect user to home - no role-based redirect needed
+ * Get redirect path based on user admin status
+ * Admin users → /admin
+ * Regular users → /
  */
-function getRedirectPath(): string {
-  return '/';
+async function getRedirectPath(userId: string): Promise<string> {
+  try {
+    console.log('🔍 Checking admin status for user:', userId);
+    
+    // Check if user is an admin by querying the admins table
+    const { data, error } = await supabase
+      .from('admins')
+      .select('user_id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      // PGRST116 is "not found" error, which is expected for non-admins
+      if (error.code === 'PGRST116') {
+        console.log('  → User is not admin, redirecting to home');
+        return '/';
+      } else {
+        console.error('  → Error checking admin status:', error);
+        // On error, default to home for safety
+        return '/';
+      }
+    }
+    
+    if (data) {
+      console.log('  → User is admin, redirecting to /admin');
+      return '/admin';
+    }
+    
+    console.log('  → User is not admin, redirecting to home');
+    return '/';
+  } catch (err) {
+    console.error('  → Exception checking admin status:', err);
+    // On exception, default to home for safety
+    return '/';
+  }
 }
 
 export default function AuthCallback() {
@@ -25,7 +60,7 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       try {
         console.log('🔐 Auth callback triggered');
-        console.log('Current URL:', window.location.href);
+        console.log('  - Current URL:', window.location.href);
 
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -43,7 +78,7 @@ export default function AuthCallback() {
         const error = hashParams.get('error') || queryParams.get('error');
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
 
-        console.log('Auth parameters:', { 
+        console.log('  - Auth parameters:', { 
           hasCode: !!code,
           hasAccessToken: !!accessToken, 
           hasRefreshToken: !!refreshToken, 
@@ -95,16 +130,17 @@ export default function AuthCallback() {
           
           if (data.session) {
             console.log('✅ Session created via PKCE code exchange');
-            console.log('User ID:', data.session.user.id);
-            console.log('User Email:', data.session.user.email);
+            console.log('  - User ID:', data.session.user.id);
+            console.log('  - User Email:', data.session.user.email);
             
             setStatus('success');
             setMessage('Email confirmed successfully! Redirecting...');
 
-            // Redirect to home
+            // Get redirect path based on admin status
+            const redirectPath = await getRedirectPath(data.session.user.id);
+            console.log('  - Redirect destination:', redirectPath);
+            
             setTimeout(() => {
-              const redirectPath = getRedirectPath();
-              console.log('Redirecting to:', redirectPath);
               navigate(redirectPath);
             }, REDIRECT_DELAY_SHORT_MS);
           } else {
@@ -141,16 +177,17 @@ export default function AuthCallback() {
 
           if (session) {
             console.log('✅ Session created successfully');
-            console.log('User ID:', session.user.id);
-            console.log('User Email:', session.user.email);
+            console.log('  - User ID:', session.user.id);
+            console.log('  - User Email:', session.user.email);
             
             setStatus('success');
             setMessage('Email confirmed successfully! Redirecting...');
 
-            // Redirect to home
+            // Get redirect path based on admin status
+            const redirectPath = await getRedirectPath(session.user.id);
+            console.log('  - Redirect destination:', redirectPath);
+            
             setTimeout(() => {
-              const redirectPath = getRedirectPath();
-              console.log('Redirecting to:', redirectPath);
               navigate(redirectPath);
             }, REDIRECT_DELAY_SHORT_MS);
           } else {
@@ -162,12 +199,32 @@ export default function AuthCallback() {
         } else if (accessToken && refreshToken) {
           // Direct token-based auth (legacy or alternative flow)
           console.log('✅ Access token found, session should be created automatically');
+          
+          // Wait a moment for Supabase to process the session
+          await new Promise(resolve => setTimeout(resolve, SESSION_WAIT_MS));
+
+          // Get the current session to get user ID for redirect
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !session) {
+            console.error('❌ Error getting session:', sessionError);
+            setStatus('error');
+            setMessage('Could not create session. Please log in.');
+            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+            return;
+          }
+          
           setStatus('success');
           setMessage('Authentication successful! Redirecting...');
           
+          console.log('  - User ID:', session.user.id);
+          console.log('  - User Email:', session.user.email);
+          
+          // Get redirect path based on admin status
+          const redirectPath = await getRedirectPath(session.user.id);
+          console.log('  - Redirect destination:', redirectPath);
+          
           setTimeout(() => {
-            const redirectPath = getRedirectPath();
-            console.log('Redirecting to:', redirectPath);
             navigate(redirectPath);
           }, REDIRECT_DELAY_SHORT_MS);
         } else {

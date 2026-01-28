@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { translateAuthError } from '@/lib/authErrors';
 import { supabase } from '@/lib/supabase';
+import { getSiteUrl } from '@/lib/utils';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -34,21 +35,26 @@ export default function Login() {
     setLoading(true);
     setError('');
     
-    // Use production domain from env var if available, otherwise use current origin
-    const productionDomain = import.meta.env.VITE_PRODUCTION_DOMAIN;
-    const redirectOrigin = productionDomain || window.location.origin;
+    // Use getSiteUrl() helper for consistent redirect URL
+    const siteUrl = getSiteUrl();
+    const redirectTo = `${siteUrl}/auth/callback`;
+    
+    console.log('🔐 Password reset requested');
+    console.log('  - Redirect URL:', redirectTo);
     
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${redirectOrigin}/reset-password`,
+      redirectTo,
     });
     
     setLoading(false);
     
     if (resetError) {
+      console.error('❌ Password reset error:', resetError);
       setError(resetError.message);
       return;
     }
     
+    console.log('✅ Password reset email sent');
     setResetEmailSent(true);
   };
 
