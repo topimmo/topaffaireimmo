@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { logger, createCorrelatedLogger } from '@/lib/logger'
+import { getSiteUrl } from '@/lib/utils'
 
 interface AuthContextType {
   user: User | null
@@ -139,9 +140,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     log.info('Signing up user');
 
     try {
+      const siteUrl = getSiteUrl();
+      const redirectTo = `${siteUrl}/auth/callback`;
+      
+      log.info('Sign up with redirect', { redirectTo });
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: redirectTo,
+        }
       });
       
       if (error) {
