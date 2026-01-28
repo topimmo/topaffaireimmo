@@ -5,6 +5,7 @@ import Home from "./components/home";
 import MobileFAB from "./components/layout/MobileFAB";
 import ProtectedRoute from "./components/ProtectedRoute"; // تم تعديل المسار
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
+import DebugMode from "./components/DebugMode";
 import { runStartupValidation } from "./lib/startup-validation";
 
 // Lazy load pages
@@ -297,6 +298,7 @@ function App() {
       </Suspense>
 
       <MobileFAB />
+      <DebugMode />
     </>
   );
 }
