@@ -197,10 +197,6 @@ export default function Header() {
                     {t('nav.addListing')}
                   </Link>
                 </Button>
-                  >
-                    {t('admin.title')}
-                  </Link>
-                )}
                 <Button
                   variant="outline"
                   onClick={() => {
