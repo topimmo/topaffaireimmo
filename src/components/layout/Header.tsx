@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 export default function Header() {
   const { t, isRTL } = useLanguage();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -110,6 +112,17 @@ export default function Header() {
                     {t('nav.addListing')}
                   </Link>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" />
+                        {isRTL ? 'لوحة الإدارة' : 'Administration'}
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                   <LogOut className="h-4 w-4 mr-2" />
@@ -197,6 +210,14 @@ export default function Header() {
                     {t('nav.addListing')}
                   </Link>
                 </Button>
+                {isAdmin && (
+                  <Button asChild variant="outline" className="mt-2">
+                    <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                      <ShieldCheck className="h-4 w-4" />
+                      {isRTL ? 'لوحة الإدارة' : 'Administration'}
+                    </Link>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {
