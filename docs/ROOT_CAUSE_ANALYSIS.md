@@ -20,12 +20,13 @@
    - Column values: 'owner', 'broker', 'agency'
 
 2. **Migration 044** (Schema Update): Updated trigger to use `announcer_type` with French values
+   - Expected column name: `announcer_type`
    - Expected values: 'proprietaire', 'courtier', 'agence'
-   - **Problem**: Trigger code was updated but column was never renamed
+   - **Problem**: Updated trigger code but never renamed the column
 
 3. **Migration 045** (Admin Whitelist): Further refined trigger with `announcer_type`
    - Assumed column existed from migration 044
-   - **Problem**: Column still doesn't exist
+   - **Problem**: Column still doesn't exist, causing INSERT to fail
 
 ### The Bug
 
@@ -105,14 +106,14 @@ SET announcer_type = CASE
   WHEN advertiser_type = 'owner' THEN 'proprietaire'
   WHEN advertiser_type = 'broker' THEN 'courtier'
   WHEN advertiser_type = 'agency' THEN 'agence'
-  ELSE advertiser_type
+  ELSE NULL  -- Invalid values become NULL
 END
 WHERE advertiser_type IS NOT NULL;
 
 -- Add constraint
 ALTER TABLE public.profiles 
 ADD CONSTRAINT profiles_announcer_type_check 
-CHECK (announcer_type IN ('proprietaire', 'courtier', 'agence'));
+CHECK (announcer_type IS NULL OR announcer_type IN ('proprietaire', 'courtier', 'agence'));
 
 -- Create sync trigger for backward compatibility
 CREATE TRIGGER sync_advertiser_announcer_type

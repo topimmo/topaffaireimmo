@@ -49,12 +49,13 @@ SET announcer_type = CASE
   WHEN advertiser_type = 'proprietaire' THEN 'proprietaire'
   WHEN advertiser_type = 'courtier' THEN 'courtier'
   WHEN advertiser_type = 'agence' THEN 'agence'
-  ELSE advertiser_type
+  ELSE NULL  -- Invalid values become NULL
 END
 WHERE advertiser_type IS NOT NULL
   AND (announcer_type IS NULL OR announcer_type = '');
 
-RAISE NOTICE 'Migrated data from advertiser_type to announcer_type';
+-- Log migration completion
+DO $$ BEGIN RAISE NOTICE 'Migrated data from advertiser_type to announcer_type'; END $$;
 
 -- =====================================================
 -- STEP 3: Update constraints
@@ -71,10 +72,7 @@ DROP CONSTRAINT IF EXISTS profiles_announcer_type_check;
 -- Add new announcer_type constraint with French values
 ALTER TABLE public.profiles 
 ADD CONSTRAINT profiles_announcer_type_check 
-CHECK (
-  announcer_type IS NULL 
-  OR announcer_type IN ('proprietaire', 'courtier', 'agence')
-);
+CHECK (announcer_type IS NULL OR announcer_type IN ('proprietaire', 'courtier', 'agence'));
 
 COMMENT ON COLUMN public.profiles.announcer_type IS
   'Type of announcer for real estate users: proprietaire (owner), courtier (broker), agence (agency).
@@ -102,10 +100,17 @@ SET advertiser_type = CASE
   WHEN announcer_type = 'proprietaire' THEN 'owner'
   WHEN announcer_type = 'courtier' THEN 'broker'
   WHEN announcer_type = 'agence' THEN 'agency'
-  ELSE announcer_type
+  ELSE NULL  -- Invalid values become NULL
 END
 WHERE announcer_type IS NOT NULL
-  AND (advertiser_type IS NULL OR advertiser_type != announcer_type);
+  AND (
+    advertiser_type IS NULL 
+    OR (advertiser_type IS NOT NULL AND announcer_type IS NOT NULL AND advertiser_type != CASE 
+      WHEN announcer_type = 'proprietaire' THEN 'owner'
+      WHEN announcer_type = 'courtier' THEN 'broker'
+      WHEN announcer_type = 'agence' THEN 'agency'
+    END)
+  );
 
 -- Add constraint to advertiser_type for backward compatibility
 ALTER TABLE public.profiles 
@@ -113,15 +118,13 @@ DROP CONSTRAINT IF EXISTS profiles_advertiser_type_check_legacy;
 
 ALTER TABLE public.profiles 
 ADD CONSTRAINT profiles_advertiser_type_check_legacy 
-CHECK (
-  advertiser_type IS NULL 
-  OR advertiser_type IN ('owner', 'broker', 'agency', 'proprietaire', 'courtier', 'agence')
-);
+CHECK (advertiser_type IS NULL OR advertiser_type IN ('owner', 'broker', 'agency', 'proprietaire', 'courtier', 'agence'));
 
 -- Mark as deprecated in schema
 COMMENT ON COLUMN public.profiles.advertiser_type IS
-  'DEPRECATED: Use announcer_type instead. Kept for backward compatibility.
-   Maps to English values: owner, broker, agency.';
+  'DEPRECATED: Use announcer_type instead. Kept for backward compatibility until v2.0.
+   Scheduled for removal: Q2 2026. Maps to English values: owner, broker, agency.
+   Automatically synced with announcer_type via trigger.';
 
 -- =====================================================
 -- STEP 6: Create trigger to keep both columns in sync
@@ -137,21 +140,24 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  -- If announcer_type is set, sync to advertiser_type
+  -- Priority 1: If announcer_type is set (new standard), sync to advertiser_type
   IF NEW.announcer_type IS NOT NULL THEN
     NEW.advertiser_type := CASE
       WHEN NEW.announcer_type = 'proprietaire' THEN 'owner'
       WHEN NEW.announcer_type = 'courtier' THEN 'broker'
       WHEN NEW.announcer_type = 'agence' THEN 'agency'
-      ELSE NEW.advertiser_type
+      ELSE NULL  -- Invalid values become NULL
     END;
-  -- If advertiser_type is set but announcer_type is null, sync the other way
-  ELSIF NEW.advertiser_type IS NOT NULL AND (TG_OP = 'INSERT' OR OLD.advertiser_type IS NULL) THEN
+  -- Priority 2: If advertiser_type is set but announcer_type is null (legacy usage)
+  ELSIF NEW.advertiser_type IS NOT NULL THEN
     NEW.announcer_type := CASE
       WHEN NEW.advertiser_type = 'owner' THEN 'proprietaire'
       WHEN NEW.advertiser_type = 'broker' THEN 'courtier'
       WHEN NEW.advertiser_type = 'agency' THEN 'agence'
-      ELSE NEW.advertiser_type
+      WHEN NEW.advertiser_type = 'proprietaire' THEN 'proprietaire'
+      WHEN NEW.advertiser_type = 'courtier' THEN 'courtier'
+      WHEN NEW.advertiser_type = 'agence' THEN 'agence'
+      ELSE NULL  -- Invalid values become NULL
     END;
   END IF;
   
@@ -161,7 +167,9 @@ $$;
 
 COMMENT ON FUNCTION public.sync_advertiser_announcer_type() IS
   'Keeps advertiser_type and announcer_type in sync for backward compatibility.
-   Priority: announcer_type (new) overwrites advertiser_type (deprecated).';
+   Priority: announcer_type (new standard) always syncs to advertiser_type (deprecated).
+   If only advertiser_type is set, it syncs to announcer_type.
+   Invalid values in either column are converted to NULL.';
 
 -- Create trigger
 CREATE TRIGGER sync_advertiser_announcer_type
