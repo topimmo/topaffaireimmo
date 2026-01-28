@@ -29,7 +29,7 @@ import {
   Loader2,
   LogIn,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, mapTransactionType } from '@/lib/utils';
 
 interface City {
   id: number;
@@ -430,7 +430,7 @@ export default function AddListing() {
       // Build insert data - only include fields that exist in the database
       const insertData: Record<string, unknown> = {
         owner_id: user.id,
-        transaction_type: formData.transactionType || 'sale',
+        transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         announcer_type: formData.announcerType || 'proprietaire',
         city_id: parseInt(formData.cityId),

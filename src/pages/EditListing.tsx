@@ -30,7 +30,7 @@ import {
   Loader2,
   ArrowLeft,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, mapTransactionType } from '@/lib/utils';
 
 interface City {
   id: number;
@@ -364,7 +364,7 @@ export default function EditListing() {
       const { error } = await supabase
         .from('properties')
         .update({
-          transaction_type: formData.transactionType,
+          transaction_type: mapTransactionType(formData.transactionType),
           property_type: formData.propertyType,
           city_id: parseInt(formData.cityId),
           neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
