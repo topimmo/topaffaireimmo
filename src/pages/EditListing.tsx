@@ -54,6 +54,42 @@ const propertyTypes = [
   { value: 'land', icon: Trees },
 ];
 
+/**
+ * Maps UI transaction type values to database values
+ * Ensures that only 'sale' or 'rent' are sent to the database
+ */
+function mapTransactionType(value: string): 'sale' | 'rent' {
+  // Normalize the value
+  const normalized = value?.toLowerCase().trim();
+  
+  // Map French labels
+  if (normalized === 'vente' || normalized === 'à vendre') {
+    return 'sale';
+  }
+  if (normalized === 'location' || normalized === 'à louer') {
+    return 'rent';
+  }
+  
+  // Map Arabic labels
+  if (normalized === 'للبيع') {
+    return 'sale';
+  }
+  if (normalized === 'للإيجار') {
+    return 'rent';
+  }
+  
+  // Already correct database values
+  if (normalized === 'sale') {
+    return 'sale';
+  }
+  if (normalized === 'rent') {
+    return 'rent';
+  }
+  
+  // Default to 'sale' if value is unrecognized
+  return 'sale';
+}
+
 export default function EditListing() {
   const { id } = useParams<{ id: string }>();
   const { t, language, isRTL } = useLanguage();
@@ -364,7 +400,7 @@ export default function EditListing() {
       const { error } = await supabase
         .from('properties')
         .update({
-          transaction_type: formData.transactionType,
+          transaction_type: mapTransactionType(formData.transactionType),
           property_type: formData.propertyType,
           city_id: parseInt(formData.cityId),
           neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
