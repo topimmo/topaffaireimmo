@@ -16,6 +16,72 @@ export interface LogEntry {
 }
 
 /**
+ * Sensitive field names to sanitize in logs
+ */
+const SENSITIVE_FIELDS = [
+  'password',
+  'token',
+  'accessToken',
+  'access_token',
+  'refreshToken',
+  'refresh_token',
+  'apiKey',
+  'api_key',
+  'secret',
+  'sessionId',
+  'session_id'
+];
+
+/**
+ * Sanitize sensitive data before logging
+ */
+function sanitizeData(data: unknown): unknown {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  // Don't sanitize primitive types
+  if (typeof data !== 'object') {
+    return data;
+  }
+
+  // Handle arrays
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeData(item));
+  }
+
+  // Handle objects
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    const lowerKey = key.toLowerCase();
+    const isSensitive = SENSITIVE_FIELDS.some(field => 
+      lowerKey.includes(field.toLowerCase())
+    );
+
+    if (isSensitive) {
+      // For email, show partial
+      if (lowerKey.includes('email')) {
+        const emailStr = String(value);
+        const parts = emailStr.split('@');
+        if (parts.length === 2) {
+          sanitized[key] = `${parts[0].substring(0, 2)}***@${parts[1]}`;
+        } else {
+          sanitized[key] = '***';
+        }
+      } else {
+        sanitized[key] = '***hidden***';
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeData(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
  * Generate a unique correlation ID for tracking requests
  */
 export function generateCorrelationId(): string {
@@ -76,7 +142,7 @@ class Logger {
   private storeLog(entry: LogEntry): void {
     this.logs.push(entry);
     
-    // Keep only the last N logs
+    // Keep only the last N logs (prevent memory issues)
     if (this.logs.length > this.maxStoredLogs) {
       this.logs.shift();
     }
@@ -96,12 +162,15 @@ class Logger {
       return;
     }
 
+    // Sanitize data before storing/logging
+    const sanitizedData = data ? sanitizeData(data) : undefined;
+
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       category,
       message,
-      data,
+      data: sanitizedData,
       correlationId
     };
 
@@ -113,16 +182,16 @@ class Logger {
 
     switch (level) {
       case 'debug':
-        console.debug(formattedMessage, data);
+        console.debug(formattedMessage, sanitizedData);
         break;
       case 'info':
-        console.info(formattedMessage, data);
+        console.info(formattedMessage, sanitizedData);
         break;
       case 'warn':
-        console.warn(formattedMessage, data);
+        console.warn(formattedMessage, sanitizedData);
         break;
       case 'error':
-        console.error(formattedMessage, data);
+        console.error(formattedMessage, sanitizedData);
         break;
     }
   }

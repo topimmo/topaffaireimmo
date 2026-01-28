@@ -21,6 +21,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   /**
+   * Check if error is a network error
+   */
+  const isNetworkError = (error: unknown): boolean => {
+    if (!error) return false;
+    
+    const errorMessage = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    
+    // Common network error patterns
+    const networkErrorPatterns = [
+      'failed to fetch',
+      'network error',
+      'network request failed',
+      'timeout',
+      'connection refused',
+      'connection timeout',
+      'networkerror',
+      'not connected to internet'
+    ];
+    
+    return networkErrorPatterns.some(pattern => errorMessage.includes(pattern));
+  };
+
+  /**
    * Initialize auth session with retry logic
    */
   const initializeAuth = useCallback(async (retryCount = 0): Promise<void> => {
@@ -36,9 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         log.error('Failed to get session', error);
         
         // Retry on network errors
-        if (retryCount < maxRetries && error.message?.includes('Failed to fetch')) {
-          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
-          log.info(`Retrying in ${delay}ms`, { retryCount });
+        if (retryCount < maxRetries && isNetworkError(error)) {
+          // Exponential backoff with jitter to prevent thundering herd
+          const baseDelay = Math.pow(2, retryCount) * 1000;
+          const jitter = Math.random() * 1000;
+          const delay = baseDelay + jitter;
+          
+          log.info(`Retrying in ${Math.round(delay)}ms`, { retryCount });
           
           await new Promise(resolve => setTimeout(resolve, delay));
           return initializeAuth(retryCount + 1);
@@ -108,7 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     }
 
-    log.info('Signing up user', { email });
+    // Log without email for privacy - use correlation ID for tracking
+    log.info('Signing up user');
 
     try {
       const { error } = await supabase.auth.signUp({
@@ -119,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         log.error('Signup failed', error);
       } else {
-        log.info('Signup successful', { email });
+        log.info('Signup successful');
       }
       
       return { error: error || null };
@@ -138,7 +166,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     }
     
-    log.info('Signing in user', { email });
+    // Log without email for privacy - use correlation ID for tracking
+    log.info('Signing in user');
 
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -146,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         log.error('Sign in failed', error);
       } else {
-        log.info('Sign in successful', { email });
+        log.info('Sign in successful');
       }
       
       return { error: error || null };

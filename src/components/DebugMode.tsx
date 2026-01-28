@@ -24,20 +24,24 @@ export default function DebugMode() {
     const debugParam = params.get('debug') === 'true';
     const debugStorage = localStorage.getItem('debug-mode') === 'true';
     
-    setIsVisible(debugParam || debugStorage);
+    // Only allow debug mode for authenticated users
+    // In production, you might want to restrict this to admins only
+    const canAccessDebugMode = user !== null; // Require authentication
     
-    if (debugParam && !debugStorage) {
+    setIsVisible((debugParam || debugStorage) && canAccessDebugMode);
+    
+    if (debugParam && !debugStorage && canAccessDebugMode) {
       localStorage.setItem('debug-mode', 'true');
     }
-  }, []);
+  }, [user]);
 
-  // Refresh logs every 2 seconds
+  // Refresh logs every 5 seconds (reduced frequency to avoid performance issues)
   useEffect(() => {
     if (!isVisible) return;
     
     const interval = setInterval(() => {
       setLogs(logger.getLogs());
-    }, 2000);
+    }, 5000); // Increased from 2s to 5s
     
     return () => clearInterval(interval);
   }, [isVisible]);
@@ -53,8 +57,8 @@ export default function DebugMode() {
           setSessionInfo({
             expiresAt: new Date(data.session.expires_at! * 1000).toISOString(),
             expiresIn: Math.floor((data.session.expires_at! * 1000 - Date.now()) / 1000),
-            accessToken: data.session.access_token.substring(0, 20) + '...',
-            refreshToken: data.session.refresh_token.substring(0, 20) + '...',
+            accessToken: '***hidden***', // Hide for security
+            refreshToken: '***hidden***', // Hide for security
           });
         }
       } catch (err) {
@@ -63,7 +67,7 @@ export default function DebugMode() {
     }
     
     fetchSessionInfo();
-    const interval = setInterval(fetchSessionInfo, 5000);
+    const interval = setInterval(fetchSessionInfo, 10000); // Increased from 5s to 10s
     
     return () => clearInterval(interval);
   }, [isVisible]);
@@ -84,6 +88,14 @@ export default function DebugMode() {
   };
 
   const downloadLogs = () => {
+    // Warn user about sensitive data
+    const confirmed = window.confirm(
+      'WARNING: The exported logs may contain sensitive information (user IDs, error messages, etc.). ' +
+      'Do not share this file publicly. Continue?'
+    );
+    
+    if (!confirmed) return;
+    
     const logsJson = logger.exportLogs();
     const blob = new Blob([logsJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);

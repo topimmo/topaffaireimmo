@@ -27,15 +27,17 @@
 
 -- This function checks if an image should be accessible based on property status
 -- Frontend should use this before displaying images OR use signed URLs
+-- NOTE: This implementation checks if owner has ANY approved property
+-- For stricter control, use property_images table to check specific property status
 CREATE OR REPLACE FUNCTION public.can_access_property_image(
   image_path TEXT
 )
 RETURNS BOOLEAN AS $$
 DECLARE
   owner_id_from_path UUID;
-  property_status TEXT;
   requesting_user_id UUID;
   is_user_admin BOOLEAN;
+  has_approved_property BOOLEAN;
 BEGIN
   -- Get requesting user ID
   requesting_user_id := auth.uid();
@@ -58,18 +60,27 @@ BEGIN
     RETURN TRUE;
   END IF;
   
-  -- For public access, check if ANY property by this owner with this image is approved
-  -- This is a simplified check - in reality you'd need to track image-property relationships
-  -- For now, we check if the owner has any approved properties
-  SELECT status INTO property_status
-  FROM public.properties
-  WHERE owner_id = owner_id_from_path
-    AND status = 'approved'
-  LIMIT 1;
+  -- For public access, check if this specific image belongs to an approved property
+  -- This is the proper way using property_images table
+  has_approved_property := EXISTS (
+    SELECT 1 
+    FROM public.property_images pi
+    JOIN public.properties p ON pi.property_id = p.id
+    WHERE pi.image_path = image_path 
+      AND p.status = 'approved'
+  );
   
-  -- If owner has approved properties, allow access to their images
-  -- Note: This is not perfect - ideally we'd track which image belongs to which property
-  RETURN property_status IS NOT NULL;
+  -- If no entry in property_images table, fall back to checking if owner has any approved property
+  -- This is for backward compatibility during migration
+  IF NOT has_approved_property THEN
+    has_approved_property := EXISTS (
+      SELECT 1 FROM public.properties
+      WHERE owner_id = owner_id_from_path AND status = 'approved'
+      LIMIT 1
+    );
+  END IF;
+  
+  RETURN has_approved_property;
   
 EXCEPTION
   WHEN OTHERS THEN
@@ -86,8 +97,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 DROP POLICY IF EXISTS "property_images_read_public" ON storage.objects;
 
 -- Create more restrictive public read policy
--- This still allows public access but documents the security consideration
--- For strict security, remove this policy and use signed URLs instead
+-- ⚠️ CRITICAL SECURITY NOTE:
+-- This policy still allows public access (TRUE clause) for backward compatibility.
+-- This means ALL images are publicly accessible regardless of property status.
+-- To enforce strict security:
+--   1. Remove the "TRUE" clause below
+--   2. Update frontend to use signed URLs via Supabase storage API
+--   3. Populate property_images table for all uploads
+--
+-- Current policy (Phase 1 - Transitional):
 CREATE POLICY "property_images_read_approved_owners_only" ON storage.objects
   FOR SELECT USING (
     bucket_id = 'property-images' AND (
@@ -95,8 +113,13 @@ CREATE POLICY "property_images_read_approved_owners_only" ON storage.objects
       auth.uid() IN (SELECT user_id FROM public.admins) OR
       -- Owner can see their own
       (auth.uid() IS NOT NULL AND (storage.foldername(name))[1] = auth.uid()::text) OR
-      -- Public can see if owner has approved properties (simplified check)
-      -- For strict security, remove this clause and use signed URLs
+      -- ⚠️ PUBLIC ACCESS - REMOVE THIS FOR STRICT SECURITY
+      -- This clause makes all images public. For Phase 2, replace with:
+      -- EXISTS (
+      --   SELECT 1 FROM public.property_images pi
+      --   JOIN public.properties p ON pi.property_id = p.id
+      --   WHERE pi.image_path = name AND p.status = 'approved'
+      -- )
       TRUE -- Temporarily keep public access for backward compatibility
     )
   );
@@ -107,14 +130,19 @@ CREATE POLICY "property_images_read_approved_owners_only" ON storage.objects
 
 -- Create table to track which images belong to which properties
 -- This enables proper access control
+-- Note: Same image path can be used across different properties (logos, watermarks)
 CREATE TABLE IF NOT EXISTS public.property_images (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
   image_path TEXT NOT NULL,
   image_order INT DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(property_id, image_path)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  -- Removed UNIQUE constraint to allow same image across multiple properties
 );
+
+-- Add index for performance (without uniqueness constraint)
+CREATE INDEX IF NOT EXISTS idx_property_images_property_path 
+  ON public.property_images(property_id, image_path);
 
 -- Enable RLS
 ALTER TABLE public.property_images ENABLE ROW LEVEL SECURITY;
@@ -173,28 +201,22 @@ CREATE POLICY "property_images_delete_admin" ON public.property_images
 
 -- This function returns a signed URL for an image if user has access
 -- Frontend should use this for serving images securely
-CREATE OR REPLACE FUNCTION public.get_property_image_signed_url(
-  image_path TEXT,
-  expires_in_seconds INT DEFAULT 3600
+-- NOTE: This is a placeholder for access control check
+-- Actual signed URL generation must be done in the application using Supabase client
+CREATE OR REPLACE FUNCTION public.validate_property_image_access(
+  image_path TEXT
 )
-RETURNS TEXT AS $$
+RETURNS BOOLEAN AS $$
 DECLARE
   has_access BOOLEAN;
 BEGIN
-  -- Check if user has access
+  -- Check if user has access using the helper function
   has_access := public.can_access_property_image(image_path);
   
-  IF NOT has_access THEN
-    RAISE EXCEPTION 'Access denied to image: %', image_path;
-  END IF;
-  
-  -- Note: Actual signed URL generation must be done from the application
-  -- This function is a placeholder for access control check
-  -- Return the path - frontend will generate signed URL using Supabase client
-  RETURN image_path;
+  RETURN has_access;
   
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
 -- =====================================================
 -- STEP 5: Add Indexes for Performance
