@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [profileLoading, setProfileLoading] = useState(false)
 
-  const fetchProfile = async (userId: string, retryCount = 0) => {
+  const fetchProfile = async (userId: string) => {
     setProfileLoading(true)
     try {
       const { data, error } = await supabase
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: { message: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement.' } as AuthError }
     }
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     })
