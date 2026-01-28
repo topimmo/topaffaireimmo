@@ -11,12 +11,14 @@ export function useAdmin() {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     async function checkAdminStatus() {
       if (!user) {
         setIsAdmin(false);
         setLoading(false);
+        setError(null);
         return;
       }
 
@@ -28,14 +30,25 @@ export function useAdmin() {
           .eq('user_id', user.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           // PGRST116 is "not found" error, which is expected for non-admins
-          console.error('Error checking admin status:', error);
+          if (error.code === 'PGRST116') {
+            setIsAdmin(false);
+            setError(null);
+          } else {
+            // Other errors (network, permission, etc.) should be logged
+            console.error('Error checking admin status:', error);
+            setError(new Error(error.message));
+            // For safety, don't grant admin access on error
+            setIsAdmin(false);
+          }
+        } else {
+          setIsAdmin(!!data);
+          setError(null);
         }
-
-        setIsAdmin(!!data);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
+      } catch (err) {
+        console.error('Error checking admin status:', err);
+        setError(err instanceof Error ? err : new Error('Unknown error'));
         setIsAdmin(false);
       } finally {
         setLoading(false);
@@ -45,5 +58,5 @@ export function useAdmin() {
     checkAdminStatus();
   }, [user]);
 
-  return { isAdmin, loading };
+  return { isAdmin, loading, error };
 }

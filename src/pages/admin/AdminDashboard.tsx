@@ -11,7 +11,7 @@ interface Stats {
   pendingListings: number;
   approvedListings: number;
   rejectedListings: number;
-  totalUsers: number;
+  totalListings: number;
 }
 
 export default function AdminDashboard() {
@@ -20,7 +20,7 @@ export default function AdminDashboard() {
     pendingListings: 0,
     approvedListings: 0,
     rejectedListings: 0,
-    totalUsers: 0,
+    totalListings: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
       pendingListings: pendingCount || 0,
       approvedListings: approvedCount || 0,
       rejectedListings: rejectedCount || 0,
-      totalUsers: allListingsCount || 0, // Show total listings instead of users
+      totalListings: allListingsCount || 0,
     });
 
     setLoading(false);
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     },
     {
       title: isRTL ? 'إجمالي الإعلانات' : 'Total Listings',
-      value: stats.totalUsers, // Reusing totalUsers field for total listings count
+      value: stats.totalListings,
       icon: FileText,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',

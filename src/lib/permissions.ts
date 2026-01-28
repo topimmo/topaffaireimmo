@@ -8,7 +8,7 @@
  * Legacy function - kept for backward compatibility
  * All authenticated users can upload property images (enforced by RLS)
  */
-export function canUploadPropertyImages(userId: string | null): boolean {
+export function canUploadPropertyImages(userId: string | null | undefined): boolean {
   return !!userId;
 }
 
@@ -16,7 +16,7 @@ export function canUploadPropertyImages(userId: string | null): boolean {
  * Legacy function - kept for backward compatibility  
  * All authenticated users can create property listings (enforced by RLS)
  */
-export function canCreatePropertyListing(userId: string | null): boolean {
+export function canCreatePropertyListing(userId: string | null | undefined): boolean {
   return !!userId;
 }
 

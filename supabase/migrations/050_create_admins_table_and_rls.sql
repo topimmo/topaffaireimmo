@@ -25,13 +25,18 @@ CREATE TABLE IF NOT EXISTS public.admins (
 -- Enable RLS on admins table
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 
--- Only admins can view the admins table
+-- IMPORTANT: To create the first admin, RLS must be bypassed using service role key
+-- or the admin should be created BEFORE enabling these policies.
+-- From SQL console (which uses service role): INSERT INTO public.admins (user_id) VALUES ('uuid');
+
+-- Only admins can view the admins table (they can only see all admin records)
 CREATE POLICY "admins_select_admin_only" ON public.admins
   FOR SELECT USING (
     auth.uid() IN (SELECT user_id FROM public.admins)
   );
 
 -- Only admins can insert new admins
+-- NOTE: First admin must be created via service role or before RLS is enabled
 CREATE POLICY "admins_insert_admin_only" ON public.admins
   FOR INSERT WITH CHECK (
     auth.uid() IN (SELECT user_id FROM public.admins)
@@ -125,15 +130,15 @@ CREATE POLICY "properties_select_public" ON public.properties
 -- UPDATE Policies:
 -- 1. Users can update their own listings
 CREATE POLICY "properties_update_own" ON public.properties
-  FOR UPDATE USING (
-    owner_id = auth.uid()
-  );
+  FOR UPDATE 
+  USING (owner_id = auth.uid())
+  WITH CHECK (owner_id = auth.uid());
 
 -- 2. Admin can update ALL listings
 CREATE POLICY "properties_update_admin" ON public.properties
-  FOR UPDATE USING (
-    auth.uid() IN (SELECT user_id FROM public.admins)
-  );
+  FOR UPDATE 
+  USING (auth.uid() IN (SELECT user_id FROM public.admins))
+  WITH CHECK (auth.uid() IN (SELECT user_id FROM public.admins));
 
 -- DELETE Policies:
 -- 1. Users can delete their own listings
@@ -215,6 +220,9 @@ CREATE POLICY "property_images_read_admin" ON storage.objects
   );
 
 -- 3. Public can read all images (for approved property display)
+-- NOTE: This allows public access to all images including those from pending listings
+-- If you need to restrict this, you would need a more complex policy that checks
+-- the property status via a join, which is not directly supported in storage policies
 CREATE POLICY "property_images_read_public" ON storage.objects
   FOR SELECT USING (
     bucket_id = 'property-images'
