@@ -203,7 +203,9 @@ BEGIN
   -- Insert profile with defensive column handling
   -- ================================================
   
-  -- Check if 'role' column exists (done once during migration, cached for performance)
+  -- Check if 'role' column exists
+  -- Note: This query executes on every signup. For high-traffic applications,
+  -- consider using a configuration table or creating separate function versions.
   SELECT EXISTS (
     SELECT 1 
     FROM information_schema.columns 
@@ -232,10 +234,10 @@ BEGIN
       NEW.email,  -- Email already validated as NOT NULL above
       role_value,  -- Populate role column
       user_role_value,  -- Populate user_role column
-      COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-      COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
+      COALESCE(NEW.raw_user_meta_data->>'full_name', NULL),
+      NEW.raw_user_meta_data->>'phone',
       announcer_type_value,
-      COALESCE(NEW.raw_user_meta_data->>'company_name', NULL),
+      NEW.raw_user_meta_data->>'company_name',
       true,  -- is_active
       false,  -- is_verified (will be set to true on email confirmation)
       CASE WHEN user_role_value = 'admin' THEN true ELSE false END  -- is_admin
@@ -270,10 +272,10 @@ BEGIN
       NEW.id,
       NEW.email,  -- Email already validated as NOT NULL above
       user_role_value,  -- Populate user_role column
-      COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-      COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
+      COALESCE(NEW.raw_user_meta_data->>'full_name', NULL),
+      NEW.raw_user_meta_data->>'phone',
       announcer_type_value,
-      COALESCE(NEW.raw_user_meta_data->>'company_name', NULL),
+      NEW.raw_user_meta_data->>'company_name',
       true,  -- is_active
       false,  -- is_verified (will be set to true on email confirmation)
       CASE WHEN user_role_value = 'admin' THEN true ELSE false END  -- is_admin

@@ -57,9 +57,9 @@ The previous `handle_new_user()` function (migration 045):
    - `role`: same as `user_role` (if column exists)
    - `user_role`: `COALESCE(metadata->>'user_role', 'user')`
    - `announcer_type`: `'proprietaire'` for non-admins, NULL for admins
-   - `full_name`: `COALESCE(metadata->>'full_name', '')`
-   - `phone`: `COALESCE(metadata->>'phone', NULL)` - can be NULL
-   - `company_name`: `COALESCE(metadata->>'company_name', NULL)` - can be NULL
+   - `full_name`: `COALESCE(metadata->>'full_name', NULL)`
+   - `phone`: `metadata->>'phone'` (can be NULL)
+   - `company_name`: `metadata->>'company_name'` (can be NULL)
 
 ✅ **Admin Whitelist Support**: Auto-promotes whitelisted emails
 
@@ -200,7 +200,7 @@ After this migration:
 
 ### Migration File
 - **Location**: `supabase/migrations/047_fix_profile_trigger_not_null_defensive.sql`
-- **Size**: ~370 lines
+- **Size**: 406 lines
 - **Type**: Defensive schema + trigger fix
 
 ### Changes Made
