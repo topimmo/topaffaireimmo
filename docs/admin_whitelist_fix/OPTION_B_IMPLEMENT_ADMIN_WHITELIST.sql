@@ -330,8 +330,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.admin_whitelist TO authenticated;
 /*
 INSERT INTO public.admin_whitelist (email, notes)
 VALUES 
-  ('admin@topaffaireimmo.com', 'Platform administrator - primary contact'),
-  ('owner@topaffaireimmo.com', 'Business owner and co-founder')
+  ('admin@yourdomain.com', 'Platform administrator - primary contact'),
+  ('owner@yourdomain.com', 'Business owner and co-founder')
 ON CONFLICT (email) DO NOTHING;  -- Idempotent: won't error if already exists
 */
 
@@ -383,8 +383,9 @@ SELECT
   tgname AS trigger_name,
   tgfoid::regproc AS function_name,
   tgenabled AS enabled,
-  CASE tgtype & 66
-    WHEN 2 THEN 'BEFORE'
+  CASE 
+    WHEN tgtype & 2 = 2 THEN 'BEFORE'
+    WHEN tgtype & 64 = 64 THEN 'INSTEAD OF'
     ELSE 'AFTER'
   END AS timing,
   CASE 

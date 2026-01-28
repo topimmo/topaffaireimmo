@@ -92,9 +92,9 @@ END $$;
 SELECT 
   tgname AS trigger_name,
   tgfoid::regproc AS function_name,
-  CASE tgtype & 66
-    WHEN 2 THEN 'BEFORE'
-    WHEN 64 THEN 'INSTEAD OF'
+  CASE 
+    WHEN tgtype & 2 = 2 THEN 'BEFORE'
+    WHEN tgtype & 64 = 64 THEN 'INSTEAD OF'
     ELSE 'AFTER'
   END AS timing
 FROM pg_trigger

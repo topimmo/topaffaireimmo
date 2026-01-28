@@ -16,9 +16,9 @@ SELECT
   tgfoid::regproc AS function_name,
   tgenabled AS enabled,
   CASE tgtype & 1 WHEN 1 THEN 'ROW' ELSE 'STATEMENT' END AS level,
-  CASE tgtype & 66
-    WHEN 2 THEN 'BEFORE'
-    WHEN 64 THEN 'INSTEAD OF'
+  CASE 
+    WHEN tgtype & 2 = 2 THEN 'BEFORE'
+    WHEN tgtype & 64 = 64 THEN 'INSTEAD OF'
     ELSE 'AFTER'
   END AS timing,
   CASE 
@@ -307,8 +307,9 @@ SELECT
   tgname AS trigger_name,
   tgfoid::regproc AS function_name,
   tgenabled AS enabled,
-  CASE tgtype & 66
-    WHEN 2 THEN 'BEFORE'
+  CASE 
+    WHEN tgtype & 2 = 2 THEN 'BEFORE'
+    WHEN tgtype & 64 = 64 THEN 'INSTEAD OF'
     ELSE 'AFTER'
   END AS timing,
   CASE 
