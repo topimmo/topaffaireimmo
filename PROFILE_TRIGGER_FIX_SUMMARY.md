@@ -53,7 +53,7 @@ The previous `handle_new_user()` function (migration 045):
 ✅ **Dynamic Schema Detection**: Checks if `role` column exists before inserting
 ✅ **Safe Defaults for ALL Fields**:
    - `id`: from `NEW.id` (always present)
-   - `email`: `COALESCE(NEW.email, '')` - never NULL
+   - `email`: Validated to never be NULL (raises exception if NULL from auth.users)
    - `role`: same as `user_role` (if column exists)
    - `user_role`: `COALESCE(metadata->>'user_role', 'user')`
    - `announcer_type`: `'proprietaire'` for non-admins, NULL for admins
@@ -200,7 +200,7 @@ After this migration:
 
 ### Migration File
 - **Location**: `supabase/migrations/047_fix_profile_trigger_not_null_defensive.sql`
-- **Size**: 374 lines
+- **Size**: ~370 lines
 - **Type**: Defensive schema + trigger fix
 
 ### Changes Made

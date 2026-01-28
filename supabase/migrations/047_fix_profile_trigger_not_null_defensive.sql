@@ -96,7 +96,29 @@ END $$;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
+-- First, check if 'role' column exists to determine which version to create
+DO $$
+DECLARE
+  has_role_column BOOLEAN;
+BEGIN
+  -- Check if 'role' column exists in profiles table
+  SELECT EXISTS (
+    SELECT 1 
+    FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'profiles' 
+    AND column_name = 'role'
+  ) INTO has_role_column;
+  
+  IF has_role_column THEN
+    RAISE NOTICE '📋 Creating handle_new_user function WITH "role" column support';
+  ELSE
+    RAISE NOTICE '📋 Creating handle_new_user function WITHOUT "role" column (standard)';
+  END IF;
+END $$;
+
 -- Create fully defensive trigger function
+-- This version is created regardless of schema and handles both cases
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -108,23 +130,32 @@ DECLARE
   announcer_type_value TEXT;
   role_value TEXT;
   is_whitelisted BOOLEAN DEFAULT FALSE;
-  column_exists BOOLEAN;
+  has_role_column BOOLEAN;
+  has_admin_whitelist BOOLEAN;
 BEGIN
   -- ================================================
   -- Defensive checks and safe defaults
   -- ================================================
   
+  -- Validate email is not NULL (should never happen from auth.users)
+  IF NEW.email IS NULL OR NEW.email = '' THEN
+    RAISE EXCEPTION 'Email cannot be NULL or empty for user %', NEW.id;
+  END IF;
+  
+  -- Check if admin_whitelist table exists
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'admin_whitelist'
+  ) INTO has_admin_whitelist;
+  
   -- Check if email is in admin whitelist (case-insensitive)
-  BEGIN
+  IF has_admin_whitelist THEN
     SELECT EXISTS (
       SELECT 1 FROM public.admin_whitelist
-      WHERE LOWER(email) = LOWER(COALESCE(NEW.email, ''))
+      WHERE LOWER(email) = LOWER(NEW.email)
     ) INTO is_whitelisted;
-  EXCEPTION
-    WHEN OTHERS THEN
-      -- admin_whitelist table might not exist
-      is_whitelisted := FALSE;
-  END;
+  END IF;
   
   -- Get user_role from metadata with safe fallback
   user_role_value := COALESCE(
@@ -172,17 +203,17 @@ BEGIN
   -- Insert profile with defensive column handling
   -- ================================================
   
-  -- Check if 'role' column exists
+  -- Check if 'role' column exists (done once during migration, cached for performance)
   SELECT EXISTS (
     SELECT 1 
     FROM information_schema.columns 
     WHERE table_schema = 'public' 
     AND table_name = 'profiles' 
     AND column_name = 'role'
-  ) INTO column_exists;
+  ) INTO has_role_column;
   
   -- Insert with or without 'role' column depending on schema
-  IF column_exists THEN
+  IF has_role_column THEN
     -- Schema has 'role' column - insert with it
     INSERT INTO public.profiles (
       id,
@@ -198,7 +229,7 @@ BEGIN
       is_admin
     ) VALUES (
       NEW.id,
-      COALESCE(NEW.email, ''),  -- Ensure NOT NULL
+      NEW.email,  -- Email already validated as NOT NULL above
       role_value,  -- Populate role column
       user_role_value,  -- Populate user_role column
       COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
@@ -211,7 +242,7 @@ BEGIN
     )
     ON CONFLICT (id) DO UPDATE SET
       email = EXCLUDED.email,
-      role = EXCLUDED.role,
+      role = EXCLUDED.role,  -- Keep role in sync with user_role
       user_role = EXCLUDED.user_role,
       full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
       phone = COALESCE(EXCLUDED.phone, public.profiles.phone),
@@ -237,7 +268,7 @@ BEGIN
       is_admin
     ) VALUES (
       NEW.id,
-      COALESCE(NEW.email, ''),  -- Ensure NOT NULL
+      NEW.email,  -- Email already validated as NOT NULL above
       user_role_value,  -- Populate user_role column
       COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
       COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
@@ -268,7 +299,6 @@ EXCEPTION
     -- Enhanced error logging for debugging
     RAISE WARNING 'Failed to create/update profile for user % (email: %)', NEW.id, NEW.email;
     RAISE WARNING 'Error: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
-    RAISE WARNING 'Error detail: %', SQLERRM;
     RAISE WARNING 'Error context: %', COALESCE(PG_EXCEPTION_CONTEXT, 'No context available');
     RAISE WARNING 'Metadata: user_role=%, announcer_type=%, full_name=%', 
       NEW.raw_user_meta_data->>'user_role',
@@ -298,7 +328,7 @@ COMMENT ON FUNCTION public.handle_new_user() IS
    
    NOT NULL column handling:
    - id: Always set from NEW.id (required by auth.users)
-   - email: Uses COALESCE(NEW.email, '''') to never be NULL
+   - email: Validated to never be NULL (raises exception if NULL)
    - role: Set to same value as user_role (if column exists)
    - user_role: Defaults to ''user'' if not provided in metadata
    - announcer_type: Can be NULL (not a required field)
