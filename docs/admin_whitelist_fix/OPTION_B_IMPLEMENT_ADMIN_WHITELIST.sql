@@ -71,7 +71,8 @@ COMMENT ON COLUMN public.admin_whitelist.notes IS
   'Optional notes explaining why this email is whitelisted (e.g., "Platform owner", "Support admin").';
 
 -- Create index for faster lookups (emails are frequently queried)
-CREATE INDEX IF NOT EXISTS idx_admin_whitelist_email ON public.admin_whitelist(LOWER(email));
+-- Note: Email column is already constrained to lowercase, so no need for LOWER() in index
+CREATE INDEX IF NOT EXISTS idx_admin_whitelist_email ON public.admin_whitelist(email);
 
 -- =====================================================
 -- STEP 2: Enable RLS on admin_whitelist
@@ -178,11 +179,14 @@ BEGIN
   -- ==========================================
   -- SAFETY CHECK: Prevent infinite recursion
   -- ==========================================
-  -- Only check on INSERT or when email actually changes
-  IF TG_OP = 'UPDATE' AND (OLD.email = NEW.email) AND (OLD.user_role = 'admin') THEN
-    -- Email hasn't changed and already admin - skip check
-    RETURN NEW;
+  -- Only check on INSERT or when email actually changes on UPDATE
+  IF TG_OP = 'UPDATE' THEN
+    -- On UPDATE: skip if email unchanged AND already admin
+    IF (OLD.email = NEW.email) AND (OLD.user_role = 'admin') THEN
+      RETURN NEW;
+    END IF;
   END IF;
+  -- On INSERT: always check (no OLD record to compare)
 
   -- ==========================================
   -- DEFENSIVE: Check if admin_whitelist table exists
@@ -212,29 +216,32 @@ BEGIN
   -- ==========================================
   -- CHECK: Is this email in the whitelist?
   -- ==========================================
-  -- Case-insensitive comparison
+  -- Case-insensitive comparison (whitelist.email is already lowercase due to constraint)
   SELECT EXISTS (
     SELECT 1 
     FROM public.admin_whitelist
-    WHERE LOWER(admin_whitelist.email) = LOWER(NEW.email)
+    WHERE admin_whitelist.email = LOWER(NEW.email)
   ) INTO is_whitelisted;
 
   -- ==========================================
   -- PROMOTE: If whitelisted and not already admin
   -- ==========================================
   IF is_whitelisted THEN
-    -- Check if already admin to avoid unnecessary updates
-    IF NEW.user_role != 'admin' OR NEW.is_admin != true THEN
+    -- Check if BOTH user_role and is_admin need to be set
+    -- Using AND ensures consistency (both must be set to admin state)
+    IF NEW.user_role != 'admin' OR NEW.is_admin IS NOT TRUE THEN
       -- Promote to admin
       NEW.user_role := 'admin';
       NEW.is_admin := true;
       
-      -- Admins should not have announcer_type (if that column exists)
+      -- Admins should not have announcer_type (business rule for this application)
+      -- Note: This is specific to the application's data model where admins don't announce properties
+      -- If announcer_type column exists, set to NULL; otherwise skip
       BEGIN
         NEW.announcer_type := NULL;
       EXCEPTION
         WHEN undefined_column THEN
-          -- Column doesn't exist, that's fine
+          -- Column doesn't exist in this schema, that's fine
           NULL;
       END;
       
