@@ -64,7 +64,7 @@ const statusColors: Record<string, string> = {
 
 export default function Dashboard() {
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [properties, setProperties] = useState<Property[]>([]);
@@ -73,14 +73,10 @@ export default function Dashboard() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !profileLoading && !user) {
+    if (!authLoading && !user) {
       navigate('/login', { state: { from: '/dashboard' } });
     }
-    // Redirect commercial advertisers to their dedicated dashboard
-    if (!authLoading && !profileLoading && profile && profile.user_role === 'commercial_advertiser') {
-      navigate('/commercial-dashboard');
-    }
-  }, [user, authLoading, profileLoading, navigate, profile]);
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -147,7 +143,7 @@ export default function Dashboard() {
     }).format(price);
   };
 
-  if (authLoading || profileLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -167,9 +163,9 @@ export default function Dashboard() {
               <h1 className="font-display text-3xl font-semibold text-foreground">
                 {t('dashboard.title')}
               </h1>
-              {profile && (
+              {user && (
                 <p className="text-muted-foreground mt-1">
-                  {isRTL ? 'مرحباً' : 'Bienvenue'}, {profile.full_name || profile.email}
+                  {isRTL ? 'مرحباً' : 'Bienvenue'}, {user.email}
                 </p>
               )}
             </div>

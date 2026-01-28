@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { t, isRTL } = useLanguage();
-  const { user, profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const [isScrolled, setIsScrolled] = useState(false);

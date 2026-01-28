@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { translateAuthError } from '@/lib/authErrors';
-import { supabase } from '@/lib/supabase';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import { Building2, Mail, Lock, Loader2, ArrowLeft, CheckCircle } from 'lucide-r
 
 export default function Login() {
   const { t, isRTL } = useLanguage();
-  const { signIn, profile } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -70,39 +69,11 @@ export default function Login() {
         return;
       }
 
-      // Wait a brief moment for the auth context to update with profile
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Fetch profile to determine redirect
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('user_role')
-          .eq('id', user.id)
-          .single();
-
-        // Redirect based on user_role
-        let redirectTo = from;
-        const userRole = userProfile?.user_role;
-        
-        if (userRole === 'admin') {
-          redirectTo = '/admin';
-        } else if (userRole === 'merchant') {
-          redirectTo = '/merchant';
-        } else if (userRole === 'agent') {
-          redirectTo = '/agent';
-        } else if (from === '/dashboard' || from === '/login') {
-          // Default redirect for regular users
-          redirectTo = '/';
-        }
-
-        console.log('✅ Login successful, redirecting to:', redirectTo);
-        
-        // Scroll to top on navigation
-        window.scrollTo(0, 0);
-        navigate(redirectTo, { replace: true });
-      }
+      console.log('✅ Login successful, redirecting to:', from);
+      
+      // Scroll to top on navigation
+      window.scrollTo(0, 0);
+      navigate(from, { replace: true });
     } catch (err) {
       console.error('❌ Unexpected error during login:', err);
       setError(translateAuthError(err as Error, isRTL));
