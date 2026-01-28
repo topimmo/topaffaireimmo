@@ -11,7 +11,7 @@ interface Stats {
   pendingListings: number;
   approvedListings: number;
   rejectedListings: number;
-  totalUsers: number;
+  totalListings: number;
 }
 
 export default function AdminDashboard() {
@@ -20,7 +20,7 @@ export default function AdminDashboard() {
     pendingListings: 0,
     approvedListings: 0,
     rejectedListings: 0,
-    totalUsers: 0,
+    totalListings: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -47,16 +47,17 @@ export default function AdminDashboard() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'rejected');
 
-    // Fetch total users
-    const { count: usersCount } = await supabase
-      .from('profiles')
+    // Fetch total users - count from auth schema is not accessible from frontend
+    // Instead, we'll show listing count or remove this stat
+    const { count: allListingsCount } = await supabase
+      .from('properties')
       .select('id', { count: 'exact', head: true });
 
     setStats({
       pendingListings: pendingCount || 0,
       approvedListings: approvedCount || 0,
       rejectedListings: rejectedCount || 0,
-      totalUsers: usersCount || 0,
+      totalListings: allListingsCount || 0,
     });
 
     setLoading(false);
@@ -88,12 +89,12 @@ export default function AdminDashboard() {
       link: '/admin/listings?status=rejected',
     },
     {
-      title: isRTL ? 'إجمالي المستخدمين' : 'Total Users',
-      value: stats.totalUsers,
-      icon: Users,
+      title: isRTL ? 'إجمالي الإعلانات' : 'Total Listings',
+      value: stats.totalListings,
+      icon: FileText,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
-      link: '/admin/users',
+      link: '/admin/listings?status=all',
     },
   ];
 

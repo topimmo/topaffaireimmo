@@ -106,7 +106,7 @@ export default function AddListing() {
   const [formData, setFormData] = useState({
     transactionType: 'sale',
     propertyType: '',
-    advertiserType: 'owner',
+    announcerType: 'proprietaire',
     cityId: '',
     neighborhoodId: '',
     customNeighborhood: '',
@@ -432,7 +432,7 @@ export default function AddListing() {
         owner_id: user.id,
         transaction_type: formData.transactionType || 'sale',
         property_type: formData.propertyType,
-        advertiser_type: formData.advertiserType || 'owner',
+        announcer_type: formData.announcerType || 'proprietaire',
         city_id: parseInt(formData.cityId),
         neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
         custom_neighborhood: formData.customNeighborhood || null,
@@ -634,10 +634,10 @@ export default function AddListing() {
               <div className="grid grid-cols-3 gap-3">
                 <button
                   type="button"
-                  onClick={() => handleSelectChange('advertiserType', 'owner')}
+                  onClick={() => handleSelectChange('announcerType', 'proprietaire')}
                   className={cn(
                     'p-4 rounded-lg border-2 transition-all text-center',
-                    formData.advertiserType === 'owner'
+                    formData.announcerType === 'proprietaire'
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-muted hover:border-primary/30'
                   )}
@@ -647,10 +647,10 @@ export default function AddListing() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleSelectChange('advertiserType', 'broker')}
+                  onClick={() => handleSelectChange('announcerType', 'courtier')}
                   className={cn(
                     'p-4 rounded-lg border-2 transition-all text-center',
-                    formData.advertiserType === 'broker'
+                    formData.announcerType === 'courtier'
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-muted hover:border-primary/30'
                   )}
@@ -660,10 +660,10 @@ export default function AddListing() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleSelectChange('advertiserType', 'agency')}
+                  onClick={() => handleSelectChange('announcerType', 'agence')}
                   className={cn(
                     'p-4 rounded-lg border-2 transition-all text-center',
-                    formData.advertiserType === 'agency'
+                    formData.announcerType === 'agence'
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-muted hover:border-primary/30'
                   )}

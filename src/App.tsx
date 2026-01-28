@@ -4,6 +4,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./components/home";
 import MobileFAB from "./components/layout/MobileFAB";
 import ProtectedRoute from "./components/ProtectedRoute"; // تم تعديل المسار
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import { runStartupValidation } from "./lib/startup-validation";
 
 // Lazy load pages
@@ -250,36 +251,36 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProtectedRoute>
                 <AdminDashboard />
-              </ProtectedRoute>
+              </AdminProtectedRoute>
             }
           />
 
           <Route
             path="/admin/listings"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProtectedRoute>
                 <AdminListings />
-              </ProtectedRoute>
+              </AdminProtectedRoute>
             }
           />
 
           <Route
             path="/admin/listings/:id"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProtectedRoute>
                 <AdminListingDetail />
-              </ProtectedRoute>
+              </AdminProtectedRoute>
             }
           />
 
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProtectedRoute>
                 <AdminUsers />
-              </ProtectedRoute>
+              </AdminProtectedRoute>
             }
           />
 
@@ -287,9 +288,9 @@ function App() {
           <Route
             path="/admin-panel"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProtectedRoute>
                 <AdminPanel />
-              </ProtectedRoute>
+              </AdminProtectedRoute>
             }
           />
         </Routes>

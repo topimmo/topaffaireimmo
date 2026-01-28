@@ -25,7 +25,7 @@ export default function Login() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
-  const from = (location.state as { from?: string })?.from || '/dashboard';
+  const from = (location.state as { from?: string })?.from || '/';
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
