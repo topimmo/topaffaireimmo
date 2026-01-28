@@ -92,46 +92,24 @@ export default function Header() {
                 <Button variant="outline" size="sm" className="gap-2">
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
-                    {profile?.full_name || profile?.email?.split('@')[0]}
+                    {user?.email?.split('@')[0]}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {/* Real estate advertiser menu */}
-                {profile?.user_role !== 'commercial_advertiser' && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="flex items-center gap-2">
-                        <LayoutDashboard className="h-4 w-4" />
-                        {t('nav.dashboard')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/add-listing" className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        {t('nav.addListing')}
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {/* Commercial advertiser menu */}
-                {profile?.user_role === 'commercial_advertiser' && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/commercial-dashboard" className="flex items-center gap-2">
-                      <Megaphone className="h-4 w-4" />
-                      {isRTL ? 'إعلاناتي التجارية' : 'Mes Publicités'}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {/* Admin menu */}
-                {profile?.is_admin && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin" className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4" />
-                      {t('admin.title')}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
+                {/* Main menu items - show for all users */}
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard" className="flex items-center gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    {t('nav.dashboard')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/add-listing" className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    {t('nav.addListing')}
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                   <LogOut className="h-4 w-4 mr-2" />
@@ -205,41 +183,20 @@ export default function Header() {
             
             {user ? (
               <>
-                {/* Real estate advertiser mobile menu */}
-                {profile?.user_role !== 'commercial_advertiser' && (
-                  <>
-                    <Link
-                      to="/dashboard"
-                      className="text-sm font-medium py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {t('nav.dashboard')}
-                    </Link>
-                    <Button asChild className="mt-2">
-                      <Link to="/add-listing" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Plus className="h-4 w-4" />
-                        {t('nav.addListing')}
-                      </Link>
-                    </Button>
-                  </>
-                )}
-                {/* Commercial advertiser mobile menu */}
-                {profile?.user_role === 'commercial_advertiser' && (
-                  <Link
-                    to="/commercial-dashboard"
-                    className="text-sm font-medium py-2 flex items-center gap-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Megaphone className="h-4 w-4" />
-                    {isRTL ? 'إعلاناتي التجارية' : 'Mes Publicités'}
+                {/* Main mobile menu items for all users */}
+                <Link
+                  to="/dashboard"
+                  className="text-sm font-medium py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {t('nav.dashboard')}
+                </Link>
+                <Button asChild className="mt-2">
+                  <Link to="/add-listing" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Plus className="h-4 w-4" />
+                    {t('nav.addListing')}
                   </Link>
-                )}
-                {/* Admin mobile menu */}
-                {profile?.is_admin && (
-                  <Link
-                    to="/admin"
-                    className="text-sm font-medium py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                </Button>
                   >
                     {t('admin.title')}
                   </Link>

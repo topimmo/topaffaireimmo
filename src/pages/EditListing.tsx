@@ -277,23 +277,6 @@ export default function EditListing() {
     e.preventDefault();
     if (!user || !id) return;
 
-    // Validate user profile exists and has correct role
-    if (!profile) {
-      alert(isRTL 
-        ? 'ملفك الشخصي غير محمل. يرجى تحديث الصفحة وإعادة المحاولة.' 
-        : 'Votre profil n\'est pas chargé. Veuillez actualiser la page et réessayer.'
-      );
-      return;
-    }
-
-    if (profile.user_role !== 'real_estate_advertiser' && profile.user_role !== 'admin') {
-      alert(isRTL 
-        ? 'ليس لديك صلاحية لتعديل الإعلانات العقارية. يجب أن يكون لديك حساب معلن عقاري.' 
-        : 'Vous n\'avez pas la permission de modifier des annonces immobilières. Vous devez avoir un compte d\'annonceur immobilier.'
-      );
-      return;
-    }
-
     setIsSubmitting(true);
     setUploadProgress('');
 
