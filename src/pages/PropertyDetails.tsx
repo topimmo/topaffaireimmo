@@ -35,8 +35,11 @@ type DbPropertyDetails = {
   id: string;
   title_fr: string | null;
   title_ar: string | null;
+
   description_fr?: string | null;
   description_ar?: string | null;
+
+  // ✅ ماكيناش description فـ DB ديالك (حسب لخطأ اللي كان)، نخليوها اختيارية فقط
   description?: string | null;
 
   price: number | null;
@@ -54,9 +57,11 @@ type DbPropertyDetails = {
   year_built?: number | null;
   featured?: boolean | null;
 
-  contact_name?: string | null;
-  phone?: string | null;
-  whatsapp?: string | null;
+  // ✅ مطابقين للي فـ DB (تصاورك)
+  contact_phone?: string | null;
+  contact_whatsapp?: string | null;
+  contact_email?: string | null;
+
   company_name?: string | null;
   advertiser_type?: "owner" | "broker" | "agency" | string | null;
 
@@ -68,11 +73,9 @@ function getPublicImageUrl(pathOrUrl: string) {
   if (!pathOrUrl) return "";
   if (pathOrUrl.startsWith("http")) return pathOrUrl;
 
-  // ⚠️ IMPORTANT: اسم البوكت خاصو يطابق اللي عندك فـ Supabase Storage
-  // من قبل كنتي مستعمل "property-images" فـ SearchResults، نخليه نفس الاسم.
-  return supabase.storage
-    .from("property-images")
-    .getPublicUrl(pathOrUrl).data.publicUrl;
+  // ✅ نفس اسم البوكت اللي كتستعمل فـ SearchResults
+  return supabase.storage.from("property-images").getPublicUrl(pathOrUrl).data
+    .publicUrl;
 }
 
 export default function PropertyDetails() {
@@ -90,62 +93,60 @@ export default function PropertyDetails() {
     const fetchProperty = async () => {
       if (!id) return;
 
-      console.log("[PropertyDetails] Loading property with ID:", id);
-
       setLoading(true);
       setLoadError(null);
 
-      const { data, error } = await supabase
-        .from("properties")
-        .select(
+      try {
+        const { data, error } = await supabase
+          .from("properties")
+          .select(
+            `
+            id,
+            title_fr,
+            title_ar,
+            description_fr,
+            description_ar,
+            price,
+            transaction_type,
+            property_type,
+            status,
+            created_at,
+            images,
+            address,
+            bedrooms,
+            bathrooms,
+            area,
+            year_built,
+            featured,
+            contact_phone,
+            contact_whatsapp,
+            contact_email,
+            company_name,
+            advertiser_type,
+            city:cities(name_fr, name_ar),
+            neighborhood:neighborhoods(name_fr, name_ar)
           `
-          id,
-          title_fr,
-          title_ar,
-          description_fr,
-          description_ar,
-          description,
-          price,
-          transaction_type,
-          property_type,
-          status,
-          created_at,
-          images,
-          address,
-          bedrooms,
-          bathrooms,
-          area,
-          year_built,
-          featured,
-          contact_name,
-          phone,
-          whatsapp,
-          company_name,
-          advertiser_type,
-          city:cities(name_fr, name_ar),
-          neighborhood:neighborhoods(name_fr, name_ar)
-        `
-        )
-        .eq("id", id)
-        .eq("status", "approved")
-        .maybeSingle();
+          )
+          .eq("id", id)
+          .eq("status", "approved")
+          .maybeSingle();
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (error) {
-        console.log("[PropertyDetails] fetch error:", error);
+        if (error) {
+          setProperty(null);
+          setLoadError(error.message);
+        } else {
+          setProperty((data as DbPropertyDetails) ?? null);
+          setCurrentImage(0);
+        }
+      } catch (e: any) {
+        if (!mounted) return;
         setProperty(null);
-        setLoadError(error.message);
-      } else {
-        console.log("[PropertyDetails] Property loaded:", {
-          id: data?.id,
-          title: data?.title_fr || data?.title_ar,
-        });
-        setProperty((data as DbPropertyDetails) ?? null);
-        setCurrentImage(0);
+        setLoadError(e?.message || "Unexpected error");
+      } finally {
+        if (mounted) setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchProperty();
@@ -160,7 +161,7 @@ export default function PropertyDetails() {
       maximumFractionDigits: 0,
     }).format(price);
 
-  // ✅ Loading UI (ماشي null)
+  // ✅ Loading UI
   if (loading) {
     return (
       <div className="pt-28">
@@ -202,20 +203,19 @@ export default function PropertyDetails() {
   }
 
   // ✅ Resolve title/desc safely
-  const title =
-    property.title_fr || property.title_ar || "Annonce immobilière";
-  const description =
-    property.description_fr ||
-    property.description_ar ||
-    property.description ||
-    "";
+  const title = property.title_fr || property.title_ar || "Annonce immobilière";
 
-  // ✅ Images safe + convert storage paths to public urls
+  const description =
+    property.description_fr || property.description_ar || property.description || "";
+
+  // ✅ Images safe + convert to public urls
   const rawImages: string[] = Array.isArray(property.images) ? property.images : [];
   const safeImages =
     rawImages.length > 0
       ? rawImages.map(getPublicImageUrl)
-      : ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80"];
+      : [
+          "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
+        ];
 
   const nextImage = () =>
     setCurrentImage((prev) => (prev + 1) % safeImages.length);
@@ -248,6 +248,7 @@ export default function PropertyDetails() {
     (c) => c.name_fr.toLowerCase() === cityNameForSlug.toLowerCase()
   );
   const citySlug = cityData?.slug || slugify(cityNameForSlug);
+
   const neighborhoodNameForSlug = property.neighborhood?.name_fr || "";
   const neighborhoodSlug = neighborhoodNameForSlug
     ? slugify(neighborhoodNameForSlug)
@@ -340,8 +341,9 @@ export default function PropertyDetails() {
   const cityLabel = property.city?.name_fr || "";
   const neighborhoodLabel = property.neighborhood?.name_fr || "";
 
-  const phone = property.phone || property.whatsapp || "";
-  const whatsapp = property.whatsapp || property.phone || "";
+  // ✅ هنا التصحيح الكبير: نفس أسماء الأعمدة ديال DB
+  const phone = property.contact_phone || "";
+  const whatsapp = property.contact_whatsapp || "";
 
   return (
     <>
@@ -376,20 +378,20 @@ export default function PropertyDetails() {
                   {cityLabel || "Ville"}
                 </BreadcrumbLink>
               </BreadcrumbItem>
+
               {neighborhoodLabel && neighborhoodSlug && (
                 <>
                   <BreadcrumbSeparator>
                     <ChevronRight className="h-4 w-4" />
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
-                    <BreadcrumbLink
-                      href={`/immobilier/${citySlug}/${neighborhoodSlug}`}
-                    >
+                    <BreadcrumbLink href={`/immobilier/${citySlug}/${neighborhoodSlug}`}>
                       {neighborhoodLabel}
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                 </>
               )}
+
               <BreadcrumbSeparator>
                 <ChevronRight className="h-4 w-4" />
               </BreadcrumbSeparator>
@@ -606,9 +608,7 @@ export default function PropertyDetails() {
                     <User className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="font-semibold">
-                      {property.contact_name || "Annonceur"}
-                    </p>
+                    <p className="font-semibold">Annonceur</p>
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Building2 className="h-4 w-4" />
                       {property.company_name || "TopAffaireImmo"}
@@ -629,12 +629,7 @@ export default function PropertyDetails() {
                 </div>
 
                 <div className="space-y-3">
-                  <Button
-                    className="w-full gap-2"
-                    size="lg"
-                    asChild
-                    disabled={!phone}
-                  >
+                  <Button className="w-full gap-2" size="lg" asChild disabled={!phone}>
                     <a href={phone ? `tel:${phone}` : "#"}>
                       <Phone className="h-5 w-5" />
                       Call Now
@@ -671,7 +666,11 @@ export default function PropertyDetails() {
           </div>
         </section>
 
-        <AdBanner page="property" position="before_footer" className="bg-muted/30" />
+        <AdBanner
+          page="property"
+          position="before_footer"
+          className="bg-muted/30"
+        />
       </div>
     </>
   );
