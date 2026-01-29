@@ -135,4 +135,11 @@
   .bottom-safe {
     bottom: env(safe-area-inset-bottom);
   }
+  
+  /* Home page bottom section spacing control */
+  .home-bottom-section {
+    padding-top: 32px !important;
+    padding-bottom: 32px !important;
+    margin-top: 0 !important;
+  }
 }
