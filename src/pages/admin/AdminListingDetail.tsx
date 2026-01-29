@@ -49,19 +49,26 @@ interface PropertyDetail {
   status: string;
   transaction_type: string;
   property_type: string;
-  area_sqm: number;
+  area: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
-  floor: number | null;
+  floor_number: number | null;
   total_floors: number | null;
   year_built: number | null;
-  furnished: boolean;
-  parking: boolean;
-  elevator: boolean;
-  balcony: boolean;
-  garden: boolean;
-  pool: boolean;
-  security: boolean;
+  
+  // Contact information
+  contact_phone: string | null;
+  contact_whatsapp: string | null;
+  contact_email: string | null;
+  
+  // Advertiser info
+  advertiser_type: string | null;
+  rejection_reason: string | null;
+  
+  // Features
+  features: any;
+  amenities: any;
+  
   images: string[];
   created_at: string;
   updated_at: string;
@@ -544,12 +551,14 @@ export default function AdminListingDetail() {
                     <strong>{isRTL ? 'النوع:' : 'Type:'}</strong> {property.property_type}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Ruler className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    <strong>{isRTL ? 'المساحة:' : 'Area:'}</strong> {property.area_sqm} m²
-                  </span>
-                </div>
+                {property.area && (
+                  <div className="flex items-center gap-2">
+                    <Ruler className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      <strong>{isRTL ? 'المساحة:' : 'Area:'}</strong> {property.area} m²
+                    </span>
+                  </div>
+                )}
                 {property.bedrooms !== null && (
                   <div className="flex items-center gap-2">
                     <Bed className="h-4 w-4 text-muted-foreground" />
@@ -566,10 +575,10 @@ export default function AdminListingDetail() {
                     </span>
                   </div>
                 )}
-                {property.floor !== null && (
+                {property.floor_number !== null && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm">
-                      <strong>{isRTL ? 'الطابق:' : 'Floor:'}</strong> {property.floor}
+                      <strong>{isRTL ? 'الطابق:' : 'Floor:'}</strong> {property.floor_number}
                       {property.total_floors && ` / ${property.total_floors}`}
                     </span>
                   </div>
@@ -585,37 +594,25 @@ export default function AdminListingDetail() {
               </CardContent>
             </Card>
 
-            {/* Features */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{isRTL ? 'المميزات' : 'Features'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {property.furnished && (
-                    <Badge variant="secondary">{isRTL ? 'مفروش' : 'Furnished'}</Badge>
-                  )}
-                  {property.parking && (
-                    <Badge variant="secondary">{isRTL ? 'موقف سيارات' : 'Parking'}</Badge>
-                  )}
-                  {property.elevator && (
-                    <Badge variant="secondary">{isRTL ? 'مصعد' : 'Elevator'}</Badge>
-                  )}
-                  {property.balcony && (
-                    <Badge variant="secondary">{isRTL ? 'شرفة' : 'Balcony'}</Badge>
-                  )}
-                  {property.garden && (
-                    <Badge variant="secondary">{isRTL ? 'حديقة' : 'Garden'}</Badge>
-                  )}
-                  {property.pool && (
-                    <Badge variant="secondary">{isRTL ? 'مسبح' : 'Pool'}</Badge>
-                  )}
-                  {property.security && (
-                    <Badge variant="secondary">{isRTL ? 'حراسة' : 'Security'}</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Features & Amenities */}
+            {((property.features && Array.isArray(property.features) && property.features.length > 0) ||
+              (property.amenities && Array.isArray(property.amenities) && property.amenities.length > 0)) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{isRTL ? 'المميزات' : 'Features'}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {property.features && Array.isArray(property.features) && property.features.map((feature: string, idx: number) => (
+                      <Badge key={`feature-${idx}`} variant="secondary">{feature}</Badge>
+                    ))}
+                    {property.amenities && Array.isArray(property.amenities) && property.amenities.map((amenity: string, idx: number) => (
+                      <Badge key={`amenity-${idx}`} variant="secondary">{amenity}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Share Listing Placeholder */}
             <Card>
@@ -697,6 +694,57 @@ export default function AdminListingDetail() {
               </Card>
             )}
 
+            {/* Contact Information (from property) */}
+            {(property.contact_phone || property.contact_whatsapp || property.contact_email) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{isRTL ? 'معلومات الاتصال' : 'Contact Information'}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {property.contact_phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">{isRTL ? 'الهاتف' : 'Phone'}</p>
+                        <p className="text-sm font-medium">{property.contact_phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  {property.contact_whatsapp && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-green-600" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">{isRTL ? 'واتساب' : 'WhatsApp'}</p>
+                        <p className="text-sm font-medium">{property.contact_whatsapp}</p>
+                      </div>
+                    </div>
+                  )}
+                  {property.contact_email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
+                        <p className="text-sm font-medium break-all">{property.contact_email}</p>
+                      </div>
+                    </div>
+                  )}
+                  {property.advertiser_type && (
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">{isRTL ? 'نوع المعلن' : 'Advertiser Type'}</p>
+                        <Badge className="mt-1" variant="secondary">
+                          {property.advertiser_type === 'owner' && (isRTL ? 'مالك' : 'Owner')}
+                          {property.advertiser_type === 'broker' && (isRTL ? 'سمسار' : 'Broker')}
+                          {property.advertiser_type === 'agency' && (isRTL ? 'وكالة' : 'Agency')}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Metadata */}
             <Card>
               <CardHeader>
@@ -711,6 +759,12 @@ export default function AdminListingDetail() {
                   <p className="text-muted-foreground">{isRTL ? 'آخر تحديث' : 'Updated'}</p>
                   <p>{formatDate(property.updated_at)}</p>
                 </div>
+                {property.status === 'rejected' && property.rejection_reason && (
+                  <div>
+                    <p className="text-muted-foreground">{isRTL ? 'سبب الرفض' : 'Rejection Reason'}</p>
+                    <p className="text-red-600 font-medium">{property.rejection_reason}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-muted-foreground">{isRTL ? 'معرف الإعلان' : 'Listing ID'}</p>
                   <p className="font-mono text-xs break-all">{property.id}</p>
