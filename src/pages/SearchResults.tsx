@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard, { Property } from "@/components/home/PropertyCard";
 import AdBanner from "@/components/home/AdBanner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -16,138 +15,177 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { SlidersHorizontal, Grid3X3, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-// Mock data - in production this would come from an API
-const allProperties: Property[] = [
-  {
-    id: "1",
-    title: "Luxury Penthouse with Ocean View",
-    price: 4500000,
-    priceType: "sale",
-    type: "Apartment",
-    city: "Casablanca",
-    address: "Corniche Ain Diab",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 280,
-    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-    featured: true,
-  },
-  {
-    id: "2",
-    title: "Modern Villa in Prestigious Neighborhood",
-    price: 8200000,
-    priceType: "sale",
-    type: "Villa",
-    city: "Marrakech",
-    address: "Amelkis Golf Resort",
-    bedrooms: 5,
-    bathrooms: 4,
-    area: 450,
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
-  },
-  {
-    id: "3",
-    title: "Contemporary Apartment in City Center",
-    price: 2800000,
-    priceType: "sale",
-    type: "Apartment",
-    city: "Rabat",
-    address: "Agdal District",
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 165,
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
-  },
-  {
-    id: "4",
-    title: "Beachfront House with Private Pool",
-    price: 6500000,
-    priceType: "sale",
-    type: "House",
-    city: "Tangier",
-    address: "Cap Spartel",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 320,
-    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80",
-  },
-  {
-    id: "5",
-    title: "Spacious Family Apartment",
-    price: 1850000,
-    priceType: "sale",
-    type: "Apartment",
-    city: "Casablanca",
-    address: "Maarif District",
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 145,
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
-  },
-  {
-    id: "6",
-    title: "Modern Studio for Rent",
-    price: 6500,
-    priceType: "rent",
-    type: "Apartment",
-    city: "Rabat",
-    address: "Hassan District",
-    bedrooms: 1,
-    bathrooms: 1,
-    area: 55,
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
-  },
-  {
-    id: "7",
-    title: "Commercial Space in Prime Location",
-    price: 25000,
-    priceType: "rent",
-    type: "Commercial",
-    city: "Casablanca",
-    address: "Boulevard Zerktouni",
-    area: 200,
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
-  },
-  {
-    id: "8",
-    title: "Traditional Riad with Modern Amenities",
-    price: 3200000,
-    priceType: "sale",
-    type: "House",
-    city: "Marrakech",
-    address: "Medina",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 280,
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
-  },
-];
+// ✅ Supabase -> PropertyCard mapping
+type DbProperty = {
+  id: string;
+  title_fr: string | null;
+  title_ar: string | null;
+  price: number | null;
+  transaction_type: string | null; // sale / rent
+  property_type: string | null; // Apartment / Villa ...
+  status: string | null;
+  created_at: string;
+  images: string[] | null;
+  city?: { name_fr: string | null; name_ar: string | null } | null;
+  neighborhood?: { name_fr: string | null; name_ar: string | null } | null;
+  address?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  area?: number | null;
+  featured?: boolean | null;
+};
 
 const propertyTypes = ["Apartment", "House", "Villa", "Commercial", "Land"];
-const cities = ["Casablanca", "Rabat", "Marrakech", "Fes", "Tangier", "Agadir"];
 
 export default function SearchResults() {
+  const { language } = useLanguage();
   const [searchParams] = useSearchParams();
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 10000000]);
-  const [selectedType, setSelectedType] = useState(searchParams.get("type") || "all-types");
-  const [selectedCity, setSelectedCity] = useState(searchParams.get("city") || "all-cities");
+
+  const [selectedType, setSelectedType] = useState(
+    searchParams.get("type") || "all-types"
+  );
+  const [selectedCity, setSelectedCity] = useState(
+    searchParams.get("city") || "all-cities"
+  );
   const [sortBy, setSortBy] = useState("newest");
 
-  const filteredProperties = allProperties.filter((property) => {
-    if (selectedType !== "all-types" && property.type.toLowerCase() !== selectedType.toLowerCase()) {
-      return false;
+  const [loading, setLoading] = useState(true);
+  const [dbRows, setDbRows] = useState<DbProperty[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✅ fetch from Supabase (approved only)
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        let q = supabase
+          .from("properties")
+          .select(
+            `
+              id,
+              title_fr,
+              title_ar,
+              price,
+              transaction_type,
+              property_type,
+              status,
+              created_at,
+              images,
+              address,
+              bedrooms,
+              bathrooms,
+              area,
+              featured,
+              city:cities(name_fr, name_ar),
+              neighborhood:neighborhoods(name_fr, name_ar)
+            `
+          )
+          .eq("status", "approved");
+
+        // City filter (slug/id?) — هنا كنقارن بالاسم باش تمشي دابا
+        if (selectedCity !== "all-cities") {
+          // If you store city_id in properties الأفضل نبدلوها لاحقا
+          // دابا كنفلتر من بعد فالfrontend
+        }
+
+        // Type filter
+        if (selectedType !== "all-types") {
+          q = q.ilike("property_type", selectedType); // "apartment" etc
+        }
+
+        // Sorting
+        if (sortBy === "newest") {
+          q = q.order("created_at", { ascending: false });
+        } else if (sortBy === "price-asc") {
+          q = q.order("price", { ascending: true, nullsFirst: false });
+        } else if (sortBy === "price-desc") {
+          q = q.order("price", { ascending: false, nullsFirst: false });
+        }
+
+        const { data, error } = await q.limit(200);
+
+        if (error) {
+          setError(error.message);
+          setDbRows([]);
+        } else {
+          setDbRows((data as DbProperty[]) || []);
+        }
+      } catch (e: any) {
+        setError(e?.message || "Unexpected error");
+        setDbRows([]);
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [selectedType, sortBy]);
+
+  // ✅ Front filters (city + price)
+  const filteredRows = useMemo(() => {
+    let rows = [...dbRows];
+
+    // city filter by name (temporary)
+    if (selectedCity !== "all-cities") {
+      rows = rows.filter((r) => {
+        const cityName =
+          (language === "ar" ? r.city?.name_ar : r.city?.name_fr) || "";
+        return cityName.toLowerCase() === selectedCity.toLowerCase();
+      });
     }
-    if (selectedCity !== "all-cities" && property.city.toLowerCase() !== selectedCity.toLowerCase()) {
-      return false;
-    }
-    if (property.price < priceRange[0] || property.price > priceRange[1]) {
-      return false;
-    }
-    return true;
-  });
+
+    // price range
+    rows = rows.filter((r) => {
+      const p = r.price ?? 0;
+      return p >= priceRange[0] && p <= priceRange[1];
+    });
+
+    return rows;
+  }, [dbRows, selectedCity, priceRange, language]);
+
+  // ✅ convert to PropertyCard type
+  const properties: Property[] = useMemo(() => {
+    return filteredRows.map((r) => {
+      const title =
+        language === "ar"
+          ? r.title_ar || r.title_fr || "Annonce"
+          : r.title_fr || r.title_ar || "Annonce";
+
+      const cityName =
+        (language === "ar" ? r.city?.name_ar : r.city?.name_fr) || "";
+
+      const firstImg = r.images?.[0] || "";
+      const image = firstImg && firstImg.startsWith("http")
+        ? firstImg
+        : firstImg
+        ? supabase.storage.from("property-images").getPublicUrl(firstImg).data.publicUrl
+        : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
+
+      return {
+        id: r.id,
+        title,
+        price: r.price ?? 0,
+        priceType: (r.transaction_type as any) || "sale",
+        type: r.property_type || "Property",
+        city: cityName || "—",
+        address: r.address || (r.neighborhood?.name_fr ?? ""),
+        bedrooms: r.bedrooms ?? undefined,
+        bathrooms: r.bathrooms ?? undefined,
+        area: r.area ?? undefined,
+        image,
+        featured: !!r.featured,
+      };
+    });
+  }, [filteredRows, language]);
 
   const clearFilters = () => {
     setSelectedType("all-types");
@@ -166,9 +204,15 @@ export default function SearchResults() {
             <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-2">
               Search Results
             </h1>
-            <p className="text-muted-foreground">
-              {filteredProperties.length} properties found
-            </p>
+            {loading ? (
+              <p className="text-muted-foreground">Loading...</p>
+            ) : error ? (
+              <p className="text-red-600 text-sm">Error: {error}</p>
+            ) : (
+              <p className="text-muted-foreground">
+                {properties.length} properties found
+              </p>
+            )}
           </div>
 
           {/* Toolbar */}
@@ -181,11 +225,13 @@ export default function SearchResults() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-cities">All Cities</SelectItem>
-                  {cities.map((city) => (
-                    <SelectItem key={city} value={city.toLowerCase()}>
-                      {city}
-                    </SelectItem>
-                  ))}
+                  {/* مؤقتاً: نخليها يدوي */}
+                  <SelectItem value="casablanca">Casablanca</SelectItem>
+                  <SelectItem value="rabat">Rabat</SelectItem>
+                  <SelectItem value="marrakech">Marrakech</SelectItem>
+                  <SelectItem value="fes">Fes</SelectItem>
+                  <SelectItem value="tangier">Tangier</SelectItem>
+                  <SelectItem value="agadir">Agadir</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -214,7 +260,10 @@ export default function SearchResults() {
                 More Filters
               </Button>
 
-              {(selectedCity !== "all-cities" || selectedType !== "all-types" || priceRange[0] > 0 || priceRange[1] < 10000000) && (
+              {(selectedCity !== "all-cities" ||
+                selectedType !== "all-types" ||
+                priceRange[0] > 0 ||
+                priceRange[1] < 10000000) && (
                 <Button variant="ghost" onClick={clearFilters} className="gap-2">
                   <X className="h-4 w-4" />
                   Clear Filters
@@ -241,7 +290,9 @@ export default function SearchResults() {
                   onClick={() => setViewMode("grid")}
                   className={cn(
                     "p-2 transition-colors",
-                    viewMode === "grid" ? "bg-primary text-white" : "hover:bg-muted"
+                    viewMode === "grid"
+                      ? "bg-primary text-white"
+                      : "hover:bg-muted"
                   )}
                 >
                   <Grid3X3 className="h-5 w-5" />
@@ -250,7 +301,9 @@ export default function SearchResults() {
                   onClick={() => setViewMode("list")}
                   className={cn(
                     "p-2 transition-colors",
-                    viewMode === "list" ? "bg-primary text-white" : "hover:bg-muted"
+                    viewMode === "list"
+                      ? "bg-primary text-white"
+                      : "hover:bg-muted"
                   )}
                 >
                   <List className="h-5 w-5" />
@@ -281,20 +334,24 @@ export default function SearchResults() {
           )}
 
           {/* Results Grid */}
-          <div
-            className={cn(
-              "grid gap-6",
-              viewMode === "grid"
-                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-                : "grid-cols-1"
-            )}
-          >
-            {filteredProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
-
-          {filteredProperties.length === 0 && (
+          {loading ? (
+            <div className="py-16 text-center text-muted-foreground">
+              Loading properties...
+            </div>
+          ) : properties.length > 0 ? (
+            <div
+              className={cn(
+                "grid gap-6",
+                viewMode === "grid"
+                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1"
+              )}
+            >
+              {properties.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+          ) : (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg">
                 No properties match your criteria.
