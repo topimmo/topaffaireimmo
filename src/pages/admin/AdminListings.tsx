@@ -107,6 +107,7 @@ export default function AdminListings() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState<string>('');
   const pageSize = 50;
 
   useEffect(() => {
@@ -193,8 +194,24 @@ export default function AdminListings() {
       // ✅ Debug صغير باش نعرفو شنو داخل images
       console.log('IMAGES SAMPLE:', merged[0]?.images);
 
+      // 🔍 DIAGNOSTIC LOGGING - Verify contact fields are being fetched
+      console.group('📊 Admin Listings - Data Diagnostic');
+      console.log('Total properties fetched:', merged.length);
+      console.log('Sample property data:', merged[0]);
+      if (merged.length > 0) {
+        console.log('Contact fields check:');
+        console.log('  - contact_phone:', merged[0]?.contact_phone);
+        console.log('  - contact_whatsapp:', merged[0]?.contact_whatsapp);
+        console.log('  - contact_email:', merged[0]?.contact_email);
+        console.log('  - advertiser_type:', merged[0]?.advertiser_type);
+      }
+      console.log('Build timestamp:', new Date().toISOString());
+      console.log('Environment:', import.meta.env.MODE);
+      console.groupEnd();
+
       setProperties(merged);
       if (count !== null) setTotalCount(count);
+      setLastFetchTime(new Date().toISOString());
     } catch (e: any) {
       console.error('UNEXPECTED FETCH ERROR:', e);
       toast.error(isRTL ? 'وقع خطأ غير متوقع فـ جلب الإعلانات' : 'Unexpected error while fetching listings');
@@ -375,6 +392,12 @@ export default function AdminListings() {
             <p className="mt-2 text-muted-foreground">
               {isRTL ? 'مراجعة والموافقة على إعلانات العقارات' : 'Review and approve property listings'}
             </p>
+            {lastFetchTime && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {isRTL ? 'آخر تحديث: ' : 'Last updated: '}
+                {new Date(lastFetchTime).toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')}
+              </p>
+            )}
           </div>
 
           <Select value={statusFilter} onValueChange={(value) => setSearchParams({ status: value })}>

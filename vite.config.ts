@@ -1,6 +1,23 @@
 import path from "path";
-import { defineConfig } from "vite";
+import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
+
+// Plugin to inject build timestamp and version into HTML
+function buildMetadataPlugin(): Plugin {
+  return {
+    name: 'build-metadata',
+    transformIndexHtml(html) {
+      const timestamp = new Date().toISOString();
+      const version = process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 
+                      process.env.npm_package_version || 
+                      'local-dev';
+      
+      return html
+        .replace('BUILD_TIMESTAMP_PLACEHOLDER', timestamp)
+        .replace('DEPLOYMENT_VERSION_PLACEHOLDER', version);
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,6 +27,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    buildMetadataPlugin(),
   ],
   resolve: {
     preserveSymlinks: true,
