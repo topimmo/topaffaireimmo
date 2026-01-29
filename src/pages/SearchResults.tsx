@@ -132,15 +132,15 @@ export default function SearchResults() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 10000000]);
-  const [selectedType, setSelectedType] = useState(searchParams.get("type") || "");
-  const [selectedCity, setSelectedCity] = useState(searchParams.get("city") || "");
+  const [selectedType, setSelectedType] = useState(searchParams.get("type") || "all-types");
+  const [selectedCity, setSelectedCity] = useState(searchParams.get("city") || "all-cities");
   const [sortBy, setSortBy] = useState("newest");
 
   const filteredProperties = allProperties.filter((property) => {
-    if (selectedType && property.type.toLowerCase() !== selectedType.toLowerCase()) {
+    if (selectedType !== "all-types" && property.type.toLowerCase() !== selectedType.toLowerCase()) {
       return false;
     }
-    if (selectedCity && property.city.toLowerCase() !== selectedCity.toLowerCase()) {
+    if (selectedCity !== "all-cities" && property.city.toLowerCase() !== selectedCity.toLowerCase()) {
       return false;
     }
     if (property.price < priceRange[0] || property.price > priceRange[1]) {
@@ -150,8 +150,8 @@ export default function SearchResults() {
   });
 
   const clearFilters = () => {
-    setSelectedType("");
-    setSelectedCity("");
+    setSelectedType("all-types");
+    setSelectedCity("all-cities");
     setPriceRange([0, 10000000]);
   };
 
@@ -180,7 +180,7 @@ export default function SearchResults() {
                   <SelectValue placeholder="Select City" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Cities</SelectItem>
+                  <SelectItem value="all-cities">All Cities</SelectItem>
                   {cities.map((city) => (
                     <SelectItem key={city} value={city.toLowerCase()}>
                       {city}
@@ -195,7 +195,7 @@ export default function SearchResults() {
                   <SelectValue placeholder="Property Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all-types">All Types</SelectItem>
                   {propertyTypes.map((type) => (
                     <SelectItem key={type} value={type.toLowerCase()}>
                       {type}
@@ -214,7 +214,7 @@ export default function SearchResults() {
                 More Filters
               </Button>
 
-              {(selectedCity || selectedType || priceRange[0] > 0 || priceRange[1] < 10000000) && (
+              {(selectedCity !== "all-cities" || selectedType !== "all-types" || priceRange[0] > 0 || priceRange[1] < 10000000) && (
                 <Button variant="ghost" onClick={clearFilters} className="gap-2">
                   <X className="h-4 w-4" />
                   Clear Filters
