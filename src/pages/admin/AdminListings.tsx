@@ -25,6 +25,13 @@ import { Eye, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
+type ProfileInfo = {
+  id: string;
+  full_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+} | null;
+
 interface Property {
   id: string;
   title_fr: string;
@@ -34,9 +41,27 @@ interface Property {
   transaction_type: string;
   property_type: string;
   created_at: string;
+
+  // ✅ جديد
+  owner_id?: string | null;
+  images?: string[] | null;
+  owner_profile?: ProfileInfo;
+
   city: { name_fr: string; name_ar: string } | null;
   neighborhood: { name_fr: string; name_ar: string } | null;
 }
+
+// ✅ يبني public url ديال Supabase Storage
+const getImageUrl = (path: string) => {
+  const { data } = supabase.storage.from('property-images').getPublicUrl(path);
+  return data.publicUrl;
+};
+
+// ✅ يجيب أول صورة
+const getFirstImagePath = (images?: string[] | null) => {
+  if (!images || images.length === 0) return null;
+  return images[0];
+};
 
 export default function AdminListings() {
   const { language, isRTL } = useLanguage();
@@ -56,6 +81,7 @@ export default function AdminListings() {
 
   useEffect(() => {
     fetchProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, page]);
 
   const fetchProperties = async () => {
@@ -74,6 +100,8 @@ export default function AdminListings() {
             transaction_type,
             property_type,
             created_at,
+            owner_id,
+            images,
             city:cities(name_fr, name_ar),
             neighborhood:neighborhoods(name_fr, name_ar)
           `,
@@ -86,36 +114,59 @@ export default function AdminListings() {
         query = query.eq('status', statusFilter);
       }
 
-      // ✅ هنا زدنا error
       const { data, count, error } = await query;
 
-      // ✅ باش يبان الخطأ
       if (error) {
         console.error('FETCH ERROR (admin listings):', error);
-
         toast.error(
           isRTL
             ? `خطأ فـ جلب الإعلانات: ${error.message}`
             : `Error fetching listings: ${error.message}`
         );
-
         setProperties([]);
         setTotalCount(0);
         setLoading(false);
         return;
       }
 
-      if (data) setProperties(data as unknown as Property[]);
+      const base = (data ?? []) as unknown as Property[];
+
+      // ✅ نجيب معلومات المالكين مرة وحدة
+      const ownerIds = Array.from(
+        new Set(base.map((p) => p.owner_id).filter(Boolean))
+      ) as string[];
+
+      let profilesMap = new Map<string, ProfileInfo>();
+
+      if (ownerIds.length > 0) {
+        const { data: profs, error: profErr } = await supabase
+          .from('profiles')
+          .select('id, full_name, phone, email')
+          .in('id', ownerIds);
+
+        if (profErr) {
+          console.warn('Could not fetch profiles:', profErr);
+        } else {
+          (profs ?? []).forEach((pr: any) => {
+            profilesMap.set(pr.id, pr);
+          });
+        }
+      }
+
+      const merged = base.map((p) => ({
+        ...p,
+        owner_profile: p.owner_id ? profilesMap.get(p.owner_id) ?? null : null,
+      }));
+
+      setProperties(merged);
       if (count !== null) setTotalCount(count);
     } catch (e: any) {
       console.error('UNEXPECTED FETCH ERROR:', e);
-
       toast.error(
         isRTL
           ? 'وقع خطأ غير متوقع فـ جلب الإعلانات'
           : 'Unexpected error while fetching listings'
       );
-
       setProperties([]);
       setTotalCount(0);
     }
@@ -127,7 +178,9 @@ export default function AdminListings() {
     setActionLoading(propertyId);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const updateData: any = { status: newStatus };
 
@@ -231,6 +284,17 @@ export default function AdminListings() {
     return language === 'ar' ? neighborhood.name_ar : neighborhood.name_fr;
   };
 
+  const getOwnerLabel = (p: Property) => {
+    const prof = p.owner_profile;
+    if (!prof) return '-';
+    return (
+      prof.full_name ||
+      prof.phone ||
+      prof.email ||
+      (isRTL ? 'مستخدم' : 'User')
+    );
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -240,14 +304,13 @@ export default function AdminListings() {
               {isRTL ? 'إدارة الإعلانات' : 'Manage Listings'}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              {isRTL ? 'مراجعة والموافقة على إعلانات العقارات' : 'Review and approve property listings'}
+              {isRTL
+                ? 'مراجعة والموافقة على إعلانات العقارات'
+                : 'Review and approve property listings'}
             </p>
           </div>
 
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => setSearchParams({ status: value })}
-          >
+          <Select value={statusFilter} onValueChange={(value) => setSearchParams({ status: value })}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={isRTL ? 'اختر الحالة' : 'Select status'} />
             </SelectTrigger>
@@ -276,7 +339,9 @@ export default function AdminListings() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[110px]">{isRTL ? 'صورة' : 'Image'}</TableHead>
                     <TableHead>{isRTL ? 'العنوان' : 'Title'}</TableHead>
+                    <TableHead>{isRTL ? 'صاحب الإعلان' : 'Owner'}</TableHead>
                     <TableHead>{isRTL ? 'المدينة' : 'City'}</TableHead>
                     <TableHead>{isRTL ? 'الحي' : 'Neighborhood'}</TableHead>
                     <TableHead>{isRTL ? 'السعر' : 'Price'}</TableHead>
@@ -285,60 +350,89 @@ export default function AdminListings() {
                     <TableHead className="text-right">{isRTL ? 'الإجراءات' : 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {properties.map((property) => (
-                    <TableRow key={property.id}>
-                      <TableCell className="font-medium max-w-xs truncate">
-                        {getTitle(property)}
-                      </TableCell>
-                      <TableCell>{getCityName(property.city)}</TableCell>
-                      <TableCell>{getNeighborhoodName(property.neighborhood)}</TableCell>
-                      <TableCell>{formatPrice(property.price)} DH</TableCell>
-                      <TableCell>{getStatusBadge(property.status)}</TableCell>
-                      <TableCell>{formatDate(property.created_at)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-2">
-                          <Link to={`/admin/listings/${property.id}`}>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                  {properties.map((property) => {
+                    const firstImg = getFirstImagePath(property.images);
+                    const imgUrl = firstImg ? getImageUrl(firstImg) : null;
 
-                          {property.status === 'pending' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleStatusChange(property.id, 'approved')}
-                                disabled={actionLoading === property.id}
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                              >
-                                {actionLoading === property.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <CheckCircle className="h-4 w-4" />
-                                )}
-                              </Button>
-
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleStatusChange(property.id, 'rejected')}
-                                disabled={actionLoading === property.id}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                {actionLoading === property.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <XCircle className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </>
+                    return (
+                      <TableRow key={property.id}>
+                        <TableCell>
+                          {imgUrl ? (
+                            <img
+                              src={imgUrl}
+                              alt="property"
+                              className="h-14 w-24 object-cover rounded border"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="h-14 w-24 rounded border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                              {isRTL ? 'بدون صورة' : 'No image'}
+                            </div>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+
+                        <TableCell className="font-medium max-w-xs truncate">
+                          {getTitle(property)}
+                        </TableCell>
+
+                        <TableCell className="max-w-[220px] truncate">
+                          {getOwnerLabel(property)}
+                        </TableCell>
+
+                        <TableCell>{getCityName(property.city)}</TableCell>
+                        <TableCell>{getNeighborhoodName(property.neighborhood)}</TableCell>
+                        <TableCell>{formatPrice(property.price)} DH</TableCell>
+                        <TableCell>{getStatusBadge(property.status)}</TableCell>
+                        <TableCell>{formatDate(property.created_at)}</TableCell>
+
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-2">
+                            <Link to={`/admin/listings/${property.id}`}>
+                              <Button variant="ghost" size="sm" title={isRTL ? 'عرض' : 'View'}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
+
+                            {property.status === 'pending' && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleStatusChange(property.id, 'approved')}
+                                  disabled={actionLoading === property.id}
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  title={isRTL ? 'قبول' : 'Approve'}
+                                >
+                                  {actionLoading === property.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="h-4 w-4" />
+                                  )}
+                                </Button>
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleStatusChange(property.id, 'rejected')}
+                                  disabled={actionLoading === property.id}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  title={isRTL ? 'رفض' : 'Reject'}
+                                >
+                                  {actionLoading === property.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
 
