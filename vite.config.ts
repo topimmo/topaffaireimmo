@@ -13,8 +13,8 @@ function buildMetadataPlugin(): Plugin {
                       'local-dev';
       
       return html
-        .replace('BUILD_TIMESTAMP_PLACEHOLDER', timestamp)
-        .replace('DEPLOYMENT_VERSION_PLACEHOLDER', version);
+        .replaceAll('BUILD_TIMESTAMP_PLACEHOLDER', timestamp)
+        .replaceAll('DEPLOYMENT_VERSION_PLACEHOLDER', version);
     },
   };
 }

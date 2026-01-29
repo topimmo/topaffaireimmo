@@ -205,7 +205,7 @@ export default function AdminListings() {
         console.log('  - contact_email:', merged[0]?.contact_email);
         console.log('  - advertiser_type:', merged[0]?.advertiser_type);
       }
-      console.log('Build timestamp:', new Date().toISOString());
+      console.log('Data fetched at:', new Date().toISOString());
       console.log('Environment:', import.meta.env.MODE);
       console.groupEnd();
 
