@@ -7,6 +7,7 @@ type ActiveBannerRow = {
   banner_image_url: string | null;
   target_url: string | null;
   company_name: string | null;
+  created_at?: string | null;
   slot?: {
     page: string | null;
     position: string | null;
@@ -19,6 +20,8 @@ interface BannerSlotProps {
   className?: string;
   adSenseFallback?: ReactNode;
 }
+
+const normalizeUrl = (u: string) => (u.startsWith("http") ? u : `https://${u}`);
 
 export default function BannerSlot({
   page,
@@ -45,6 +48,7 @@ export default function BannerSlot({
             banner_image_url,
             target_url,
             company_name,
+            created_at,
             slot:banner_slots!inner(
               page,
               position
@@ -57,6 +61,7 @@ export default function BannerSlot({
         .lte("start_date", now)
         .gte("end_date", now)
         .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (!mounted) return;
@@ -65,9 +70,6 @@ export default function BannerSlot({
         console.log("[BannerSlot] fetch error:", error);
         setActiveBanner(null);
       } else {
-        // Debug (خليه ولا حيدو)
-        // console.log("[BannerSlot] data:", data);
-
         setActiveBanner((data as ActiveBannerRow) ?? null);
       }
 
@@ -83,7 +85,6 @@ export default function BannerSlot({
 
   if (loading) return null;
 
-  // ✅ خاص البيانات تكون كاملة باش نعرضو الصورة
   const img = activeBanner?.banner_image_url ?? null;
   const url = activeBanner?.target_url ?? null;
   const name = activeBanner?.company_name ?? "Advertisement";
@@ -92,7 +93,7 @@ export default function BannerSlot({
     return (
       <div className={`banner-slot ${className}`}>
         <a
-          href={url}
+          href={normalizeUrl(url)}
           target="_blank"
           rel="noopener noreferrer sponsored"
           className="block"
@@ -108,7 +109,6 @@ export default function BannerSlot({
     );
   }
 
-  // ✅ Fallback AdSense
   if (adSenseFallback) {
     return <div className={`banner-slot ${className}`}>{adSenseFallback}</div>;
   }
