@@ -152,9 +152,10 @@ export default function SearchResults() {
 
   // ✅ convert to PropertyCard type
   const properties: Property[] = useMemo(() => {
+    // ✅ Debug log (for navigation issue diagnosis - Issue #5 verification)
     console.log('[SearchResults] Converting properties, count:', filteredRows.length);
     
-    return filteredRows.map((r) => {
+    return filteredRows.map((r, index) => {
       const title =
         language === "ar"
           ? r.title_ar || r.title_fr || "Annonce"
@@ -185,8 +186,8 @@ export default function SearchResults() {
         featured: !!r.featured,
       };
 
-      // ✅ Log first property mapping for debugging
-      if (filteredRows.indexOf(r) === 0) {
+      // ✅ Debug log for first property (Issue #5 verification)
+      if (index === 0) {
         console.log('[SearchResults] First property mapped:', {
           dbId: r.id,
           cardId: propertyCard.id,

@@ -36,8 +36,8 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const { t, language, isRTL } = useLanguage();
   
-  // ✅ Add click handler to log property ID
-  const handleCardClick = (e: React.MouseEvent) => {
+  // ✅ Click handler with debug log (for navigation issue diagnosis - Issue #5 verification)
+  const handleCardClick = () => {
     console.log("[PropertyCard] Clicked property:", {
       id: property.id,
       title: property.title,

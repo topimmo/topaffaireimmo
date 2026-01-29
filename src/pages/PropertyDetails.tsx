@@ -46,7 +46,7 @@ export default function PropertyDetails() {
     const fetchProperty = async () => {
       if (!id) return;
 
-      // ✅ Log property ID being loaded
+      // ✅ Debug log (for navigation issue diagnosis - Issue #5 verification)
       console.log("[PropertyDetails] Loading property with ID:", id);
 
       setLoading(true);
@@ -63,6 +63,7 @@ export default function PropertyDetails() {
         console.log("[PropertyDetails] fetch error:", error);
         setProperty(null);
       } else {
+        // ✅ Debug log (for navigation issue diagnosis - Issue #5 verification)
         console.log("[PropertyDetails] Property loaded successfully:", {
           id: data?.id,
           title: data?.title_fr || data?.title,

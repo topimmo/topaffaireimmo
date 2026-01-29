@@ -115,6 +115,7 @@ export default function AdminListingDetail() {
       toast.error(isRTL ? 'خطأ في تحميل الإعلان' : 'Error loading listing');
       navigate('/admin/listings');
     } else if (data) {
+      // ✅ Debug log (for image display issue diagnosis - Issue #2)
       console.log('[AdminListingDetail] Property loaded:', {
         id: data.id,
         images: data.images,
@@ -294,6 +295,7 @@ export default function AdminListingDetail() {
             ? `فشل الحذف: ${dbError.message}` 
             : `Failed to delete: ${dbError.message}`
         );
+        setActionLoading(false);
         return;
       }
 
@@ -306,7 +308,6 @@ export default function AdminListingDetail() {
           ? 'وقع خطأ غير متوقع فالحذف' 
           : 'Unexpected error deleting listing'
       );
-    } finally {
       setActionLoading(false);
     }
   };
@@ -500,6 +501,7 @@ export default function AdminListingDetail() {
                   <div className="grid grid-cols-2 gap-4">
                     {property.images.map((image, index) => {
                       const imageUrl = getPublicImageUrl(image);
+                      // ✅ Debug log (for image display issue diagnosis - Issue #2)
                       console.log('[AdminListingDetail] Rendering image:', { index, original: image, url: imageUrl });
                       
                       return (
