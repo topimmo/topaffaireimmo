@@ -20,7 +20,7 @@ export default function ExploreByCityMap() {
   }
 
   return (
-    <section className={`py-16 md:py-24 bg-background noise-texture ${isRTL ? "rtl" : "ltr"}`}>
+    <section className={`py-8 md:py-12 bg-background noise-texture ${isRTL ? "rtl" : "ltr"}`}>
       <div className="container">
         {/* Section Title */}
         <div className="text-center mb-8">

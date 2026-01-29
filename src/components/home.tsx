@@ -17,11 +17,13 @@ function Home() {
 
       {/* ✅ Ad banner (home middle) */}
       <section className="mt-12">
-        <AdBanner
-          page="home"
-          position="home-middle"
-          className="max-w-6xl mx-auto"
-        />
+        <div className="min-h-[90px]">
+          <AdBanner
+            page="home"
+            position="home-middle"
+            className="max-w-6xl mx-auto"
+          />
+        </div>
       </section>
 
       {/* Latest listings */}
@@ -30,7 +32,7 @@ function Home() {
       </section>
 
       {/* Explore by city */}
-      <section className="mt-20">
+      <section className="mt-12">
         <ExploreByCityMap />
       </section>
     </main>
