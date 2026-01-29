@@ -42,15 +42,20 @@ const propertyTypes = ["Apartment", "House", "Villa", "Commercial", "Land"] as c
 // ✅ Helpers
 const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
 
-function normalizeTypeValue(v: string) {
-  // UI values will be "apartment", "villa", etc.
+function normalize(v: string) {
   return (v || "").trim().toLowerCase();
 }
 
-function normalizeCityValue(v: string) {
-  // UI values are slugs: "casablanca", "rabat"...
-  return (v || "").trim().toLowerCase();
-}
+// UI slug -> display label (مؤقتاً ثابتة)
+const CITY_OPTIONS = [
+  { value: "all-cities", label: "All Cities" },
+  { value: "casablanca", label: "Casablanca" },
+  { value: "rabat", label: "Rabat" },
+  { value: "marrakech", label: "Marrakech" },
+  { value: "fes", label: "Fes" },
+  { value: "tangier", label: "Tangier" },
+  { value: "agadir", label: "Agadir" },
+] as const;
 
 function getPublicImageUrl(pathOrUrl: string) {
   if (!pathOrUrl) return "";
@@ -62,21 +67,18 @@ export default function SearchResults() {
   const { language } = useLanguage();
   const [searchParams] = useSearchParams();
 
-  const initialType = useMemo(() => {
-    const t = searchParams.get("type");
-    return t ? normalizeTypeValue(t) : "all-types";
-  }, [searchParams]);
+  // ✅ derive initial values from URL (never empty)
+  const urlType = useMemo(() => normalize(searchParams.get("type") || ""), [searchParams]);
+  const urlCity = useMemo(() => normalize(searchParams.get("city") || ""), [searchParams]);
 
-  const initialCity = useMemo(() => {
-    const c = searchParams.get("city");
-    return c ? normalizeCityValue(c) : "all-cities";
-  }, [searchParams]);
+  const initialType = urlType ? urlType : "all-types";
+  const initialCity = urlCity ? urlCity : "all-cities";
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
 
-  // ✅ IMPORTANT: Select values must NEVER be ""
+  // ✅ IMPORTANT: Select value must NEVER be ""
   const [selectedType, setSelectedType] = useState<string>(initialType);
   const [selectedCity, setSelectedCity] = useState<string>(initialCity);
   const [sortBy, setSortBy] = useState<string>("newest");
@@ -85,7 +87,13 @@ export default function SearchResults() {
   const [dbRows, setDbRows] = useState<DbProperty[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ fetch from Supabase (approved only)
+  // ✅ keep state synced if URL changes (back/forward navigation)
+  useEffect(() => {
+    setSelectedType(initialType);
+    setSelectedCity(initialCity);
+  }, [initialType, initialCity]);
+
+  // ✅ fetch from Supabase
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -116,14 +124,8 @@ export default function SearchResults() {
           )
           .eq("status", "approved");
 
-        // ✅ Type filter:
-        // DB غالباً مخزن "Apartment" / "Villa" ... (Pascal case)
-        // UI كيعطي "apartment" -> نستعمل ilike مع wildcards أو نقلب قيمة صحيحة
+        // ✅ Type filter (SQL) - نخففو فالfrontend filter final
         if (selectedType !== "all-types") {
-          // safest: case-insensitive exact match using ilike without wildcards:
-          // BUT ilike expects pattern; to enforce exact, we can do ilike("property_type", selectedType)
-          // only if DB already lowercase. غالباً لا.
-          // better: ilike with % and compare normalized later as backup.
           q = q.ilike("property_type", `%${selectedType}%`);
         }
 
@@ -155,26 +157,25 @@ export default function SearchResults() {
     fetchData();
   }, [selectedType, sortBy]);
 
-  // ✅ Front filters (city + price + exact type normalization fallback)
+  // ✅ frontend filters (city + exact type + price)
   const filteredRows = useMemo(() => {
     let rows = [...dbRows];
 
-    // ✅ city filter by slug vs DB name (temporary)
-    // UI: "casablanca" / DB: "Casablanca"
+    // City filter (UI slug vs DB name)
     if (selectedCity !== "all-cities") {
       rows = rows.filter((r) => {
-        const cityName =
+        const dbCity =
           (language === "ar" ? r.city?.name_ar : r.city?.name_fr) || "";
-        return normalizeCityValue(cityName) === normalizeCityValue(selectedCity);
+        return normalize(dbCity) === normalize(selectedCity);
       });
     }
 
-    // ✅ exact type fallback (because we used %like% in SQL)
+    // Exact type fallback
     if (selectedType !== "all-types") {
-      rows = rows.filter((r) => normalizeTypeValue(r.property_type || "") === normalizeTypeValue(selectedType));
+      rows = rows.filter((r) => normalize(r.property_type || "") === normalize(selectedType));
     }
 
-    // price range
+    // Price range
     rows = rows.filter((r) => {
       const p = r.price ?? 0;
       return p >= priceRange[0] && p <= priceRange[1];
@@ -183,11 +184,9 @@ export default function SearchResults() {
     return rows;
   }, [dbRows, selectedCity, selectedType, priceRange, language]);
 
-  // ✅ convert to PropertyCard type
+  // ✅ map to PropertyCard type
   const properties: Property[] = useMemo(() => {
-    console.log("[SearchResults] Converting properties, count:", filteredRows.length);
-
-    return filteredRows.map((r, index) => {
+    return filteredRows.map((r) => {
       const title =
         language === "ar"
           ? r.title_ar || r.title_fr || "Annonce"
@@ -197,12 +196,11 @@ export default function SearchResults() {
         (language === "ar" ? r.city?.name_ar : r.city?.name_fr) || "";
 
       const firstImg = r.images?.[0] || "";
-      const image =
-        firstImg
-          ? getPublicImageUrl(firstImg)
-          : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
+      const image = firstImg
+        ? getPublicImageUrl(firstImg)
+        : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
 
-      const propertyCard: Property = {
+      return {
         id: r.id,
         title,
         price: r.price ?? 0,
@@ -216,16 +214,6 @@ export default function SearchResults() {
         image,
         featured: !!r.featured,
       };
-
-      if (index === 0) {
-        console.log("[SearchResults] First property mapped:", {
-          dbId: r.id,
-          cardId: propertyCard.id,
-          title: propertyCard.title,
-        });
-      }
-
-      return propertyCard;
     });
   }, [filteredRows, language]);
 
@@ -234,6 +222,12 @@ export default function SearchResults() {
     setSelectedCity("all-cities");
     setPriceRange(DEFAULT_PRICE_RANGE);
   };
+
+  const showClear =
+    selectedCity !== "all-cities" ||
+    selectedType !== "all-types" ||
+    priceRange[0] > 0 ||
+    priceRange[1] < DEFAULT_PRICE_RANGE[1];
 
   return (
     <div className="pt-24 pb-16">
@@ -261,16 +255,11 @@ export default function SearchResults() {
                 <SelectValue placeholder="Select City" />
               </SelectTrigger>
               <SelectContent>
-                {/* ✅ value MUST NOT be empty */}
-                <SelectItem value="all-cities">All Cities</SelectItem>
-
-                {/* مؤقتاً: نخليها يدوي */}
-                <SelectItem value="casablanca">Casablanca</SelectItem>
-                <SelectItem value="rabat">Rabat</SelectItem>
-                <SelectItem value="marrakech">Marrakech</SelectItem>
-                <SelectItem value="fes">Fes</SelectItem>
-                <SelectItem value="tangier">Tangier</SelectItem>
-                <SelectItem value="agadir">Agadir</SelectItem>
+                {CITY_OPTIONS.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -280,12 +269,9 @@ export default function SearchResults() {
                 <SelectValue placeholder="Property Type" />
               </SelectTrigger>
               <SelectContent>
-                {/* ✅ value MUST NOT be empty */}
                 <SelectItem value="all-types">All Types</SelectItem>
-
                 {propertyTypes.map((type) => (
-                  // ✅ IMPORTANT: Keep value consistent with normalizeTypeValue
-                  <SelectItem key={type} value={normalizeTypeValue(type)}>
+                  <SelectItem key={type} value={normalize(type)}>
                     {type}
                   </SelectItem>
                 ))}
@@ -295,17 +281,14 @@ export default function SearchResults() {
             {/* More Filters Button */}
             <Button
               variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => setShowFilters((s) => !s)}
               className="gap-2"
             >
               <SlidersHorizontal className="h-4 w-4" />
               More Filters
             </Button>
 
-            {(selectedCity !== "all-cities" ||
-              selectedType !== "all-types" ||
-              priceRange[0] > 0 ||
-              priceRange[1] < DEFAULT_PRICE_RANGE[1]) && (
+            {showClear && (
               <Button variant="ghost" onClick={clearFilters} className="gap-2">
                 <X className="h-4 w-4" />
                 Clear Filters
@@ -334,6 +317,7 @@ export default function SearchResults() {
                   "p-2 transition-colors",
                   viewMode === "grid" ? "bg-primary text-white" : "hover:bg-muted"
                 )}
+                aria-label="Grid view"
               >
                 <Grid3X3 className="h-5 w-5" />
               </button>
@@ -343,6 +327,7 @@ export default function SearchResults() {
                   "p-2 transition-colors",
                   viewMode === "list" ? "bg-primary text-white" : "hover:bg-muted"
                 )}
+                aria-label="List view"
               >
                 <List className="h-5 w-5" />
               </button>
@@ -383,8 +368,15 @@ export default function SearchResults() {
                 : "grid-cols-1"
             )}
           >
-            {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+            {properties.map((property, i) => (
+              <div key={property.id}>
+                <PropertyCard property={property} />
+
+                {/* ✅ Ad inside results (Adsense friendly) */}
+                {i === 5 && (
+                  <AdBanner page="search" position="mid_results" className="mt-6" />
+                )}
+              </div>
             ))}
           </div>
         ) : (
@@ -396,7 +388,7 @@ export default function SearchResults() {
           </div>
         )}
 
-        {/* Ad Banner */}
+        {/* Ad Banner (after results) */}
         <AdBanner page="search" position="after_results" className="mt-12" />
       </div>
     </div>
