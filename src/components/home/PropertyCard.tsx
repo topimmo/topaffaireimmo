@@ -36,6 +36,14 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const { t, language, isRTL } = useLanguage();
   
+  // ✅ Click handler with debug log (for navigation issue diagnosis - Issue #5 verification)
+  const handleCardClick = () => {
+    console.log("[PropertyCard] Clicked property:", {
+      id: property.id,
+      title: property.title,
+    });
+  };
+  
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-MA", {
       style: "decimal",
@@ -50,6 +58,7 @@ export default function PropertyCard({
   return (
     <Link
       to={`/property/${property.id}`}
+      onClick={handleCardClick}
       className={cn(
         "group block bg-white rounded-xl border border-muted overflow-hidden transition-all duration-300 hover:-translate-y-1",
         "shadow-[0_2px_4px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.06)]",

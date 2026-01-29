@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import AdBanner from "@/components/home/AdBanner";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -48,6 +46,9 @@ export default function PropertyDetails() {
     const fetchProperty = async () => {
       if (!id) return;
 
+      // ✅ Debug log (for navigation issue diagnosis - Issue #5 verification)
+      console.log("[PropertyDetails] Loading property with ID:", id);
+
       setLoading(true);
 
       const { data, error } = await supabase
@@ -62,6 +63,11 @@ export default function PropertyDetails() {
         console.log("[PropertyDetails] fetch error:", error);
         setProperty(null);
       } else {
+        // ✅ Debug log (for navigation issue diagnosis - Issue #5 verification)
+        console.log("[PropertyDetails] Property loaded successfully:", {
+          id: data?.id,
+          title: data?.title_fr || data?.title,
+        });
         setProperty(data ?? null);
         setCurrentImage(0);
       }
@@ -87,12 +93,8 @@ export default function PropertyDetails() {
 
   if (!property) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 pt-24 container">
-          <p className="text-muted-foreground">Property not found</p>
-        </main>
-        <Footer />
+      <div className="container pt-24">
+        <p className="text-muted-foreground">Property not found</p>
       </div>
     );
   }
@@ -224,10 +226,7 @@ export default function PropertyDetails() {
         canonical={`/property/${property.id}`}
       />
 
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-
-        <main className="flex-1 pt-20">
+      <div className="pt-20">
           {/* Breadcrumb Navigation */}
           <section className="container pt-6 pb-4">
             <Breadcrumb>
@@ -508,9 +507,6 @@ export default function PropertyDetails() {
           </section>
 
           <AdBanner page="property" position="before_footer" className="bg-muted/30" />
-        </main>
-
-        <Footer />
       </div>
     </>
   );

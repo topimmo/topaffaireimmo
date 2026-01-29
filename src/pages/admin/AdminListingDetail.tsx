@@ -24,9 +24,20 @@ import {
   Phone,
   Share2,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+// ✅ Helper to check if string is URL
+const isUrl = (s: string) => /^https?:\/\//i.test(s);
+
+// ✅ Get public URL from storage path
+const getPublicImageUrl = (pathOrUrl: string) => {
+  if (isUrl(pathOrUrl)) return pathOrUrl;
+  const { data } = supabase.storage.from('property-images').getPublicUrl(pathOrUrl);
+  return data.publicUrl;
+};
 
 interface PropertyDetail {
   id: string;
@@ -100,9 +111,16 @@ export default function AdminListingDetail() {
       .single();
 
     if (error) {
+      console.error('[AdminListingDetail] Error loading listing:', error);
       toast.error(isRTL ? 'خطأ في تحميل الإعلان' : 'Error loading listing');
       navigate('/admin/listings');
     } else if (data) {
+      // ✅ Debug log (for image display issue diagnosis - Issue #2)
+      console.log('[AdminListingDetail] Property loaded:', {
+        id: data.id,
+        images: data.images,
+        imagesCount: data.images?.length || 0,
+      });
       setProperty(data as unknown as PropertyDetail);
     }
 
@@ -236,6 +254,64 @@ export default function AdminListingDetail() {
     setActionLoading(false);
   };
 
+  // ✅ Delete property handler
+  const handleDelete = async () => {
+    if (!property) return;
+
+    const confirmed = window.confirm(
+      isRTL 
+        ? 'واش متأكد بغيت تحذف هاد الإعلان نهائياً؟ غادي يتحذف من قاعدة البيانات و التخزين.'
+        : 'Are you sure you want to permanently delete this listing? It will be removed from the database and storage.'
+    );
+
+    if (!confirmed) return;
+
+    setActionLoading(true);
+
+    try {
+      // 1) Delete images from storage (only paths, not URLs)
+      if (property.images && property.images.length > 0) {
+        const paths = property.images.filter((img) => !isUrl(img));
+        if (paths.length > 0) {
+          const { error: storageError } = await supabase.storage
+            .from('property-images')
+            .remove(paths);
+          if (storageError) {
+            console.warn('[AdminListingDetail] Storage deletion warning:', storageError);
+          }
+        }
+      }
+
+      // 2) Delete property from database
+      const { error: dbError } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', property.id);
+
+      if (dbError) {
+        console.error('[AdminListingDetail] Delete error:', dbError);
+        toast.error(
+          isRTL 
+            ? `فشل الحذف: ${dbError.message}` 
+            : `Failed to delete: ${dbError.message}`
+        );
+        setActionLoading(false);
+        return;
+      }
+
+      toast.success(isRTL ? 'تم حذف الإعلان بنجاح' : 'Listing deleted successfully');
+      navigate('/admin/listings');
+    } catch (error: any) {
+      console.error('[AdminListingDetail] Unexpected delete error:', error);
+      toast.error(
+        isRTL 
+          ? 'وقع خطأ غير متوقع فالحذف' 
+          : 'Unexpected error deleting listing'
+      );
+      setActionLoading(false);
+    }
+  };
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-MA', {
       year: 'numeric',
@@ -311,34 +387,51 @@ export default function AdminListingDetail() {
         </div>
 
         {/* Action Buttons */}
-        {property.status === 'pending' && (
-          <div className="flex gap-3">
-            <Button
-              onClick={() => handleStatusChange('approved')}
-              disabled={actionLoading}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {actionLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <CheckCircle className="h-4 w-4 mr-2" />
-              )}
-              {isRTL ? 'اعتماد' : 'Approve'}
-            </Button>
-            <Button
-              onClick={() => handleStatusChange('rejected')}
-              disabled={actionLoading}
-              variant="destructive"
-            >
-              {actionLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <XCircle className="h-4 w-4 mr-2" />
-              )}
-              {isRTL ? 'رفض' : 'Reject'}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-3">
+          {property.status === 'pending' && (
+            <>
+              <Button
+                onClick={() => handleStatusChange('approved')}
+                disabled={actionLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {actionLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                {isRTL ? 'اعتماد' : 'Approve'}
+              </Button>
+              <Button
+                onClick={() => handleStatusChange('rejected')}
+                disabled={actionLoading}
+                variant="destructive"
+              >
+                {actionLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <XCircle className="h-4 w-4 mr-2" />
+                )}
+                {isRTL ? 'رفض' : 'Reject'}
+              </Button>
+            </>
+          )}
+
+          {/* ✅ Delete button for all statuses */}
+          <Button
+            onClick={handleDelete}
+            disabled={actionLoading}
+            variant="destructive"
+            className="ml-auto"
+          >
+            {actionLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Trash2 className="h-4 w-4 mr-2" />
+            )}
+            {isRTL ? 'حذف' : 'Delete'}
+          </Button>
+        </div>
 
         {/* Facebook Posting Status & Retry */}
         {property.status === 'approved' && (
@@ -406,14 +499,24 @@ export default function AdminListingDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
-                    {property.images.map((image, index) => (
-                      <img
-                        key={index}
-                        src={image}
-                        alt={`${title} - ${index + 1}`}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                    ))}
+                    {property.images.map((image, index) => {
+                      const imageUrl = getPublicImageUrl(image);
+                      // ✅ Debug log (for image display issue diagnosis - Issue #2)
+                      console.log('[AdminListingDetail] Rendering image:', { index, original: image, url: imageUrl });
+                      
+                      return (
+                        <img
+                          key={index}
+                          src={imageUrl}
+                          alt={`${title} - ${index + 1}`}
+                          className="w-full h-48 object-cover rounded-lg border"
+                          onError={(e) => {
+                            console.error('[AdminListingDetail] Image load error:', imageUrl);
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
