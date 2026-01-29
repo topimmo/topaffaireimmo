@@ -51,7 +51,7 @@ export default function AdminListings() {
   const pageSize = 50;
 
   useEffect(() => {
-    setPage(1); // Reset to first page when filter changes
+    setPage(1);
   }, [statusFilter]);
 
   useEffect(() => {
@@ -61,53 +61,83 @@ export default function AdminListings() {
   const fetchProperties = async () => {
     setLoading(true);
 
-    let query = supabase
-      .from('properties')
-      .select(`
-        id,
-        title_fr,
-        title_ar,
-        price,
-        status,
-        transaction_type,
-        property_type,
-        created_at,
-        city:cities(name_fr, name_ar),
-        neighborhood:neighborhoods(name_fr, name_ar)
-      `, { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range((page - 1) * pageSize, page * pageSize - 1);
+    try {
+      let query = supabase
+        .from('properties')
+        .select(
+          `
+            id,
+            title_fr,
+            title_ar,
+            price,
+            status,
+            transaction_type,
+            property_type,
+            created_at,
+            city:cities(name_fr, name_ar),
+            neighborhood:neighborhoods(name_fr, name_ar)
+          `,
+          { count: 'exact' }
+        )
+        .order('created_at', { ascending: false })
+        .range((page - 1) * pageSize, page * pageSize - 1);
 
-    if (statusFilter !== 'all') {
-      query = query.eq('status', statusFilter);
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      // ✅ هنا زدنا error
+      const { data, count, error } = await query;
+
+      // ✅ باش يبان الخطأ
+      if (error) {
+        console.error('FETCH ERROR (admin listings):', error);
+
+        toast.error(
+          isRTL
+            ? `خطأ فـ جلب الإعلانات: ${error.message}`
+            : `Error fetching listings: ${error.message}`
+        );
+
+        setProperties([]);
+        setTotalCount(0);
+        setLoading(false);
+        return;
+      }
+
+      if (data) setProperties(data as unknown as Property[]);
+      if (count !== null) setTotalCount(count);
+    } catch (e: any) {
+      console.error('UNEXPECTED FETCH ERROR:', e);
+
+      toast.error(
+        isRTL
+          ? 'وقع خطأ غير متوقع فـ جلب الإعلانات'
+          : 'Unexpected error while fetching listings'
+      );
+
+      setProperties([]);
+      setTotalCount(0);
     }
 
-    const { data, count } = await query;
-
-    if (data) setProperties(data as unknown as Property[]);
-    if (count !== null) setTotalCount(count);
     setLoading(false);
   };
 
   const handleStatusChange = async (propertyId: string, newStatus: string) => {
     setActionLoading(propertyId);
-    
+
     try {
-      // Get current user for approved_by field
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Prepare update data
+
       const updateData: any = { status: newStatus };
-      
-      // If approving, set approval fields
+
       if (newStatus === 'approved') {
         const now = new Date().toISOString();
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
       }
-      
-      // Update the listing
+
       const { error } = await supabase
         .from('properties')
         .update(updateData)
@@ -116,20 +146,19 @@ export default function AdminListings() {
       if (error) {
         toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
       } else {
-        // If approved, send Facebook webhook
         if (newStatus === 'approved') {
           try {
             await sendFacebookWebhook(propertyId);
             toast.success(
-              isRTL 
-                ? 'تم اعتماد الإعلان ونشره على فيسبوك' 
+              isRTL
+                ? 'تم اعتماد الإعلان ونشره على فيسبوك'
                 : 'Listing approved and posted to Facebook'
             );
           } catch (webhookError) {
             console.error('Webhook error:', webhookError);
             toast.warning(
-              isRTL 
-                ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' 
+              isRTL
+                ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك'
                 : 'Listing approved but Facebook posting failed'
             );
           }
@@ -140,14 +169,14 @@ export default function AdminListings() {
               : `Listing ${newStatus === 'rejected' ? 'rejected' : 'updated'}`
           );
         }
-        
+
         await fetchProperties();
       }
     } catch (error) {
       console.error('Status change error:', error);
       toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
     }
-    
+
     setActionLoading(null);
   };
 
@@ -205,20 +234,16 @@ export default function AdminListings() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
               {isRTL ? 'إدارة الإعلانات' : 'Manage Listings'}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              {isRTL
-                ? 'مراجعة والموافقة على إعلانات العقارات'
-                : 'Review and approve property listings'}
+              {isRTL ? 'مراجعة والموافقة على إعلانات العقارات' : 'Review and approve property listings'}
             </p>
           </div>
 
-          {/* Status Filter */}
           <Select
             value={statusFilter}
             onValueChange={(value) => setSearchParams({ status: value })}
@@ -235,7 +260,6 @@ export default function AdminListings() {
           </Select>
         </div>
 
-        {/* Listings Table */}
         <div className="bg-white rounded-lg border">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -279,6 +303,7 @@ export default function AdminListings() {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
+
                           {property.status === 'pending' && (
                             <>
                               <Button
@@ -294,6 +319,7 @@ export default function AdminListings() {
                                   <CheckCircle className="h-4 w-4" />
                                 )}
                               </Button>
+
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -315,8 +341,7 @@ export default function AdminListings() {
                   ))}
                 </TableBody>
               </Table>
-              
-              {/* Pagination */}
+
               {totalCount > pageSize && (
                 <div className="flex items-center justify-between border-t px-4 py-3">
                   <div className="text-sm text-muted-foreground">
@@ -328,7 +353,7 @@ export default function AdminListings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
                     >
                       {isRTL ? 'السابق' : 'Previous'}
@@ -336,7 +361,7 @@ export default function AdminListings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage(p => p + 1)}
+                      onClick={() => setPage((p) => p + 1)}
                       disabled={page * pageSize >= totalCount}
                     >
                       {isRTL ? 'التالي' : 'Next'}
