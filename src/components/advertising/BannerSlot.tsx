@@ -21,7 +21,13 @@ interface BannerSlotProps {
   adSenseFallback?: ReactNode;
 }
 
-const normalizeUrl = (u: string) => (u.startsWith("http") ? u : `https://${u}`);
+const normalizeUrl = (u: string) => {
+  const clean = u.trim();
+  if (!clean) return clean;
+  return clean.startsWith("http://") || clean.startsWith("https://")
+    ? clean
+    : `https://${clean}`;
+};
 
 export default function BannerSlot({
   page,
@@ -37,7 +43,6 @@ export default function BannerSlot({
 
     const fetchActiveBanner = async () => {
       setLoading(true);
-
       const now = new Date().toISOString();
 
       const { data, error } = await supabase
@@ -85,30 +90,43 @@ export default function BannerSlot({
 
   if (loading) return null;
 
-  const img = activeBanner?.banner_image_url ?? null;
-  const url = activeBanner?.target_url ?? null;
-  const name = activeBanner?.company_name ?? "Advertisement";
+  const imgRaw = activeBanner?.banner_image_url ?? "";
+  const urlRaw = activeBanner?.target_url ?? "";
+  const name = activeBanner?.company_name?.trim() || "Advertisement";
 
-  if (img && url) {
+  const img = imgRaw.trim();
+  const url = urlRaw.trim();
+
+  // ✅ إذا كاينة الصورة => عرضها (بالرابط إذا كاين)
+  if (img) {
+    const imageEl = (
+      <img
+        src={normalizeUrl(img)}
+        alt={name}
+        className="w-full h-auto rounded-lg"
+        loading="lazy"
+      />
+    );
+
     return (
       <div className={`banner-slot ${className}`}>
-        <a
-          href={normalizeUrl(url)}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className="block"
-        >
-          <img
-            src={img}
-            alt={name}
-            className="w-full h-auto rounded-lg"
-            loading="lazy"
-          />
-        </a>
+        {url ? (
+          <a
+            href={normalizeUrl(url)}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="block"
+          >
+            {imageEl}
+          </a>
+        ) : (
+          <div className="block">{imageEl}</div>
+        )}
       </div>
     );
   }
 
+  // ✅ Fallback AdSense
   if (adSenseFallback) {
     return <div className={`banner-slot ${className}`}>{adSenseFallback}</div>;
   }
