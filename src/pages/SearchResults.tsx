@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import PropertyCard, { Property } from "@/components/home/PropertyCard";
 import AdBanner from "@/components/home/AdBanner";
 import { Button } from "@/components/ui/button";
@@ -154,6 +152,8 @@ export default function SearchResults() {
 
   // ✅ convert to PropertyCard type
   const properties: Property[] = useMemo(() => {
+    console.log('[SearchResults] Converting properties, count:', filteredRows.length);
+    
     return filteredRows.map((r) => {
       const title =
         language === "ar"
@@ -170,7 +170,7 @@ export default function SearchResults() {
         ? supabase.storage.from("property-images").getPublicUrl(firstImg).data.publicUrl
         : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
 
-      return {
+      const propertyCard = {
         id: r.id,
         title,
         price: r.price ?? 0,
@@ -184,6 +184,17 @@ export default function SearchResults() {
         image,
         featured: !!r.featured,
       };
+
+      // ✅ Log first property mapping for debugging
+      if (filteredRows.indexOf(r) === 0) {
+        console.log('[SearchResults] First property mapped:', {
+          dbId: r.id,
+          cardId: propertyCard.id,
+          title: propertyCard.title,
+        });
+      }
+
+      return propertyCard;
     });
   }, [filteredRows, language]);
 
@@ -194,11 +205,8 @@ export default function SearchResults() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-
-      <main className="flex-1 pt-24 pb-16">
-        <div className="container">
+    <div className="pt-24 pb-16">
+      <div className="container">
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-2">
@@ -365,9 +373,6 @@ export default function SearchResults() {
           {/* Ad Banner */}
           <AdBanner page="search" position="after_results" className="mt-12" />
         </div>
-      </main>
-
-      <Footer />
     </div>
   );
 }
