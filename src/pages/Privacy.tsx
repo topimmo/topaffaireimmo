@@ -2,14 +2,34 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const content = {
+type Lang = "fr" | "ar";
+
+type Section = {
+  title: string;
+  content: string;
+  list?: string[];
+  footer?: string;
+  contact?: {
+    email: string;
+    address: string;
+  };
+};
+
+type PageContent = {
+  title: string;
+  lastUpdated: string;
+  sections: Section[];
+};
+
+const content: Record<Lang, PageContent> = {
   fr: {
     title: "Politique de Confidentialité",
     lastUpdated: "Dernière mise à jour : Janvier 2025",
     sections: [
       {
         title: "1. Introduction",
-        content: "TopAffaireImmo (\"nous\", \"notre\" ou \"nos\") s'engage à protéger votre vie privée. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous visitez notre site web ou utilisez nos services.",
+        content:
+          'TopAffaireImmo ("nous", "notre" ou "nos") s\'engage à protéger votre vie privée. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous visitez notre site web ou utilisez nos services.',
       },
       {
         title: "2. Informations que nous collectons",
@@ -35,7 +55,8 @@ const content = {
       },
       {
         title: "4. Cookies et suivi",
-        content: "Nous utilisons des cookies et des technologies de suivi similaires pour améliorer votre expérience de navigation et analyser le trafic du site web. Des services tiers comme Google AdSense peuvent également placer des cookies sur votre appareil. Vous pouvez gérer vos préférences de cookies via les paramètres de votre navigateur.",
+        content:
+          "Nous utilisons des cookies et des technologies de suivi similaires pour améliorer votre expérience de navigation et analyser le trafic du site web. Des services tiers comme Google AdSense peuvent également placer des cookies sur votre appareil. Vous pouvez gérer vos préférences de cookies via les paramètres de votre navigateur.",
       },
       {
         title: "5. Partage d'informations",
@@ -49,7 +70,8 @@ const content = {
       },
       {
         title: "6. Sécurité des données",
-        content: "Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos informations contre tout accès, modification ou destruction non autorisé. Cependant, aucune transmission sur Internet n'est totalement sécurisée et nous ne pouvons garantir une sécurité absolue.",
+        content:
+          "Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos informations contre tout accès, modification ou destruction non autorisé. Cependant, aucune transmission sur Internet n'est totalement sécurisée et nous ne pouvons garantir une sécurité absolue.",
       },
       {
         title: "7. Vos droits",
@@ -63,7 +85,8 @@ const content = {
       },
       {
         title: "8. Contactez-nous",
-        content: "Si vous avez des questions sur cette Politique de Confidentialité ou souhaitez exercer vos droits, veuillez nous contacter à :",
+        content:
+          "Si vous avez des questions sur cette Politique de Confidentialité ou souhaitez exercer vos droits, veuillez nous contacter à :",
         contact: {
           email: "privacy@topaffaireimmo.com",
           address: "123 Boulevard Mohammed V, Casablanca, Maroc",
@@ -77,7 +100,8 @@ const content = {
     sections: [
       {
         title: "1. مقدمة",
-        content: "تلتزم TopAffaireImmo (\"نحن\" أو \"لنا\" أو \"خاصتنا\") بحماية خصوصيتك. توضح سياسة الخصوصية هذه كيفية جمع معلوماتك واستخدامها والإفصاح عنها وحمايتها عند زيارة موقعنا الإلكتروني أو استخدام خدماتنا.",
+        content:
+          'تلتزم TopAffaireImmo ("نحن" أو "لنا" أو "خاصتنا") بحماية خصوصيتك. توضح سياسة الخصوصية هذه كيفية جمع معلوماتك واستخدامها والإفصاح عنها وحمايتها عند زيارة موقعنا الإلكتروني أو استخدام خدماتنا.',
       },
       {
         title: "2. المعلومات التي نجمعها",
@@ -103,7 +127,8 @@ const content = {
       },
       {
         title: "4. ملفات تعريف الارتباط والتتبع",
-        content: "نستخدم ملفات تعريف الارتباط وتقنيات التتبع المماثلة لتحسين تجربة التصفح وتحليل حركة المرور على الموقع. قد تضع خدمات الطرف الثالث مثل Google AdSense أيضًا ملفات تعريف الارتباط على جهازك. يمكنك إدارة تفضيلات ملفات تعريف الارتباط من خلال إعدادات متصفحك.",
+        content:
+          "نستخدم ملفات تعريف الارتباط وتقنيات التتبع المماثلة لتحسين تجربة التصفح وتحليل حركة المرور على الموقع. قد تضع خدمات الطرف الثالث مثل Google AdSense أيضًا ملفات تعريف الارتباط على جهازك. يمكنك إدارة تفضيلات ملفات تعريف الارتباط من خلال إعدادات متصفحك.",
       },
       {
         title: "5. مشاركة المعلومات",
@@ -117,7 +142,8 @@ const content = {
       },
       {
         title: "6. أمن البيانات",
-        content: "نطبق التدابير التقنية والتنظيمية المناسبة لحماية معلوماتك من الوصول غير المصرح به أو التعديل أو التدمير. ومع ذلك، لا يوجد نقل عبر الإنترنت آمن تمامًا، ولا يمكننا ضمان الأمان المطلق.",
+        content:
+          "نطبق التدابير التقنية والتنظيمية المناسبة لحماية معلوماتك من الوصول غير المصرح به أو التعديل أو التدمير. ومع ذلك، لا يوجد نقل عبر الإنترنت آمن تمامًا، ولا يمكننا ضمان الأمان المطلق.",
       },
       {
         title: "7. حقوقك",
@@ -131,7 +157,8 @@ const content = {
       },
       {
         title: "8. اتصل بنا",
-        content: "إذا كانت لديك أسئلة حول سياسة الخصوصية هذه أو ترغب في ممارسة حقوقك، يرجى الاتصال بنا على:",
+        content:
+          "إذا كانت لديك أسئلة حول سياسة الخصوصية هذه أو ترغب في ممارسة حقوقك، يرجى الاتصال بنا على:",
         contact: {
           email: "privacy@topaffaireimmo.com",
           address: "123 شارع محمد الخامس، الدار البيضاء، المغرب",
@@ -143,10 +170,13 @@ const content = {
 
 export default function Privacy() {
   const { language, isRTL } = useLanguage();
-  const t = content[language];
+
+  // ✅ fallback in case language is not "fr" | "ar"
+  const lang: Lang = (language === "ar" ? "ar" : "fr");
+  const t = content[lang];
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? "rtl" : "ltr"}`}>
       <Header />
 
       <main className="flex-1 pt-24 pb-16">
@@ -154,39 +184,42 @@ export default function Privacy() {
           <h1 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
             {t.title}
           </h1>
-          <p className="text-muted-foreground mb-8">
-            {t.lastUpdated}
-          </p>
+
+          <p className="text-muted-foreground mb-8">{t.lastUpdated}</p>
 
           <div className="prose prose-neutral max-w-none">
             <div className="bg-white rounded-xl border p-8 space-y-8">
               {t.sections.map((section, index) => (
-                <section key={index}>
+                <section key={`${section.title}-${index}`}>
                   <h2 className="font-display text-2xl font-semibold mb-4">
                     {section.title}
                   </h2>
-                  <p className="text-muted-foreground">
-                    {section.content}
-                  </p>
-                  {section.list && (
-                    <ul className={`list-disc ${isRTL ? 'pr-6' : 'pl-6'} text-muted-foreground space-y-2 mt-4`}>
+
+                  <p className="text-muted-foreground">{section.content}</p>
+
+                  {section.list?.length ? (
+                    <ul
+                      className={`list-disc ${
+                        isRTL ? "pr-6" : "pl-6"
+                      } text-muted-foreground space-y-2 mt-4`}
+                    >
                       {section.list.map((item, i) => (
-                        <li key={i}>{item}</li>
+                        <li key={`${index}-${i}`}>{item}</li>
                       ))}
                     </ul>
-                  )}
-                  {section.footer && (
+                  ) : null}
+
+                  {section.footer ? (
+                    <p className="text-muted-foreground mt-4">{section.footer}</p>
+                  ) : null}
+
+                  {section.contact ? (
                     <p className="text-muted-foreground mt-4">
-                      {section.footer}
-                    </p>
-                  )}
-                  {section.contact && (
-                    <p className="text-muted-foreground mt-2">
-                      {isRTL ? 'البريد الإلكتروني' : 'Email'}: {section.contact.email}
+                      {isRTL ? "البريد الإلكتروني" : "Email"}: {section.contact.email}
                       <br />
-                      {isRTL ? 'العنوان' : 'Adresse'}: {section.contact.address}
+                      {isRTL ? "العنوان" : "Adresse"}: {section.contact.address}
                     </p>
-                  )}
+                  ) : null}
                 </section>
               ))}
             </div>
