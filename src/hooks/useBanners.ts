@@ -46,6 +46,8 @@ export function useActiveBanners(page?: string, position?: string) {
       setLoading(true);
       setError(null);
 
+      const now = new Date().toISOString();
+
       // IMPORTANT: inner join باش نقدروا نفلتروا على slot fields
       let query = supabase
         .from('banner_requests')
@@ -56,8 +58,9 @@ export function useActiveBanners(page?: string, position?: string) {
           `
         )
         .eq('status', 'active')
-        .lte('start_date', new Date().toISOString())
-        .gte('end_date', new Date().toISOString());
+        .lte('start_date', now)
+        // ✅ end_date: إلا كانت NULL ولا >= now
+        .or(`end_date.is.null,end_date.gte.${now}`);
 
       if (page) query = query.eq('slot.page', page);
       if (position) query = query.eq('slot.position', position);
@@ -85,6 +88,9 @@ export function useBannerBySlot(slotCode: string) {
       setLoading(true);
       setError(null);
 
+      console.log('--- useBannerBySlot START ---');
+      console.log('SLOT CODE:', slotCode);
+
       // 1) جيب slot (يمكن ما يكونش)
       const { data: slot, error: slotErr } = await supabase
         .from('banner_slots')
@@ -92,9 +98,13 @@ export function useBannerBySlot(slotCode: string) {
         .eq('code', slotCode)
         .maybeSingle(); // ✅ بدل single
 
+      console.log('SLOT:', slot);
+      console.log('SLOT ERROR:', slotErr);
+
       if (slotErr) {
         setError(slotErr.message);
         setLoading(false);
+        console.log('STOP: slotErr', slotErr.message);
         return;
       }
 
@@ -102,8 +112,11 @@ export function useBannerBySlot(slotCode: string) {
         // ماكاينش slot بهذا code => ماشي خطأ ضروري
         setBanner(null);
         setLoading(false);
+        console.log('STOP: no slot found for code:', slotCode);
         return;
       }
+
+      const now = new Date().toISOString();
 
       // 2) جيب active banner لهذا slot (يمكن 0 rows => null)
       const { data: bannerData, error: bannerErr } = await supabase
@@ -116,24 +129,36 @@ export function useBannerBySlot(slotCode: string) {
         )
         .eq('slot_id', slot.id)
         .eq('status', 'active')
-        .lte('start_date', new Date().toISOString())
-        .gte('end_date', new Date().toISOString())
+        .lte('start_date', now)
+        // ✅ end_date: إلا كانت NULL ولا >= now
+        .or(`end_date.is.null,end_date.gte.${now}`)
         .maybeSingle(); // ✅ بدل single
+
+      console.log('BANNER DATA:', bannerData);
+      console.log('BANNER ERROR:', bannerErr);
 
       if (bannerErr) {
         setError(bannerErr.message);
         setLoading(false);
+        console.log('STOP: bannerErr', bannerErr.message);
         return;
+      }
+
+      if (!bannerData) {
+        console.log('NO ACTIVE BANNER FOR SLOT:', { slotId: slot.id, slotCode });
       }
 
       setBanner((bannerData as BannerWithSlot) || null);
       setLoading(false);
+
+      console.log('--- useBannerBySlot END ---');
     };
 
     if (slotCode) fetchBanner();
     else {
       setBanner(null);
       setLoading(false);
+      console.log('STOP: empty slotCode');
     }
   }, [slotCode]);
 
