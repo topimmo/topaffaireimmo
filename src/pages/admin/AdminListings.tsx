@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Eye, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, Loader2, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -42,7 +42,6 @@ interface Property {
   property_type: string;
   created_at: string;
 
-  // ✅ جديد
   owner_id?: string | null;
   images?: string[] | null;
   owner_profile?: ProfileInfo;
@@ -57,10 +56,30 @@ const getImageUrl = (path: string) => {
   return data.publicUrl;
 };
 
+// ✅ واش string هو URL ولا path
+const isUrl = (s: string) => /^https?:\/\//i.test(s);
+
+// ✅ إلا كانت URL نخليها، إلا كانت path نبني public url
+const getDisplayImageUrl = (img: string) => {
+  if (isUrl(img)) return img;
+  return getImageUrl(img);
+};
+
 // ✅ يجيب أول صورة
 const getFirstImagePath = (images?: string[] | null) => {
   if (!images || images.length === 0) return null;
   return images[0];
+};
+
+// ✅ مسح صور storage (paths فقط)
+const deleteStorageImages = async (images?: string[] | null) => {
+  if (!images || images.length === 0) return;
+
+  const paths = images.filter((p) => p && !isUrl(p)); // غير paths
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from('property-images').remove(paths);
+  if (error) console.warn('Storage remove error:', error);
 };
 
 export default function AdminListings() {
@@ -110,9 +129,7 @@ export default function AdminListings() {
         .order('created_at', { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
+      if (statusFilter !== 'all') query = query.eq('status', statusFilter);
 
       const { data, count, error } = await query;
 
@@ -147,9 +164,7 @@ export default function AdminListings() {
         if (profErr) {
           console.warn('Could not fetch profiles:', profErr);
         } else {
-          (profs ?? []).forEach((pr: any) => {
-            profilesMap.set(pr.id, pr);
-          });
+          (profs ?? []).forEach((pr: any) => profilesMap.set(pr.id, pr));
         }
       }
 
@@ -178,9 +193,7 @@ export default function AdminListings() {
     setActionLoading(propertyId);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       const updateData: any = { status: newStatus };
 
@@ -233,6 +246,44 @@ export default function AdminListings() {
     setActionLoading(null);
   };
 
+  const handleDelete = async (property: Property) => {
+    const ok = window.confirm(
+      isRTL
+        ? 'واش متأكد بغيت تحذف هاد الإعلان نهائياً؟'
+        : 'Are you sure you want to permanently delete this listing?'
+    );
+    if (!ok) return;
+
+    try {
+      setActionLoading(property.id);
+
+      // ✅ 1) مسح صور storage (paths فقط)
+      await deleteStorageImages(property.images);
+
+      // ✅ 2) مسح الإعلان من DB
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', property.id);
+
+      if (error) {
+        console.error('Delete error:', error);
+        toast.error(
+          isRTL ? `فشل حذف الإعلان: ${error.message}` : `Failed to delete: ${error.message}`
+        );
+        return;
+      }
+
+      toast.success(isRTL ? 'تم حذف الإعلان' : 'Listing deleted');
+      await fetchProperties();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(isRTL ? 'وقع خطأ غير متوقع فالحذف' : 'Unexpected delete error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -259,20 +310,13 @@ export default function AdminListings() {
     );
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'decimal',
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('fr-MA', { style: 'decimal', maximumFractionDigits: 0 }).format(price);
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-MA');
-  };
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-MA');
 
-  const getTitle = (property: Property) => {
-    return language === 'ar' ? property.title_ar : property.title_fr;
-  };
+  const getTitle = (property: Property) => (language === 'ar' ? property.title_ar : property.title_fr);
 
   const getCityName = (city: Property['city']) => {
     if (!city) return '-';
@@ -287,12 +331,7 @@ export default function AdminListings() {
   const getOwnerLabel = (p: Property) => {
     const prof = p.owner_profile;
     if (!prof) return '-';
-    return (
-      prof.full_name ||
-      prof.phone ||
-      prof.email ||
-      (isRTL ? 'مستخدم' : 'User')
-    );
+    return prof.full_name || prof.phone || prof.email || (isRTL ? 'مستخدم' : 'User');
   };
 
   return (
@@ -304,9 +343,7 @@ export default function AdminListings() {
               {isRTL ? 'إدارة الإعلانات' : 'Manage Listings'}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              {isRTL
-                ? 'مراجعة والموافقة على إعلانات العقارات'
-                : 'Review and approve property listings'}
+              {isRTL ? 'مراجعة والموافقة على إعلانات العقارات' : 'Review and approve property listings'}
             </p>
           </div>
 
@@ -330,9 +367,7 @@ export default function AdminListings() {
             </div>
           ) : properties.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                {isRTL ? 'لا توجد إعلانات' : 'No listings found'}
-              </p>
+              <p className="text-muted-foreground">{isRTL ? 'لا توجد إعلانات' : 'No listings found'}</p>
             </div>
           ) : (
             <>
@@ -354,7 +389,7 @@ export default function AdminListings() {
                 <TableBody>
                   {properties.map((property) => {
                     const firstImg = getFirstImagePath(property.images);
-                    const imgUrl = firstImg ? getImageUrl(firstImg) : null;
+                    const imgUrl = firstImg ? getDisplayImageUrl(firstImg) : null;
 
                     return (
                       <TableRow key={property.id}>
@@ -373,14 +408,8 @@ export default function AdminListings() {
                           )}
                         </TableCell>
 
-                        <TableCell className="font-medium max-w-xs truncate">
-                          {getTitle(property)}
-                        </TableCell>
-
-                        <TableCell className="max-w-[220px] truncate">
-                          {getOwnerLabel(property)}
-                        </TableCell>
-
+                        <TableCell className="font-medium max-w-xs truncate">{getTitle(property)}</TableCell>
+                        <TableCell className="max-w-[220px] truncate">{getOwnerLabel(property)}</TableCell>
                         <TableCell>{getCityName(property.city)}</TableCell>
                         <TableCell>{getNeighborhoodName(property.neighborhood)}</TableCell>
                         <TableCell>{formatPrice(property.price)} DH</TableCell>
@@ -395,6 +424,7 @@ export default function AdminListings() {
                               </Button>
                             </Link>
 
+                            {/* ✅ Approve / Reject غير ل pending */}
                             {property.status === 'pending' && (
                               <>
                                 <Button
@@ -428,6 +458,22 @@ export default function AdminListings() {
                                 </Button>
                               </>
                             )}
+
+                            {/* ✅ زر الحذف كيبان دائما */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(property)}
+                              disabled={actionLoading === property.id}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title={isRTL ? 'حذف' : 'Delete'}
+                            >
+                              {actionLoading === property.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
