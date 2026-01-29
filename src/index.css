@@ -135,4 +135,10 @@
   .bottom-safe {
     bottom: env(safe-area-inset-bottom);
   }
+
+  .home-bottom-section {
+    padding-top: 32px;
+    padding-bottom: 24px;
+    margin-top: 0;
+  }
 }
