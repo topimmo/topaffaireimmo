@@ -137,10 +137,10 @@ export default function SearchResults() {
   const [sortBy, setSortBy] = useState("newest");
 
   const filteredProperties = allProperties.filter((property) => {
-    if (selectedType && selectedType !== "all-types" && property.type.toLowerCase() !== selectedType.toLowerCase()) {
+    if (selectedType !== "all-types" && property.type.toLowerCase() !== selectedType.toLowerCase()) {
       return false;
     }
-    if (selectedCity && selectedCity !== "all-cities" && property.city.toLowerCase() !== selectedCity.toLowerCase()) {
+    if (selectedCity !== "all-cities" && property.city.toLowerCase() !== selectedCity.toLowerCase()) {
       return false;
     }
     if (property.price < priceRange[0] || property.price > priceRange[1]) {
