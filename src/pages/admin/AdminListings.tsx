@@ -50,32 +50,32 @@ interface Property {
   neighborhood: { name_fr: string; name_ar: string } | null;
 }
 
-// ✅ يبني public url ديال Supabase Storage
-const getImageUrl = (path: string) => {
+// ===== Helpers =====
+const isUrl = (s: string) => /^https?:\/\//i.test(s);
+
+// Supabase Storage public url from path
+const getPublicImageUrlFromPath = (path: string) => {
   const { data } = supabase.storage.from('property-images').getPublicUrl(path);
   return data.publicUrl;
 };
 
-// ✅ واش string هو URL ولا path
-const isUrl = (s: string) => /^https?:\/\//i.test(s);
+// if url keep it, if path build public url
+const getDisplayImageUrl = (img: string) => (isUrl(img) ? img : getPublicImageUrlFromPath(img));
 
-// ✅ إلا كانت URL نخليها، إلا كانت path نبني public url
-const getDisplayImageUrl = (img: string) => {
-  if (isUrl(img)) return img;
-  return getImageUrl(img);
-};
-
-// ✅ يجيب أول صورة
-const getFirstImagePath = (images?: string[] | null) => {
+const getFirstImage = (images?: string[] | null) => {
   if (!images || images.length === 0) return null;
   return images[0];
 };
 
-// ✅ مسح صور storage (paths فقط)
+// Delete storage images (only paths; URLs are ignored)
 const deleteStorageImages = async (images?: string[] | null) => {
   if (!images || images.length === 0) return;
 
-  const paths = images.filter((p) => p && !isUrl(p)); // غير paths
+  // Keep only paths (not URLs)
+  const paths = images
+    .filter((p) => typeof p === 'string' && p.trim().length > 0)
+    .filter((p) => !isUrl(p));
+
   if (paths.length === 0) return;
 
   const { error } = await supabase.storage.from('property-images').remove(paths);
@@ -135,25 +135,18 @@ export default function AdminListings() {
 
       if (error) {
         console.error('FETCH ERROR (admin listings):', error);
-        toast.error(
-          isRTL
-            ? `خطأ فـ جلب الإعلانات: ${error.message}`
-            : `Error fetching listings: ${error.message}`
-        );
+        toast.error(isRTL ? `خطأ فـ جلب الإعلانات: ${error.message}` : `Error fetching listings: ${error.message}`);
         setProperties([]);
         setTotalCount(0);
-        setLoading(false);
         return;
       }
 
       const base = (data ?? []) as unknown as Property[];
 
-      // ✅ نجيب معلومات المالكين مرة وحدة
-      const ownerIds = Array.from(
-        new Set(base.map((p) => p.owner_id).filter(Boolean))
-      ) as string[];
+      // Fetch owners profiles once
+      const ownerIds = Array.from(new Set(base.map((p) => p.owner_id).filter(Boolean))) as string[];
 
-      let profilesMap = new Map<string, ProfileInfo>();
+      const profilesMap = new Map<string, ProfileInfo>();
 
       if (ownerIds.length > 0) {
         const { data: profs, error: profErr } = await supabase
@@ -173,20 +166,19 @@ export default function AdminListings() {
         owner_profile: p.owner_id ? profilesMap.get(p.owner_id) ?? null : null,
       }));
 
+      // ✅ Debug صغير باش نعرفو شنو داخل images
+      console.log('IMAGES SAMPLE:', merged[0]?.images);
+
       setProperties(merged);
       if (count !== null) setTotalCount(count);
     } catch (e: any) {
       console.error('UNEXPECTED FETCH ERROR:', e);
-      toast.error(
-        isRTL
-          ? 'وقع خطأ غير متوقع فـ جلب الإعلانات'
-          : 'Unexpected error while fetching listings'
-      );
+      toast.error(isRTL ? 'وقع خطأ غير متوقع فـ جلب الإعلانات' : 'Unexpected error while fetching listings');
       setProperties([]);
       setTotalCount(0);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleStatusChange = async (propertyId: string, newStatus: string) => {
@@ -215,18 +207,10 @@ export default function AdminListings() {
         if (newStatus === 'approved') {
           try {
             await sendFacebookWebhook(propertyId);
-            toast.success(
-              isRTL
-                ? 'تم اعتماد الإعلان ونشره على فيسبوك'
-                : 'Listing approved and posted to Facebook'
-            );
+            toast.success(isRTL ? 'تم اعتماد الإعلان ونشره على فيسبوك' : 'Listing approved and posted to Facebook');
           } catch (webhookError) {
             console.error('Webhook error:', webhookError);
-            toast.warning(
-              isRTL
-                ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك'
-                : 'Listing approved but Facebook posting failed'
-            );
+            toast.warning(isRTL ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' : 'Listing approved but Facebook posting failed');
           }
         } else {
           toast.success(
@@ -241,36 +225,29 @@ export default function AdminListings() {
     } catch (error) {
       console.error('Status change error:', error);
       toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
+    } finally {
+      setActionLoading(null);
     }
-
-    setActionLoading(null);
   };
 
   const handleDelete = async (property: Property) => {
     const ok = window.confirm(
-      isRTL
-        ? 'واش متأكد بغيت تحذف هاد الإعلان نهائياً؟'
-        : 'Are you sure you want to permanently delete this listing?'
+      isRTL ? 'واش متأكد بغيت تحذف هاد الإعلان نهائياً؟' : 'Are you sure you want to permanently delete this listing?'
     );
     if (!ok) return;
 
-    try {
-      setActionLoading(property.id);
+    setActionLoading(property.id);
 
-      // ✅ 1) مسح صور storage (paths فقط)
+    try {
+      // 1) delete storage images (paths only)
       await deleteStorageImages(property.images);
 
-      // ✅ 2) مسح الإعلان من DB
-      const { error } = await supabase
-        .from('properties')
-        .delete()
-        .eq('id', property.id);
+      // 2) delete DB row
+      const { error } = await supabase.from('properties').delete().eq('id', property.id);
 
       if (error) {
         console.error('Delete error:', error);
-        toast.error(
-          isRTL ? `فشل حذف الإعلان: ${error.message}` : `Failed to delete: ${error.message}`
-        );
+        toast.error(isRTL ? `فشل حذف الإعلان: ${error.message}` : `Failed to delete: ${error.message}`);
         return;
       }
 
@@ -388,7 +365,7 @@ export default function AdminListings() {
 
                 <TableBody>
                   {properties.map((property) => {
-                    const firstImg = getFirstImagePath(property.images);
+                    const firstImg = getFirstImage(property.images);
                     const imgUrl = firstImg ? getDisplayImageUrl(firstImg) : null;
 
                     return (
@@ -400,6 +377,11 @@ export default function AdminListings() {
                               alt="property"
                               className="h-14 w-24 object-cover rounded border"
                               loading="lazy"
+                              onError={(e) => {
+                                // helpful debug
+                                console.warn('IMAGE LOAD ERROR:', imgUrl);
+                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                              }}
                             />
                           ) : (
                             <div className="h-14 w-24 rounded border bg-muted flex items-center justify-center text-xs text-muted-foreground">
@@ -424,7 +406,6 @@ export default function AdminListings() {
                               </Button>
                             </Link>
 
-                            {/* ✅ Approve / Reject غير ل pending */}
                             {property.status === 'pending' && (
                               <>
                                 <Button
@@ -459,7 +440,7 @@ export default function AdminListings() {
                               </>
                             )}
 
-                            {/* ✅ زر الحذف كيبان دائما */}
+                            {/* ✅ Delete always visible */}
                             <Button
                               variant="ghost"
                               size="sm"
