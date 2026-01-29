@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { BannerRequest, BannerSlot } from '@/types/supabase';
 
 export interface BannerWithSlot extends BannerRequest {
-  slot?: BannerSlot;
+  slot?: BannerSlot | null;
   id: string;
   impressions: number | null;
   clicks: number | null;
@@ -12,17 +12,20 @@ export interface BannerWithSlot extends BannerRequest {
 export function useBannerSlots() {
   const [slots, setSlots] = useState<BannerSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSlots = async () => {
+      setLoading(true);
+      setError(null);
+
       const { data, error } = await supabase
         .from('banner_slots')
         .select('*')
         .eq('is_active', true)
         .order('id');
 
-      if (error) console.error('fetchSlots error:', error);
-
+      if (error) setError(error.message);
       setSlots(data || []);
       setLoading(false);
     };
@@ -30,37 +33,38 @@ export function useBannerSlots() {
     fetchSlots();
   }, []);
 
-  return { slots, loading };
+  return { slots, loading, error };
 }
 
 export function useActiveBanners(page?: string, position?: string) {
   const [banners, setBanners] = useState<BannerWithSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBanners = async () => {
       setLoading(true);
+      setError(null);
 
+      // IMPORTANT: inner join باش نقدروا نفلتروا على slot fields
       let query = supabase
         .from('banner_requests')
-        // ✅ inner join باش نقدر نفلتر على banner_slots
-        .select(`*, slot:banner_slots!inner(*)`)
+        .select(
+          `
+            *,
+            slot:banner_slots!inner(*)
+          `
+        )
         .eq('status', 'active')
         .lte('start_date', new Date().toISOString())
         .gte('end_date', new Date().toISOString());
 
-      // ✅ فلترة صحيحة على جدول banner_slots
-      if (page) {
-        query = query.eq('banner_slots.page', page);
-      }
-      if (position) {
-        query = query.eq('banner_slots.position', position);
-      }
+      if (page) query = query.eq('slot.page', page);
+      if (position) query = query.eq('slot.position', position);
 
       const { data, error } = await query;
 
-      if (error) console.error('fetchBanners error:', error);
-
+      if (error) setError(error.message);
       setBanners((data as BannerWithSlot[]) || []);
       setLoading(false);
     };
@@ -68,97 +72,117 @@ export function useActiveBanners(page?: string, position?: string) {
     fetchBanners();
   }, [page, position]);
 
-  return { banners, loading };
+  return { banners, loading, error };
 }
 
 export function useBannerBySlot(slotCode: string) {
   const [banner, setBanner] = useState<BannerWithSlot | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBanner = async () => {
       setLoading(true);
+      setError(null);
 
-      // ✅ maybeSingle بدل single باش ما يطيحش فحالة 0 rows
-      const { data: slot, error: slotError } = await supabase
+      // 1) جيب slot (يمكن ما يكونش)
+      const { data: slot, error: slotErr } = await supabase
         .from('banner_slots')
-        .select('id')
+        .select('*')
         .eq('code', slotCode)
-        .maybeSingle();
+        .maybeSingle(); // ✅ بدل single
 
-      if (slotError) console.error('slotError:', slotError);
+      if (slotErr) {
+        setError(slotErr.message);
+        setLoading(false);
+        return;
+      }
 
       if (!slot) {
+        // ماكاينش slot بهذا code => ماشي خطأ ضروري
         setBanner(null);
         setLoading(false);
         return;
       }
 
-      // ✅ maybeSingle + limit(1) + order باش نتفادى PGST116 (0 أو بزاف rows)
-      const { data: foundBanner, error: bannerError } = await supabase
+      // 2) جيب active banner لهذا slot (يمكن 0 rows => null)
+      const { data: bannerData, error: bannerErr } = await supabase
         .from('banner_requests')
-        .select(`*, slot:banner_slots(*)`)
+        .select(
+          `
+            *,
+            slot:banner_slots(*)
+          `
+        )
         .eq('slot_id', slot.id)
         .eq('status', 'active')
         .lte('start_date', new Date().toISOString())
         .gte('end_date', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .maybeSingle(); // ✅ بدل single
 
-      if (bannerError) console.error('bannerError:', bannerError);
+      if (bannerErr) {
+        setError(bannerErr.message);
+        setLoading(false);
+        return;
+      }
 
-      setBanner((foundBanner as BannerWithSlot) || null);
+      setBanner((bannerData as BannerWithSlot) || null);
       setLoading(false);
     };
 
-    fetchBanner();
+    if (slotCode) fetchBanner();
+    else {
+      setBanner(null);
+      setLoading(false);
+    }
   }, [slotCode]);
 
-  // Track impression
+  // Track impression (غير إلا كان banner كاين)
   const trackImpression = useCallback(async () => {
     if (!banner?.id) return;
 
-    const nextImpressions = (banner.impressions || 0) + 1;
+    const next = (banner.impressions ?? 0) + 1;
 
     const { error } = await supabase
       .from('banner_requests')
-      .update({ impressions: nextImpressions })
+      .update({ impressions: next })
       .eq('id', banner.id);
 
-    if (error) console.error('trackImpression error:', error);
+    if (!error) {
+      setBanner(prev => (prev ? { ...prev, impressions: next } : prev));
+    }
   }, [banner]);
 
   // Track click
   const trackClick = useCallback(async () => {
     if (!banner?.id) return;
 
-    const nextClicks = (banner.clicks || 0) + 1;
+    const next = (banner.clicks ?? 0) + 1;
 
     const { error } = await supabase
       .from('banner_requests')
-      .update({ clicks: nextClicks })
+      .update({ clicks: next })
       .eq('id', banner.id);
 
-    if (error) console.error('trackClick error:', error);
+    if (!error) {
+      setBanner(prev => (prev ? { ...prev, clicks: next } : prev));
+    }
   }, [banner]);
 
-  return { banner, loading, trackImpression, trackClick };
+  return { banner, loading, error, trackImpression, trackClick };
 }
 
 export function useMyBannerRequests() {
   const [requests, setRequests] = useState<BannerWithSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
+    setError(null);
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) console.error('getUser error:', userError);
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr) setError(userErr.message);
 
     if (!user) {
       setRequests([]);
@@ -172,8 +196,7 @@ export function useMyBannerRequests() {
       .eq('advertiser_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (error) console.error('fetchMyBannerRequests error:', error);
-
+    if (error) setError(error.message);
     setRequests((data as BannerWithSlot[]) || []);
     setLoading(false);
   }, []);
@@ -182,29 +205,34 @@ export function useMyBannerRequests() {
     fetchRequests();
   }, [fetchRequests]);
 
-  return { requests, loading, refetch: fetchRequests };
+  return { requests, loading, error, refetch: fetchRequests };
 }
 
 export function useAllBannerRequests(status?: string) {
   const [requests, setRequests] = useState<BannerWithSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
+    setError(null);
 
     let query = supabase
       .from('banner_requests')
-      .select(`*, slot:banner_slots(*), advertiser:profiles(id, email, full_name, company_name)`)
+      .select(
+        `
+          *,
+          slot:banner_slots(*),
+          advertiser:profiles(id, email, full_name, company_name)
+        `
+      )
       .order('created_at', { ascending: false });
 
-    if (status && status !== 'all') {
-      query = query.eq('status', status);
-    }
+    if (status && status !== 'all') query = query.eq('status', status);
 
     const { data, error } = await query;
 
-    if (error) console.error('fetchAllBannerRequests error:', error);
-
+    if (error) setError(error.message);
     setRequests((data as BannerWithSlot[]) || []);
     setLoading(false);
   }, [status]);
@@ -213,5 +241,5 @@ export function useAllBannerRequests(status?: string) {
     fetchRequests();
   }, [fetchRequests]);
 
-  return { requests, loading, refetch: fetchRequests };
+  return { requests, loading, error, refetch: fetchRequests };
 }
