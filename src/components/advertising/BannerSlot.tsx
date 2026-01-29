@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface ActiveBanner {
@@ -12,53 +13,62 @@ interface BannerSlotProps {
   page: string;
   position: string;
   className?: string;
-  adSenseFallback?: React.ReactNode;
+  adSenseFallback?: ReactNode;
 }
 
-export default function BannerSlot({ page, position, className = '', adSenseFallback }: BannerSlotProps) {
+export default function BannerSlot({
+  page,
+  position,
+  className = '',
+  adSenseFallback,
+}: BannerSlotProps) {
   const [activeBanner, setActiveBanner] = useState<ActiveBanner | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchActiveBanner();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, position]);
 
   const fetchActiveBanner = async () => {
     setLoading(true);
-    
+
     const now = new Date().toISOString();
-    
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from('banner_requests')
-      .select(`
+      .select(
+        `
         id,
         banner_image_url,
         target_url,
         company_name,
-        slot:banner_slots!inner(page, position)
-      `)
+        banner_slots!inner (
+          page,
+          position
+        )
+      `
+      )
       .eq('status', 'active')
-      .eq('slot.page', page)
-      .eq('slot.position', position)
+      .eq('banner_slots.page', page)
+      .eq('banner_slots.position', position)
       .lte('start_date', now)
       .gte('end_date', now)
-      .limit(1)
-      .single();
+      .maybeSingle(); // ✅ مهم: ما كيعطيش 406
 
-    if (data) {
-      setActiveBanner(data as unknown as ActiveBanner);
-    } else {
+    if (error) {
+      console.log('[BannerSlot] fetch error:', error);
       setActiveBanner(null);
+    } else {
+      setActiveBanner((data as ActiveBanner) ?? null);
     }
-    
+
     setLoading(false);
   };
 
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
-  // If there's an active direct banner, show it
+  // ✅ إعلان مباشر (Direct banner)
   if (activeBanner) {
     return (
       <div className={`banner-slot ${className}`}>
@@ -78,7 +88,7 @@ export default function BannerSlot({ page, position, className = '', adSenseFall
     );
   }
 
-  // Fallback to AdSense if provided
+  // ✅ Fallback AdSense
   if (adSenseFallback) {
     return <div className={`banner-slot ${className}`}>{adSenseFallback}</div>;
   }
