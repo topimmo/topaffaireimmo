@@ -1,14 +1,20 @@
 // src/App.tsx
 import { Suspense, lazy, useEffect, useState } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import Home from "./components/home";
+import { Routes, Route, useLocation, Outlet } from "react-router-dom";
+
 import MobileFAB from "./components/layout/MobileFAB";
-import ProtectedRoute from "./components/ProtectedRoute"; // تم تعديل المسار
+import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
 import { runStartupValidation } from "./lib/startup-validation";
 
+// ✅ Layout imports
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import AdBanner from "@/components/home/AdBanner";
+
 // Lazy load pages
+const Home = lazy(() => import("./components/home"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const PropertyDetails = lazy(() => import("./pages/PropertyDetails"));
 const AddListing = lazy(() => import("./pages/AddListing"));
@@ -40,24 +46,50 @@ const CityPage = lazy(() => import("./pages/CityPage"));
 const TransactionPage = lazy(() => import("./pages/TransactionPage"));
 const CityImmobilierPage = lazy(() => import("./pages/CityImmobilierPage"));
 const NeighborhoodPage = lazy(() => import("./pages/NeighborhoodPage"));
-const PropertyTypeNeighborhoodPage = lazy(() => import("./pages/PropertyTypeNeighborhoodPage"));
+const PropertyTypeNeighborhoodPage = lazy(
+  () => import("./pages/PropertyTypeNeighborhoodPage")
+);
 
 function LoadingSpinner() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
     </div>
   );
 }
 
 function ScrollToTop() {
   const location = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
-
+  useEffect(() => window.scrollTo(0, 0), [location.pathname]);
   return null;
+}
+
+/** ✅ Public Layout: كيخلي الإشهار يبان فـ جميع صفحات public */
+function PublicLayout() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+
+      {/* إعلان عام تحت الهيدر */}
+      <AdBanner page="global" position="after_header" />
+
+      <main className="flex-1">
+        <Outlet />
+      </main>
+
+      {/* إعلان عام قبل الفوتر */}
+      <AdBanner
+        page="global"
+        position="before_footer"
+        className="bg-muted/30"
+      />
+
+      <Footer />
+
+      {/* بغيتيه هنا ولا تخليه فالـ App تحت */}
+      <MobileFAB />
+    </div>
+  );
 }
 
 function App() {
@@ -65,117 +97,116 @@ function App() {
   const [validationFailed, setValidationFailed] = useState(false);
 
   useEffect(() => {
-    // Run startup validation once on app initialization
     runStartupValidation().then((result) => {
       setValidationComplete(true);
-      
-      // In development, always allow app to continue even with errors
-      // In production, log errors but still allow app to load (non-blocking)
       if (!result.valid && result.errors.length > 0) {
-        console.error('⚠️ Startup validation found errors, but app will continue');
-        // Set flag for potential UI indication
+        console.error("⚠️ Startup validation found errors, but app will continue");
         setValidationFailed(true);
       }
     });
   }, []);
 
-  // Show loading spinner while validation is running
-  if (!validationComplete) {
-    return <LoadingSpinner />;
-  }
+  if (!validationComplete) return <LoadingSpinner />;
 
   return (
     <>
       {validationFailed && import.meta.env.DEV && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: '#FEE2E2',
-          color: '#991B1B',
-          padding: '8px',
-          textAlign: 'center',
-          zIndex: 9999,
-          fontSize: '14px'
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "#FEE2E2",
+            color: "#991B1B",
+            padding: "8px",
+            textAlign: "center",
+            zIndex: 9999,
+            fontSize: "14px",
+          }}
+        >
           ⚠️ Configuration warnings detected. Check browser console for details.
         </div>
       )}
+
       <ScrollToTop />
+
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/search" element={<SearchResults />} />
-          <Route path="/buy" element={<SearchResults />} />
-          <Route path="/rent" element={<SearchResults />} />
-          <Route path="/property/:id" element={<PropertyDetails />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/agencies" element={<Agencies />} />
-          <Route path="/advertise" element={<Advertise />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          {/* ✅ كلشي public داخل PublicLayout */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/buy" element={<SearchResults />} />
+            <Route path="/rent" element={<SearchResults />} />
+            <Route path="/property/:id" element={<PropertyDetails />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/agencies" element={<Agencies />} />
+            <Route path="/advertise" element={<Advertise />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
-          {/* SEO Landing Pages - Morocco Cities */}
-          <Route path="/casablanca" element={<CityPage />} />
-          <Route path="/rabat" element={<CityPage />} />
-          <Route path="/marrakech" element={<CityPage />} />
-          <Route path="/tanger" element={<CityPage />} />
-          <Route path="/agadir" element={<CityPage />} />
-          <Route path="/fes" element={<CityPage />} />
+            {/* SEO cities */}
+            <Route path="/casablanca" element={<CityPage />} />
+            <Route path="/rabat" element={<CityPage />} />
+            <Route path="/marrakech" element={<CityPage />} />
+            <Route path="/tanger" element={<CityPage />} />
+            <Route path="/agadir" element={<CityPage />} />
+            <Route path="/fes" element={<CityPage />} />
 
-          {/* SEO Landing Pages - Immobilier Routes with City/Neighborhood */}
-          {/* /immobilier/[city] - City overview with neighborhoods */}
-          <Route path="/immobilier/:city" element={<CityImmobilierPage />} />
-          {/* /immobilier/[city]/[neighborhood]/[propertyType]/[transactionType] - Full SEO route */}
-          <Route path="/immobilier/:city/:neighborhood/:propertyType/:transactionType" element={<PropertyTypeNeighborhoodPage />} />
-          {/* /immobilier/[city]/[neighborhood]/[propertyType] - Property type in neighborhood */}
-          <Route path="/immobilier/:city/:neighborhood/:propertyType" element={<PropertyTypeNeighborhoodPage />} />
-          {/* /immobilier/[city]/[neighborhood] - Neighborhood pages */}
-          <Route path="/immobilier/:city/:neighborhood" element={<NeighborhoodPage />} />
+            {/* SEO immobilier */}
+            <Route path="/immobilier/:city" element={<CityImmobilierPage />} />
+            <Route
+              path="/immobilier/:city/:neighborhood/:propertyType/:transactionType"
+              element={<PropertyTypeNeighborhoodPage />}
+            />
+            <Route
+              path="/immobilier/:city/:neighborhood/:propertyType"
+              element={<PropertyTypeNeighborhoodPage />}
+            />
+            <Route
+              path="/immobilier/:city/:neighborhood"
+              element={<NeighborhoodPage />}
+            />
 
-          {/* SEO Landing Pages - Transactions with various combinations */}
-          {/* /acheter, /louer */}
-          <Route path="/acheter" element={<TransactionPage />} />
-          <Route path="/louer" element={<TransactionPage />} />
-          {/* /acheter-appartement, /louer-villa, etc. */}
-          <Route path="/acheter-appartement" element={<TransactionPage />} />
-          <Route path="/acheter-villa" element={<TransactionPage />} />
-          <Route path="/acheter-maison" element={<TransactionPage />} />
-          <Route path="/acheter-terrain" element={<TransactionPage />} />
-          <Route path="/acheter-commercial" element={<TransactionPage />} />
-          <Route path="/louer-appartement" element={<TransactionPage />} />
-          <Route path="/louer-villa" element={<TransactionPage />} />
-          <Route path="/louer-maison" element={<TransactionPage />} />
-          <Route path="/louer-commercial" element={<TransactionPage />} />
-          {/* /acheter-casablanca, /louer-rabat, etc. */}
-          <Route path="/acheter-casablanca" element={<TransactionPage />} />
-          <Route path="/acheter-rabat" element={<TransactionPage />} />
-          <Route path="/acheter-marrakech" element={<TransactionPage />} />
-          <Route path="/acheter-tanger" element={<TransactionPage />} />
-          <Route path="/acheter-agadir" element={<TransactionPage />} />
-          <Route path="/acheter-fes" element={<TransactionPage />} />
-          <Route path="/louer-casablanca" element={<TransactionPage />} />
-          <Route path="/louer-rabat" element={<TransactionPage />} />
-          <Route path="/louer-marrakech" element={<TransactionPage />} />
-          <Route path="/louer-tanger" element={<TransactionPage />} />
-          <Route path="/louer-agadir" element={<TransactionPage />} />
-          <Route path="/louer-fes" element={<TransactionPage />} />
-          {/* Combined: /acheter-appartement-casablanca, etc. */}
-          <Route path="/acheter-appartement-:city" element={<TransactionPage />} />
-          <Route path="/acheter-villa-:city" element={<TransactionPage />} />
-          <Route path="/acheter-maison-:city" element={<TransactionPage />} />
-          <Route path="/louer-appartement-:city" element={<TransactionPage />} />
-          <Route path="/louer-villa-:city" element={<TransactionPage />} />
-          <Route path="/louer-maison-:city" element={<TransactionPage />} />
+            {/* Transactions */}
+            <Route path="/acheter" element={<TransactionPage />} />
+            <Route path="/louer" element={<TransactionPage />} />
+            <Route path="/acheter-appartement" element={<TransactionPage />} />
+            <Route path="/acheter-villa" element={<TransactionPage />} />
+            <Route path="/acheter-maison" element={<TransactionPage />} />
+            <Route path="/acheter-terrain" element={<TransactionPage />} />
+            <Route path="/acheter-commercial" element={<TransactionPage />} />
+            <Route path="/louer-appartement" element={<TransactionPage />} />
+            <Route path="/louer-villa" element={<TransactionPage />} />
+            <Route path="/louer-maison" element={<TransactionPage />} />
+            <Route path="/louer-commercial" element={<TransactionPage />} />
+            <Route path="/acheter-casablanca" element={<TransactionPage />} />
+            <Route path="/acheter-rabat" element={<TransactionPage />} />
+            <Route path="/acheter-marrakech" element={<TransactionPage />} />
+            <Route path="/acheter-tanger" element={<TransactionPage />} />
+            <Route path="/acheter-agadir" element={<TransactionPage />} />
+            <Route path="/acheter-fes" element={<TransactionPage />} />
+            <Route path="/louer-casablanca" element={<TransactionPage />} />
+            <Route path="/louer-rabat" element={<TransactionPage />} />
+            <Route path="/louer-marrakech" element={<TransactionPage />} />
+            <Route path="/louer-tanger" element={<TransactionPage />} />
+            <Route path="/louer-agadir" element={<TransactionPage />} />
+            <Route path="/louer-fes" element={<TransactionPage />} />
+            <Route path="/acheter-appartement-:city" element={<TransactionPage />} />
+            <Route path="/acheter-villa-:city" element={<TransactionPage />} />
+            <Route path="/acheter-maison-:city" element={<TransactionPage />} />
+            <Route path="/louer-appartement-:city" element={<TransactionPage />} />
+            <Route path="/louer-villa-:city" element={<TransactionPage />} />
+            <Route path="/louer-maison-:city" element={<TransactionPage />} />
+          </Route>
 
-          {/* Protected Routes */}
+          {/* ✅ Protected Routes (خليتهم برا layout) */}
           <Route
             path="/add-listing"
             element={
@@ -248,7 +279,7 @@ function App() {
             }
           />
 
-          {/* Admin Routes - New Structure */}
+          {/* ✅ Admin Routes */}
           <Route
             path="/admin"
             element={
@@ -257,7 +288,6 @@ function App() {
               </AdminProtectedRoute>
             }
           />
-
           <Route
             path="/admin/listings"
             element={
@@ -266,7 +296,6 @@ function App() {
               </AdminProtectedRoute>
             }
           />
-
           <Route
             path="/admin/listings/:id"
             element={
@@ -275,7 +304,6 @@ function App() {
               </AdminProtectedRoute>
             }
           />
-
           <Route
             path="/admin/users"
             element={
@@ -285,7 +313,7 @@ function App() {
             }
           />
 
-          {/* Legacy Admin Route - Redirect to new structure */}
+          {/* Legacy Admin */}
           <Route
             path="/admin-panel"
             element={
@@ -297,7 +325,7 @@ function App() {
         </Routes>
       </Suspense>
 
-      <MobileFAB />
+      {/* ⚠️ دابا MobileFAB راه داخل PublicLayout، إلى بغيتيه هنا حيدو من PublicLayout */}
       <DebugMode />
     </>
   );
