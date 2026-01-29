@@ -17,7 +17,7 @@ function Home() {
 
       {/* ✅ Ad banner (home middle) */}
       <section className="mt-12">
-        <div className="my-6 min-h-[90px]">
+        <div className="min-h-[90px]">
           <AdBanner
             page="home"
             position="home-middle"
