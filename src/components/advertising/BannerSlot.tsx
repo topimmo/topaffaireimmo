@@ -1,13 +1,17 @@
-import { useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
 
-interface ActiveBanner {
+type ActiveBannerRow = {
   id: string;
-  banner_image_url: string;
-  target_url: string;
-  company_name: string;
-}
+  banner_image_url: string | null;
+  target_url: string | null;
+  company_name: string | null;
+  slot?: {
+    page: string | null;
+    position: string | null;
+  } | null;
+};
 
 interface BannerSlotProps {
   page: string;
@@ -19,69 +23,85 @@ interface BannerSlotProps {
 export default function BannerSlot({
   page,
   position,
-  className = '',
+  className = "",
   adSenseFallback,
 }: BannerSlotProps) {
-  const [activeBanner, setActiveBanner] = useState<ActiveBanner | null>(null);
+  const [activeBanner, setActiveBanner] = useState<ActiveBannerRow | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchActiveBanner();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, position]);
+    let mounted = true;
 
-  const fetchActiveBanner = async () => {
-    setLoading(true);
+    const fetchActiveBanner = async () => {
+      setLoading(true);
 
-    const now = new Date().toISOString();
+      const now = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from('banner_requests')
-      .select(
-        `
-        id,
-        banner_image_url,
-        target_url,
-        company_name,
-        banner_slots!inner (
-          page,
-          position
+      const { data, error } = await supabase
+        .from("banner_requests")
+        .select(
+          `
+            id,
+            banner_image_url,
+            target_url,
+            company_name,
+            slot:banner_slots!inner(
+              page,
+              position
+            )
+          `
         )
-      `
-      )
-      .eq('status', 'active')
-      .eq('banner_slots.page', page)
-      .eq('banner_slots.position', position)
-      .lte('start_date', now)
-      .gte('end_date', now)
-      .maybeSingle(); // ✅ مهم: ما كيعطيش 406
+        .eq("status", "active")
+        .eq("slot.page", page)
+        .eq("slot.position", position)
+        .lte("start_date", now)
+        .gte("end_date", now)
+        .order("created_at", { ascending: false })
+        .maybeSingle();
 
-    if (error) {
-      console.log('[BannerSlot] fetch error:', error);
-      setActiveBanner(null);
-    } else {
-      setActiveBanner((data as ActiveBanner) ?? null);
-    }
+      if (!mounted) return;
 
-    setLoading(false);
-  };
+      if (error) {
+        console.log("[BannerSlot] fetch error:", error);
+        setActiveBanner(null);
+      } else {
+        // Debug (خليه ولا حيدو)
+        // console.log("[BannerSlot] data:", data);
+
+        setActiveBanner((data as ActiveBannerRow) ?? null);
+      }
+
+      setLoading(false);
+    };
+
+    fetchActiveBanner();
+
+    return () => {
+      mounted = false;
+    };
+  }, [page, position]);
 
   if (loading) return null;
 
-  // ✅ إعلان مباشر (Direct banner)
-  if (activeBanner) {
+  // ✅ خاص البيانات تكون كاملة باش نعرضو الصورة
+  const img = activeBanner?.banner_image_url ?? null;
+  const url = activeBanner?.target_url ?? null;
+  const name = activeBanner?.company_name ?? "Advertisement";
+
+  if (img && url) {
     return (
       <div className={`banner-slot ${className}`}>
         <a
-          href={activeBanner.target_url}
+          href={url}
           target="_blank"
           rel="noopener noreferrer sponsored"
           className="block"
         >
           <img
-            src={activeBanner.banner_image_url}
-            alt={activeBanner.company_name}
+            src={img}
+            alt={name}
             className="w-full h-auto rounded-lg"
+            loading="lazy"
           />
         </a>
       </div>
