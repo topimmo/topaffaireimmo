@@ -46,6 +46,21 @@ interface Property {
   images?: string[] | null;
   owner_profile?: ProfileInfo;
 
+  // Contact information
+  contact_phone?: string | null;
+  contact_whatsapp?: string | null;
+  contact_email?: string | null;
+
+  // Advertiser info
+  advertiser_type?: string | null;
+  rejection_reason?: string | null;
+
+  // Additional fields
+  area?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  featured?: boolean | null;
+
   city: { name_fr: string; name_ar: string } | null;
   neighborhood: { name_fr: string; name_ar: string } | null;
 }
@@ -121,6 +136,15 @@ export default function AdminListings() {
             created_at,
             owner_id,
             images,
+            contact_phone,
+            contact_whatsapp,
+            contact_email,
+            advertiser_type,
+            rejection_reason,
+            area,
+            bedrooms,
+            bathrooms,
+            featured,
             city:cities(name_fr, name_ar),
             neighborhood:neighborhoods(name_fr, name_ar)
           `,
@@ -311,6 +335,35 @@ export default function AdminListings() {
     return prof.full_name || prof.phone || prof.email || (isRTL ? 'مستخدم' : 'User');
   };
 
+  const getAdvertiserTypeBadge = (advertiserType?: string | null) => {
+    if (!advertiserType) return null;
+
+    const variants: Record<string, string> = {
+      owner: 'bg-blue-100 text-blue-800',
+      broker: 'bg-purple-100 text-purple-800',
+      agency: 'bg-orange-100 text-orange-800',
+    };
+
+    const labels: Record<string, { fr: string; ar: string }> = {
+      owner: { fr: 'Propriétaire', ar: 'مالك' },
+      broker: { fr: 'Courtier', ar: 'سمسار' },
+      agency: { fr: 'Agence', ar: 'وكالة' },
+    };
+
+    const label = language === 'ar' ? labels[advertiserType]?.ar : labels[advertiserType]?.fr;
+
+    return (
+      <Badge className={cn('font-medium text-xs', variants[advertiserType] || '')}>
+        {label || advertiserType}
+      </Badge>
+    );
+  };
+
+  const getContactPhone = (p: Property) => {
+    // Prefer contact_phone from property, fallback to owner profile phone
+    return p.contact_phone || p.owner_profile?.phone || '-';
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -354,6 +407,8 @@ export default function AdminListings() {
                     <TableHead className="w-[110px]">{isRTL ? 'صورة' : 'Image'}</TableHead>
                     <TableHead>{isRTL ? 'العنوان' : 'Title'}</TableHead>
                     <TableHead>{isRTL ? 'صاحب الإعلان' : 'Owner'}</TableHead>
+                    <TableHead>{isRTL ? 'نوع المعلن' : 'Advertiser'}</TableHead>
+                    <TableHead>{isRTL ? 'الهاتف' : 'Phone'}</TableHead>
                     <TableHead>{isRTL ? 'المدينة' : 'City'}</TableHead>
                     <TableHead>{isRTL ? 'الحي' : 'Neighborhood'}</TableHead>
                     <TableHead>{isRTL ? 'السعر' : 'Price'}</TableHead>
@@ -392,6 +447,8 @@ export default function AdminListings() {
 
                         <TableCell className="font-medium max-w-xs truncate">{getTitle(property)}</TableCell>
                         <TableCell className="max-w-[220px] truncate">{getOwnerLabel(property)}</TableCell>
+                        <TableCell>{getAdvertiserTypeBadge(property.advertiser_type)}</TableCell>
+                        <TableCell className="max-w-[140px] truncate">{getContactPhone(property)}</TableCell>
                         <TableCell>{getCityName(property.city)}</TableCell>
                         <TableCell>{getNeighborhoodName(property.neighborhood)}</TableCell>
                         <TableCell>{formatPrice(property.price)} DH</TableCell>
