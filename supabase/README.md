@@ -19,7 +19,8 @@ supabase db push
 
 ```
 supabase/
-├── migrations/       # SQL migration files
+├── migrations/       # SQL migration files (schema only)
+├── seed/             # Demo/seed data files (data only)
 ├── functions/        # Edge functions (currently unused)
 ├── templates/        # Email templates
 └── config.toml       # Supabase configuration
@@ -32,11 +33,15 @@ We have 42 migration files tracking the evolution of the database schema.
 ### Key Migrations
 
 - **001-010**: Initial schema and early iterations
-- **020-024**: Full rebuild with sample data
+- **020-024**: Full rebuild (024 files are deprecated - data moved to seed)
 - **025-032**: Profile trigger fixes and RLS policies
 - **033-035**: Advertising inquiries and signup fixes
 - **036-037**: Facebook integration
 - **038-042**: Comprehensive production fixes
+- **043-052**: Security fixes and admin system improvements
+
+**Important:** Migrations contain ONLY schema changes (tables, columns, constraints, RLS, functions). 
+All demo/sample data has been moved to `supabase/seed/seed_demo_data.sql`.
 
 ### Running Migrations
 
@@ -253,6 +258,30 @@ CREATE POLICY "Users can upload own receipts"
 ```
 
 ## Seeding Data
+
+### Demo Data (Development Only)
+
+For local development, you can load demo data using the seed file:
+
+```bash
+# Apply migrations first
+supabase db push
+
+# Then load demo data (optional - for local dev only)
+# Option 1: Using psql
+psql -h localhost -U postgres -d postgres -f supabase/seed/seed_demo_data.sql
+
+# Option 2: Using Supabase CLI
+cat supabase/seed/seed_demo_data.sql | supabase db execute
+```
+
+**IMPORTANT:** 
+- The seed file contains demo admin profiles and sample properties
+- It should ONLY be used for local development/testing
+- Do NOT run this in production
+- The seed file assumes the schema is already created via migrations
+- Requires superuser or service role privileges
+- See `supabase/seed/README.md` for detailed instructions
 
 ### Sample Cities
 
