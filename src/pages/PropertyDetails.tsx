@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 import { supabase } from "@/lib/supabase";
+import { SITE_URL } from "@/config/site";
 
 type DbPropertyDetails = {
   id: string;
@@ -259,10 +260,10 @@ export default function PropertyDetails() {
       {
         "@context": "https://schema.org",
         "@type": "RealEstateListing",
-        "@id": `https://topaffaireimmo.vercel.app/property/${property.id}`,
+        "@id": `${SITE_URL}/property/${property.id}`,
         name: title,
         description: description,
-        url: `https://topaffaireimmo.vercel.app/property/${property.id}`,
+        url: `${SITE_URL}/property/${property.id}`,
         offers: {
           "@type": "Offer",
           price: property.price ?? 0,
@@ -300,13 +301,13 @@ export default function PropertyDetails() {
             "@type": "ListItem",
             position: 1,
             name: "Accueil",
-            item: "https://topaffaireimmo.vercel.app/",
+            item: `${SITE_URL}/`,
           },
           {
             "@type": "ListItem",
             position: 2,
             name: cityNameForSlug || "Ville",
-            item: `https://topaffaireimmo.vercel.app/immobilier/${citySlug}`,
+            item: `${SITE_URL}/immobilier/${citySlug}`,
           },
           ...(neighborhoodSlug
             ? [
@@ -314,7 +315,7 @@ export default function PropertyDetails() {
                   "@type": "ListItem",
                   position: 3,
                   name: neighborhoodNameForSlug,
-                  item: `https://topaffaireimmo.vercel.app/immobilier/${citySlug}/${neighborhoodSlug}`,
+                  item: `${SITE_URL}/immobilier/${citySlug}/${neighborhoodSlug}`,
                 },
               ]
             : []),

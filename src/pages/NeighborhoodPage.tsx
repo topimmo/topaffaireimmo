@@ -5,6 +5,7 @@ import { MOROCCO_CITIES, findNeighborhoodInCity } from '../lib/seo';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import MobileFAB from '../components/layout/MobileFAB';
+import { SITE_URL } from "@/config/site";
 
 /**
  * Neighborhood Landing Page
@@ -65,25 +66,25 @@ export default function NeighborhoodPage() {
           "@type": "ListItem",
           "position": 1,
           "name": "Accueil",
-          "item": "https://topaffaireimmo.vercel.app/"
+          "item": `${SITE_URL}/`
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Immobilier",
-          "item": "https://topaffaireimmo.vercel.app/search"
+          "item": `${SITE_URL}/search`
         },
         {
           "@type": "ListItem",
           "position": 3,
           "name": cityName,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${cityData.slug}`
+          "item": `${SITE_URL}/immobilier/${cityData.slug}`
         },
         {
           "@type": "ListItem",
           "position": 4,
           "name": neighborhoodName,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${cityData.slug}/${neighborhoodData.slug}`
+          "item": `${SITE_URL}/immobilier/${cityData.slug}/${neighborhoodData.slug}`
         }
       ]
     }

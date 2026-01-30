@@ -8,6 +8,7 @@ import Footer from '../components/layout/Footer';
 import MobileFAB from '../components/layout/MobileFAB';
 
 import BannerSlot from '../components/advertising/BannerSlot';
+import { SITE_URL } from "@/config/site";
 
 /**
  * City Landing Page
@@ -59,13 +60,13 @@ export default function CityPage() {
           '@type': 'ListItem',
           position: 1,
           name: 'Accueil',
-          item: 'https://topaffaireimmo.vercel.app/',
+          item: `${SITE_URL}/`,
         },
         {
           '@type': 'ListItem',
           position: 2,
           name: cityName,
-          item: `https://topaffaireimmo.vercel.app/${cityData.slug}`,
+          item: `${SITE_URL}/${cityData.slug}`,
         },
       ],
     },

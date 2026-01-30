@@ -6,6 +6,7 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import MobileFAB from '../components/layout/MobileFAB';
 import { MapPin } from 'lucide-react';
+import { SITE_URL } from "@/config/site";
 
 /**
  * City Immobilier Page
@@ -63,19 +64,19 @@ export default function CityImmobilierPage() {
           "@type": "ListItem",
           "position": 1,
           "name": "Accueil",
-          "item": "https://topaffaireimmo.vercel.app/"
+          "item": `${SITE_URL}/`
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Immobilier",
-          "item": "https://topaffaireimmo.vercel.app/search"
+          "item": `${SITE_URL}/search`
         },
         {
           "@type": "ListItem",
           "position": 3,
           "name": cityName,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${cityData.slug}`
+          "item": `${SITE_URL}/immobilier/${cityData.slug}`
         }
       ]
     }

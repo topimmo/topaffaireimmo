@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { getCanonicalUrl, shouldAllowIndexing } from '../lib/seo';
+import { SITE_URL } from '../config/site';
 
 export interface SEOProps {
   title?: string;
@@ -28,7 +29,7 @@ export function useSEO(props: SEOProps) {
       canonical,
       ogTitle,
       ogDescription,
-      ogImage = 'https://topaffaireimmo.vercel.app/og-image.jpg',
+      ogImage = `${SITE_URL}/og-image.jpg`,
       ogType = 'website',
       noindex = false,
       structuredData,
