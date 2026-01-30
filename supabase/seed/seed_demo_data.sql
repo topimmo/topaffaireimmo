@@ -7,17 +7,30 @@
 -- Usage:
 --   psql -h localhost -U postgres -d postgres -f supabase/seed/seed_demo_data.sql
 --   OR via Supabase CLI:
---   supabase db execute -f supabase/seed/seed_demo_data.sql
+--   cat supabase/seed/seed_demo_data.sql | supabase db execute
 --
 -- IMPORTANT:
 -- - This file assumes the schema is already created via migrations
 -- - This should only be used for local/dev environments
 -- - Do NOT run this in production
+-- - Requires superuser or service role privileges to disable RLS
 -- =====================================================
+
+-- Safety check: Prevent running in production
+DO $$
+BEGIN
+  -- Only allow on local/dev databases (customize this check for your environment)
+  IF current_database() NOT IN ('postgres', 'defaultdb') 
+     AND current_database() NOT LIKE '%_local%' 
+     AND current_database() NOT LIKE '%_dev%' THEN
+    RAISE EXCEPTION 'SAFETY: This seed file should only be run on local/dev databases. Current database: %', current_database();
+  END IF;
+END $$;
 
 BEGIN;
 
 -- Disable RLS temporarily for seeding (safe inside transaction)
+-- NOTE: This requires superuser or service role privileges
 ALTER TABLE public.properties DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 
@@ -27,6 +40,13 @@ ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 -- Create a demo admin user profile
 -- NOTE: This assumes a user with this ID exists in auth.users
 -- For local dev, you may need to create this user first via Supabase Auth
+
+-- If the auth.users entry doesn't exist, you'll get a foreign key error.
+-- To create the auth.users entry first, you can run this as a superuser:
+--   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, role, aud)
+--   VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 
+--           'demo@topaffaireimmo.com', crypt('demo123', gen_salt('bf')), now(), 'authenticated', 'authenticated')
+--   ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.profiles (
   id, 
@@ -55,10 +75,14 @@ SET
 -- DEMO PROPERTIES
 -- =====================================================
 -- Delete existing demo properties first to avoid duplicates
+-- Only delete if the profile exists to avoid FK issues
 DELETE FROM public.properties
 WHERE owner_id = '00000000-0000-0000-0000-000000000001'::uuid;
 
 -- Insert sample properties
+-- NOTE: city_id values assume standard city insertion order from migrations:
+--   1=Casablanca, 2=Rabat, 3=Marrakech, 4=Fès, 5=Tanger, 6=Agadir
+-- If migrations change, adjust these IDs accordingly
 INSERT INTO public.properties (
   owner_id, 
   transaction_type, 
@@ -79,12 +103,12 @@ INSERT INTO public.properties (
   contact_phone, 
   contact_whatsapp
 ) VALUES
-  -- Property 1: Luxury Apartment in Anfa, Casablanca
+  -- Property 1: Luxury Apartment in Anfa, Casablanca (city_id=1)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'sale', 
     'apartment', 
-    1,
+    (SELECT id FROM public.cities WHERE name_fr = 'Casablanca' LIMIT 1),
     2500000, 
     150, 
     3, 
@@ -103,12 +127,12 @@ INSERT INTO public.properties (
     '+212 6XX XX XX XX', 
     '+212 6XX XX XX XX'
   ),
-  -- Property 2: Prestige Villa with Pool in Palmeraie, Marrakech
+  -- Property 2: Prestige Villa with Pool in Palmeraie, Marrakech (city_id=3)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'sale', 
     'villa', 
-    3,
+    (SELECT id FROM public.cities WHERE name_fr = 'Marrakech' LIMIT 1),
     8500000, 
     450, 
     5, 
@@ -127,12 +151,12 @@ INSERT INTO public.properties (
     '+212 6XX XX XX XX', 
     NULL
   ),
-  -- Property 3: Modern Furnished Apartment in Agdal, Rabat
+  -- Property 3: Modern Furnished Apartment in Agdal, Rabat (city_id=2)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'rent', 
     'apartment', 
-    2,
+    (SELECT id FROM public.cities WHERE name_fr = 'Rabat' LIMIT 1),
     12000, 
     120, 
     2, 
@@ -148,12 +172,12 @@ INSERT INTO public.properties (
     '+212 6XX XX XX XX', 
     NULL
   ),
-  -- Property 4: Commercial Space Downtown Tangier
+  -- Property 4: Commercial Space Downtown Tangier (city_id=5)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'rent', 
     'commercial', 
-    5,
+    (SELECT id FROM public.cities WHERE name_fr = 'Tanger' LIMIT 1),
     25000, 
     200, 
     0, 
@@ -169,12 +193,12 @@ INSERT INTO public.properties (
     '+212 6XX XX XX XX', 
     NULL
   ),
-  -- Property 5: Building Land in Agadir Bay
+  -- Property 5: Building Land in Agadir Bay (city_id=6)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'sale', 
     'land', 
-    6,
+    (SELECT id FROM public.cities WHERE name_fr = 'Agadir' LIMIT 1),
     3500000, 
     1000, 
     0, 
@@ -190,12 +214,12 @@ INSERT INTO public.properties (
     '+212 6XX XX XX XX', 
     NULL
   ),
-  -- Property 6: Renovated Traditional House in Fès
+  -- Property 6: Renovated Traditional House in Fès (city_id=4)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'sale', 
     'house', 
-    4,
+    (SELECT id FROM public.cities WHERE name_fr = 'Fès' LIMIT 1),
     1800000, 
     220, 
     4, 
@@ -211,12 +235,12 @@ INSERT INTO public.properties (
     '+212 6XX XX XX XX', 
     NULL
   ),
-  -- Property 7: Bright Apartment in Maârif, Casablanca
+  -- Property 7: Bright Apartment in Maârif, Casablanca (city_id=1)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'rent', 
     'apartment', 
-    1,
+    (SELECT id FROM public.cities WHERE name_fr = 'Casablanca' LIMIT 1),
     8500, 
     90, 
     2, 
@@ -232,12 +256,12 @@ INSERT INTO public.properties (
     '+212 6XX XX XX XX', 
     NULL
   ),
-  -- Property 8: Sea View Villa in Malabata, Tangier
+  -- Property 8: Sea View Villa in Malabata, Tangier (city_id=5)
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'sale', 
     'villa', 
-    5,
+    (SELECT id FROM public.cities WHERE name_fr = 'Tanger' LIMIT 1),
     5500000, 
     350, 
     4, 

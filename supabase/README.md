@@ -268,10 +268,11 @@ For local development, you can load demo data using the seed file:
 supabase db push
 
 # Then load demo data (optional - for local dev only)
+# Option 1: Using psql
 psql -h localhost -U postgres -d postgres -f supabase/seed/seed_demo_data.sql
 
-# OR via Supabase CLI (if available in your version)
-supabase db execute -f supabase/seed/seed_demo_data.sql
+# Option 2: Using Supabase CLI
+cat supabase/seed/seed_demo_data.sql | supabase db execute
 ```
 
 **IMPORTANT:** 
@@ -279,6 +280,8 @@ supabase db execute -f supabase/seed/seed_demo_data.sql
 - It should ONLY be used for local development/testing
 - Do NOT run this in production
 - The seed file assumes the schema is already created via migrations
+- Requires superuser or service role privileges
+- See `supabase/seed/README.md` for detailed instructions
 
 ### Sample Cities
 

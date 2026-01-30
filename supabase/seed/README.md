@@ -31,20 +31,55 @@ Contains demo data for local development:
 
 ### Running the Seed File
 
-**Option 1: Using psql**
+**Option 1: Using psql** (Recommended)
 ```bash
 psql -h localhost -U postgres -d postgres -f supabase/seed/seed_demo_data.sql
 ```
 
-**Option 2: Using Supabase CLI** (if supported in your version)
+**Option 2: Using Supabase CLI**
 ```bash
-supabase db execute -f supabase/seed/seed_demo_data.sql
+# Pipe the SQL file to the execute command
+cat supabase/seed/seed_demo_data.sql | supabase db execute
 ```
 
 **Option 3: Via Supabase Dashboard**
 1. Go to SQL Editor in your Supabase Dashboard
 2. Copy the contents of `seed_demo_data.sql`
 3. Run the SQL
+
+### Creating the Demo Auth User (If Needed)
+
+If you get a foreign key error when running the seed file, you need to create the auth.users entry first.
+
+**Using Supabase Dashboard:**
+1. Go to Authentication → Users
+2. Create a new user with email `demo@topaffaireimmo.com`
+3. Note the user's UUID
+4. Update the seed file's UUID to match, OR
+5. Run this SQL as superuser to create with specific UUID:
+
+```sql
+-- Run this BEFORE the seed file if you need a specific UUID
+INSERT INTO auth.users (
+  id, 
+  instance_id, 
+  email, 
+  encrypted_password, 
+  email_confirmed_at, 
+  role, 
+  aud
+)
+VALUES (
+  '00000000-0000-0000-0000-000000000001'::uuid,
+  '00000000-0000-0000-0000-000000000000'::uuid,
+  'demo@topaffaireimmo.com',
+  crypt('demo123', gen_salt('bf')),
+  now(),
+  'authenticated',
+  'authenticated'
+)
+ON CONFLICT (id) DO NOTHING;
+```
 
 ## How It Works
 
@@ -85,9 +120,7 @@ The demo profile insert may fail if:
 - The corresponding user doesn't exist in `auth.users`
 - Another profile with the same email already exists
 
-**Solution**: Either:
-1. Create a user via Supabase Auth with the demo UUID first, OR
-2. Modify the UUID and email in the seed file to match an existing user
+**Solution**: Create the auth.users entry first (see "Creating the Demo Auth User" section above), OR use an existing user's UUID from your auth.users table.
 
 ### RLS Policy Errors
 

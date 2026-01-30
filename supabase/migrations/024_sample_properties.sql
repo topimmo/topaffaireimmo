@@ -5,4 +5,5 @@
 -- All demo data has been moved to: supabase/seed/seed_demo_data.sql
 -- 
 -- This file is kept empty to maintain migration numbering.
+-- This is a no-op migration and is safe to apply.
 -- =====================================================
