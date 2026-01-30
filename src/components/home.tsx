@@ -1,7 +1,7 @@
 import HeroSearch from "@/components/home/HeroSearch";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import LatestListings from "@/components/home/LatestListings";
-import ExploreByCityMap from "@/components/home/ExploreByCityMap";
+import PropertyCategories from "@/components/home/PropertyCategories";
 import AdBanner from "@/components/home/AdBanner";
 
 function Home() {
@@ -31,8 +31,8 @@ function Home() {
         <LatestListings />
       </section>
 
-      {/* Explore by city */}
-      <ExploreByCityMap />
+      {/* Property Categories */}
+      <PropertyCategories />
     </main>
   );
 }
