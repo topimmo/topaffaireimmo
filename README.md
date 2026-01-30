@@ -31,10 +31,14 @@ The app will be available at `http://localhost:5173`
 
 ## 📚 Documentation
 
+### Core Setup Guides
+- **[Supabase Documentation Index](SUPABASE_DOCUMENTATION_INDEX.md)** - 📖 Start here for Supabase setup
+  - [Quick Reference](SUPABASE_QUICK_REFERENCE.md) - ⚡ Fast fixes & troubleshooting (7 min)
+  - [Diagnostic Report](SUPABASE_DIAGNOSTIC_REPORT.md) - 📋 Complete configuration guide (1,792 lines)
+  - [Setup Quickstart](SUPABASE_SETUP_QUICKSTART.md) - 🚀 Guided setup (30-60 min)
 - **[Setup Guide](docs/SETUP.md)** - Complete local development setup
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and folder structure  
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment to Vercel
-- **[Supabase Setup](docs/setup/SUPABASE_SETUP.md)** - Database configuration and migrations
 
 ### Feature Documentation
 - [Email Configuration](docs/setup/EMAIL_CONFIGURATION.md)
