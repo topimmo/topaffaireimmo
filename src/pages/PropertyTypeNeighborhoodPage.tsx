@@ -18,6 +18,7 @@ import PropertyCard from '../components/home/PropertyCard';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
 import { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { SITE_URL } from "@/config/site";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -142,31 +143,31 @@ export default function PropertyTypeNeighborhoodPage() {
           "@type": "ListItem",
           "position": 1,
           "name": "Accueil",
-          "item": "https://topaffaireimmo.vercel.app/"
+          "item": `${SITE_URL}/`
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Immobilier",
-          "item": "https://topaffaireimmo.vercel.app/search"
+          "item": `${SITE_URL}/search`
         },
         {
           "@type": "ListItem",
           "position": 3,
           "name": cityName,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${cityData.slug}`
+          "item": `${SITE_URL}/immobilier/${cityData.slug}`
         },
         {
           "@type": "ListItem",
           "position": 4,
           "name": neighborhoodName,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${cityData.slug}/${neighborhoodData.slug}`
+          "item": `${SITE_URL}/immobilier/${cityData.slug}/${neighborhoodData.slug}`
         },
         ...(propertyTypeData ? [{
           "@type": "ListItem",
           "position": 5,
           "name": propertyTypeName,
-          "item": `https://topaffaireimmo.vercel.app/immobilier/${cityData.slug}/${neighborhoodData.slug}/${propertyType}`
+          "item": `${SITE_URL}/immobilier/${cityData.slug}/${neighborhoodData.slug}/${propertyType}`
         }] : []),
         ...(transactionTypeData ? [{
           "@type": "ListItem",

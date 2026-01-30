@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://topaffaireimmo.vercel.app/sitemaps/static.xml</loc>
-    <lastmod>2026-01-29</lastmod>
+    <loc>https://www.topaffaireimmo.com/sitemaps/static.xml</loc>
+    <lastmod>2026-01-30</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://topaffaireimmo.vercel.app/sitemaps/cities.xml</loc>
-    <lastmod>2026-01-29</lastmod>
+    <loc>https://www.topaffaireimmo.com/sitemaps/cities.xml</loc>
+    <lastmod>2026-01-30</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://topaffaireimmo.vercel.app/sitemaps/neighborhoods.xml</loc>
-    <lastmod>2026-01-29</lastmod>
+    <loc>https://www.topaffaireimmo.com/sitemaps/neighborhoods.xml</loc>
+    <lastmod>2026-01-30</lastmod>
   </sitemap>
 </sitemapindex>

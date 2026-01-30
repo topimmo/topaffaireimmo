@@ -7,7 +7,10 @@
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
-const DOMAIN = 'https://topaffaireimmo.vercel.app';
+// Use production domain from environment variable, fallback to www.topaffaireimmo.com
+const DOMAIN = process.env.VITE_PRODUCTION_DOMAIN || 
+               process.env.VITE_SITE_URL || 
+               'https://www.topaffaireimmo.com';
 
 // Define data inline to avoid import issues
 const MOROCCO_CITIES = [

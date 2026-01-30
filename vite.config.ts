@@ -2,7 +2,7 @@ import path from "path";
 import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 
-// Plugin to inject build timestamp and version into HTML
+// Plugin to inject build timestamp, version, and production domain into HTML
 function buildMetadataPlugin(): Plugin {
   return {
     name: 'build-metadata',
@@ -12,9 +12,16 @@ function buildMetadataPlugin(): Plugin {
                       process.env.npm_package_version || 
                       'local-dev';
       
+      // Get production domain from environment, default to www.topaffaireimmo.com
+      const productionDomain = process.env.VITE_PRODUCTION_DOMAIN || 
+                               process.env.VITE_SITE_URL || 
+                               'https://www.topaffaireimmo.com';
+      
       return html
         .replaceAll('BUILD_TIMESTAMP_PLACEHOLDER', timestamp)
-        .replaceAll('DEPLOYMENT_VERSION_PLACEHOLDER', version);
+        .replaceAll('DEPLOYMENT_VERSION_PLACEHOLDER', version)
+        // Replace all hardcoded Vercel URLs with production domain
+        .replaceAll('https://topaffaireimmo.vercel.app', productionDomain);
     },
   };
 }
