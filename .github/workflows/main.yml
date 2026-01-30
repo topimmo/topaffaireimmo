@@ -21,7 +21,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Install Supabase CLI
+        shell: bash
         run: |
           curl -fsSL https://supabase.com/install.sh | sh
           echo "$HOME/.supabase/bin" >> $GITHUB_PATH
@@ -31,33 +37,33 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: supabase login --token "$SUPABASE_ACCESS_TOKEN"
 
-      - name: Link project
+      - name: Link project (no config needed)
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
 
       - name: DB Push (migrations)
         if: ${{ github.event.inputs.action == 'db_push' }}
-        run: supabase db push
-
-      - name: Run SQL fixes (from supabase/fixes)
-        if: ${{ github.event.inputs.action == 'run_sql_fixes' }}
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Run SQL fixes (from supabase/fixes) using DATABASE_URL
+        if: ${{ github.event.inputs.action == 'run_sql_fixes' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-          DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
-          export PGPASSWORD="$SUPABASE_DB_PASSWORD"
-
           for f in supabase/fixes/*.sql; do
             echo "Running $f"
-            psql -h "$DB_HOST" -U "postgres" -d "postgres" -v ON_ERROR_STOP=1 -f "$f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
           done
 
       - name: Deploy Edge Functions
         if: ${{ github.event.inputs.action == 'deploy_functions' }}
-        run: |
-          supabase functions deploy send-facebook-webhook
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy send-facebook-webhook --project-ref "$SUPABASE_PROJECT_REF"
