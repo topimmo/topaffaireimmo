@@ -70,19 +70,23 @@ function PublicLayout() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* إعلان عام تحت الهيدر */}
-      <AdBanner page="global" position="after_header" />
+      {/* AdBanner after header with proper spacing and reserved height */}
+      <div className="pt-2 md:pt-4 min-h-[100px] md:min-h-[120px]">
+        <AdBanner page="global" position="after_header" />
+      </div>
 
       <main className="flex-1">
         <Outlet />
       </main>
 
-      {/* إعلان عام قبل الفوتر */}
-      <AdBanner
-        page="global"
-        position="before_footer"
-        className="bg-muted/30"
-      />
+      {/* AdBanner before footer with proper spacing */}
+      <div className="py-4 md:py-6 min-h-[100px] md:min-h-[120px]">
+        <AdBanner
+          page="global"
+          position="before_footer"
+          className="bg-muted/30"
+        />
+      </div>
 
       <Footer />
 

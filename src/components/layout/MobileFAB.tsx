@@ -14,16 +14,18 @@ export default function MobileFAB() {
   return (
     <Link
       to="/add-listing"
-      className={`md:hidden fixed z-50 w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:shadow-xl flex items-center justify-center transition-all active:scale-95 ${
-        isRTL ? 'left-6' : 'right-6'
+      className={`md:hidden fixed z-40 rounded-full bg-primary text-white shadow-lg hover:shadow-xl flex items-center justify-center transition-all active:scale-95 ${
+        isRTL ? 'left-4' : 'right-4'
       }`}
       style={{
-        // Use safe-area-inset-bottom for iOS/Android notch support
-        bottom: 'calc(1.5rem + env(safe-area-inset-bottom))'
+        width: '56px',
+        height: '56px',
+        // Proper bottom spacing with safe area for iOS/Android
+        bottom: 'calc(1.25rem + env(safe-area-inset-bottom))'
       }}
       aria-label={t('nav.addListing')}
     >
-      <Plus className="h-6 w-6" />
+      <Plus className="h-6 w-6" strokeWidth={2.5} />
     </Link>
   );
 }
