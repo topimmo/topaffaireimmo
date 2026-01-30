@@ -1,12 +1,14 @@
 // SEO utilities for Morocco real estate platform
 // Provides canonical URLs, meta tags, and SEO-friendly URLs
 
+import { getSiteUrl } from '../config/site';
+
 /**
  * Get the production domain URL
- * Falls back to Vercel deployment URL if not configured
+ * Falls back to default configured domain if not set
  */
 export function getProductionDomain(): string {
-  return import.meta.env.VITE_PRODUCTION_DOMAIN || 'https://topaffaireimmo.vercel.app';
+  return getSiteUrl();
 }
 
 /**
@@ -245,7 +247,9 @@ export function isVercelPreview(): boolean {
   }
   
   const url = window.location.hostname;
-  return url.includes('vercel.app') && !url.includes('topaffaireimmo.vercel.app');
+  const productionDomain = getProductionDomain();
+  // Check if we're on a vercel.app domain but not the production one
+  return url.includes('vercel.app') && !window.location.origin.startsWith(productionDomain);
 }
 
 /**
