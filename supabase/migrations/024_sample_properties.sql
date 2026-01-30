@@ -1,13 +1,15 @@
 -- =====================================================
--- SAMPLE PROPERTIES FOR TOPAFFAIREIMMO
--- Demo data for testing the platform
+-- SAMPLE PROPERTIES FOR TOPAFFAIREIMMO (DEMO SEED)
+-- Safe/idempotent seed data
 -- =====================================================
 
--- Disable RLS temporarily for seeding
+BEGIN;
+
+-- 1) Disable RLS temporarily (safe inside transaction)
 ALTER TABLE public.properties DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 
--- Create a demo admin user
+-- 2) Ensure demo admin profile exists (handle id + email conflicts safely)
 INSERT INTO public.profiles (
   id, email, full_name, user_role, is_verified, is_active
 ) VALUES (
@@ -17,16 +19,29 @@ INSERT INTO public.profiles (
   'admin',
   true,
   true
-) ON CONFLICT (id) DO NOTHING;
+)
+ON CONFLICT (id) DO UPDATE
+SET email = EXCLUDED.email,
+    full_name = EXCLUDED.full_name,
+    user_role = EXCLUDED.user_role,
+    is_verified = EXCLUDED.is_verified,
+    is_active = EXCLUDED.is_active;
 
--- Insert sample properties
+-- If your database has UNIQUE(email) and the email is already used by another id,
+-- the insert above can still fail. In that case, run this once manually and fix it:
+-- Either delete the conflicting profile or change the demo email here.
+
+-- 3) Insert sample properties (avoid duplicates by deleting existing demo properties first)
+DELETE FROM public.properties
+WHERE owner_id = '00000000-0000-0000-0000-000000000001'::uuid;
+
 INSERT INTO public.properties (
-  owner_id, transaction_type, property_type, city_id, 
+  owner_id, transaction_type, property_type, city_id,
   price, area, bedrooms, bathrooms,
   title_fr, title_ar, description_fr, description_ar,
   images, status, featured, advertiser_type,
   contact_phone, contact_whatsapp
-) VALUES 
+) VALUES
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
     'sale', 'apartment', 1,
@@ -35,7 +50,10 @@ INSERT INTO public.properties (
     'شقة فاخرة مع إطلالة على البحر في أنفا',
     'Magnifique appartement de 150m² situé dans le prestigieux quartier d''Anfa. Vue imprenable sur l''océan Atlantique. Finitions haut de gamme, parking sécurisé.',
     'شقة رائعة بمساحة 150 متر مربع في حي أنفا الراقي. إطلالة خلابة على المحيط الأطلسي. تشطيبات فاخرة، موقف سيارات آمن.',
-    ARRAY['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80', 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80'],
+    ARRAY[
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80'
+    ],
     'approved', true, 'agency',
     '+212 6XX XX XX XX', '+212 6XX XX XX XX'
   ),
@@ -47,9 +65,12 @@ INSERT INTO public.properties (
     'فيلا فاخرة مع مسبح في النخيل',
     'Superbe villa de 450m² dans la Palmeraie de Marrakech. Jardin paysager de 2000m², piscine chauffée, 5 chambres en suite. Architecture traditionnelle marocaine.',
     'فيلا رائعة بمساحة 450 متر مربع في نخيل مراكش. حديقة 2000 متر مربع، مسبح مدفأ، 5 غرف نوم مع حمامات خاصة. هندسة معمارية مغربية تقليدية.',
-    ARRAY['https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&q=80', 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80'],
+    ARRAY[
+      'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80'
+    ],
     'approved', true, 'owner',
-    '+212 6XX XX XX XX'
+    '+212 6XX XX XX XX', NULL
   ),
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
@@ -61,7 +82,7 @@ INSERT INTO public.properties (
     'شقة مفروشة جميلة بمساحة 120 متر مربع في حي أكدال بالرباط. قريب من جميع المرافق. مثالي للمغتربين أو المهنيين.',
     ARRAY['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80'],
     'approved', false, 'broker',
-    '+212 6XX XX XX XX'
+    '+212 6XX XX XX XX', NULL
   ),
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
@@ -73,7 +94,7 @@ INSERT INTO public.properties (
     'محل تجاري بمساحة 200 متر مربع في موقع مثالي بوسط مدينة طنجة. واجهة على شارع رئيسي، وصول سهل.',
     ARRAY['https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80'],
     'approved', false, 'agency',
-    '+212 6XX XX XX XX'
+    '+212 6XX XX XX XX', NULL
   ),
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
@@ -85,7 +106,7 @@ INSERT INTO public.properties (
     'أرض بمساحة 1000 متر مربع مع إطلالة على خليج أكادير. رخصة البناء متاحة. منطقة سكنية هادئة.',
     ARRAY['https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80'],
     'approved', true, 'owner',
-    '+212 6XX XX XX XX'
+    '+212 6XX XX XX XX', NULL
   ),
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
@@ -97,7 +118,7 @@ INSERT INTO public.properties (
     'منزل تقليدي أصيل بمساحة 220 متر مربع تم تجديده بالكامل. فناء مركزي مع نافورة، تراس على السطح.',
     ARRAY['https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&q=80'],
     'approved', false, 'owner',
-    '+212 6XX XX XX XX'
+    '+212 6XX XX XX XX', NULL
   ),
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
@@ -109,7 +130,7 @@ INSERT INTO public.properties (
     'شقة بمساحة 90 متر مربع مشرقة جداً في قلب المعاريف. قريب من توين سنتر ووسائل النقل.',
     ARRAY['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'],
     'approved', false, 'broker',
-    '+212 6XX XX XX XX'
+    '+212 6XX XX XX XX', NULL
   ),
   (
     '00000000-0000-0000-0000-000000000001'::uuid,
@@ -121,9 +142,11 @@ INSERT INTO public.properties (
     'فيلا رائعة بمساحة 350 متر مربع مع إطلالة بانورامية على البحر. حديقة 800 متر مربع، كراج مزدوج.',
     ARRAY['https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80'],
     'approved', true, 'agency',
-    '+212 6XX XX XX XX'
+    '+212 6XX XX XX XX', NULL
   );
 
--- Re-enable RLS
+-- 4) Re-enable RLS
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+COMMIT;
