@@ -1175,7 +1175,7 @@ RESET ROLE;
 -- Create test admin (if not exists)
 INSERT INTO public.admins (user_id) 
 VALUES ('admin-uuid-here')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (user_id) DO NOTHING;
 
 -- Test as admin
 SET LOCAL ROLE authenticated;

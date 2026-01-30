@@ -57,7 +57,7 @@ SELECT id, email FROM auth.users WHERE email = 'your-email@example.com';
 -- Step 2: Insert into admins table (replace UUID)
 INSERT INTO public.admins (user_id) 
 VALUES ('paste-uuid-from-above')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (user_id) DO NOTHING;
 ```
 
 **Verify:**
