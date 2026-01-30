@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - db_push
+          - seed_demo
           - run_sql_fixes
           - deploy_functions
 
@@ -21,37 +22,60 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      # ✅ Install Supabase CLI بطريقة صحيحة (بلا npm وبلا install.sh)
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
         with:
-          node-version: 20
+          version: latest
 
-      - name: Login Supabase
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: npx supabase login --token "$SUPABASE_ACCESS_TOKEN"
+      - name: Login Supabase CLI
+        run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
 
+      # ✅ Link project بلا ما يعتمد على supabase/config.toml
       - name: Link project
-        env:
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-        run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
+      # ✅ DB Push (migrations)
       - name: DB Push (migrations)
         if: ${{ github.event.inputs.action == 'db_push' }}
-        run: npx supabase db push
-
-      - name: Run SQL fixes
-        if: ${{ github.event.inputs.action == 'run_sql_fixes' }}
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+
+      # ✅ Seed demo data (من ملف منفصل، ماشي migration)
+      - name: Seed demo data
+        if: ${{ github.event.inputs.action == 'seed_demo' }}
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+
+          DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
+          export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+
+          psql -h "$DB_HOST" -U "postgres" -d "postgres" -v ON_ERROR_STOP=1 -f supabase/seed_demo.sql
+
+      # ✅ Run SQL fixes (إذا عندك supabase/fixes/*.sql)
+      - name: Run SQL fixes (from supabase/fixes)
+        if: ${{ github.event.inputs.action == 'run_sql_fixes' }}
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+          DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
+          export PGPASSWORD="$SUPABASE_DB_PASSWORD"
+
           for f in supabase/fixes/*.sql; do
             echo "Running $f"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+            psql -h "$DB_HOST" -U "postgres" -d "postgres" -v ON_ERROR_STOP=1 -f "$f"
           done
 
+      # ✅ Deploy Edge Functions
       - name: Deploy Edge Functions
         if: ${{ github.event.inputs.action == 'deploy_functions' }}
-        run: npx supabase functions deploy send-facebook-webhook
+        run: supabase functions deploy send-facebook-webhook
