@@ -311,34 +311,6 @@ export default function AddListing() {
     setImageUploadStatus((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ NEW: get profile id safely (try id first, then email)
-  const fetchProfileId = async (): Promise<string> => {
-    // 1) Try: profiles.id == auth.users.id
-    const { data: p1, error: e1 } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user!.id)
-      .maybeSingle();
-
-    if (!e1 && p1?.id) return p1.id;
-
-    // 2) Try: by email
-    const email = user?.email;
-    if (!email) throw new Error(isRTL ? 'البريد الإلكتروني غير موجود' : 'Email introuvable');
-
-    const { data: p2, error: e2 } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (e2 || !p2?.id) {
-      throw new Error(isRTL ? 'الملف الشخصي غير موجود' : 'Profil introuvable');
-    }
-
-    return p2.id;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -397,9 +369,6 @@ export default function AddListing() {
     setUploadProgress('');
 
     try {
-      // ✅ IMPORTANT: get profileId
-      const profileId = await fetchProfileId();
-
       // TRANSACTIONAL APPROACH: Create listing first, then upload images
       // Step 1: Create property record with status='pending' (no images yet)
       setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
@@ -450,7 +419,7 @@ export default function AddListing() {
       }
 
       const insertData: Record<string, unknown> = {
-        owner_id: profileId,
+        owner_id: user.id,
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         advertiser_type: mapAnnouncerType(formData.announcerType),
