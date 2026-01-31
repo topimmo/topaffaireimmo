@@ -128,8 +128,16 @@ export default function AddListing() {
   }, []);
 
   useEffect(() => {
+    console.log('[AddListing] useEffect cityId changed:', { 
+      cityId: formData.cityId, 
+      neighborhoodsCount: neighborhoods.length 
+    });
     if (formData.cityId) {
       const filtered = neighborhoods.filter((n) => n.city_id === parseInt(formData.cityId));
+      console.log('[AddListing] Filtered neighborhoods:', { 
+        cityId: formData.cityId,
+        filteredCount: filtered.length 
+      });
       setFilteredNeighborhoods(filtered);
       setFormData((prev) => ({ ...prev, neighborhoodId: '', customNeighborhood: '' }));
       setShowCustomNeighborhood(false);
@@ -207,6 +215,7 @@ export default function AddListing() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    console.log('[AddListing] handleSelectChange:', { name, value, type: typeof value });
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -316,12 +325,22 @@ export default function AddListing() {
     e.preventDefault();
     if (!user) return;
 
+    // Log the entire form state for debugging
+    console.log('[AddListing] Form submission started:', {
+      formData: {
+        ...formData,
+        phone: formData.phone ? '[REDACTED]' : null
+      }
+    });
+
     if (!formData.propertyType) {
       alert(isRTL ? 'يرجى اختيار نوع العقار' : 'Veuillez sélectionner un type de bien');
       return;
     }
 
-    if (!formData.cityId) {
+    // Strict validation for cityId
+    if (!formData.cityId || formData.cityId.trim() === '') {
+      console.error('[AddListing] Validation failed: cityId is empty', { cityId: formData.cityId });
       alert(isRTL ? 'يرجى اختيار المدينة' : 'Veuillez sélectionner une ville');
       return;
     }
@@ -359,12 +378,25 @@ export default function AddListing() {
       // Step 1: Create property record with status='pending' (no images yet)
       setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
 
+      // Hard guard: Ensure cityId is valid before creating insert payload
+      const parsedCityId = parseInt(formData.cityId);
+      if (!formData.cityId || isNaN(parsedCityId)) {
+        console.error('[AddListing] Critical validation error: invalid cityId', { 
+          cityId: formData.cityId, 
+          parsedCityId,
+          formData 
+        });
+        alert(isRTL ? 'خطأ: معرف المدينة غير صالح' : 'Erreur: ID de ville invalide');
+        setIsSubmitting(false);
+        return;
+      }
+
       const insertData: Record<string, unknown> = {
         owner_id: profileId,
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         advertiser_type: formData.announcerType || 'owner',
-        city_id: parseInt(formData.cityId),
+        city_id: parsedCityId,
         neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
         custom_neighborhood: formData.customNeighborhood || null,
         address: formData.address || null,
