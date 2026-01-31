@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 
 type Lang = "fr" | "ar";
 
@@ -180,6 +181,10 @@ export default function Privacy() {
       <Header />
 
       <main className="flex-1 pt-24 pb-16">
+        <CMSPageWrapper 
+          slug="privacy" 
+          defaultTitle={{ fr: t.title, ar: t.title }}
+        >
         <div className="container max-w-4xl">
           <h1 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
             {t.title}
@@ -225,6 +230,7 @@ export default function Privacy() {
             </div>
           </div>
         </div>
+        </CMSPageWrapper>
       </main>
 
       <Footer />

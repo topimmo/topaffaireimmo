@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,10 @@ export default function Contact() {
       <Header />
 
       <main className="flex-1 pt-24 pb-16">
+        <CMSPageWrapper 
+          slug="contact" 
+          defaultTitle={{ fr: c.title, ar: c.title }}
+        >
         <div className="container">
           {/* Header */}
           <div className="max-w-2xl mb-12">
@@ -251,6 +256,7 @@ export default function Contact() {
             </div>
           </div>
         </div>
+        </CMSPageWrapper>
       </main>
 
       <Footer />

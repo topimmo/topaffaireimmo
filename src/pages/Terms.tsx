@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 
 const content = {
   fr: {
@@ -152,6 +153,10 @@ export default function Terms() {
       <Header />
 
       <main className="flex-1 pt-24 pb-16">
+        <CMSPageWrapper 
+          slug="terms" 
+          defaultTitle={{ fr: t.title, ar: t.title }}
+        >
         <div className="container max-w-4xl">
           <h1 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
             {t.title}
@@ -194,6 +199,7 @@ export default function Terms() {
             </div>
           </div>
         </div>
+        </CMSPageWrapper>
       </main>
 
       <Footer />
