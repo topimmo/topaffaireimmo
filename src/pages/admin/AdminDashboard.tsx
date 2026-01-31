@@ -12,6 +12,17 @@ interface Stats {
   approvedListings: number;
   rejectedListings: number;
   totalListings: number;
+  totalUsers: number;
+  totalAgencies: number;
+}
+
+interface ActivityLog {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  created_at: string;
+  metadata: any;
 }
 
 export default function AdminDashboard() {
@@ -21,7 +32,10 @@ export default function AdminDashboard() {
     approvedListings: 0,
     rejectedListings: 0,
     totalListings: 0,
+    totalUsers: 0,
+    totalAgencies: 0,
   });
+  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,18 +61,40 @@ export default function AdminDashboard() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'rejected');
 
-    // Fetch total users - count from auth schema is not accessible from frontend
-    // Instead, we'll show listing count or remove this stat
     const { count: allListingsCount } = await supabase
       .from('properties')
       .select('id', { count: 'exact', head: true });
+
+    // Fetch total users from profiles
+    const { count: usersCount } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true });
+
+    // Fetch agencies count (profiles with advertiser_type = 'agency')
+    const { count: agenciesCount } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('advertiser_type', 'agency');
+
+    // Fetch recent activity from audit logs
+    const { data: activityData } = await supabase
+      .from('admin_audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
 
     setStats({
       pendingListings: pendingCount || 0,
       approvedListings: approvedCount || 0,
       rejectedListings: rejectedCount || 0,
       totalListings: allListingsCount || 0,
+      totalUsers: usersCount || 0,
+      totalAgencies: agenciesCount || 0,
     });
+
+    if (activityData) {
+      setRecentActivity(activityData);
+    }
 
     setLoading(false);
   };
@@ -95,6 +131,22 @@ export default function AdminDashboard() {
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
       link: '/admin/listings?status=all',
+    },
+    {
+      title: isRTL ? 'المستخدمون' : 'Users',
+      value: stats.totalUsers,
+      icon: Users,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      link: '/admin/users',
+    },
+    {
+      title: isRTL ? 'الوكالات' : 'Agencies',
+      value: stats.totalAgencies,
+      icon: Users,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100',
+      link: '/admin/agencies',
     },
   ];
 
@@ -138,7 +190,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {statCards.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -189,6 +241,59 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
+
+        {/* Recent Activity */}
+        {recentActivity.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{isRTL ? 'النشاط الأخير' : 'Recent Activity'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentActivity.map((activity) => {
+                  const actionLabels: Record<string, { fr: string; ar: string }> = {
+                    approve: { fr: 'Approuvé', ar: 'تمت الموافقة' },
+                    reject: { fr: 'Rejeté', ar: 'تم الرفض' },
+                    delete: { fr: 'Supprimé', ar: 'تم الحذف' },
+                    feature: { fr: 'Mis en avant', ar: 'تم التمييز' },
+                    unfeature: { fr: 'Retiré de la mise en avant', ar: 'تمت إزالة التمييز' },
+                    update: { fr: 'Mis à jour', ar: 'تم التحديث' },
+                    create: { fr: 'Créé', ar: 'تم الإنشاء' },
+                  };
+
+                  const entityLabels: Record<string, { fr: string; ar: string }> = {
+                    property: { fr: 'Annonce', ar: 'إعلان' },
+                    user: { fr: 'Utilisateur', ar: 'مستخدم' },
+                    page: { fr: 'Page', ar: 'صفحة' },
+                    category: { fr: 'Catégorie', ar: 'فئة' },
+                    settings: { fr: 'Paramètres', ar: 'إعدادات' },
+                  };
+
+                  const action = actionLabels[activity.action]?.[language] || activity.action;
+                  const entity = entityLabels[activity.entity_type]?.[language] || activity.entity_type;
+
+                  return (
+                    <div
+                      key={activity.id}
+                      className="flex items-start justify-between py-2 border-b last:border-b-0"
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">
+                          {action} {entity}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(activity.created_at).toLocaleString(
+                            language === 'ar' ? 'ar-MA' : 'fr-MA'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AdminLayout>
   );
