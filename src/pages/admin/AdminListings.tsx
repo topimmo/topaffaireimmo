@@ -239,10 +239,8 @@ export default function AdminListings() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      console.group('🔍 [STEP B] Preparing Network Request');
-      console.log('Current User:', user?.id);
+      console.log('Current User ID:', user?.id);
       console.log('Current User Email:', user?.email);
-      console.groupEnd();
 
       const updateData: any = { status: newStatus };
 

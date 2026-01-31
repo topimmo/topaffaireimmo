@@ -153,10 +153,8 @@ export default function AdminListingDetail() {
       // Get current user for approved_by field
       const { data: { user } } = await supabase.auth.getUser();
       
-      console.group('🔍 [STEP B] Preparing Network Request');
-      console.log('Current User:', user?.id);
+      console.log('Current User ID:', user?.id);
       console.log('Current User Email:', user?.email);
-      console.groupEnd();
       
       // Prepare update data
       const updateData: any = { status: newStatus };
