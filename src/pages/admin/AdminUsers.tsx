@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
@@ -88,38 +88,43 @@ export default function AdminUsers() {
     }
   };
 
+  // Utility function to generate CSV content
+  const generateCSV = (users: Profile[]) => {
+    const headers = [
+      'ID',
+      'Email',
+      'Full Name',
+      'Phone',
+      'Role',
+      'Advertiser Type',
+      'Agency Name',
+      'Active',
+      'Verified',
+      'Created At',
+    ];
+
+    const rows = users.map((user) => [
+      user.id,
+      user.email,
+      user.full_name || '',
+      user.phone || '',
+      user.user_role,
+      user.advertiser_type || '',
+      user.agency_name || '',
+      user.is_active ? 'Yes' : 'No',
+      user.is_verified ? 'Yes' : 'No',
+      user.created_at ? new Date(user.created_at).toISOString() : '',
+    ]);
+
+    return [
+      headers.join(','),
+      ...rows.map((row) => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+  };
+
   const handleExportCSV = () => {
     try {
-      const headers = [
-        'ID',
-        'Email',
-        'Full Name',
-        'Phone',
-        'Role',
-        'Advertiser Type',
-        'Agency Name',
-        'Active',
-        'Verified',
-        'Created At',
-      ];
-
-      const rows = filteredUsers.map((user) => [
-        user.id,
-        user.email,
-        user.full_name || '',
-        user.phone || '',
-        user.user_role,
-        user.advertiser_type || '',
-        user.agency_name || '',
-        user.is_active ? 'Yes' : 'No',
-        user.is_verified ? 'Yes' : 'No',
-        user.created_at ? new Date(user.created_at).toISOString() : '',
-      ]);
-
-      const csvContent = [
-        headers.join(','),
-        ...rows.map((row) => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
-      ].join('\n');
+      const csvContent = generateCSV(filteredUsers);
 
       const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
@@ -203,6 +208,13 @@ export default function AdminUsers() {
       user.agency_name?.toLowerCase().includes(query)
     );
   });
+
+  // Memoize statistics calculations to avoid recomputation on every render
+  const userStats = useMemo(() => ({
+    activeUsers: users.filter((u) => u.is_active).length,
+    agents: users.filter((u) => u.user_role === 'agent').length,
+    agencies: users.filter((u) => u.advertiser_type === 'agency').length,
+  }), [users]);
 
   return (
     <AdminLayout>
@@ -373,7 +385,7 @@ export default function AdminUsers() {
               {isRTL ? 'المستخدمون النشطون' : 'Active Users'}
             </p>
             <p className="text-2xl font-bold mt-1">
-              {users.filter((u) => u.is_active).length}
+              {userStats.activeUsers}
             </p>
           </div>
           <div className="bg-white p-4 rounded-lg border">
@@ -381,7 +393,7 @@ export default function AdminUsers() {
               {isRTL ? 'الوكلاء' : 'Agents'}
             </p>
             <p className="text-2xl font-bold mt-1">
-              {users.filter((u) => u.user_role === 'agent').length}
+              {userStats.agents}
             </p>
           </div>
           <div className="bg-white p-4 rounded-lg border">
@@ -389,7 +401,7 @@ export default function AdminUsers() {
               {isRTL ? 'الوكالات' : 'Agencies'}
             </p>
             <p className="text-2xl font-bold mt-1">
-              {users.filter((u) => u.advertiser_type === 'agency').length}
+              {userStats.agencies}
             </p>
           </div>
         </div>
