@@ -315,6 +315,23 @@ function App() {
               </AdminProtectedRoute>
             }
           />
+          {/* Alias route for /admin/properties */}
+          <Route
+            path="/admin/properties"
+            element={
+              <AdminProtectedRoute>
+                <AdminListings />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/properties/:id"
+            element={
+              <AdminProtectedRoute>
+                <AdminListingDetail />
+              </AdminProtectedRoute>
+            }
+          />
           <Route
             path="/admin/users"
             element={

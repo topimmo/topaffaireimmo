@@ -26,7 +26,7 @@ interface ActivityLog {
 }
 
 export default function AdminDashboard() {
-  const { isRTL } = useLanguage();
+  const { language, isRTL } = useLanguage();
   const [stats, setStats] = useState<Stats>({
     pendingListings: 0,
     approvedListings: 0,
