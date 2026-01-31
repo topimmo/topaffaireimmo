@@ -415,8 +415,7 @@ export default function Advertise() {
                 </p>
               </form>
             </div>
-          </div>
-        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
