@@ -311,33 +311,7 @@ export default function AddListing() {
     setImageUploadStatus((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ NEW: get profile id safely (try id first, then email)
-  const fetchProfileId = async (): Promise<string> => {
-    // 1) Try: profiles.id == auth.users.id
-    const { data: p1, error: e1 } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user!.id)
-      .maybeSingle();
 
-    if (!e1 && p1?.id) return p1.id;
-
-    // 2) Try: by email
-    const email = user?.email;
-    if (!email) throw new Error(isRTL ? 'البريد الإلكتروني غير موجود' : 'Email introuvable');
-
-    const { data: p2, error: e2 } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (e2 || !p2?.id) {
-      throw new Error(isRTL ? 'الملف الشخصي غير موجود' : 'Profil introuvable');
-    }
-
-    return p2.id;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -397,9 +371,6 @@ export default function AddListing() {
     setUploadProgress('');
 
     try {
-      // ✅ IMPORTANT: get profileId
-      const profileId = await fetchProfileId();
-
       // TRANSACTIONAL APPROACH: Create listing first, then upload images
       // Step 1: Create property record with status='pending' (no images yet)
       setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
@@ -450,7 +421,7 @@ export default function AddListing() {
       }
 
       const insertData: Record<string, unknown> = {
-        owner_id: profileId,
+        owner_id: user.id,
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         advertiser_type: mapAnnouncerType(formData.announcerType),
@@ -472,41 +443,6 @@ export default function AddListing() {
         contact_phone: formData.phone || null,
         // Let database default handle status (defaults to 'pending')
       };
-
-      // Log payload for debugging schema alignment issues
-      console.log('[AddListing] 🔍 Pre-insert validation:');
-      console.log('[AddListing] Payload keys:', Object.keys(insertData));
-      console.log('[AddListing] Payload preview:', {
-        owner_id: insertData.owner_id ? String(insertData.owner_id).substring(0, 8) + '...' : 'null',
-        city_id: insertData.city_id,
-        neighborhood_id: insertData.neighborhood_id,
-        custom_neighborhood: insertData.custom_neighborhood,
-        advertiser_type: insertData.advertiser_type,
-        transaction_type: insertData.transaction_type,
-        property_type: insertData.property_type,
-      });
-
-      // Log payload before insert - show full details in DEV mode
-      if (import.meta.env.DEV) {
-        console.log('[AddListing] Creating listing with full payload:', insertData);
-        console.log('[AddListing] Payload field types:', {
-          owner_id: typeof insertData.owner_id,
-          transaction_type: typeof insertData.transaction_type,
-          property_type: typeof insertData.property_type,
-          advertiser_type: typeof insertData.advertiser_type,
-          city_id: typeof insertData.city_id,
-          neighborhood_id: typeof insertData.neighborhood_id,
-          price: typeof insertData.price,
-          area: typeof insertData.area,
-          bedrooms: typeof insertData.bedrooms,
-          bathrooms: typeof insertData.bathrooms,
-        });
-      } else {
-        console.log('[AddListing] Creating listing with payload:', {
-          ...insertData,
-          owner_id: insertData.owner_id ? insertData.owner_id.toString().substring(0, 8) + '...' : 'null',
-        });
-      }
 
       const { data: insertedProperty, error: insertError } = await supabase
         .from('properties')
