@@ -290,7 +290,10 @@ export default function EditListing() {
           : `Téléchargement des images... (0/${imageFiles.length})`
         );
         
-        console.log(`[EditListing] Uploading ${imageFiles.length} new images...`);
+        console.log('[EditListing] Uploading new images:', {
+          count: imageFiles.length,
+          listingId: id,
+        });
         
         // Upload images one by one with progress tracking
         const uploadResults = [];
@@ -307,18 +310,30 @@ export default function EditListing() {
             : `Téléchargement des images... (${i + 1}/${imageFiles.length})`
           );
           
+          console.log(`[EditListing] Uploading image ${i + 1}/${imageFiles.length}:`, {
+            fileName: file.name,
+            size: `${(file.size / 1024).toFixed(2)} KB`,
+            listingId: id,
+          });
+          
           const result = await uploadPropertyImages([file], user.id, id);
           uploadResults.push(result[0]);
           
           if (result[0].error) {
-            console.error(`[EditListing] Failed to upload image ${i + 1}:`, result[0].error);
+            console.error(`[EditListing] Failed to upload image ${i + 1}:`, {
+              fileName: result[0].fileName,
+              error: result[0].error,
+            });
             setImageUploadStatus((prev) => {
               const updated = [...prev];
               updated[i] = 'error';
               return updated;
             });
           } else {
-            console.log(`[EditListing] Successfully uploaded image ${i + 1}`);
+            console.log(`[EditListing] Image ${i + 1} uploaded successfully:`, {
+              fileName: result[0].fileName,
+              url: result[0].url?.substring(0, 50) + '...',
+            });
             setImageUploadStatus((prev) => {
               const updated = [...prev];
               updated[i] = 'success';
@@ -330,7 +345,11 @@ export default function EditListing() {
         // Check for upload errors
         const failedUploads = uploadResults.filter(r => r.error);
         if (failedUploads.length > 0) {
-          console.error('[EditListing] Image upload errors:', failedUploads);
+          console.warn('[EditListing] Some images failed to upload:', {
+            total: imageFiles.length,
+            failed: failedUploads.length,
+            succeeded: imageFiles.length - failedUploads.length,
+          });
           
           // Show specific error messages for failed uploads
           const errorDetails = failedUploads.map((r, idx) => 
@@ -361,6 +380,11 @@ export default function EditListing() {
       // Step 2: Update property listing
       setUploadProgress(isRTL ? 'جاري حفظ التغييرات...' : 'Enregistrement des modifications...');
       
+      console.log('[EditListing] Updating listing:', {
+        listingId: id,
+        imageCount: finalImageUrls.length,
+      });
+      
       const { error } = await supabase
         .from('properties')
         .update({
@@ -389,9 +413,16 @@ export default function EditListing() {
         .eq('owner_id', user.id);
 
       if (error) {
-        console.error('Error updating property:', error);
+        console.error('[EditListing] Failed to update listing:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+        });
         throw error;
       }
+
+      console.log('[EditListing] Listing updated successfully');
+
 
       // Cleanup blob URLs
       uploadedImages.forEach(url => {
@@ -405,7 +436,7 @@ export default function EditListing() {
         navigate('/dashboard');
       }, 2000);
     } catch (err) {
-      console.error('Error during submission:', err);
+      console.error('[EditListing] Error during submission:', err);
       alert(isRTL 
         ? 'حدث خطأ أثناء تحديث الإعلان. يرجى المحاولة مرة أخرى.' 
         : 'Une erreur s\'est produite lors de la mise à jour de l\'annonce. Veuillez réessayer.'
