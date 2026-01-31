@@ -461,17 +461,29 @@ export default function AddListing() {
         area: formData.area ? parseFloat(formData.area) : null,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-        // Use French title/description as fallback for English since form only has FR/AR
-        title_en: formData.titleFr || 'New property',
+        // Only FR and AR titles/descriptions exist in schema (NO title_en or description_en)
         title_fr: formData.titleFr || 'Nouveau bien',
         title_ar: formData.titleAr || 'عقار جديد',
-        description_en: formData.descriptionFr || null,
         description_fr: formData.descriptionFr || null,
         description_ar: formData.descriptionAr || null,
         images: [],
-        phone: formData.phone || null,
-        status: 'pending',
+        // Schema uses contact_phone not phone
+        contact_phone: formData.phone || null,
+        // Let database default handle status (defaults to 'pending')
       };
+
+      // MANDATORY: Log payload keys and validation before insert
+      console.log('[AddListing] 🔍 Pre-insert validation:');
+      console.log('[AddListing] Payload keys:', Object.keys(insertData));
+      console.log('[AddListing] Payload preview:', {
+        owner_id: insertData.owner_id ? String(insertData.owner_id).substring(0, 8) + '...' : 'null',
+        city_id: insertData.city_id,
+        neighborhood_id: insertData.neighborhood_id,
+        custom_neighborhood: insertData.custom_neighborhood,
+        advertiser_type: insertData.advertiser_type,
+        transaction_type: insertData.transaction_type,
+        property_type: insertData.property_type,
+      });
 
       // Log payload before insert - show full details in DEV mode
       if (import.meta.env.DEV) {
