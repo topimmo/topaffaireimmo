@@ -20,6 +20,11 @@ on:
 jobs:
   supabase:
     runs-on: ubuntu-latest
+    
+    # Security: Limit GITHUB_TOKEN permissions
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
       # ✅ FIX: Set fetch-depth: 0 to fetch all history for git diff commands
