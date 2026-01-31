@@ -192,11 +192,15 @@ ALTER TABLE public.properties
 2. Different error (not FK related) - check error message
 3. RLS policies not updated - verify policies use `auth.uid()`
 
-**Debug**:
+**Debug** (requires psql or Supabase Studio SQL Editor):
 ```sql
--- Check exact error
+-- In psql interactive session, enable verbose errors:
 \set VERBOSITY verbose
 INSERT INTO properties (...) VALUES (...);
+
+-- OR using Supabase CLI/Dashboard (no backslash commands):
+-- Check the exact error message in the response
+-- Look for: "violates foreign key constraint" or "violates row-level security"
 ```
 
 ### Issue: Existing properties broken

@@ -7,8 +7,11 @@
 # This script verifies that migration 049 and 061 have been
 # correctly applied to the database.
 #
+# First time setup:
+#   chmod +x scripts/verify-fk-fix.sh
+#
 # Usage:
-#   ./verify-fk-fix.sh
+#   ./scripts/verify-fk-fix.sh
 #
 # Prerequisites:
 #   - Supabase CLI installed
