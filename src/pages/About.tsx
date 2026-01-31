@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { Building2, Users, Award, Globe } from "lucide-react";
 
 const content = {
@@ -77,6 +78,10 @@ export default function About() {
       <Header />
 
       <main className="flex-1 pt-24 pb-16">
+        <CMSPageWrapper 
+          slug="about" 
+          defaultTitle={{ fr: c.title, ar: c.title }}
+        >
         {/* Hero */}
         <section className="container mb-16">
           <div className="max-w-3xl">
@@ -167,6 +172,7 @@ export default function About() {
             </p>
           </div>
         </section>
+        </CMSPageWrapper>
       </main>
 
       <Footer />

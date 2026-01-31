@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
 import { sendFacebookWebhook } from '@/lib/facebookWebhook';
+import { logAdminAction } from '@/lib/auditLog';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Eye, CheckCircle, XCircle, Loader2, Trash2 } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, Loader2, Trash2, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -245,7 +246,16 @@ export default function AdminListings() {
       if (error) {
         toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
       } else {
+        // Log audit action
+        const property = properties.find(p => p.id === propertyId);
         if (newStatus === 'approved') {
+          await logAdminAction({
+            action: 'approve',
+            entity_type: 'property',
+            entity_id: propertyId,
+            metadata: { title: property?.title_fr || '' },
+          });
+
           try {
             await sendFacebookWebhook(propertyId);
             toast.success(isRTL ? 'تم اعتماد الإعلان ونشره على فيسبوك' : 'Listing approved and posted to Facebook');
@@ -253,11 +263,18 @@ export default function AdminListings() {
             console.error('Webhook error:', webhookError);
             toast.warning(isRTL ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' : 'Listing approved but Facebook posting failed');
           }
+        } else if (newStatus === 'rejected') {
+          await logAdminAction({
+            action: 'reject',
+            entity_type: 'property',
+            entity_id: propertyId,
+            metadata: { title: property?.title_fr || '' },
+          });
+
+          toast.success(isRTL ? 'تم رفض الإعلان' : 'Listing rejected');
         } else {
           toast.success(
-            isRTL
-              ? `تم ${newStatus === 'rejected' ? 'رفض' : 'تحديث'} الإعلان`
-              : `Listing ${newStatus === 'rejected' ? 'rejected' : 'updated'}`
+            isRTL ? 'تم تحديث الإعلان' : 'Listing updated'
           );
         }
 
@@ -292,6 +309,14 @@ export default function AdminListings() {
         return;
       }
 
+      // Log audit action
+      await logAdminAction({
+        action: 'delete',
+        entity_type: 'property',
+        entity_id: property.id,
+        metadata: { title: property.title_fr },
+      });
+
       toast.success(isRTL ? 'تم حذف الإعلان' : 'Listing deleted');
       await fetchProperties();
     } catch (e: any) {
@@ -299,6 +324,68 @@ export default function AdminListings() {
       toast.error(isRTL ? 'وقع خطأ غير متوقع فالحذف' : 'Unexpected delete error');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleExportCSV = () => {
+    try {
+      // Prepare CSV headers
+      const headers = [
+        'ID',
+        'Title (FR)',
+        'Title (AR)',
+        'Price',
+        'Status',
+        'Type',
+        'Transaction',
+        'City',
+        'Neighborhood',
+        'Contact Phone',
+        'Contact WhatsApp',
+        'Contact Email',
+        'Advertiser Type',
+        'Created At',
+      ];
+
+      // Prepare CSV rows
+      const rows = properties.map((property) => [
+        property.id,
+        `"${property.title_fr?.replace(/"/g, '""') || ''}"`,
+        `"${property.title_ar?.replace(/"/g, '""') || ''}"`,
+        property.price,
+        property.status,
+        property.property_type,
+        property.transaction_type,
+        getCityName(property.city),
+        getNeighborhoodName(property.neighborhood),
+        property.contact_phone || '',
+        property.contact_whatsapp || '',
+        property.contact_email || '',
+        property.advertiser_type || '',
+        formatDate(property.created_at),
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) => row.join(',')),
+      ].join('\n');
+
+      // Create a Blob and download
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `listings_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(isRTL ? 'تم تصدير البيانات بنجاح' : 'Data exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error(isRTL ? 'خطأ في التصدير' : 'Export error');
     }
   };
 
@@ -400,17 +487,28 @@ export default function AdminListings() {
             )}
           </div>
 
-          <Select value={statusFilter} onValueChange={(value) => setSearchParams({ status: value })}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={isRTL ? 'اختر الحالة' : 'Select status'} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{isRTL ? 'الكل' : 'All'}</SelectItem>
-              <SelectItem value="pending">{isRTL ? 'قيد الانتظار' : 'Pending'}</SelectItem>
-              <SelectItem value="approved">{isRTL ? 'معتمد' : 'Approved'}</SelectItem>
-              <SelectItem value="rejected">{isRTL ? 'مرفوض' : 'Rejected'}</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={(value) => setSearchParams({ status: value })}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={isRTL ? 'اختر الحالة' : 'Select status'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{isRTL ? 'الكل' : 'All'}</SelectItem>
+                <SelectItem value="pending">{isRTL ? 'قيد الانتظار' : 'Pending'}</SelectItem>
+                <SelectItem value="approved">{isRTL ? 'معتمد' : 'Approved'}</SelectItem>
+                <SelectItem value="rejected">{isRTL ? 'مرفوض' : 'Rejected'}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              onClick={handleExportCSV}
+              disabled={properties.length === 0}
+            >
+              <Download className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
+              {isRTL ? 'تصدير CSV' : 'Export CSV'}
+            </Button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg border">

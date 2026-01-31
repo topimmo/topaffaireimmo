@@ -40,6 +40,13 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminListings = lazy(() => import("./pages/admin/AdminListings"));
 const AdminListingDetail = lazy(() => import("./pages/admin/AdminListingDetail"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminAgencies = lazy(() => import("./pages/admin/AdminAgencies"));
+const AdminLocations = lazy(() => import("./pages/admin/AdminLocations"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminDiagnostics = lazy(() => import("./pages/admin/AdminDiagnostics"));
+const AdminContentPages = lazy(() => import("./pages/admin/AdminContentPages"));
+const AdminContentPageEditor = lazy(() => import("./pages/admin/AdminContentPageEditor"));
+const AdminContentCategories = lazy(() => import("./pages/admin/AdminContentCategories"));
 
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -313,6 +320,62 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminUsers />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/agencies"
+            element={
+              <AdminProtectedRoute>
+                <AdminAgencies />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/locations"
+            element={
+              <AdminProtectedRoute>
+                <AdminLocations />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <AdminProtectedRoute>
+                <AdminSettings />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/diagnostics"
+            element={
+              <AdminProtectedRoute>
+                <AdminDiagnostics />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/content/pages"
+            element={
+              <AdminProtectedRoute>
+                <AdminContentPages />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/content/pages/:id"
+            element={
+              <AdminProtectedRoute>
+                <AdminContentPageEditor />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/content/categories"
+            element={
+              <AdminProtectedRoute>
+                <AdminContentCategories />
               </AdminProtectedRoute>
             }
           />

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
 import { sendFacebookWebhook, retryFacebookPost } from '@/lib/facebookWebhook';
+import { logAdminAction } from '@/lib/auditLog';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -168,6 +169,14 @@ export default function AdminListingDetail() {
 
       // If approved, send Facebook webhook
       if (newStatus === 'approved') {
+        // Log audit action
+        await logAdminAction({
+          action: 'approve',
+          entity_type: 'property',
+          entity_id: property.id,
+          metadata: { title: property.title_fr },
+        });
+
         try {
           const webhookResult = await sendFacebookWebhook(property.id);
           
@@ -198,6 +207,18 @@ export default function AdminListingDetail() {
               : 'Listing approved but Facebook posting failed'
           );
         }
+      } else if (newStatus === 'rejected') {
+        // Log audit action for rejection
+        await logAdminAction({
+          action: 'reject',
+          entity_type: 'property',
+          entity_id: property.id,
+          metadata: { title: property.title_fr, reason: property.rejection_reason },
+        });
+
+        toast.success(
+          isRTL ? 'تم رفض الإعلان' : 'Listing rejected'
+        );
       } else {
         toast.success(
           isRTL
@@ -305,6 +326,14 @@ export default function AdminListingDetail() {
         setActionLoading(false);
         return;
       }
+
+      // Log audit action
+      await logAdminAction({
+        action: 'delete',
+        entity_type: 'property',
+        entity_id: property.id,
+        metadata: { title: property.title_fr },
+      });
 
       toast.success(isRTL ? 'تم حذف الإعلان بنجاح' : 'Listing deleted successfully');
       navigate('/admin/listings');

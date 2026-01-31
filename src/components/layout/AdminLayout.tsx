@@ -1,10 +1,34 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, LayoutDashboard, FileText, Users, LogOut } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
+import { 
+  Building2, 
+  LayoutDashboard, 
+  FileText, 
+  Users, 
+  LogOut, 
+  Bell,
+  Building,
+  MapPin,
+  Settings,
+  Activity,
+  BookOpen,
+  FolderTree,
+  Menu,
+  X
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { markNotificationAsRead, markAllNotificationsAsRead } from '@/lib/notifications';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -14,6 +38,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { t, isRTL } = useLanguage();
   const { signOut, profile } = useAuth();
   const location = useLocation();
+  const { notifications, unreadCount, refresh } = useNotifications();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
     {
@@ -34,11 +60,54 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: Users,
       current: location.pathname === '/admin/users',
     },
+    {
+      name: isRTL ? 'الوكالات' : 'Agencies',
+      href: '/admin/agencies',
+      icon: Building,
+      current: location.pathname === '/admin/agencies',
+    },
+    {
+      name: isRTL ? 'المواقع' : 'Locations',
+      href: '/admin/locations',
+      icon: MapPin,
+      current: location.pathname === '/admin/locations',
+    },
+    {
+      name: isRTL ? 'المحتوى' : 'Content',
+      href: '/admin/content/pages',
+      icon: BookOpen,
+      current: location.pathname.startsWith('/admin/content'),
+    },
+    {
+      name: isRTL ? 'الإعدادات' : 'Settings',
+      href: '/admin/settings',
+      icon: Settings,
+      current: location.pathname === '/admin/settings',
+    },
+    {
+      name: isRTL ? 'التشخيص' : 'Diagnostics',
+      href: '/admin/diagnostics',
+      icon: Activity,
+      current: location.pathname === '/admin/diagnostics',
+    },
   ];
 
   const handleLogout = async () => {
     await signOut();
     window.location.href = '/';
+  };
+
+  const handleNotificationClick = async (notificationId: string, link?: string | null) => {
+    await markNotificationAsRead(notificationId);
+    refresh();
+    if (link) {
+      window.location.href = link;
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllNotificationsAsRead();
+    refresh();
   };
 
   return (
@@ -60,11 +129,77 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Notifications Bell */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+                <div className="flex items-center justify-between px-3 py-2 border-b">
+                  <span className="font-semibold text-sm">
+                    {isRTL ? 'الإشعارات' : 'Notifications'}
+                  </span>
+                  {unreadCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleMarkAllAsRead}
+                      className="text-xs h-auto py-1"
+                    >
+                      {isRTL ? 'تحديد الكل كمقروء' : 'Mark all read'}
+                    </Button>
+                  )}
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+                    {isRTL ? 'لا توجد إشعارات جديدة' : 'No new notifications'}
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification.id, notification.link)}
+                      className="cursor-pointer flex-col items-start p-3 border-b last:border-b-0"
+                    >
+                      <div className="font-medium text-sm">{notification.title}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {notification.body}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.created_at).toLocaleString()}
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {profile?.email}
             </span>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
+            
+            {/* Mobile menu toggle */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="hidden md:flex">
               <LogOut className="h-4 w-4 mr-2" />
               {isRTL ? 'تسجيل الخروج' : 'Logout'}
             </Button>
@@ -107,10 +242,60 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </aside>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Collapsible Sidebar */}
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
+            <div 
+              className={cn(
+                "fixed top-16 bottom-0 w-64 bg-white shadow-xl overflow-y-auto",
+                isRTL ? "right-0" : "left-0"
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <nav className="px-2 pt-4 pb-20 space-y-1">
+                {navigation.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        item.current
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-foreground hover:bg-gray-100',
+                        'group flex items-center px-3 py-2 text-sm font-medium rounded-md'
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          item.current ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground',
+                          `${isRTL ? 'ml-3' : 'mr-3'} flex-shrink-0 h-5 w-5`
+                        )}
+                      />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+                
+                {/* Logout button for mobile */}
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start mt-4" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className={cn("h-5 w-5", isRTL ? "ml-3" : "mr-3")} />
+                  {isRTL ? 'تسجيل الخروج' : 'Logout'}
+                </Button>
+              </nav>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Bottom Navigation - Quick Access */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
           <nav className="flex justify-around">
-            {navigation.map((item) => {
+            {navigation.slice(0, 4).map((item) => {
               const Icon = item.icon;
               return (
                 <Link
