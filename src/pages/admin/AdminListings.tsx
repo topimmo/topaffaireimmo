@@ -224,10 +224,23 @@ export default function AdminListings() {
   };
 
   const handleStatusChange = async (propertyId: string, newStatus: string) => {
+    // ===== STEP A: Confirm onClick is triggered =====
+    console.group('🔍 [STEP A] Approve/Reject onClick Triggered');
+    console.log('Function: handleStatusChange (AdminListings)');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('New Status:', newStatus);
+    console.log('Property ID:', propertyId);
+    const property = properties.find(p => p.id === propertyId);
+    console.log('Property Title:', property?.title_fr || 'Unknown');
+    console.groupEnd();
+
     setActionLoading(propertyId);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+
+      console.log('Current User ID:', user?.id);
+      console.log('Current User Email:', user?.email);
 
       const updateData: any = { status: newStatus };
 
@@ -238,14 +251,57 @@ export default function AdminListings() {
         updateData.published_at = now;
       }
 
-      const { error } = await supabase
+      // ===== STEP B: Confirm network request is sent =====
+      console.group('🔍 [STEP B] Sending Supabase Update Request');
+      console.log('Table:', 'properties');
+      console.log('Property ID:', propertyId);
+      console.log('Update Data:', JSON.stringify(updateData, null, 2));
+      console.log('Request Time:', new Date().toISOString());
+      console.groupEnd();
+
+      const { data, error } = await supabase
         .from('properties')
         .update(updateData)
-        .eq('id', propertyId);
+        .eq('id', propertyId)
+        .select();
 
+      // ===== STEP C: Confirm Supabase response and errors =====
+      console.group('🔍 [STEP C] Supabase Response');
+      console.log('Response Time:', new Date().toISOString());
       if (error) {
+        console.error('❌ Error Object:', error);
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+        console.error('Error Details:', error.details);
+        console.error('Error Hint:', error.hint);
+        console.groupEnd();
+        
         toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
       } else {
+        console.log('✅ Success - No Error');
+        console.log('Response Data:', data);
+        console.groupEnd();
+        
+        // ===== STEP D: Confirm DB update happens =====
+        console.group('🔍 [STEP D] Verifying DB Update');
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('properties')
+          .select('id, status, approved_at, approved_by, published_at')
+          .eq('id', propertyId)
+          .single();
+        
+        if (verifyError) {
+          console.error('❌ Verification Query Error:', verifyError);
+        } else {
+          console.log('✅ Current DB State:', verifyData);
+          console.log('Status Match:', verifyData?.status === newStatus ? '✅ YES' : '❌ NO');
+          if (newStatus === 'approved') {
+            console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
+            console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
+            console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
+          }
+        }
+        console.groupEnd();
         // Log audit action
         const property = properties.find(p => p.id === propertyId);
         if (newStatus === 'approved') {

@@ -138,11 +138,23 @@ export default function AdminListingDetail() {
   const handleStatusChange = async (newStatus: string) => {
     if (!property) return;
 
+    // ===== STEP A: Confirm onClick is triggered =====
+    console.group('🔍 [STEP A] Approve/Reject onClick Triggered');
+    console.log('Function: handleStatusChange (AdminListingDetail)');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('New Status:', newStatus);
+    console.log('Property ID:', property.id);
+    console.log('Property Title:', property.title_fr);
+    console.groupEnd();
+
     setActionLoading(true);
     
     try {
       // Get current user for approved_by field
       const { data: { user } } = await supabase.auth.getUser();
+      
+      console.log('Current User ID:', user?.id);
+      console.log('Current User Email:', user?.email);
       
       // Prepare update data
       const updateData: any = { status: newStatus };
@@ -155,17 +167,61 @@ export default function AdminListingDetail() {
         updateData.published_at = now;
       }
       
+      // ===== STEP B: Confirm network request is sent =====
+      console.group('🔍 [STEP B] Sending Supabase Update Request');
+      console.log('Table:', 'properties');
+      console.log('Property ID:', property.id);
+      console.log('Update Data:', JSON.stringify(updateData, null, 2));
+      console.log('Request Time:', new Date().toISOString());
+      console.groupEnd();
+      
       // Update the listing
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('properties')
         .update(updateData)
-        .eq('id', property.id);
+        .eq('id', property.id)
+        .select();
 
+      // ===== STEP C: Confirm Supabase response and errors =====
+      console.group('🔍 [STEP C] Supabase Response');
+      console.log('Response Time:', new Date().toISOString());
       if (error) {
+        console.error('❌ Error Object:', error);
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+        console.error('Error Details:', error.details);
+        console.error('Error Hint:', error.hint);
+        console.groupEnd();
+        
         toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
         setActionLoading(false);
         return;
       }
+      
+      console.log('✅ Success - No Error');
+      console.log('Response Data:', data);
+      console.groupEnd();
+      
+      // ===== STEP D: Confirm DB update happens =====
+      console.group('🔍 [STEP D] Verifying DB Update');
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('properties')
+        .select('id, status, approved_at, approved_by, published_at')
+        .eq('id', property.id)
+        .single();
+      
+      if (verifyError) {
+        console.error('❌ Verification Query Error:', verifyError);
+      } else {
+        console.log('✅ Current DB State:', verifyData);
+        console.log('Status Match:', verifyData?.status === newStatus ? '✅ YES' : '❌ NO');
+        if (newStatus === 'approved') {
+          console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
+          console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
+          console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
+        }
+      }
+      console.groupEnd();
 
       // If approved, send Facebook webhook
       if (newStatus === 'approved') {
