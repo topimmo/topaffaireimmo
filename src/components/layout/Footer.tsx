@@ -13,24 +13,8 @@ export default function Footer() {
   const { t, isRTL } = useLanguage();
   
   return (
-    <footer className={`bg-foreground text-background/90 relative overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
-      {/* Decorative pattern - reduced opacity */}
-      <div className="absolute inset-0 opacity-3">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              135deg,
-              transparent,
-              transparent 10px,
-              currentColor 10px,
-              currentColor 11px
-            )`,
-          }}
-        />
-      </div>
-
-      <div className="container relative z-10 py-6 md:py-8 lg:py-10">
+    <footer className={`bg-foreground text-background/90 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="container py-8 md:py-10">
         {/* Mobile: Accordion Layout */}
         <div className="md:hidden space-y-2">
           {/* Brand - Always visible on mobile */}
@@ -137,7 +121,7 @@ export default function Footer() {
         </div>
 
         {/* Desktop: Grid Layout */}
-        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-3">
