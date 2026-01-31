@@ -45,6 +45,7 @@ export default function AdminAgencies() {
   
   // Filter and pagination state
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
@@ -53,9 +54,18 @@ export default function AdminAgencies() {
     fetchAgencies();
   }, []);
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     applyFilters();
-  }, [agencies, searchQuery, statusFilter]);
+  }, [agencies, debouncedSearchQuery, statusFilter]);
 
   const fetchAgencies = async () => {
     setLoading(true);
@@ -123,9 +133,9 @@ export default function AdminAgencies() {
   const applyFilters = () => {
     let filtered = [...agencies];
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    // Apply search filter (using debounced query)
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter((agency) => {
         const searchableFields = [
           agency.agency_name,
@@ -277,7 +287,7 @@ export default function AdminAgencies() {
                 </div>
 
                 {/* Status Filter */}
-                <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+                <Select value={statusFilter} onValueChange={(value: 'all' | 'active' | 'inactive') => setStatusFilter(value)}>
                   <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder={isRTL ? 'الحالة' : 'Status'} />
                   </SelectTrigger>
@@ -308,7 +318,7 @@ export default function AdminAgencies() {
             ) : filteredAgencies.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
-                  {searchQuery || statusFilter !== 'all'
+                  {debouncedSearchQuery || statusFilter !== 'all'
                     ? (isRTL ? 'لا توجد نتائج مطابقة' : 'No matching results')
                     : (isRTL ? 'لا توجد وكالات' : 'No agencies found')}
                 </p>
