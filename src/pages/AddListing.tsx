@@ -62,7 +62,7 @@ function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
     : "Une erreur s'est produite lors de la création de l'annonce.";
 
   // Check for column doesn't exist error (42703)
-  if (error.code === '42703' || error.message?.includes('column') && error.message?.includes('does not exist')) {
+  if (error.code === '42703' || (error.message?.includes('column') && error.message?.includes('does not exist'))) {
     message = isRTL
       ? 'خطأ في البيانات: حقل غير موجود في قاعدة البيانات.'
       : 'Erreur de données: colonne inexistante dans la base de données.';
@@ -413,7 +413,13 @@ export default function AddListing() {
           'courtier': 'broker',
           'agence': 'agency',
         };
-        return mapping[type] || 'owner';
+        
+        const mapped = mapping[type];
+        if (!mapped && import.meta.env.DEV) {
+          console.warn(`[AddListing] Unknown announcer type "${type}", defaulting to "owner"`);
+        }
+        
+        return mapped || 'owner';
       };
 
       const insertData: Record<string, unknown> = {
