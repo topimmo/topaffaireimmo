@@ -406,11 +406,21 @@ export default function AddListing() {
       // Parse cityId (validated above)
       const parsedCityId = parseInt(formData.cityId);
 
+      // Map announcer type from French to English values for database
+      const mapAnnouncerType = (type: string): string => {
+        const mapping: Record<string, string> = {
+          'proprietaire': 'owner',
+          'courtier': 'broker',
+          'agence': 'agency',
+        };
+        return mapping[type] || 'owner';
+      };
+
       const insertData: Record<string, unknown> = {
         owner_id: profileId,
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
-        advertiser_type: formData.announcerType || 'owner',
+        advertiser_type: mapAnnouncerType(formData.announcerType),
         city_id: parsedCityId,
         neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
         custom_neighborhood: formData.customNeighborhood || null,
@@ -419,6 +429,7 @@ export default function AddListing() {
         area: formData.area ? parseFloat(formData.area) : null,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+        // Use French title/description as fallback for English since form only has FR/AR
         title_en: formData.titleFr || 'New property',
         title_fr: formData.titleFr || 'Nouveau bien',
         title_ar: formData.titleAr || 'عقار جديد',
