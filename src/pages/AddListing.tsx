@@ -387,7 +387,7 @@ export default function AddListing() {
       // Log payload before insert
       console.log('[AddListing] Creating listing with payload:', {
         ...insertData,
-        owner_id: insertData.owner_id?.toString().substring(0, 8) + '...',
+        owner_id: insertData.owner_id ? insertData.owner_id.toString().substring(0, 8) + '...' : 'null',
       });
 
       const { data: insertedProperty, error: insertError } = await supabase
@@ -461,7 +461,9 @@ export default function AddListing() {
           } else {
             console.log(`[AddListing] Image ${i + 1} uploaded successfully:`, {
               fileName: result[0].fileName,
-              url: result[0].url?.substring(0, 50) + '...',
+              url: result[0].url && result[0].url.length > 50 
+                ? result[0].url.substring(0, 50) + '...' 
+                : result[0].url,
             });
             setImageUploadStatus((prev) => {
               const updated = [...prev];

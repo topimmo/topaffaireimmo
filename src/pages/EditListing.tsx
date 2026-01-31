@@ -332,7 +332,9 @@ export default function EditListing() {
           } else {
             console.log(`[EditListing] Image ${i + 1} uploaded successfully:`, {
               fileName: result[0].fileName,
-              url: result[0].url?.substring(0, 50) + '...',
+              url: result[0].url && result[0].url.length > 50 
+                ? result[0].url.substring(0, 50) + '...' 
+                : result[0].url,
             });
             setImageUploadStatus((prev) => {
               const updated = [...prev];
