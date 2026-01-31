@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
@@ -47,12 +47,7 @@ export default function AdminUsers() {
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 50;
 
-  useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roleFilter, page]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
 
     try {
@@ -86,6 +81,20 @@ export default function AdminUsers() {
     } finally {
       setLoading(false);
     }
+  }, [roleFilter, page, isRTL]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Utility function to escape CSV cell values
+  const escapeCSVCell = (value: string | number | boolean): string => {
+    const str = String(value);
+    // If the value contains comma, newline, carriage return, or double quote, wrap it in quotes and escape quotes
+    if (str.includes(',') || str.includes('\n') || str.includes('\r') || str.includes('"')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
   };
 
   // Utility function to generate CSV content
@@ -117,8 +126,8 @@ export default function AdminUsers() {
     ]);
 
     return [
-      headers.join(','),
-      ...rows.map((row) => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+      headers.map(escapeCSVCell).join(','),
+      ...rows.map((row) => row.map(escapeCSVCell).join(',')),
     ].join('\n');
   };
 
@@ -196,18 +205,18 @@ export default function AdminUsers() {
     return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-MA');
   };
 
-  // Filter users by search query
-  const filteredUsers = users.filter((user) => {
-    if (!searchQuery.trim()) return true;
+  // Memoize filtered users to avoid recomputation on every render
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
     
     const query = searchQuery.toLowerCase();
-    return (
+    return users.filter((user) => 
       user.email.toLowerCase().includes(query) ||
       user.full_name?.toLowerCase().includes(query) ||
       user.phone?.toLowerCase().includes(query) ||
       user.agency_name?.toLowerCase().includes(query)
     );
-  });
+  }, [users, searchQuery]);
 
   // Memoize statistics calculations to avoid recomputation on every render
   const userStats = useMemo(() => ({
