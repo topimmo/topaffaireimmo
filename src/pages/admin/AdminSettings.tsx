@@ -1,0 +1,323 @@
+import { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/lib/supabase';
+import { logAdminAction } from '@/lib/auditLog';
+import AdminLayout from '@/components/layout/AdminLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Save } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface Settings {
+  contact_email?: string;
+  contact_phone?: string;
+  contact_whatsapp?: string;
+  maintenance_mode?: boolean;
+  adsense_header_slot?: string;
+  adsense_sidebar_slot?: string;
+  adsense_footer_slot?: string;
+  facebook_webhook_url?: string;
+  facebook_page_id?: string;
+}
+
+export default function AdminSettings() {
+  const { isRTL } = useLanguage();
+  const [settings, setSettings] = useState<Settings>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned
+        console.error('Error fetching settings:', error);
+      } else if (data) {
+        setSettings({
+          contact_email: data.contact_email || '',
+          contact_phone: data.contact_phone || '',
+          contact_whatsapp: data.contact_whatsapp || '',
+          maintenance_mode: data.maintenance_mode || false,
+          adsense_header_slot: data.adsense_header_slot || '',
+          adsense_sidebar_slot: data.adsense_sidebar_slot || '',
+          adsense_footer_slot: data.adsense_footer_slot || '',
+          facebook_webhook_url: data.facebook_webhook_url || '',
+          facebook_page_id: data.facebook_page_id || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchSettings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+
+    try {
+      // Check if settings exist
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .single();
+
+      let result;
+      if (existing) {
+        // Update existing
+        result = await supabase
+          .from('site_settings')
+          .update(settings)
+          .eq('id', existing.id);
+      } else {
+        // Insert new
+        result = await supabase.from('site_settings').insert(settings);
+      }
+
+      if (result.error) {
+        console.error('Save error:', result.error);
+        toast.error(isRTL ? 'خطأ في الحفظ' : 'Error saving settings');
+        return;
+      }
+
+      // Log audit action
+      await logAdminAction({
+        action: 'update',
+        entity_type: 'settings',
+        metadata: { changes: Object.keys(settings) },
+      });
+
+      toast.success(isRTL ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error(isRTL ? 'خطأ في الحفظ' : 'Error saving settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {isRTL ? 'الإعدادات' : 'Settings'}
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            {isRTL ? 'إدارة إعدادات الموقع' : 'Manage site settings'}
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{isRTL ? 'معلومات الاتصال' : 'Contact Information'}</CardTitle>
+                <CardDescription>
+                  {isRTL
+                    ? 'معلومات الاتصال الرئيسية للموقع'
+                    : 'Primary contact information for the site'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact_email">{isRTL ? 'البريد الإلكتروني' : 'Email'}</Label>
+                  <Input
+                    id="contact_email"
+                    type="email"
+                    value={settings.contact_email || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, contact_email: e.target.value })
+                    }
+                    placeholder="contact@topaffaireimmo.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact_phone">{isRTL ? 'الهاتف' : 'Phone'}</Label>
+                  <Input
+                    id="contact_phone"
+                    type="tel"
+                    value={settings.contact_phone || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, contact_phone: e.target.value })
+                    }
+                    placeholder="+212 6XX XXX XXX"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact_whatsapp">{isRTL ? 'واتساب' : 'WhatsApp'}</Label>
+                  <Input
+                    id="contact_whatsapp"
+                    type="tel"
+                    value={settings.contact_whatsapp || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, contact_whatsapp: e.target.value })
+                    }
+                    placeholder="+212 6XX XXX XXX"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* System Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{isRTL ? 'إعدادات النظام' : 'System Settings'}</CardTitle>
+                <CardDescription>
+                  {isRTL ? 'إعدادات عامة للنظام' : 'General system settings'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>{isRTL ? 'وضع الصيانة' : 'Maintenance Mode'}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {isRTL
+                        ? 'تفعيل وضع الصيانة للموقع'
+                        : 'Enable maintenance mode for the site'}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.maintenance_mode || false}
+                    onCheckedChange={(checked) =>
+                      setSettings({ ...settings, maintenance_mode: checked })
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AdSense Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{isRTL ? 'إعدادات AdSense' : 'AdSense Settings'}</CardTitle>
+                <CardDescription>
+                  {isRTL
+                    ? 'إعدادات إعلانات Google AdSense'
+                    : 'Google AdSense advertising settings'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="adsense_header_slot">
+                    {isRTL ? 'فتحة الرأس' : 'Header Slot'}
+                  </Label>
+                  <Input
+                    id="adsense_header_slot"
+                    value={settings.adsense_header_slot || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, adsense_header_slot: e.target.value })
+                    }
+                    placeholder="ca-pub-XXXXXXXXXXXXXXXX"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adsense_sidebar_slot">
+                    {isRTL ? 'فتحة الشريط الجانبي' : 'Sidebar Slot'}
+                  </Label>
+                  <Input
+                    id="adsense_sidebar_slot"
+                    value={settings.adsense_sidebar_slot || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, adsense_sidebar_slot: e.target.value })
+                    }
+                    placeholder="ca-pub-XXXXXXXXXXXXXXXX"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adsense_footer_slot">
+                    {isRTL ? 'فتحة التذييل' : 'Footer Slot'}
+                  </Label>
+                  <Input
+                    id="adsense_footer_slot"
+                    value={settings.adsense_footer_slot || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, adsense_footer_slot: e.target.value })
+                    }
+                    placeholder="ca-pub-XXXXXXXXXXXXXXXX"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Facebook Integration */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{isRTL ? 'تكامل Facebook' : 'Facebook Integration'}</CardTitle>
+                <CardDescription>
+                  {isRTL
+                    ? 'إعدادات نشر الإعلانات على Facebook'
+                    : 'Settings for posting listings to Facebook'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="facebook_webhook_url">
+                    {isRTL ? 'رابط Webhook' : 'Webhook URL'}
+                  </Label>
+                  <Input
+                    id="facebook_webhook_url"
+                    value={settings.facebook_webhook_url || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, facebook_webhook_url: e.target.value })
+                    }
+                    placeholder="https://your-webhook-url.com/facebook"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="facebook_page_id">
+                    {isRTL ? 'معرف صفحة Facebook' : 'Facebook Page ID'}
+                  </Label>
+                  <Input
+                    id="facebook_page_id"
+                    value={settings.facebook_page_id || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, facebook_page_id: e.target.value })
+                    }
+                    placeholder="123456789012345"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {isRTL ? 'حفظ الإعدادات' : 'Save Settings'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
+  );
+}
