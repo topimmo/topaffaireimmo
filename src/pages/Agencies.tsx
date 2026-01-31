@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/lib/supabase";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, MapPin, Phone, Home, Loader2, Users } from "lucide-react";
@@ -126,9 +124,7 @@ export default function Agencies() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? "rtl" : "ltr"}`}>
-      <Header />
-
+    <>
       <main className="flex-1 pt-24 pb-16">
         <div className="container">
           {/* Header */}
@@ -268,8 +264,6 @@ export default function Agencies() {
           )}
         </div>
       </main>
-
-      <Footer />
-    </div>
+    </>
   );
 }
