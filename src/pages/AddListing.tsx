@@ -61,7 +61,12 @@ function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
     ? 'حدث خطأ أثناء إنشاء الإعلان.'
     : "Une erreur s'est produite lors de la création de l'annonce.";
 
-  if (error.message?.includes('permission') || error.code === '42501') {
+  // Check for column doesn't exist error (42703)
+  if (error.code === '42703' || (error.message?.includes('column') && error.message?.includes('does not exist'))) {
+    message = isRTL
+      ? 'خطأ في البيانات: حقل غير موجود في قاعدة البيانات.'
+      : 'Erreur de données: colonne inexistante dans la base de données.';
+  } else if (error.message?.includes('permission') || error.code === '42501') {
     message = isRTL
       ? 'ليس لديك صلاحية لإنشاء إعلان. تأكد من تسجيل الدخول كمعلن عقاري.'
       : "Vous n'avez pas la permission de créer une annonce. Assurez-vous d'être connecté en tant qu'annonceur immobilier.";
@@ -77,9 +82,16 @@ function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
       : 'Champs requis manquants. Veuillez remplir tous les champs obligatoires.';
   }
 
-  // Only show technical details in development mode
+  // Show comprehensive technical details in development mode
   if (isDev) {
-    message += '\n\nDétails: ' + (error.message || error.code || 'Unknown error');
+    const details = [
+      error.code && `Code: ${error.code}`,
+      error.message && `Message: ${error.message}`,
+      error.details && `Details: ${error.details}`,
+      error.hint && `Hint: ${error.hint}`,
+    ].filter(Boolean).join('\n');
+    
+    message += '\n\n[DEV MODE - Full Error Details]\n' + details;
   }
 
   return message;
@@ -394,11 +406,27 @@ export default function AddListing() {
       // Parse cityId (validated above)
       const parsedCityId = parseInt(formData.cityId);
 
+      // Map announcer type from French to English values for database
+      const mapAnnouncerType = (type: string): string => {
+        const mapping: Record<string, string> = {
+          'proprietaire': 'owner',
+          'courtier': 'broker',
+          'agence': 'agency',
+        };
+        
+        const mapped = mapping[type];
+        if (!mapped && import.meta.env.DEV) {
+          console.warn(`[AddListing] Unknown announcer type "${type}", defaulting to "owner"`);
+        }
+        
+        return mapped || 'owner';
+      };
+
       const insertData: Record<string, unknown> = {
         owner_id: profileId,
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
-        advertiser_type: formData.announcerType || 'owner',
+        advertiser_type: mapAnnouncerType(formData.announcerType),
         city_id: parsedCityId,
         neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
         custom_neighborhood: formData.customNeighborhood || null,
@@ -407,6 +435,7 @@ export default function AddListing() {
         area: formData.area ? parseFloat(formData.area) : null,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+        // Use French title/description as fallback for English since form only has FR/AR
         title_en: formData.titleFr || 'New property',
         title_fr: formData.titleFr || 'Nouveau bien',
         title_ar: formData.titleAr || 'عقار جديد',
@@ -415,15 +444,30 @@ export default function AddListing() {
         description_ar: formData.descriptionAr || null,
         images: [],
         phone: formData.phone || null,
-        contact_phone: formData.phone || null,
         status: 'pending',
       };
 
-      // Log payload before insert
-      console.log('[AddListing] Creating listing with payload:', {
-        ...insertData,
-        owner_id: insertData.owner_id ? insertData.owner_id.toString().substring(0, 8) + '...' : 'null',
-      });
+      // Log payload before insert - show full details in DEV mode
+      if (import.meta.env.DEV) {
+        console.log('[AddListing] Creating listing with full payload:', insertData);
+        console.log('[AddListing] Payload field types:', {
+          owner_id: typeof insertData.owner_id,
+          transaction_type: typeof insertData.transaction_type,
+          property_type: typeof insertData.property_type,
+          advertiser_type: typeof insertData.advertiser_type,
+          city_id: typeof insertData.city_id,
+          neighborhood_id: typeof insertData.neighborhood_id,
+          price: typeof insertData.price,
+          area: typeof insertData.area,
+          bedrooms: typeof insertData.bedrooms,
+          bathrooms: typeof insertData.bathrooms,
+        });
+      } else {
+        console.log('[AddListing] Creating listing with payload:', {
+          ...insertData,
+          owner_id: insertData.owner_id ? insertData.owner_id.toString().substring(0, 8) + '...' : 'null',
+        });
+      }
 
       const { data: insertedProperty, error: insertError } = await supabase
         .from('properties')
@@ -432,12 +476,31 @@ export default function AddListing() {
         .single();
 
       if (insertError) {
-        console.error('[AddListing] Failed to insert listing:', {
+        console.error('[AddListing] ❌ SUPABASE INSERT FAILED:', {
           code: insertError.code,
           message: insertError.message,
           details: insertError.details,
           hint: insertError.hint,
         });
+        
+        // In DEV mode, show the full error object
+        if (import.meta.env.DEV) {
+          console.error('[AddListing] Full Supabase error object:', insertError);
+          console.error('[AddListing] Payload that caused the error:', insertData);
+          
+          // Try to identify the problematic field
+          if (insertError.message) {
+            const msg = insertError.message.toLowerCase();
+            if (msg.includes('column')) {
+              const match = insertError.message.match(/column "([^"]+)"/i);
+              if (match) {
+                console.error(`[AddListing] ⚠️  Problematic column: "${match[1]}"`);
+                console.error(`[AddListing] Value being sent: ${insertData[match[1]]}`);
+              }
+            }
+          }
+        }
+        
         const errorMessage = getErrorMessage(insertError, isRTL, import.meta.env.DEV);
         throw new Error(errorMessage);
       }
