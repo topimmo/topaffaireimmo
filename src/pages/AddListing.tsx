@@ -355,7 +355,64 @@ export default function AddListing() {
       // ✅ IMPORTANT: get profileId
       const profileId = await fetchProfileId();
 
-      // Step 1: Upload images
+      // TRANSACTIONAL APPROACH: Create listing first, then upload images
+      // Step 1: Create property record with status='pending' (no images yet)
+      setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
+
+      const insertData: Record<string, unknown> = {
+        owner_id: profileId,
+        transaction_type: mapTransactionType(formData.transactionType || 'sale'),
+        property_type: formData.propertyType,
+        advertiser_type: formData.announcerType || 'owner',
+        city_id: parseInt(formData.cityId),
+        neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
+        custom_neighborhood: formData.customNeighborhood || null,
+        address: formData.address || null,
+        price: formData.price ? parseFloat(formData.price) : 0,
+        area: formData.area ? parseFloat(formData.area) : null,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+        title_en: formData.titleFr || 'New property',
+        title_fr: formData.titleFr || 'Nouveau bien',
+        title_ar: formData.titleAr || 'عقار جديد',
+        description_en: formData.descriptionFr || null,
+        description_fr: formData.descriptionFr || null,
+        description_ar: formData.descriptionAr || null,
+        images: [],
+        phone: formData.phone || null,
+        contact_phone: formData.phone || null,
+        status: 'pending',
+      };
+
+      // Log payload before insert
+      console.log('[AddListing] Creating listing with payload:', {
+        ...insertData,
+        owner_id: insertData.owner_id ? insertData.owner_id.toString().substring(0, 8) + '...' : 'null',
+      });
+
+      const { data: insertedProperty, error: insertError } = await supabase
+        .from('properties')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('[AddListing] Failed to insert listing:', {
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+        });
+        const errorMessage = getErrorMessage(insertError, isRTL, import.meta.env.DEV);
+        throw new Error(errorMessage);
+      }
+
+      console.log('[AddListing] Listing created successfully:', {
+        id: insertedProperty.id,
+        status: insertedProperty.status,
+      });
+
+      // Step 2: Upload images to listings/{listingId}/ folder
       let imageUrls: string[] = [];
 
       if (imageFiles.length > 0) {
@@ -382,17 +439,32 @@ export default function AddListing() {
               : `Téléchargement des images... (${i + 1}/${imageFiles.length})`
           );
 
-          const result = await uploadPropertyImages([file], user.id);
+          console.log(`[AddListing] Uploading image ${i + 1}/${imageFiles.length}:`, {
+            fileName: file.name,
+            size: `${(file.size / 1024).toFixed(2)} KB`,
+            listingId: insertedProperty.id,
+          });
+
+          const result = await uploadPropertyImages([file], user.id, insertedProperty.id);
           uploadResults.push(result[0]);
 
           if (result[0].error) {
-            console.error(`[AddListing] Failed to upload image ${i + 1}:`, result[0].error);
+            console.error(`[AddListing] Failed to upload image ${i + 1}:`, {
+              fileName: result[0].fileName,
+              error: result[0].error,
+            });
             setImageUploadStatus((prev) => {
               const updated = [...prev];
               updated[i] = 'error';
               return updated;
             });
           } else {
+            console.log(`[AddListing] Image ${i + 1} uploaded successfully:`, {
+              fileName: result[0].fileName,
+              url: result[0].url && result[0].url.length > 50 
+                ? result[0].url.substring(0, 50) + '...' 
+                : result[0].url,
+            });
             setImageUploadStatus((prev) => {
               const updated = [...prev];
               updated[i] = 'success';
@@ -403,6 +475,12 @@ export default function AddListing() {
 
         const failedUploads = uploadResults.filter((r) => r.error);
         if (failedUploads.length > 0) {
+          console.warn('[AddListing] Some images failed to upload:', {
+            total: imageFiles.length,
+            failed: failedUploads.length,
+            succeeded: imageFiles.length - failedUploads.length,
+          });
+
           const errorDetails = failedUploads
             .map((r, idx) => `${idx + 1}. ${r.fileName}: ${r.error}`)
             .join('\n');
@@ -420,51 +498,53 @@ export default function AddListing() {
         }
 
         imageUrls = uploadResults.filter((r) => !r.error).map((r) => r.url);
-      }
 
-      // Step 2: Create property
-      setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
+        // Step 3: Update property with image URLs
+        if (imageUrls.length > 0) {
+          setUploadProgress(
+            isRTL ? 'جاري تحديث الصور...' : 'Mise à jour des images...'
+          );
 
-      const insertData: Record<string, unknown> = {
-        owner_id: profileId, // ✅ FIXED HERE
-        transaction_type: mapTransactionType(formData.transactionType || 'sale'),
-        property_type: formData.propertyType,
-        announcer_type: formData.announcerType || 'proprietaire',
-        city_id: parseInt(formData.cityId),
-        neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
-        custom_neighborhood: formData.customNeighborhood || null,
-        address: formData.address || null,
-        price: formData.price ? parseFloat(formData.price) : 0,
-        area: formData.area ? parseFloat(formData.area) : null,
-        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-        title_en: formData.titleFr || 'New property',
-        title_fr: formData.titleFr || 'Nouveau bien',
-        title_ar: formData.titleAr || 'عقار جديد',
-        description_en: formData.descriptionFr || null,
-        description_fr: formData.descriptionFr || null,
-        description_ar: formData.descriptionAr || null,
-        images: imageUrls,
-        phone: formData.phone || null,
-        contact_phone: formData.phone || null,
-        status: 'pending',
-      };
+          console.log('[AddListing] Updating listing with images:', {
+            listingId: insertedProperty.id,
+            imageCount: imageUrls.length,
+          });
 
-      const { error } = await supabase.from('properties').insert(insertData).select();
+          const { error: updateError } = await supabase
+            .from('properties')
+            .update({ images: imageUrls })
+            .eq('id', insertedProperty.id);
 
-      if (error) {
-        const errorMessage = getErrorMessage(error, isRTL, import.meta.env.DEV);
-        throw new Error(errorMessage);
+          if (updateError) {
+            console.error('[AddListing] Failed to update listing with images:', {
+              code: updateError.code,
+              message: updateError.message,
+            });
+            // Don't throw - listing is created, just missing images
+            alert(
+              isRTL
+                ? 'تم إنشاء الإعلان ولكن فشل تحديث الصور. يمكنك تعديل الإعلان لاحقاً لإضافة الصور.'
+                : "L'annonce a été créée mais la mise à jour des images a échoué. Vous pouvez modifier l'annonce plus tard pour ajouter les images."
+            );
+          } else {
+            console.log('[AddListing] Listing updated with images successfully');
+          }
+        }
       }
 
       uploadedImages.forEach((url) => URL.revokeObjectURL(url));
+
+      console.log('[AddListing] Listing creation completed successfully:', {
+        listingId: insertedProperty.id,
+        imageCount: imageUrls.length,
+      });
 
       setIsSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
       }, 3000);
     } catch (err) {
-      console.error('Error during submission:', err);
+      console.error('[AddListing] Error during submission:', err);
       const message =
         err instanceof Error
           ? err.message
