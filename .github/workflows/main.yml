@@ -1,0 +1,107 @@
+name: Supabase Apply Fixes
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose what to run"
+        required: true
+        default: "db_push"
+        type: choice
+        options:
+          - db_push
+          - seed_demo
+          - run_sql_fixes
+          - deploy_functions
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ✅ FIX: Set fetch-depth: 0 to fetch all history for git diff commands
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history to allow git diff with base branch
+
+      # ✅ Install Supabase CLI بطريقة صحيحة (بلا npm وبلا install.sh)
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Login Supabase CLI
+        run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+
+      # ✅ Link project بلا ما يعتمد على supabase/config.toml
+      - name: Link project
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      # ✅ DB Push (migrations)
+      - name: DB Push (migrations)
+        if: ${{ github.event.inputs.action == 'db_push' || github.event.inputs.action == '' }}
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+
+      # ✅ Seed demo data (من ملف منفصل، ماشي migration)
+      - name: Seed demo data
+        if: ${{ github.event.inputs.action == 'seed_demo' }}
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+          DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
+          export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+
+          psql -h "$DB_HOST" -U "postgres" -d "postgres" -v ON_ERROR_STOP=1 -f supabase/seed_demo.sql
+
+      # ✅ Run SQL fixes (إذا عندك supabase/fixes/*.sql)
+      - name: Run SQL fixes (from supabase/fixes)
+        if: ${{ github.event.inputs.action == 'run_sql_fixes' }}
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+          DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
+          export PGPASSWORD="$SUPABASE_DB_PASSWORD"
+
+          for f in supabase/fixes/*.sql; do
+            echo "Running $f"
+            psql -h "$DB_HOST" -U "postgres" -d "postgres" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      # ✅ Deploy Edge Functions
+      - name: Deploy Edge Functions
+        if: ${{ github.event.inputs.action == 'deploy_functions' }}
+        run: supabase functions deploy send-facebook-webhook
+
+      # ✅ FIX: Example of proper git diff usage for PR workflows
+      # Use origin/main instead of just 'main' and proper GitHub context variables
+      - name: Check for migration changes (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Checking for migration changes..."
+          # ✅ CORRECT: Use origin/main or GitHub context variables for base reference
+          # Option 1: Using origin/main (works because fetch-depth: 0)
+          if git diff --name-only origin/main...HEAD | grep -q '^supabase/migrations/'; then
+            echo "✅ Migration files changed"
+          else
+            echo "ℹ️ No migration files changed"
+          fi
+          
+          # ✅ CORRECT: Option 2: Using GitHub PR context (recommended for PRs)
+          # git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.sha }}
+          
+          # ❌ INCORRECT: This would fail with shallow checkout:
+          # git diff main...HEAD

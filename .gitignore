@@ -30,7 +30,9 @@ dist-ssr
 
 core
 
-.github/
+# Allow GitHub Actions workflows but ignore other .github content
+.github/*
+!.github/workflows/
 
 **/tempobook/**
 .env
