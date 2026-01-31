@@ -473,7 +473,7 @@ export default function AddListing() {
         // Let database default handle status (defaults to 'pending')
       };
 
-      // MANDATORY: Log payload keys and validation before insert
+      // Log payload for debugging schema alignment issues
       console.log('[AddListing] 🔍 Pre-insert validation:');
       console.log('[AddListing] Payload keys:', Object.keys(insertData));
       console.log('[AddListing] Payload preview:', {
