@@ -424,7 +424,7 @@ export default function AddListing() {
 
       // Strict normalization: ensure neighborhood fields are properly typed and mutually exclusive
       const normalizedNeighborhoodId = formData.neighborhoodId && formData.neighborhoodId.trim() !== '' 
-        ? parseInt(formData.neighborhoodId) 
+        ? parseInt(formData.neighborhoodId, 10) 
         : null;
       const normalizedCustomNeighborhood = formData.customNeighborhood && formData.customNeighborhood.trim() !== '' 
         ? formData.customNeighborhood.trim() 
@@ -436,7 +436,7 @@ export default function AddListing() {
 
       // Validate that finalNeighborhoodId is a valid number (not NaN) or null
       if (finalNeighborhoodId !== null && isNaN(finalNeighborhoodId)) {
-        throw new Error('Invalid neighborhood_id: must be a valid integer or null');
+        throw new Error(`Invalid neighborhood_id: '${formData.neighborhoodId}' is not a valid integer`);
       }
 
       // DEV logs for debugging
