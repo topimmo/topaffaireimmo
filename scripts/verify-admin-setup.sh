@@ -99,3 +99,4 @@ echo "  SELECT * FROM pg_policies WHERE tablename = 'properties';"
 echo ""
 echo "See ROOT_CAUSE_ANALYSIS_APPROVE_REJECT.md for detailed diagnostics"
 echo ""
+
