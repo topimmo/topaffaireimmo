@@ -28,7 +28,7 @@ export default function Advertise() {
     email: '',
     phone: '',
     message: '',
-    advertiserType: 'agency', // Default to agency
+    advertiserType: 'agency', // Maps to advertiser_type column in database
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

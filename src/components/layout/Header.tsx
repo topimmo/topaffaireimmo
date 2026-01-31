@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { t, isRTL } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
@@ -41,7 +41,6 @@ export default function Header() {
   }, []);
 
   const handleSignOut = async () => {
-    const { signOut } = useAuth();
     await signOut();
     navigate("/");
   };
