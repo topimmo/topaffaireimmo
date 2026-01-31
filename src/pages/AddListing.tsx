@@ -382,8 +382,9 @@ export default function AddListing() {
       }
     }
 
-    if (formData.price && parseFloat(formData.price) <= 0) {
-      alert(isRTL ? 'السعر يجب أن يكون أكبر من الصفر' : 'Le prix doit être supérieur à zéro');
+    // Price validation: must be provided and > 0 (price is NOT NULL in DB)
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      alert(isRTL ? 'السعر مطلوب ويجب أن يكون أكبر من الصفر' : 'Le prix est requis et doit être supérieur à zéro');
       return;
     }
 
@@ -457,7 +458,7 @@ export default function AddListing() {
         neighborhood_id: finalNeighborhoodId,
         custom_neighborhood: finalCustomNeighborhood,
         address: formData.address || null,
-        price: formData.price ? parseFloat(formData.price) : 0,
+        price: parseFloat(formData.price), // Already validated above, must exist
         area: formData.area ? parseFloat(formData.area) : null,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
