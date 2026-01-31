@@ -346,8 +346,8 @@ export default function AddListing() {
       return;
     }
 
-    // Strict validation for cityId
-    if (!formData.cityId || formData.cityId.trim() === '' || isNaN(parseInt(formData.cityId))) {
+    // Strict validation for cityId - ensure it's not empty and is a valid integer
+    if (!formData.cityId || isNaN(parseInt(formData.cityId))) {
       if (import.meta.env.DEV) {
         console.error('[AddListing] Validation failed: cityId is invalid', { 
           cityId: formData.cityId,
@@ -391,7 +391,7 @@ export default function AddListing() {
       // Step 1: Create property record with status='pending' (no images yet)
       setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
 
-      // Parse cityId (already validated above, but defensive check)
+      // Parse cityId (validated above)
       const parsedCityId = parseInt(formData.cityId);
 
       const insertData: Record<string, unknown> = {
