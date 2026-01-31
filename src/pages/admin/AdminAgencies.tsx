@@ -5,6 +5,15 @@ import { supabase } from '@/lib/supabase';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -13,7 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Building, Loader2, Mail, Phone } from 'lucide-react';
+import { Building, Loader2, Mail, Phone, Download, Search } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Agency {
   id: string;
@@ -29,12 +39,33 @@ interface Agency {
 export default function AdminAgencies() {
   const { language, isRTL } = useLanguage();
   const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [filteredAgencies, setFilteredAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, withListings: 0 });
+  
+  // Filter and pagination state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   useEffect(() => {
     fetchAgencies();
   }, []);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [agencies, debouncedSearchQuery, statusFilter]);
 
   const fetchAgencies = async () => {
     setLoading(true);
@@ -99,6 +130,84 @@ export default function AdminAgencies() {
     }
   };
 
+  const applyFilters = () => {
+    let filtered = [...agencies];
+
+    // Apply search filter (using debounced query)
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase();
+      filtered = filtered.filter((agency) => {
+        const searchableFields = [
+          agency.agency_name,
+          agency.full_name,
+          agency.email,
+          agency.phone,
+        ];
+        return searchableFields.some((field) => 
+          field?.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply status filter
+    if (statusFilter === 'active') {
+      filtered = filtered.filter((agency) => agency.listing_count && agency.listing_count > 0);
+    } else if (statusFilter === 'inactive') {
+      filtered = filtered.filter((agency) => !agency.listing_count || agency.listing_count === 0);
+    }
+
+    setFilteredAgencies(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  const exportToCSV = () => {
+    try {
+      // Prepare CSV headers
+      const headers = [
+        'Agency Name',
+        'Contact Person',
+        'Email',
+        'Phone',
+        'License',
+        'Listings',
+        'Registered Date'
+      ];
+
+      // Prepare CSV rows
+      const rows = filteredAgencies.map((agency) => [
+        agency.agency_name || '-',
+        agency.full_name || '-',
+        agency.email,
+        agency.phone || '-',
+        agency.agency_license || '-',
+        agency.listing_count || 0,
+        formatDate(agency.created_at)
+      ]);
+
+      // Create CSV content
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `agencies_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(isRTL ? 'تم تصدير البيانات بنجاح' : 'Data exported successfully');
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      toast.error(isRTL ? 'فشل تصدير البيانات' : 'Failed to export data');
+    }
+  };
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-MA', {
       year: 'numeric',
@@ -106,6 +215,12 @@ export default function AdminAgencies() {
       day: 'numeric',
     });
   };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAgencies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAgencies = filteredAgencies.slice(startIndex, endIndex);
 
   return (
     <AdminLayout>
@@ -155,74 +270,171 @@ export default function AdminAgencies() {
         {/* Agencies Table */}
         <Card>
           <CardHeader>
-            <CardTitle>{isRTL ? 'قائمة الوكالات' : 'Agencies List'}</CardTitle>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <CardTitle>{isRTL ? 'قائمة الوكالات' : 'Agencies List'}</CardTitle>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search */}
+                <div className="relative flex-1 sm:min-w-[250px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={isRTL ? 'بحث بالاسم، البريد، أو الهاتف...' : 'Search by name, email, or phone...'}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Status Filter */}
+                <Select value={statusFilter} onValueChange={(value: 'all' | 'active' | 'inactive') => setStatusFilter(value)}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder={isRTL ? 'الحالة' : 'Status'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{isRTL ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="active">{isRTL ? 'نشط' : 'Active'}</SelectItem>
+                    <SelectItem value="inactive">{isRTL ? 'غير نشط' : 'Inactive'}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Export Button */}
+                <Button 
+                  onClick={exportToCSV}
+                  variant="outline"
+                  disabled={filteredAgencies.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {isRTL ? 'تصدير CSV' : 'Export CSV'}
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : agencies.length === 0 ? (
+            ) : filteredAgencies.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
-                  {isRTL ? 'لا توجد وكالات' : 'No agencies found'}
+                  {debouncedSearchQuery || statusFilter !== 'all'
+                    ? (isRTL ? 'لا توجد نتائج مطابقة' : 'No matching results')
+                    : (isRTL ? 'لا توجد وكالات' : 'No agencies found')}
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{isRTL ? 'اسم الوكالة' : 'Agency Name'}</TableHead>
-                    <TableHead>{isRTL ? 'المسؤول' : 'Contact Person'}</TableHead>
-                    <TableHead>{isRTL ? 'البريد الإلكتروني' : 'Email'}</TableHead>
-                    <TableHead>{isRTL ? 'الهاتف' : 'Phone'}</TableHead>
-                    <TableHead>{isRTL ? 'الترخيص' : 'License'}</TableHead>
-                    <TableHead>{isRTL ? 'الإعلانات' : 'Listings'}</TableHead>
-                    <TableHead>{isRTL ? 'تاريخ التسجيل' : 'Registered'}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {agencies.map((agency) => (
-                    <TableRow key={agency.id}>
-                      <TableCell className="font-medium">
-                        {agency.agency_name || '-'}
-                      </TableCell>
-                      <TableCell>{agency.full_name || '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm">{agency.email}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {agency.phone ? (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm">{agency.phone}</span>
-                          </div>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {agency.agency_license || '-'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {agency.listing_count || 0}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDate(agency.created_at)}
-                        </span>
-                      </TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{isRTL ? 'اسم الوكالة' : 'Agency Name'}</TableHead>
+                      <TableHead>{isRTL ? 'المسؤول' : 'Contact Person'}</TableHead>
+                      <TableHead>{isRTL ? 'البريد الإلكتروني' : 'Email'}</TableHead>
+                      <TableHead>{isRTL ? 'الهاتف' : 'Phone'}</TableHead>
+                      <TableHead>{isRTL ? 'الترخيص' : 'License'}</TableHead>
+                      <TableHead>{isRTL ? 'الإعلانات' : 'Listings'}</TableHead>
+                      <TableHead>{isRTL ? 'تاريخ التسجيل' : 'Registered'}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedAgencies.map((agency) => (
+                      <TableRow key={agency.id}>
+                        <TableCell className="font-medium">
+                          {agency.agency_name || '-'}
+                        </TableCell>
+                        <TableCell>{agency.full_name || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">{agency.email}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {agency.phone ? (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm">{agency.phone}</span>
+                            </div>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {agency.agency_license || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={agency.listing_count && agency.listing_count > 0 ? "default" : "secondary"}>
+                            {agency.listing_count || 0}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {formatDate(agency.created_at)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      {isRTL 
+                        ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredAgencies.length)} من ${filteredAgencies.length}`
+                        : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredAgencies.length)} of ${filteredAgencies.length}`}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        {isRTL ? 'السابق' : 'Previous'}
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="w-10"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        {isRTL ? 'التالي' : 'Next'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
