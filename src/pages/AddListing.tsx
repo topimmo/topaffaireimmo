@@ -422,14 +422,40 @@ export default function AddListing() {
         return mapped || 'owner';
       };
 
+      // Strict normalization: ensure neighborhood fields are properly typed and mutually exclusive
+      const normalizedNeighborhoodId = formData.neighborhoodId && formData.neighborhoodId.trim() !== '' 
+        ? parseInt(formData.neighborhoodId, 10) 
+        : null;
+      const normalizedCustomNeighborhood = formData.customNeighborhood && formData.customNeighborhood.trim() !== '' 
+        ? formData.customNeighborhood.trim() 
+        : null;
+
+      // Ensure only ONE of neighborhood_id or custom_neighborhood is set
+      const finalNeighborhoodId = normalizedCustomNeighborhood ? null : normalizedNeighborhoodId;
+      const finalCustomNeighborhood = finalNeighborhoodId ? null : normalizedCustomNeighborhood;
+
+      // Validate that finalNeighborhoodId is a valid number (not NaN) or null
+      if (finalNeighborhoodId !== null && isNaN(finalNeighborhoodId)) {
+        throw new Error(`Invalid neighborhood_id: '${formData.neighborhoodId}' is not a valid integer`);
+      }
+
+      // DEV logs for debugging
+      if (import.meta.env.DEV) {
+        console.log('[AddListing] Normalized neighborhood data:', {
+          city_id: parsedCityId,
+          neighborhood_id: finalNeighborhoodId,
+          custom_neighborhood: finalCustomNeighborhood,
+        });
+      }
+
       const insertData: Record<string, unknown> = {
         owner_id: profileId,
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         advertiser_type: mapAnnouncerType(formData.announcerType),
         city_id: parsedCityId,
-        neighborhood_id: formData.neighborhoodId ? parseInt(formData.neighborhoodId) : null,
-        custom_neighborhood: formData.customNeighborhood || null,
+        neighborhood_id: finalNeighborhoodId,
+        custom_neighborhood: finalCustomNeighborhood,
         address: formData.address || null,
         price: formData.price ? parseFloat(formData.price) : 0,
         area: formData.area ? parseFloat(formData.area) : null,
