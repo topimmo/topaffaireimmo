@@ -382,8 +382,9 @@ export default function AddListing() {
       }
     }
 
-    if (formData.price && parseFloat(formData.price) <= 0) {
-      alert(isRTL ? 'السعر يجب أن يكون أكبر من الصفر' : 'Le prix doit être supérieur à zéro');
+    // Price validation: must be provided and > 0 (price is NOT NULL in DB)
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      alert(isRTL ? 'السعر مطلوب ويجب أن يكون أكبر من الصفر' : 'Le prix est requis et doit être supérieur à zéro');
       return;
     }
 
@@ -457,21 +458,33 @@ export default function AddListing() {
         neighborhood_id: finalNeighborhoodId,
         custom_neighborhood: finalCustomNeighborhood,
         address: formData.address || null,
-        price: formData.price ? parseFloat(formData.price) : 0,
+        price: parseFloat(formData.price), // Already validated above, must exist
         area: formData.area ? parseFloat(formData.area) : null,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-        // Use French title/description as fallback for English since form only has FR/AR
-        title_en: formData.titleFr || 'New property',
+        // Only FR and AR titles/descriptions exist in schema (NO title_en or description_en)
         title_fr: formData.titleFr || 'Nouveau bien',
         title_ar: formData.titleAr || 'عقار جديد',
-        description_en: formData.descriptionFr || null,
         description_fr: formData.descriptionFr || null,
         description_ar: formData.descriptionAr || null,
         images: [],
-        phone: formData.phone || null,
-        status: 'pending',
+        // Schema uses contact_phone not phone
+        contact_phone: formData.phone || null,
+        // Let database default handle status (defaults to 'pending')
       };
+
+      // Log payload for debugging schema alignment issues
+      console.log('[AddListing] 🔍 Pre-insert validation:');
+      console.log('[AddListing] Payload keys:', Object.keys(insertData));
+      console.log('[AddListing] Payload preview:', {
+        owner_id: insertData.owner_id ? String(insertData.owner_id).substring(0, 8) + '...' : 'null',
+        city_id: insertData.city_id,
+        neighborhood_id: insertData.neighborhood_id,
+        custom_neighborhood: insertData.custom_neighborhood,
+        advertiser_type: insertData.advertiser_type,
+        transaction_type: insertData.transaction_type,
+        property_type: insertData.property_type,
+      });
 
       // Log payload before insert - show full details in DEV mode
       if (import.meta.env.DEV) {
