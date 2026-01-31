@@ -347,9 +347,12 @@ export default function AddListing() {
     }
 
     // Strict validation for cityId
-    if (!formData.cityId || formData.cityId.trim() === '') {
+    if (!formData.cityId || formData.cityId.trim() === '' || isNaN(parseInt(formData.cityId))) {
       if (import.meta.env.DEV) {
-        console.error('[AddListing] Validation failed: cityId is empty', { cityId: formData.cityId });
+        console.error('[AddListing] Validation failed: cityId is invalid', { 
+          cityId: formData.cityId,
+          parsedCityId: parseInt(formData.cityId)
+        });
       }
       alert(isRTL ? 'يرجى اختيار المدينة' : 'Veuillez sélectionner une ville');
       return;
@@ -388,20 +391,8 @@ export default function AddListing() {
       // Step 1: Create property record with status='pending' (no images yet)
       setUploadProgress(isRTL ? 'جاري حفظ الإعلان...' : "Enregistrement de l'annonce...");
 
-      // Hard guard: Ensure cityId is valid before creating insert payload
+      // Parse cityId (already validated above, but defensive check)
       const parsedCityId = parseInt(formData.cityId);
-      if (!formData.cityId || isNaN(parsedCityId)) {
-        if (import.meta.env.DEV) {
-          console.error('[AddListing] Critical validation error: invalid cityId', { 
-            cityId: formData.cityId, 
-            parsedCityId,
-            formData 
-          });
-        }
-        alert(isRTL ? 'خطأ: معرف المدينة غير صالح' : 'Erreur: ID de ville invalide');
-        setIsSubmitting(false);
-        return;
-      }
 
       const insertData: Record<string, unknown> = {
         owner_id: profileId,
