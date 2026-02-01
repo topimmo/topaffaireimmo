@@ -237,34 +237,33 @@ export default function AdminListingDetail() {
           console.warn('Failed to log audit action, continuing anyway:', auditError);
         }
 
-        try {
-          const webhookResult = await sendFacebookWebhook(property.id);
-          
-          if (webhookResult.already_posted) {
-            toast.info(
-              isRTL 
-                ? 'تم نشر الإعلان على فيسبوك مسبقاً' 
-                : 'Already posted to Facebook'
-            );
-          } else if (webhookResult.skipped) {
-            toast.warning(
-              isRTL 
-                ? 'لم يتم تكوين رابط الويب هوك' 
-                : 'Webhook URL not configured'
-            );
-          } else if (webhookResult.success) {
-            toast.success(
-              isRTL 
-                ? 'تم اعتماد الإعلان ونشره على فيسبوك' 
-                : 'Listing approved and posted to Facebook'
-            );
-          }
-        } catch (webhookError) {
-          console.warn('Facebook webhook failed, listing already approved:', webhookError);
+        // Send Facebook webhook (non-blocking)
+        const webhookResult = await sendFacebookWebhook(property.id);
+        
+        if (webhookResult.already_posted) {
+          toast.info(
+            isRTL 
+              ? 'تم نشر الإعلان على فيسبوك مسبقاً' 
+              : 'Already posted to Facebook'
+          );
+        } else if (webhookResult.skipped) {
+          toast.warning(
+            isRTL 
+              ? 'لم يتم تكوين رابط الويب هوك' 
+              : 'Webhook URL not configured'
+          );
+        } else if (webhookResult.success) {
+          toast.success(
+            isRTL 
+              ? 'تم اعتماد الإعلان ونشره على فيسبوك' 
+              : 'Listing approved and posted to Facebook'
+          );
+        } else {
+          console.warn('Facebook webhook failed, listing already approved:', webhookResult.error);
           toast.warning(
             isRTL 
               ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' 
-              : 'Listing approved but Facebook posting failed'
+              : 'Listing approved but Facebook webhook failed'
           );
         }
       } else if (newStatus === 'rejected') {
@@ -314,34 +313,25 @@ export default function AdminListingDetail() {
 
     setActionLoading(true);
     
-    try {
-      const result = await retryFacebookPost(property.id);
-      
-      if (result.success) {
-        toast.success(
-          isRTL 
-            ? 'تم نشر الإعلان على فيسبوك بنجاح' 
-            : 'Successfully posted to Facebook'
-        );
-      } else {
-        toast.error(
-          isRTL 
-            ? 'فشل النشر على فيسبوك' 
-            : 'Failed to post to Facebook'
-        );
-      }
-      
-      // Refresh the property data
-      await fetchPropertyDetail();
-      
-    } catch (error) {
-      console.error('Retry error:', error);
+    const result = await retryFacebookPost(property.id);
+    
+    if (result.success) {
+      toast.success(
+        isRTL 
+          ? 'تم نشر الإعلان على فيسبوك بنجاح' 
+          : 'Successfully posted to Facebook'
+      );
+    } else {
+      console.warn('Failed to post to Facebook:', result.error);
       toast.error(
         isRTL 
-          ? 'خطأ في إعادة المحاولة' 
-          : 'Error retrying Facebook post'
+          ? 'فشل النشر على فيسبوك' 
+          : 'Failed to post to Facebook'
       );
     }
+    
+    // Refresh the property data
+    await fetchPropertyDetail();
 
     setActionLoading(false);
   };
