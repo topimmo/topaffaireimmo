@@ -225,13 +225,17 @@ export default function AdminListingDetail() {
 
       // If approved, send Facebook webhook
       if (newStatus === 'approved') {
-        // Log audit action
-        await logAdminAction({
-          action: 'approve',
-          entity_type: 'property',
-          entity_id: property.id,
-          metadata: { title: property.title_fr },
-        });
+        // Log audit action (wrapped in try/catch to not break flow)
+        try {
+          await logAdminAction({
+            action: 'approve',
+            entity_type: 'property',
+            entity_id: property.id,
+            metadata: { title: property.title_fr },
+          });
+        } catch (auditError) {
+          console.warn('Failed to log audit action, continuing anyway:', auditError);
+        }
 
         try {
           const webhookResult = await sendFacebookWebhook(property.id);
@@ -256,7 +260,7 @@ export default function AdminListingDetail() {
             );
           }
         } catch (webhookError) {
-          console.error('Webhook error:', webhookError);
+          console.warn('Facebook webhook failed, listing already approved:', webhookError);
           toast.warning(
             isRTL 
               ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' 
@@ -264,13 +268,17 @@ export default function AdminListingDetail() {
           );
         }
       } else if (newStatus === 'rejected') {
-        // Log audit action for rejection
-        await logAdminAction({
-          action: 'reject',
-          entity_type: 'property',
-          entity_id: property.id,
-          metadata: { title: property.title_fr, reason: property.rejection_reason },
-        });
+        // Log audit action for rejection (wrapped in try/catch to not break flow)
+        try {
+          await logAdminAction({
+            action: 'reject',
+            entity_type: 'property',
+            entity_id: property.id,
+            metadata: { title: property.title_fr, reason: property.rejection_reason },
+          });
+        } catch (auditError) {
+          console.warn('Failed to log audit action, continuing anyway:', auditError);
+        }
 
         toast.success(
           isRTL ? 'تم رفض الإعلان' : 'Listing rejected'
