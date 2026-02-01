@@ -262,8 +262,8 @@ export default function AdminListingDetail() {
           console.warn('Facebook webhook failed, listing already approved:', webhookResult.error);
           toast.warning(
             isRTL 
-              ? 'تم التحديث بنجاح لكن فشل إرسال الويبهوك للفيسبوك' 
-              : 'Updated successfully but Facebook webhook failed'
+              ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' 
+              : 'Listing approved but Facebook webhook failed'
           );
         }
       } else if (newStatus === 'rejected') {

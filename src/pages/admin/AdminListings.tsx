@@ -322,7 +322,7 @@ export default function AdminListings() {
             toast.success(isRTL ? 'تم اعتماد الإعلان ونشره على فيسبوك' : 'Listing approved and posted to Facebook');
           } else {
             console.warn('Facebook webhook failed, listing already approved:', webhookResult.error);
-            toast.warning(isRTL ? 'تم التحديث بنجاح لكن فشل إرسال الويبهوك للفيسبوك' : 'Updated successfully but Facebook webhook failed');
+            toast.warning(isRTL ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' : 'Listing approved but Facebook webhook failed');
           }
         } else if (newStatus === 'rejected') {
           try {
