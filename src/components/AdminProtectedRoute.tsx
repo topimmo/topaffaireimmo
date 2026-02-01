@@ -49,13 +49,13 @@ export default function AdminProtectedRoute({
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // Redirect to home if not admin
+  // Redirect to dashboard if not admin
   if (!isAdmin) {
-    console.log('[AdminProtectedRoute] User is not admin, redirecting to home');
+    console.log('[AdminProtectedRoute] User is not admin, redirecting to dashboard');
     toast.error("Access denied", {
       description: "You don't have permission to access the admin area.",
     });
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // User is admin, allow access

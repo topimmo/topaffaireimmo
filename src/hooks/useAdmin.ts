@@ -40,6 +40,15 @@ export function useAdmin() {
      * Check admin status for a given session
      */
     async function checkAdminStatus(session: Session | null) {
+      // Set loading to true at the start of any check
+      // This prevents redirects during async operations
+      if (isMountedRef.current) {
+        setState(prevState => ({
+          ...prevState,
+          loading: true,
+        }));
+      }
+
       // If no session, user is not admin
       if (!session) {
         if (isMountedRef.current) {

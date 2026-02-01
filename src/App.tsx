@@ -296,6 +296,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/listings"
             element={
               <AdminProtectedRoute>
