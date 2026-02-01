@@ -10,11 +10,26 @@ export default function AdSenseBanner({ slot, format = 'auto', className = '' }:
   
   return (
     <div 
-      className={`adsense-banner bg-muted/30 rounded-lg flex items-center justify-center min-h-[60px] border border-dashed border-muted ${className}`}
+      className={`adsense-banner-wrapper ${className}`}
+      style={{
+        maxWidth: '100%',
+        overflow: 'hidden',
+        position: 'relative',
+        width: '100%',
+      }}
     >
-      <div className="text-center text-sm text-muted-foreground">
-        <p>Google AdSense</p>
-        <p className="text-xs">Slot: {slot}</p>
+      <div 
+        className="adsense-banner bg-muted/30 rounded-lg flex items-center justify-center min-h-[60px] border border-dashed border-muted"
+        style={{
+          maxWidth: '100%',
+          transform: 'none',
+          zoom: 1,
+        }}
+      >
+        <div className="text-center text-sm text-muted-foreground">
+          <p>Google AdSense</p>
+          <p className="text-xs">Slot: {slot}</p>
+        </div>
       </div>
     </div>
   );
