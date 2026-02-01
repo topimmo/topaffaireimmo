@@ -105,36 +105,22 @@ export default function BannerSlot({
         alt={name}
         className="w-full h-auto rounded-lg"
         loading="lazy"
-        style={{
-          maxWidth: '100%',
-          height: 'auto',
-          objectFit: 'contain',
-        }}
       />
     );
 
     return (
-      <div 
-        className={`banner-slot ${className}`}
-        style={{
-          maxWidth: '100%',
-          overflow: 'hidden',
-          position: 'relative',
-          width: '100%',
-        }}
-      >
+      <div className={`banner-slot ${className}`}>
         {url ? (
           <a
             href={normalizeUrl(url)}
             target="_blank"
             rel="noopener noreferrer sponsored"
             className="block"
-            style={{ display: 'block', maxWidth: '100%' }}
           >
             {imageEl}
           </a>
         ) : (
-          <div className="block" style={{ display: 'block', maxWidth: '100%' }}>{imageEl}</div>
+          <div className="block">{imageEl}</div>
         )}
       </div>
     );
@@ -142,19 +128,7 @@ export default function BannerSlot({
 
   // ✅ Fallback AdSense
   if (adSenseFallback) {
-    return (
-      <div 
-        className={`banner-slot ${className}`}
-        style={{
-          maxWidth: '100%',
-          overflow: 'hidden',
-          position: 'relative',
-          width: '100%',
-        }}
-      >
-        {adSenseFallback}
-      </div>
-    );
+    return <div className={`banner-slot ${className}`}>{adSenseFallback}</div>;
   }
 
   return null;

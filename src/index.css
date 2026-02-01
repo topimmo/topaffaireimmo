@@ -222,6 +222,8 @@
   }
 
   /* AdSense and Banner Safe Layout Rules */
+  /* These rules use !important to ensure third-party AdSense scripts cannot override layout constraints */
+  /* This prevents ads from shrinking the page or affecting viewport sizing */
   .adsense-banner-wrapper,
   .banner-slot {
     max-width: 100% !important;
@@ -245,7 +247,8 @@
     height: auto !important;
   }
 
-  /* Prevent body/html zoom changes from ads */
+  /* Prevent body/html transform changes from ads */
+  /* Third-party ad scripts may attempt to modify these properties */
   html,
   body {
     transform: none !important;
