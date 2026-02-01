@@ -95,6 +95,7 @@
   }
   
   /* Prevent third-party ad scripts from modifying layout */
+  /* Both html and body need protection as scripts may target either element */
   html {
     transform: none !important;
     min-width: 320px !important;

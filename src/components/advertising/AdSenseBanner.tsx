@@ -8,6 +8,7 @@ export default function AdSenseBanner({ slot, format = 'auto', className = '' }:
   // This is a placeholder for Google AdSense
   // In production, replace with actual AdSense code
   
+  // className is applied to wrapper for positioning/spacing
   return (
     <div className={`adsense-banner-wrapper ${className}`}>
       <div className="adsense-banner bg-muted/30 rounded-lg flex items-center justify-center min-h-[60px] border border-dashed border-muted">
