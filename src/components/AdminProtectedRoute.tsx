@@ -76,13 +76,15 @@ export default function AdminProtectedRoute({
             Error Checking Admin Access
           </h2>
           <p className="text-muted-foreground">
-            We couldn't verify your admin status due to a server error. Please try refreshing the page.
+            We couldn't verify your admin status due to a server error. Please try refreshing the page. If the problem persists, please contact support.
           </p>
           <p className="text-sm text-muted-foreground font-mono bg-muted p-2 rounded">
             {error.message}
           </p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
+            aria-label="Refresh page to retry admin access check"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             Refresh Page
