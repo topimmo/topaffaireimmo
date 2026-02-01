@@ -23,7 +23,6 @@ export default function AdSenseBanner({ slot, format = 'auto', className = '' }:
         style={{
           maxWidth: '100%',
           transform: 'none',
-          zoom: 1,
         }}
       >
         <div className="text-center text-sm text-muted-foreground">

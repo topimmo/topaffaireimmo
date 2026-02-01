@@ -22,21 +22,8 @@ export default function AdBanner({
   }
   
   return (
-    <section 
-      className={cn("py-4 md:py-6", className)}
-      style={{
-        maxWidth: '100%',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
-      <div 
-        className="container"
-        style={{
-          maxWidth: '100%',
-          overflow: 'hidden',
-        }}
-      >
+    <section className={cn("py-4 md:py-6", className)}>
+      <div className="container">
         <BannerSlot 
           page={page} 
           position={position} 
