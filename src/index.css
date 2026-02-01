@@ -98,6 +98,16 @@
     font-family: 'Manrope', sans-serif;
     /* Prevent horizontal overflow */
     overflow-x: hidden;
+    /* Prevent third-party ad scripts from modifying layout */
+    transform: none !important;
+    min-width: 320px !important;
+    max-width: 100vw !important;
+  }
+  html {
+    /* Prevent third-party ad scripts from modifying layout */
+    transform: none !important;
+    min-width: 320px !important;
+    max-width: 100vw !important;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Fraunces', serif;
@@ -245,14 +255,5 @@
     position: relative !important;
     max-width: 100% !important;
     height: auto !important;
-  }
-
-  /* Prevent body/html transform changes from ads */
-  /* Third-party ad scripts may attempt to modify these properties */
-  html,
-  body {
-    transform: none !important;
-    min-width: 320px !important;
-    max-width: 100vw !important;
   }
 }
