@@ -290,15 +290,19 @@ export default function AdminListingDetail() {
         );
       }
 
-      // Refresh the property data
-      await fetchPropertyDetail();
       
     } catch (error) {
       console.error('Status change error:', error);
       toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
+    } finally {
+      // Always refresh property data and clear loading state
+      try {
+        await fetchPropertyDetail();
+      } catch (fetchError) {
+        console.error('Error refreshing property data:', fetchError);
+      }
+      setActionLoading(false);
     }
-
-    setActionLoading(false);
   };
 
   const formatPrice = (price: number) => {
@@ -313,27 +317,39 @@ export default function AdminListingDetail() {
 
     setActionLoading(true);
     
-    const result = await retryFacebookPost(property.id);
-    
-    if (result.success) {
-      toast.success(
-        isRTL 
-          ? 'تم نشر الإعلان على فيسبوك بنجاح' 
-          : 'Successfully posted to Facebook'
-      );
-    } else {
-      console.warn('Failed to post to Facebook:', result.error);
+    try {
+      const result = await retryFacebookPost(property.id);
+      
+      if (result.success) {
+        toast.success(
+          isRTL 
+            ? 'تم نشر الإعلان على فيسبوك بنجاح' 
+            : 'Successfully posted to Facebook'
+        );
+      } else {
+        console.warn('Failed to post to Facebook:', result.error);
+        toast.error(
+          isRTL 
+            ? 'فشل النشر على فيسبوك' 
+            : 'Failed to post to Facebook'
+        );
+      }
+    } catch (error) {
+      console.error('Retry Facebook post error:', error);
       toast.error(
         isRTL 
-          ? 'فشل النشر على فيسبوك' 
-          : 'Failed to post to Facebook'
+          ? 'خطأ في إعادة المحاولة' 
+          : 'Error retrying Facebook post'
       );
+    } finally {
+      // Always refresh property data and clear loading state
+      try {
+        await fetchPropertyDetail();
+      } catch (fetchError) {
+        console.error('Error refreshing property data:', fetchError);
+      }
+      setActionLoading(false);
     }
-    
-    // Refresh the property data
-    await fetchPropertyDetail();
-
-    setActionLoading(false);
   };
 
   // ✅ Delete property handler
