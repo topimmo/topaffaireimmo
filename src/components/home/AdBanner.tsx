@@ -9,6 +9,9 @@ interface AdBannerProps {
   position?: string;
 }
 
+// Admin route prefix - ads are disabled on admin routes to prevent UI blocking
+const ADMIN_ROUTE_PREFIX = '/admin';
+
 export default function AdBanner({ 
   className, 
   page = 'home', 
@@ -17,7 +20,7 @@ export default function AdBanner({
   const location = useLocation();
   
   // Disable ads on /admin routes to prevent UI blocking
-  if (location.pathname.startsWith('/admin')) {
+  if (location.pathname.startsWith(ADMIN_ROUTE_PREFIX)) {
     return null;
   }
   
