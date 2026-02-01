@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,7 +74,7 @@ export default function ResetPassword() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center py-12">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -84,11 +82,8 @@ export default function ResetPassword() {
 
   if (!validSession) {
     return (
-      <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-        <Header />
-        
-        <main className="flex-1 flex items-center justify-center pt-20 pb-16 px-4">
-          <div className="w-full max-w-md text-center">
+      <div className={`flex items-center justify-center py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+        <div className="w-full max-w-md text-center">
             <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="h-10 w-10 text-destructive" />
             </div>
@@ -106,20 +101,14 @@ export default function ResetPassword() {
               </Link>
             </Button>
           </div>
-        </main>
-
-        <Footer />
-      </div>
+        </div>
     );
   }
 
   if (success) {
     return (
-      <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-        <Header />
-        
-        <main className="flex-1 flex items-center justify-center pt-20 pb-16 px-4">
-          <div className="w-full max-w-md text-center">
+      <div className={`flex items-center justify-center py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+        <div className="w-full max-w-md text-center">
             <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="h-10 w-10 text-green-600" />
             </div>
@@ -132,20 +121,14 @@ export default function ResetPassword() {
                 : 'Votre mot de passe a été modifié avec succès. Redirection en cours...'}
             </p>
           </div>
-        </main>
-
-        <Footer />
-      </div>
+        </div>
     );
   }
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <Header />
-      
-      <main className="flex-1 flex items-center justify-center pt-20 pb-16 px-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl border p-8 shadow-sm">
+    <div className={`flex items-center justify-center py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl border p-8 shadow-sm">
             {/* Header */}
             <div className="text-center mb-8">
               <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -225,9 +208,6 @@ export default function ResetPassword() {
             </div>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
   );
 }

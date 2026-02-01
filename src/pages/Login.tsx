@@ -5,8 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { translateAuthError } from '@/lib/authErrors';
 import { supabase } from '@/lib/supabase';
 import { getSiteUrl } from '@/lib/utils';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -89,11 +87,8 @@ export default function Login() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <Header />
-      
-      <main className="flex-1 flex items-center justify-center pt-20 pb-16 px-4">
-        <div className="w-full max-w-md">
+    <div className={`flex items-center justify-center py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl border p-8 shadow-sm">
             {/* Header */}
             <div className="text-center mb-8">
@@ -177,7 +172,6 @@ export default function Login() {
             </div>
           </div>
         </div>
-      </main>
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (
@@ -250,8 +244,6 @@ export default function Login() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

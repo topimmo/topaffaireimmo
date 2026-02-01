@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { translateAuthError } from '@/lib/authErrors';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,11 +64,8 @@ export default function Register() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <Header />
-      
-      <main className="flex-1 flex items-center justify-center pt-20 pb-16 px-4">
-        <div className="w-full max-w-md">
+    <div className={`flex items-center justify-center py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="w-full max-w-md">
           {success ? (
             <div className="bg-white rounded-2xl border p-8 shadow-sm text-center">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
@@ -189,9 +184,6 @@ export default function Register() {
             </div>
           )}
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
   );
 }
