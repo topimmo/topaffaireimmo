@@ -46,7 +46,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       name: isRTL ? 'لوحة التحكم' : 'Dashboard',
       href: '/admin',
       icon: LayoutDashboard,
-      current: location.pathname === '/admin',
+      current: location.pathname === '/admin' || location.pathname === '/admin/dashboard',
     },
     {
       name: isRTL ? 'الإعلانات' : 'Listings',
