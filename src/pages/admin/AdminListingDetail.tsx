@@ -290,13 +290,17 @@ export default function AdminListingDetail() {
         );
       }
 
-      // Refresh the property data
-      await fetchPropertyDetail();
       
     } catch (error) {
       console.error('Status change error:', error);
       toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
     } finally {
+      // Always refresh property data and clear loading state
+      try {
+        await fetchPropertyDetail();
+      } catch (fetchError) {
+        console.error('Error refreshing property data:', fetchError);
+      }
       setActionLoading(false);
     }
   };
@@ -330,9 +334,6 @@ export default function AdminListingDetail() {
             : 'Failed to post to Facebook'
         );
       }
-      
-      // Refresh the property data
-      await fetchPropertyDetail();
     } catch (error) {
       console.error('Retry Facebook post error:', error);
       toast.error(
@@ -341,6 +342,12 @@ export default function AdminListingDetail() {
           : 'Error retrying Facebook post'
       );
     } finally {
+      // Always refresh property data and clear loading state
+      try {
+        await fetchPropertyDetail();
+      } catch (fetchError) {
+        console.error('Error refreshing property data:', fetchError);
+      }
       setActionLoading(false);
     }
   };
