@@ -277,6 +277,7 @@ export default function AdminListings() {
         console.groupEnd();
         
         toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
+        return;
       } else {
         console.log('✅ Success - No Error');
         console.log('Response Data:', data);
