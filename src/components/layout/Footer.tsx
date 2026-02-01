@@ -13,7 +13,7 @@ export default function Footer() {
   const { t, isRTL } = useLanguage();
   
   return (
-    <footer className={`bg-foreground text-background/90 ${isRTL ? 'rtl' : 'ltr'}`}>
+    <footer className={`bg-foreground text-background/90 border-t border-background/10 ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="container py-8 md:py-10">
         {/* Mobile: Accordion Layout */}
         <div className="md:hidden space-y-2">
