@@ -1,71 +1,120 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { logger, createCorrelatedLogger } from '@/lib/logger';
+import { Session } from '@supabase/supabase-js';
+
+interface AdminState {
+  loading: boolean;
+  isAdmin: boolean;
+  role: string | null;
+  error: Error | null;
+}
 
 /**
  * Hook to check if the current user is an admin
- * Queries the admins table to determine admin status
- * Returns { isAdmin, loading, error }
+ * Queries the public.admins table to determine admin status
+ * 
+ * Features:
+ * - Checks admin status on mount and session changes
+ * - Subscribes to auth state changes (login/logout/token refresh)
+ * - Prevents state updates after unmount
+ * - Uses maybeSingle() to avoid errors for non-admin users
+ * 
+ * Returns { loading, isAdmin, role, error }
  */
 export function useAdmin() {
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [state, setState] = useState<AdminState>({
+    loading: true,
+    isAdmin: false,
+    role: null,
+    error: null,
+  });
+
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    async function checkAdminStatus() {
-      const log = createCorrelatedLogger('useAdmin');
+    // Set mounted flag
+    isMountedRef.current = true;
 
-      if (!user) {
-        log.debug('No user, not admin');
-        setIsAdmin(false);
-        setLoading(false);
-        setError(null);
+    /**
+     * Check admin status for a given session
+     */
+    async function checkAdminStatus(session: Session | null) {
+      // If no session, user is not admin
+      if (!session) {
+        if (isMountedRef.current) {
+          setState({
+            loading: false,
+            isAdmin: false,
+            role: null,
+            error: null,
+          });
+        }
         return;
       }
 
-      log.info('Checking admin status', { userId: user.id });
-
       try {
-        // Query admins table to check if user is an admin
+        // Query public.admins table
+        // Use maybeSingle() to avoid PGRST116 error when no row exists
         const { data, error } = await supabase
           .from('admins')
-          .select('user_id')
-          .eq('user_id', user.id)
-          .single();
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
 
-        if (error) {
-          // PGRST116 is "not found" error, which is expected for non-admins
-          if (error.code === 'PGRST116') {
-            log.debug('User is not admin (not in admins table)', { userId: user.id });
-            setIsAdmin(false);
-            setError(null);
+        if (isMountedRef.current) {
+          if (error) {
+            // Handle query errors
+            console.error('[useAdmin] Error checking admin status:', error);
+            setState({
+              loading: false,
+              isAdmin: false,
+              role: null,
+              error: new Error(error.message),
+            });
           } else {
-            // Other errors (network, permission, etc.) should be logged
-            log.error('Error checking admin status', error);
-            setError(new Error(error.message));
-            // For safety, don't grant admin access on error
-            setIsAdmin(false);
+            // data will be null if no admin row exists, otherwise it will have the role
+            const isAdmin = !!data;
+            setState({
+              loading: false,
+              isAdmin,
+              role: data?.role || null,
+              error: null,
+            });
           }
-        } else {
-          const adminStatus = !!data;
-          log.info('Admin status checked', { userId: user.id, isAdmin: adminStatus });
-          setIsAdmin(adminStatus);
-          setError(null);
         }
       } catch (err) {
-        log.error('Exception checking admin status', err);
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
+        // Handle unexpected exceptions
+        console.error('[useAdmin] Exception checking admin status:', err);
+        if (isMountedRef.current) {
+          setState({
+            loading: false,
+            isAdmin: false,
+            role: null,
+            error: err instanceof Error ? err : new Error('Unknown error'),
+          });
+        }
       }
     }
 
-    checkAdminStatus();
-  }, [user]);
+    // Initial check: get current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      checkAdminStatus(session);
+    });
 
-  return { isAdmin, loading, error };
+    // Subscribe to auth state changes (login, logout, token refresh)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      checkAdminStatus(session);
+    });
+
+    // Cleanup: unsubscribe and mark as unmounted
+    return () => {
+      isMountedRef.current = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return state;
 }
