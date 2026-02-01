@@ -5,11 +5,13 @@ import { supabase } from './supabase';
 
 interface FacebookWebhookResponse {
   success: boolean;
-  message: string;
+  message?: string;
   already_posted?: boolean;
   skipped?: boolean;
   error?: string;
   facebook_post_id?: string;
+  status?: number;
+  data?: any;
 }
 
 /**
@@ -27,7 +29,11 @@ export async function sendFacebookWebhook(
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     
     if (!supabaseUrl) {
-      throw new Error('VITE_SUPABASE_URL not configured');
+      console.warn('Facebook webhook: VITE_SUPABASE_URL not configured');
+      return {
+        success: false,
+        error: 'VITE_SUPABASE_URL not configured'
+      };
     }
 
     // Build Edge Function URL
@@ -37,7 +43,11 @@ export async function sendFacebookWebhook(
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      throw new Error('No active session');
+      console.warn('Facebook webhook: No active session');
+      return {
+        success: false,
+        error: 'No active session'
+      };
     }
 
     // Call Edge Function
@@ -50,16 +60,35 @@ export async function sendFacebookWebhook(
       body: JSON.stringify({ listing_id: listingId }),
     });
 
-    const result = await response.json();
+    // Try to parse response JSON
+    let result: any;
+    try {
+      result = await response.json();
+    } catch (parseError) {
+      result = {};
+    }
 
     if (!response.ok) {
-      throw new Error(result.error || `HTTP ${response.status}`);
+      console.warn('Facebook webhook failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: result
+      });
+      return {
+        success: false,
+        status: response.status,
+        data: result,
+        error: result.error || `HTTP ${response.status}`
+      };
     }
 
     return result;
   } catch (error) {
-    console.warn('Error sending Facebook webhook:', error);
-    throw error;
+    console.warn('Facebook webhook error:', error);
+    return {
+      success: false,
+      error: String(error)
+    };
   }
 }
 
@@ -80,7 +109,11 @@ export async function retryFacebookPost(listingId: string): Promise<FacebookWebh
     .eq('id', listingId);
 
   if (updateError) {
-    throw new Error(`Failed to reset listing: ${updateError.message}`);
+    console.warn('Failed to reset listing for retry:', updateError);
+    return {
+      success: false,
+      error: `Failed to reset listing: ${updateError.message}`
+    };
   }
 
   // Now send the webhook

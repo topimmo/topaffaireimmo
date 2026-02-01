@@ -316,12 +316,13 @@ export default function AdminListings() {
             console.warn('Failed to log audit action, continuing anyway:', auditError);
           }
 
-          try {
-            await sendFacebookWebhook(propertyId);
+          // Send Facebook webhook (non-blocking)
+          const webhookResult = await sendFacebookWebhook(propertyId);
+          if (webhookResult.success) {
             toast.success(isRTL ? 'تم اعتماد الإعلان ونشره على فيسبوك' : 'Listing approved and posted to Facebook');
-          } catch (webhookError) {
-            console.warn('Facebook webhook failed, listing already approved:', webhookError);
-            toast.warning(isRTL ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' : 'Listing approved but Facebook posting failed');
+          } else {
+            console.warn('Facebook webhook failed, listing already approved:', webhookResult.error);
+            toast.warning(isRTL ? 'تم التحديث بنجاح لكن فشل إرسال الويبهوك للفيسبوك' : 'Updated successfully but Facebook webhook failed');
           }
         } else if (newStatus === 'rejected') {
           try {
