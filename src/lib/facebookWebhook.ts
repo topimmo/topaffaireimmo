@@ -65,6 +65,7 @@ export async function sendFacebookWebhook(
     try {
       result = await response.json();
     } catch (parseError) {
+      console.warn('Facebook webhook: Failed to parse response JSON:', parseError);
       result = {};
     }
 
