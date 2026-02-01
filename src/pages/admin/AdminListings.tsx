@@ -302,30 +302,38 @@ export default function AdminListings() {
           }
         }
         console.groupEnd();
-        // Log audit action
+        // Log audit action (wrapped in try/catch to not break flow)
         const property = properties.find(p => p.id === propertyId);
         if (newStatus === 'approved') {
-          await logAdminAction({
-            action: 'approve',
-            entity_type: 'property',
-            entity_id: propertyId,
-            metadata: { title: property?.title_fr || '' },
-          });
+          try {
+            await logAdminAction({
+              action: 'approve',
+              entity_type: 'property',
+              entity_id: propertyId,
+              metadata: { title: property?.title_fr || '' },
+            });
+          } catch (auditError) {
+            console.warn('Failed to log audit action, continuing anyway:', auditError);
+          }
 
           try {
             await sendFacebookWebhook(propertyId);
             toast.success(isRTL ? 'تم اعتماد الإعلان ونشره على فيسبوك' : 'Listing approved and posted to Facebook');
           } catch (webhookError) {
-            console.error('Webhook error:', webhookError);
+            console.warn('Facebook webhook failed, listing already approved:', webhookError);
             toast.warning(isRTL ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' : 'Listing approved but Facebook posting failed');
           }
         } else if (newStatus === 'rejected') {
-          await logAdminAction({
-            action: 'reject',
-            entity_type: 'property',
-            entity_id: propertyId,
-            metadata: { title: property?.title_fr || '' },
-          });
+          try {
+            await logAdminAction({
+              action: 'reject',
+              entity_type: 'property',
+              entity_id: propertyId,
+              metadata: { title: property?.title_fr || '' },
+            });
+          } catch (auditError) {
+            console.warn('Failed to log audit action, continuing anyway:', auditError);
+          }
 
           toast.success(isRTL ? 'تم رفض الإعلان' : 'Listing rejected');
         } else {

@@ -58,7 +58,7 @@ export async function sendFacebookWebhook(
 
     return result;
   } catch (error) {
-    console.error('Error sending Facebook webhook:', error);
+    console.warn('Error sending Facebook webhook:', error);
     throw error;
   }
 }
