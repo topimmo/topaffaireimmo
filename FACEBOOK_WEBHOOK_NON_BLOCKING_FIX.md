@@ -69,9 +69,9 @@ catch (error) {
 **Key Changes:**
 - ✅ **Removed try-catch** around webhook call (no longer needed)
 - ✅ **Check result.success** instead of catching errors
-- ✅ **Show warning toast** with Arabic message when webhook fails:
-  - AR: `"تم التحديث بنجاح لكن فشل إرسال الويبهوك للفيسبوك"`
-  - EN: `"Updated successfully but Facebook webhook failed"`
+- ✅ **Show warning toast** with context-specific Arabic message when webhook fails:
+  - AR: `"تم اعتماد الإعلان لكن فشل النشر على فيسبوك"`
+  - EN: `"Listing approved but Facebook webhook failed"`
 - ✅ **Listing update always succeeds** regardless of webhook status
 - ✅ **UI always refreshes** in finally block
 
@@ -94,7 +94,7 @@ if (webhookResult.success) {
   toast.success(isRTL ? 'تم اعتماد الإعلان ونشره على فيسبوك' : 'Listing approved and posted to Facebook');
 } else {
   console.warn('Facebook webhook failed, listing already approved:', webhookResult.error);
-  toast.warning(isRTL ? 'تم التحديث بنجاح لكن فشل إرسال الويبهوك للفيسبوك' : 'Updated successfully but Facebook webhook failed');
+  toast.warning(isRTL ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' : 'Listing approved but Facebook webhook failed');
 }
 ```
 
@@ -147,7 +147,7 @@ if (updateError) {
   - UI should refresh
 
 - [ ] **Approve listing** when webhook fails (HTTP 401)
-  - Should show: "تم التحديث بنجاح لكن فشل إرسال الويبهوك للفيسبوك" (AR)
+  - Should show: "تم اعتماد الإعلان لكن فشل النشر على فيسبوك" (AR) / "Listing approved but Facebook webhook failed" (EN)
   - Listing status should STILL change to "approved"
   - UI should refresh
   - No error thrown, flow completes
