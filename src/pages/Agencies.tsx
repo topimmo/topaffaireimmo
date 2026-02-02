@@ -81,13 +81,14 @@ export default function Agencies() {
         return;
       }
 
-      // 2) جيب جميع الإعلانات approved ديال هاد الوكالات (query وحدة)
+      // 2) جيب جميع الإعلانات published ديال هاد الوكالات (query وحدة)
       const agencyIds = baseAgencies.map((a) => a.id);
 
       const { data: props, error: propsErr } = await supabase
         .from("properties")
         .select("owner_id")
         .in("owner_id", agencyIds)
+
         .eq("status", "published");
 
       if (propsErr) throw propsErr;

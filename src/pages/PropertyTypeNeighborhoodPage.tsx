@@ -68,6 +68,7 @@ export default function PropertyTypeNeighborhoodPage() {
   // Build filters for useProperties hook
   const filters: any = {
     neighborhood_id: neighborhoodData.id,
+    
     status: 'published',
   };
 

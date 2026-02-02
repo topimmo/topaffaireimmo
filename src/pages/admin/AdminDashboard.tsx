@@ -5,11 +5,12 @@ import { supabase } from '@/lib/supabase';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, CheckCircle, Clock, Users, ArrowRight } from 'lucide-react';
+import { FileText, CheckCircle, Clock, Users, ArrowRight, Globe } from 'lucide-react';
 
 interface Stats {
   pendingListings: number;
   approvedListings: number;
+  publishedListings: number; // Added for public listings count
   rejectedListings: number;
   totalListings: number;
   totalUsers: number;
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({
     pendingListings: 0,
     approvedListings: 0,
+    publishedListings: 0,
     rejectedListings: 0,
     totalListings: 0,
     totalUsers: 0,
@@ -50,6 +52,11 @@ export default function AdminDashboard() {
       .from('properties')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');
+
+    const { count: publishedCount } = await supabase
+      .from('properties')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'published');
 
     const { count: publishedCount } = await supabase
       .from('properties')
@@ -86,6 +93,7 @@ export default function AdminDashboard() {
     setStats({
       pendingListings: pendingCount || 0,
       approvedListings: publishedCount || 0,
+
       rejectedListings: rejectedCount || 0,
       totalListings: allListingsCount || 0,
       totalUsers: usersCount || 0,
@@ -114,6 +122,14 @@ export default function AdminDashboard() {
       icon: CheckCircle,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
+      link: '/admin/listings?status=published',
+    },
+    {
+      title: isRTL ? 'الإعلانات المنشورة' : 'Published Listings',
+      value: stats.publishedListings,
+      icon: Globe,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
       link: '/admin/listings?status=published',
     },
     {
