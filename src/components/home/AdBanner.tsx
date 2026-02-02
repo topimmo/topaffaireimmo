@@ -19,26 +19,27 @@ export default function AdBanner({
 }: AdBannerProps) {
   const location = useLocation();
   
-  // Disable ads on /admin routes to prevent UI blocking
+  // Disable ads on /admin routes to prevent UI blocking and banner fetching
   if (location.pathname.startsWith(ADMIN_ROUTE_PREFIX)) {
     return null;
   }
   
-  // Check if this is the header banner (after_header position)
-  const isHeaderBanner = position === 'after_header';
+  // Disable header banners globally (only allow middle/bottom placements)
+  if (position === 'after_header' || position === 'header') {
+    return null;
+  }
   
   return (
     <section className={cn("py-4 md:py-6", className)}>
-      <div className={cn("container", isHeaderBanner && "header-ad-container")}>
+      <div className="container">
         <BannerSlot 
           page={page} 
           position={position} 
           className="rounded-xl overflow-hidden"
           adSenseFallback={
             <AdSenseBanner 
-              slot="home-middle" 
+              slot={`${page}-${position}`}
               format="horizontal"
-              isHeaderBanner={isHeaderBanner}
             />
           }
         />

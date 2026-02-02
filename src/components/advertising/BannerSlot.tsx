@@ -64,7 +64,7 @@ export default function BannerSlot({
         .eq("slot.page", page)
         .eq("slot.position", position)
         .lte("start_date", now)
-        .gte("end_date", now)
+        .or(`end_date.is.null,end_date.gte.${now}`)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -72,7 +72,10 @@ export default function BannerSlot({
       if (!mounted) return;
 
       if (error) {
-        console.log("[BannerSlot] fetch error:", error);
+        // Silent fallback - don't spam console with 406 errors
+        if (error.code !== 'PGRST116') {
+          console.warn("[BannerSlot] fetch error:", error.message);
+        }
         setActiveBanner(null);
       } else {
         setActiveBanner((data as ActiveBannerRow) ?? null);

@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LanguageSwitcher from "./LanguageSwitcher";
-import BannerSlot from "@/components/advertising/BannerSlot"; // ✅ NEW
 import {
   Menu,
   X,
