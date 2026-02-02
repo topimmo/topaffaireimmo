@@ -314,7 +314,7 @@ export default function AdminListings() {
       }
       
       if (!data) {
-        console.warn('⚠️ No data returned from update (property may not exist)');
+        console.warn('[Admin] Record not found', { id: propertyId });
         console.groupEnd();
         toast.error(isRTL ? 'لم يتم العثور على الإعلان' : 'Property not found');
         return;
