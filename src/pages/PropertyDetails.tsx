@@ -63,8 +63,16 @@ type DbPropertyDetails = {
   contact_whatsapp?: string | null;
   contact_email?: string | null;
 
-  company_name?: string | null;
   advertiser_type?: "owner" | "broker" | "agency" | string | null;
+
+  // Owner profile data via join
+  owner?: {
+    company_name?: string | null;
+    agency_name?: string | null;
+    full_name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
 
   city?: { name_fr: string | null; name_ar: string | null } | null;
   neighborhood?: { name_fr: string | null; name_ar: string | null } | null;
@@ -123,6 +131,7 @@ export default function PropertyDetails() {
             contact_whatsapp,
             contact_email,
             advertiser_type,
+            owner:profiles(company_name, agency_name, full_name, phone, email),
             city:cities(name_fr, name_ar),
             neighborhood:neighborhoods(name_fr, name_ar)
           `
@@ -612,7 +621,7 @@ export default function PropertyDetails() {
                     <p className="font-semibold">Annonceur</p>
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Building2 className="h-4 w-4" />
-                      {property.company_name || "TopAffaireImmo"}
+                      {property.owner?.company_name || property.owner?.agency_name || "TopAffaireImmo"}
                     </div>
 
                     {property.advertiser_type && (
