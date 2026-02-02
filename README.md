@@ -135,6 +135,8 @@ Required variables (see `.env.example`):
 
 See [Deployment Guide](docs/DEPLOYMENT.md) for detailed instructions.
 
+📋 **[Deployment Verification Guide](DEPLOYMENT_VERIFICATION.md)** - Complete guide for verifying deployments and troubleshooting
+
 #### Verifying Production Deployments
 
 After deploying to production, you can verify which version is running:
