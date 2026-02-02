@@ -295,7 +295,8 @@ export default function AdminListings() {
         .from('properties')
         .update(updateData)
         .eq('id', propertyId)
-        .select();
+        .select()
+        .single();
 
       // ===== STEP C: Confirm Supabase response and errors =====
       console.group('🔍 [STEP C] Supabase Response');
@@ -352,8 +353,6 @@ export default function AdminListings() {
             console.warn('Failed to log audit action, continuing anyway:', auditError);
           }
 
-          // Facebook webhook removed from client-side
-          // Use Supabase Database Webhooks (configured in dashboard) or manual retry button
           toast.success(isRTL ? 'تم اعتماد الإعلان' : 'Listing approved');
         } else if (newStatus === 'rejected') {
           try {
@@ -377,7 +376,19 @@ export default function AdminListings() {
           );
         }
 
-        await fetchProperties();
+        // Update UI: if current filter is 'pending', remove the row; otherwise update status
+        if (statusFilter === 'pending') {
+          // Remove from list since it's no longer pending
+          setProperties(prev => prev.filter(p => p.id !== propertyId));
+          setTotalCount(prev => Math.max(0, prev - 1));
+        } else {
+          // Update the row status in place
+          setProperties(prev => prev.map(p => 
+            p.id === propertyId 
+              ? { ...p, status: newStatus, ...updateData }
+              : p
+          ));
+        }
       }
     } catch (error) {
       console.error('Status change error:', error);
