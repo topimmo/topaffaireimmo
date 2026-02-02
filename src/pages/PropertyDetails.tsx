@@ -122,7 +122,6 @@ export default function PropertyDetails() {
             contact_phone,
             contact_whatsapp,
             contact_email,
-            company_name,
             advertiser_type,
             city:cities(name_fr, name_ar),
             neighborhood:neighborhoods(name_fr, name_ar)
