@@ -21,8 +21,6 @@ interface Settings {
   adsense_header_slot?: string;
   adsense_sidebar_slot?: string;
   adsense_footer_slot?: string;
-  facebook_webhook_url?: string;
-  facebook_page_id?: string;
 }
 
 export default function AdminSettings() {
@@ -56,8 +54,6 @@ export default function AdminSettings() {
           adsense_header_slot: data.adsense_header_slot || '',
           adsense_sidebar_slot: data.adsense_sidebar_slot || '',
           adsense_footer_slot: data.adsense_footer_slot || '',
-          facebook_webhook_url: data.facebook_webhook_url || '',
-          facebook_page_id: data.facebook_page_id || '',
         });
       }
     } catch (error) {
@@ -259,47 +255,6 @@ export default function AdminSettings() {
                       setSettings({ ...settings, adsense_footer_slot: e.target.value })
                     }
                     placeholder="ca-pub-XXXXXXXXXXXXXXXX"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Facebook Integration */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{isRTL ? 'تكامل Facebook' : 'Facebook Integration'}</CardTitle>
-                <CardDescription>
-                  {isRTL
-                    ? 'إعدادات نشر الإعلانات على Facebook'
-                    : 'Settings for posting listings to Facebook'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="facebook_webhook_url">
-                    {isRTL ? 'رابط Webhook' : 'Webhook URL'}
-                  </Label>
-                  <Input
-                    id="facebook_webhook_url"
-                    value={settings.facebook_webhook_url || ''}
-                    onChange={(e) =>
-                      setSettings({ ...settings, facebook_webhook_url: e.target.value })
-                    }
-                    placeholder="https://your-webhook-url.com/facebook"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="facebook_page_id">
-                    {isRTL ? 'معرف صفحة Facebook' : 'Facebook Page ID'}
-                  </Label>
-                  <Input
-                    id="facebook_page_id"
-                    value={settings.facebook_page_id || ''}
-                    onChange={(e) =>
-                      setSettings({ ...settings, facebook_page_id: e.target.value })
-                    }
-                    placeholder="123456789012345"
                   />
                 </div>
               </CardContent>
