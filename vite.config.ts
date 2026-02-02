@@ -9,8 +9,8 @@ function buildMetadataPlugin(): Plugin {
     transformIndexHtml(html) {
       const timestamp = new Date().toISOString();
       const version = process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 
-                      process.env.npm_package_version || 
-                      'local-dev';
+                      process.env.GITHUB_SHA?.substring(0, 7) || 
+                      'local';
       
       // Get production domain from environment, default to www.topaffaireimmo.com
       const productionDomain = process.env.VITE_PRODUCTION_DOMAIN || 

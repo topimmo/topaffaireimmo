@@ -9,10 +9,10 @@
  */
 
 export const BUILD_INFO = {
-  // Vercel provides this during build
-  commitSha: import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 
-             import.meta.env.VERCEL_GIT_COMMIT_SHA || 
-             'local-dev',
+  // Priority order: Vercel automatic → GitHub Actions → local fallback
+  commitSha: import.meta.env.VERCEL_GIT_COMMIT_SHA || 
+             import.meta.env.GITHUB_SHA || 
+             'local',
   
   // Build timestamp (set when module is evaluated during build)
   buildTime: new Date().toISOString(),

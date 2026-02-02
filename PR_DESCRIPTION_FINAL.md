@@ -110,9 +110,9 @@ PR #86 enforcement is active and working correctly
 ### 4. Deployment Verification (Already in Place)
 
 **Files:**
-- `src/config/buildInfo.ts` - Captures commit SHA from Vercel
+- `src/config/buildInfo.ts` - Captures commit SHA from Vercel/GitHub
 - `src/pages/admin/AdminSettings.tsx` - Displays build info
-- `vercel.json` - Passes `VITE_VERCEL_GIT_COMMIT_SHA`
+- `vercel.json` - Vercel provides `VERCEL_GIT_COMMIT_SHA` automatically
 
 **What Admins See:**
 ```
