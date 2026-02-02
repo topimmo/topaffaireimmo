@@ -163,6 +163,11 @@ export default function AdminListingDetail() {
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
+      } else if (newStatus === 'rejected') {
+        const now = new Date().toISOString();
+        updateData.rejected_at = now;
+        updateData.rejected_by = user?.id || null;
+        // rejection_reason should be set separately via the UI
       }
       
       // ===== STEP B: Confirm network request is sent =====
@@ -204,7 +209,7 @@ export default function AdminListingDetail() {
       console.group('🔍 [STEP D] Verifying DB Update');
       const { data: verifyData, error: verifyError } = await supabase
         .from('properties')
-        .select('id, status, approved_at, approved_by, published_at')
+        .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by')
         .eq('id', property.id)
         .maybeSingle();
       
@@ -217,6 +222,9 @@ export default function AdminListingDetail() {
           console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
           console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
           console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
+        } else if (newStatus === 'rejected') {
+          console.log('Rejected At Set:', verifyData?.rejected_at ? '✅ YES' : '❌ NO');
+          console.log('Rejected By Set:', verifyData?.rejected_by ? '✅ YES' : '❌ NO');
         }
       }
       console.groupEnd();
