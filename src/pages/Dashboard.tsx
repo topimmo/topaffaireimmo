@@ -264,13 +264,18 @@ export default function Dashboard() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex sm:flex-col gap-2">
+                    <div className="flex sm:flex-col gap-2 sm:items-end">
                       {/* Edit button - disabled when locked */}
                       {(['draft', 'rejected'].includes(property.status)) ? (
-                        <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          asChild 
+                          className="flex-1 sm:w-24 gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                        >
                           <Link to={`/edit-listing/${property.id}`}>
                             <Edit className="h-4 w-4" />
-                            <span className="sm:hidden">{t('dashboard.edit')}</span>
+                            <span>{t('dashboard.edit')}</span>
                           </Link>
                         </Button>
                       ) : (
@@ -278,11 +283,11 @@ export default function Dashboard() {
                           variant="outline" 
                           size="sm" 
                           disabled 
-                          className="flex-1 sm:flex-none opacity-50 cursor-not-allowed"
+                          className="flex-1 sm:w-24 gap-2 opacity-50 cursor-not-allowed"
                           title={isRTL ? 'الإعلان مقفل - اتصل بالدعم' : 'Annonce verrouillée - contactez le support'}
                         >
                           <Edit className="h-4 w-4" />
-                          <span className="sm:hidden">{t('dashboard.edit')}</span>
+                          <span>{t('dashboard.edit')}</span>
                         </Button>
                       )}
                       
@@ -292,21 +297,21 @@ export default function Dashboard() {
                           variant="outline"
                           size="sm"
                           onClick={() => setDeleteId(property.id)}
-                          className="flex-1 sm:flex-none text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="flex-1 sm:w-24 gap-2 text-destructive border-destructive hover:bg-destructive hover:text-white transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span className="sm:hidden">{t('dashboard.delete')}</span>
+                          <span>{t('dashboard.delete')}</span>
                         </Button>
                       ) : (
                         <Button
                           variant="outline"
                           size="sm"
                           disabled
-                          className="flex-1 sm:flex-none opacity-50 cursor-not-allowed"
+                          className="flex-1 sm:w-24 gap-2 opacity-50 cursor-not-allowed"
                           title={isRTL ? 'لا يمكن الحذف' : 'Suppression non autorisée'}
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span className="sm:hidden">{t('dashboard.delete')}</span>
+                          <span>{t('dashboard.delete')}</span>
                         </Button>
                       )}
                     </div>
