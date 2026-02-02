@@ -323,80 +323,80 @@ export default function AdminListings() {
       console.log('✅ Success - No Error');
       console.log('Response Data:', data);
       console.groupEnd();
-        
-        // ===== STEP D: Confirm DB update happens =====
-        console.group('🔍 [STEP D] Verifying DB Update');
-        const { data: verifyData, error: verifyError } = await supabase
-          .from('properties')
-          .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by')
-          .eq('id', propertyId)
-          .maybeSingle();
-        
-        if (verifyError) {
-          console.error('❌ Verification Query Error:', verifyError);
-        } else {
-          console.log('✅ Current DB State:', verifyData);
-          console.log('Status Match:', verifyData?.status === newStatus ? '✅ YES' : '❌ NO');
-          if (newStatus === 'approved') {
-            console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
-            console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
-            console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
-          } else if (newStatus === 'rejected') {
-            console.log('Rejected At Set:', verifyData?.rejected_at ? '✅ YES' : '❌ NO');
-            console.log('Rejected By Set:', verifyData?.rejected_by ? '✅ YES' : '❌ NO');
-          }
-        }
-        console.groupEnd();
-        // Log audit action (wrapped in try/catch to not break flow)
-        const property = properties.find(p => p.id === propertyId);
+      
+      // ===== STEP D: Confirm DB update happens =====
+      console.group('🔍 [STEP D] Verifying DB Update');
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('properties')
+        .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by')
+        .eq('id', propertyId)
+        .maybeSingle();
+      
+      if (verifyError) {
+        console.error('❌ Verification Query Error:', verifyError);
+      } else {
+        console.log('✅ Current DB State:', verifyData);
+        console.log('Status Match:', verifyData?.status === newStatus ? '✅ YES' : '❌ NO');
         if (newStatus === 'approved') {
-          try {
-            await logAdminAction({
-              action: 'approve',
-              entity_type: 'property',
-              entity_id: propertyId,
-              metadata: { title: property?.title_fr || '' },
-            });
-          } catch (auditError) {
-            console.warn('Failed to log audit action, continuing anyway:', auditError);
-          }
-
-          toast.success(isRTL ? 'تم اعتماد الإعلان' : 'Listing approved');
+          console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
+          console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
+          console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
         } else if (newStatus === 'rejected') {
-          try {
-            await logAdminAction({
-              action: 'reject',
-              entity_type: 'property',
-              entity_id: propertyId,
-              metadata: { 
-                title: property?.title_fr || '',
-                reason: reason || '',
-              },
-            });
-          } catch (auditError) {
-            console.warn('Failed to log audit action, continuing anyway:', auditError);
-          }
-
-          toast.success(isRTL ? 'تم رفض الإعلان' : 'Listing rejected');
-        } else {
-          toast.success(
-            isRTL ? 'تم تحديث الإعلان' : 'Listing updated'
-          );
+          console.log('Rejected At Set:', verifyData?.rejected_at ? '✅ YES' : '❌ NO');
+          console.log('Rejected By Set:', verifyData?.rejected_by ? '✅ YES' : '❌ NO');
+        }
+      }
+      console.groupEnd();
+      
+      // Log audit action (wrapped in try/catch to not break flow)
+      const property = properties.find(p => p.id === propertyId);
+      if (newStatus === 'approved') {
+        try {
+          await logAdminAction({
+            action: 'approve',
+            entity_type: 'property',
+            entity_id: propertyId,
+            metadata: { title: property?.title_fr || '' },
+          });
+        } catch (auditError) {
+          console.warn('Failed to log audit action, continuing anyway:', auditError);
         }
 
-        // Update UI: if current filter is 'pending', remove the row; otherwise update status
-        if (statusFilter === 'pending') {
-          // Remove from list since it's no longer pending
-          setProperties(prev => prev.filter(p => p.id !== propertyId));
-          setTotalCount(prev => Math.max(0, prev - 1));
-        } else {
-          // Update the row status in place
-          setProperties(prev => prev.map(p => 
-            p.id === propertyId 
-              ? { ...p, status: newStatus, ...updateData }
-              : p
-          ));
+        toast.success(isRTL ? 'تم اعتماد الإعلان' : 'Listing approved');
+      } else if (newStatus === 'rejected') {
+        try {
+          await logAdminAction({
+            action: 'reject',
+            entity_type: 'property',
+            entity_id: propertyId,
+            metadata: { 
+              title: property?.title_fr || '',
+              reason: reason || '',
+            },
+          });
+        } catch (auditError) {
+          console.warn('Failed to log audit action, continuing anyway:', auditError);
         }
+
+        toast.success(isRTL ? 'تم رفض الإعلان' : 'Listing rejected');
+      } else {
+        toast.success(
+          isRTL ? 'تم تحديث الإعلان' : 'Listing updated'
+        );
+      }
+
+      // Update UI: if current filter is 'pending', remove the row; otherwise update status
+      if (statusFilter === 'pending') {
+        // Remove from list since it's no longer pending
+        setProperties(prev => prev.filter(p => p.id !== propertyId));
+        setTotalCount(prev => Math.max(0, prev - 1));
+      } else {
+        // Update the row status in place
+        setProperties(prev => prev.map(p => 
+          p.id === propertyId 
+            ? { ...p, status: newStatus, ...updateData }
+            : p
+        ));
       }
     } catch (error) {
       console.error('Status change error:', error);
