@@ -269,11 +269,15 @@ export default function AdminListings() {
 
       const updateData: any = { status: newStatus };
 
+      // When approving, set status to 'published' to make it visible on public site
+      // and set is_archived to false to ensure it passes RLS policy
       if (newStatus === 'approved') {
         const now = new Date().toISOString();
+        updateData.status = 'published'; // Use 'published' instead of 'approved' for public visibility
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
+        updateData.is_archived = false;
       } else if (newStatus === 'rejected') {
         const now = new Date().toISOString();
         updateData.rejected_at = now;
@@ -328,7 +332,7 @@ export default function AdminListings() {
       console.group('🔍 [STEP D] Verifying DB Update');
       const { data: verifyData, error: verifyError } = await supabase
         .from('properties')
-        .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by')
+        .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by, is_archived')
         .eq('id', propertyId)
         .maybeSingle();
       
@@ -336,11 +340,15 @@ export default function AdminListings() {
         console.error('❌ Verification Query Error:', verifyError);
       } else {
         console.log('✅ Current DB State:', verifyData);
-        console.log('Status Match:', verifyData?.status === newStatus ? '✅ YES' : '❌ NO');
+        // When approving, we actually set status to 'published' (not 'approved')
+        const expectedStatus = newStatus === 'approved' ? 'published' : newStatus;
+        console.log('Status Match:', verifyData?.status === expectedStatus ? '✅ YES' : '❌ NO');
+        console.log('Expected Status:', expectedStatus, 'Actual Status:', verifyData?.status);
         if (newStatus === 'approved') {
           console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
           console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
           console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
+          console.log('Is Archived:', verifyData?.is_archived ? '❌ TRUE (should be false)' : '✅ FALSE');
         } else if (newStatus === 'rejected') {
           console.log('Rejected At Set:', verifyData?.rejected_at ? '✅ YES' : '❌ NO');
           console.log('Rejected By Set:', verifyData?.rejected_by ? '✅ YES' : '❌ NO');
@@ -537,6 +545,7 @@ export default function AdminListings() {
     const variants: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       approved: 'bg-green-100 text-green-800',
+      published: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
       sold: 'bg-blue-100 text-blue-800',
       rented: 'bg-purple-100 text-purple-800',
@@ -545,6 +554,7 @@ export default function AdminListings() {
     const labels: Record<string, { fr: string; ar: string }> = {
       pending: { fr: 'En attente', ar: 'قيد الانتظار' },
       approved: { fr: 'Approuvé', ar: 'معتمد' },
+      published: { fr: 'Publié', ar: 'منشور' },
       rejected: { fr: 'Rejeté', ar: 'مرفوض' },
       sold: { fr: 'Vendu', ar: 'مباع' },
       rented: { fr: 'Loué', ar: 'مؤجر' },
@@ -639,7 +649,7 @@ export default function AdminListings() {
               <SelectContent>
                 <SelectItem value="all">{isRTL ? 'الكل' : 'All'}</SelectItem>
                 <SelectItem value="pending">{isRTL ? 'قيد الانتظار' : 'Pending'}</SelectItem>
-                <SelectItem value="approved">{isRTL ? 'معتمد' : 'Approved'}</SelectItem>
+                <SelectItem value="published">{isRTL ? 'منشور' : 'Published'}</SelectItem>
                 <SelectItem value="rejected">{isRTL ? 'مرفوض' : 'Rejected'}</SelectItem>
               </SelectContent>
             </Select>

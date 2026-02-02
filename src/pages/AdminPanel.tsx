@@ -302,8 +302,19 @@ export default function AdminPanel() {
     if (propertyActionType === 'delete') {
       await supabase.from('properties').delete().eq('id', selectedProperty.id);
     } else {
-      const status = propertyActionType === 'approve' ? 'approved' : 'rejected';
-      await supabase.from('properties').update({ status }).eq('id', selectedProperty.id);
+      // When approving, use 'published' status to make it visible on public site
+      const status = propertyActionType === 'approve' ? 'published' : 'rejected';
+      const updateData: any = { status };
+      
+      // Set additional fields when approving
+      if (propertyActionType === 'approve') {
+        const now = new Date().toISOString();
+        updateData.approved_at = now;
+        updateData.published_at = now;
+        updateData.is_archived = false;
+      }
+      
+      await supabase.from('properties').update(updateData).eq('id', selectedProperty.id);
     }
 
     setProcessing(false);
@@ -460,15 +471,15 @@ export default function AdminPanel() {
                 <TabsTrigger value="pending">
                   {isRTL ? 'قيد الانتظار' : 'En attente'} ({filterPropertiesByStatus('pending').length})
                 </TabsTrigger>
-                <TabsTrigger value="approved">
-                  {isRTL ? 'موافق عليه' : 'Approuvé'} ({filterPropertiesByStatus('approved').length})
+                <TabsTrigger value="published">
+                  {isRTL ? 'منشور' : 'Publié'} ({filterPropertiesByStatus('published').length})
                 </TabsTrigger>
                 <TabsTrigger value="all">
                   {isRTL ? 'الكل' : 'Tous'} ({properties.length})
                 </TabsTrigger>
               </TabsList>
 
-              {['pending', 'approved', 'all'].map((tab) => (
+              {['pending', 'published', 'all'].map((tab) => (
                 <TabsContent key={tab} value={tab} className="space-y-4">
                   {filterPropertiesByStatus(tab).length === 0 ? (
                     <div className="bg-white rounded-xl border p-12 text-center">
@@ -500,7 +511,7 @@ export default function AdminPanel() {
                             <div className="flex flex-wrap items-center gap-2 mb-2">
                               <Badge className={propertyStatusColors[property.status]}>
                                 {property.status === 'pending' ? (isRTL ? 'قيد الانتظار' : 'En attente') :
-                                 property.status === 'approved' ? (isRTL ? 'موافق عليه' : 'Approuvé') :
+                                 property.status === 'published' ? (isRTL ? 'منشور' : 'Publié') :
                                  property.status === 'rejected' ? (isRTL ? 'مرفوض' : 'Rejeté') : property.status}
                               </Badge>
                               <Badge variant="outline">

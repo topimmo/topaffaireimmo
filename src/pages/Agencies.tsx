@@ -88,7 +88,7 @@ export default function Agencies() {
         .from("properties")
         .select("owner_id")
         .in("owner_id", agencyIds)
-        .eq("status", "approved");
+        .eq("status", "published");
 
       if (propsErr) throw propsErr;
 

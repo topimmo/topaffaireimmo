@@ -129,7 +129,7 @@ export default function PropertyDetails() {
           `
           )
           .eq("id", id)
-          .eq("status", "approved")
+          .eq("status", "published")
           .maybeSingle();
 
         if (!mounted) return;
