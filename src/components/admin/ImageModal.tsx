@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,13 @@ export function ImageModal({
   initialIndex = 0,
 }: ImageModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  // Sync currentIndex with initialIndex when modal opens or initialIndex changes
+  useEffect(() => {
+    if (open) {
+      setCurrentIndex(initialIndex);
+    }
+  }, [open, initialIndex]);
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
