@@ -93,12 +93,14 @@
   * {
     @apply border-border;
   }
+  
   body {
     @apply bg-background text-foreground;
     font-family: 'Manrope', sans-serif;
     /* Prevent horizontal overflow */
     overflow-x: hidden;
   }
+  
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Fraunces', serif;
   }
@@ -219,5 +221,60 @@
   .overflow-safe {
     max-width: 100vw;
     overflow-x: hidden;
+  }
+
+  /* AdSense and Banner Safe Layout Rules */
+  /* Standard Google AdSense dimensions with responsive scaling */
+  /* Desktop: 728×90, Mobile: 320×50 */
+  .adsense-banner-wrapper,
+  .banner-slot {
+    position: relative !important;
+    overflow: hidden !important;
+    margin: 0 auto !important; /* Center horizontally */
+    width: 100% !important;
+    max-width: 728px !important; /* Max desktop ad width */
+  }
+  
+  /* Reserve height to prevent layout shift */
+  .adsense-banner-wrapper {
+    /* Desktop height: 90px, Mobile height: 50px */
+    min-height: 50px !important;
+  }
+  
+  @media (min-width: 768px) {
+    .adsense-banner-wrapper {
+      min-height: 90px !important;
+    }
+  }
+
+  /* Header AdSense Banner - Fixed height enforcement */
+  /* Apply ONLY to banner under header (after_header position) */
+  .adsense-header-banner {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    /* Fixed height for mobile: 50px */
+    height: 50px !important;
+  }
+
+  @media (min-width: 768px) {
+    .adsense-header-banner {
+      /* Fixed height for desktop: 90px (728×90 standard) */
+      height: 90px !important;
+    }
+  }
+
+  /* Prevent AdSense from affecting viewport - no zoom, no transform:scale, no position:fixed */
+  .adsense-banner-wrapper > *,
+  .banner-slot > *,
+  .adsense-banner,
+  .banner-slot img {
+    max-width: 100% !important;
+    height: auto !important;
+    transform: none !important;
+    zoom: normal !important;
+    position: relative !important;
   }
 }
