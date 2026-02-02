@@ -38,6 +38,13 @@ export default function BannerSlot({
   const [activeBanner, setActiveBanner] = useState<ActiveBannerRow | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Block header/top positions globally (only allow middle/bottom)
+  const isBlockedPosition = position === 'after_header' || position === 'header' || position === 'hero';
+  
+  if (isBlockedPosition) {
+    return null;
+  }
+
   useEffect(() => {
     let mounted = true;
 
@@ -78,7 +85,7 @@ export default function BannerSlot({
         }
         setActiveBanner(null);
       } else {
-        setActiveBanner((data as ActiveBannerRow) ?? null);
+        setActiveBanner((data as unknown as ActiveBannerRow) ?? null);
       }
 
       setLoading(false);
