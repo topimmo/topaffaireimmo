@@ -247,25 +247,6 @@
     }
   }
 
-  /* Header AdSense Banner - Fixed height enforcement */
-  /* Apply ONLY to banner under header (after_header position) */
-  .adsense-header-banner {
-    display: flex !important;
-    justify-content: center !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: hidden !important;
-    /* Fixed height for mobile: 50px */
-    height: 50px !important;
-  }
-
-  @media (min-width: 768px) {
-    .adsense-header-banner {
-      /* Fixed height for desktop: 90px (728×90 standard) */
-      height: 90px !important;
-    }
-  }
-
   /* Prevent AdSense from affecting viewport - no zoom, no transform:scale, no position:fixed */
   .adsense-banner-wrapper > *,
   .banner-slot > *,

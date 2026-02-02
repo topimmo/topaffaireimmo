@@ -11,7 +11,6 @@ import { runStartupValidation } from "./lib/startup-validation";
 // ✅ Layout imports
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import AdBanner from "@/components/home/AdBanner";
 
 // Lazy load pages
 const Home = lazy(() => import("./components/home"));
@@ -71,29 +70,18 @@ function ScrollToTop() {
   return null;
 }
 
-/** ✅ Public Layout: كيخلي الإشهار يبان فـ جميع صفحات public */
+/** ✅ Public Layout */
 function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* AdBanner after header with proper spacing */}
-      <AdBanner page="global" position="after_header" />
-
       <main className="flex-1">
         <Outlet />
       </main>
 
-      {/* AdBanner before footer with proper spacing */}
-      <AdBanner
-        page="global"
-        position="before_footer"
-        className="bg-muted/30"
-      />
-
       <Footer />
 
-      {/* بغيتيه هنا ولا تخليه فالـ App تحت */}
       <MobileFAB />
     </div>
   );
