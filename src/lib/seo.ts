@@ -83,6 +83,8 @@ export const SAHARA_CITIES = [
   'tarfaya',
 ] as const;
 
+export type SaharaCityId = typeof SAHARA_CITIES[number];
+
 /**
  * Property types for SEO URLs
  */

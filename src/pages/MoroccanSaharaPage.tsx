@@ -16,8 +16,10 @@ import { Link } from 'react-router-dom';
 export default function MoroccanSaharaPage() {
   const { language, t } = useLanguage();
 
-  // Get Sahara cities data
-  const saharaCities = MOROCCO_CITIES.filter(c => SAHARA_CITIES.includes(c.id as any));
+  // Get Sahara cities data - filter by checking if id is in SAHARA_CITIES
+  const saharaCities = MOROCCO_CITIES.filter(c => 
+    SAHARA_CITIES.includes(c.id as typeof SAHARA_CITIES[number])
+  );
 
   const pageTitle = 'Immobilier au Sahara Marocain – Vente & Location | TopAffaireImmo';
   const pageDescription = 
