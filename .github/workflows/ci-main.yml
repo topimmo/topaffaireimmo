@@ -29,6 +29,9 @@ jobs:
         run: npm run typecheck || echo "⚠️ TypeScript errors detected (non-blocking)"
         continue-on-error: true
 
+      - name: Verify PR #86 Enforcement (CRITICAL - MUST pass)
+        run: npx tsx src/tests/ad-positioning.test.ts
+
       - name: Run build (MUST succeed)
         run: npm run build
         env:

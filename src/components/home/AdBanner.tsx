@@ -12,6 +12,18 @@ interface AdBannerProps {
 // Admin route prefix - ads are disabled on admin routes to prevent UI blocking
 const ADMIN_ROUTE_PREFIX = '/admin';
 
+/**
+ * CRITICAL: Header ad positions that must NEVER render
+ * This is a permanent enforcement from PR #86
+ * DO NOT modify or remove these restrictions
+ */
+const BLOCKED_AD_POSITIONS = [
+  'header',
+  'after_header',
+  'hero',
+  'top',
+] as const;
+
 export default function AdBanner({ 
   className, 
   page = 'home', 
@@ -19,13 +31,17 @@ export default function AdBanner({
 }: AdBannerProps) {
   const location = useLocation();
   
-  // Disable ads on /admin routes to prevent UI blocking and banner fetching
+  // CRITICAL ENFORCEMENT #1: Disable ads on /admin routes to prevent UI blocking and banner fetching
   if (location.pathname.startsWith(ADMIN_ROUTE_PREFIX)) {
     return null;
   }
   
-  // Disable header banners globally (only allow middle/bottom placements)
-  if (position === 'after_header' || position === 'header') {
+  // CRITICAL ENFORCEMENT #2: Disable header banners globally (only allow middle/bottom placements)
+  // This is permanent from PR #86 - header ads must NEVER render site-wide
+  if (BLOCKED_AD_POSITIONS.includes(position as any)) {
+    if (import.meta.env.DEV) {
+      console.warn(`[AdBanner] Blocked header position: "${position}" - This is permanent from PR #86`);
+    }
     return null;
   }
   
