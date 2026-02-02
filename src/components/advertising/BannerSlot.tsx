@@ -21,6 +21,18 @@ interface BannerSlotProps {
   adSenseFallback?: ReactNode;
 }
 
+/**
+ * CRITICAL: Header ad positions that must NEVER render
+ * This is a permanent enforcement from PR #86
+ * DO NOT modify or remove these restrictions
+ */
+const BLOCKED_AD_POSITIONS = [
+  'header',
+  'after_header',
+  'hero',
+  'top',
+] as const;
+
 const normalizeUrl = (u: string) => {
   const clean = u.trim();
   if (!clean) return clean;
@@ -38,10 +50,14 @@ export default function BannerSlot({
   const [activeBanner, setActiveBanner] = useState<ActiveBannerRow | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Block header/top positions globally (only allow middle/bottom)
-  const isBlockedPosition = position === 'after_header' || position === 'header' || position === 'hero';
+  // CRITICAL ENFORCEMENT: Block header/top positions globally (only allow middle/bottom)
+  // This is permanent from PR #86 - header ads must NEVER render site-wide
+  const isBlockedPosition = BLOCKED_AD_POSITIONS.includes(position as any);
   
   if (isBlockedPosition) {
+    if (import.meta.env.DEV) {
+      console.warn(`[BannerSlot] Blocked header position: "${position}" - This is permanent from PR #86`);
+    }
     return null;
   }
 
@@ -79,7 +95,9 @@ export default function BannerSlot({
       if (!mounted) return;
 
       if (error) {
-        // Silent fallback - don't spam console with 406 errors
+        // CRITICAL: Silent fallback for 406 errors (PR #86 enforcement)
+        // PGRST116 = "The result contains 0 rows" - this is expected and should not spam console
+        // This prevents noise when banner slots don't have active campaigns
         if (error.code !== 'PGRST116') {
           console.warn("[BannerSlot] fetch error:", error.message);
         }

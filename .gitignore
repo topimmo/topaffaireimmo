@@ -30,7 +30,9 @@ dist-ssr
 
 core
 
-.github/
+# Allow GitHub workflows but ignore agent configs
+.github/agents/
+!.github/workflows/
 
 **/tempobook/**
 .env
