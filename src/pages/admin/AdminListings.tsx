@@ -24,6 +24,9 @@ import {
 import { Eye, CheckCircle, XCircle, Loader2, Trash2, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { ImageModal } from '@/components/admin/ImageModal';
+import { Textarea } from '@/components/ui/textarea';
 
 type ProfileInfo = {
   id: string;
@@ -109,6 +112,16 @@ export default function AdminListings() {
   const [totalCount, setTotalCount] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<string>('');
   const pageSize = 50;
+
+  // Reject dialog state
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectingPropertyId, setRejectingPropertyId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  // Image modal state
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [modalImages, setModalImages] = useState<string[]>([]);
+  const [modalInitialIndex, setModalInitialIndex] = useState(0);
 
   useEffect(() => {
     setPage(1);
@@ -223,12 +236,25 @@ export default function AdminListings() {
   };
 
   const handleStatusChange = async (propertyId: string, newStatus: string) => {
+    // For reject, show confirmation dialog
+    if (newStatus === 'rejected') {
+      setRejectingPropertyId(propertyId);
+      setRejectDialogOpen(true);
+      return;
+    }
+
+    // For approve, proceed directly
+    await performStatusChange(propertyId, newStatus);
+  };
+
+  const performStatusChange = async (propertyId: string, newStatus: string, reason?: string) => {
     // ===== STEP A: Confirm onClick is triggered =====
     console.group('🔍 [STEP A] Approve/Reject onClick Triggered');
-    console.log('Function: handleStatusChange (AdminListings)');
+    console.log('Function: performStatusChange (AdminListings)');
     console.log('Timestamp:', new Date().toISOString());
     console.log('New Status:', newStatus);
     console.log('Property ID:', propertyId);
+    if (reason) console.log('Rejection Reason:', reason);
     const property = properties.find(p => p.id === propertyId);
     console.log('Property Title:', property?.title_fr || 'Unknown');
     console.groupEnd();
@@ -248,6 +274,13 @@ export default function AdminListings() {
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
+      } else if (newStatus === 'rejected') {
+        const now = new Date().toISOString();
+        updateData.rejected_at = now;
+        updateData.rejected_by = user?.id || null;
+        if (reason) {
+          updateData.rejection_reason = reason;
+        }
       }
 
       // ===== STEP B: Confirm network request is sent =====
@@ -262,7 +295,8 @@ export default function AdminListings() {
         .from('properties')
         .update(updateData)
         .eq('id', propertyId)
-        .select();
+        .select()
+        .single();
 
       // ===== STEP C: Confirm Supabase response and errors =====
       console.group('🔍 [STEP C] Supabase Response');
@@ -286,7 +320,7 @@ export default function AdminListings() {
         console.group('🔍 [STEP D] Verifying DB Update');
         const { data: verifyData, error: verifyError } = await supabase
           .from('properties')
-          .select('id, status, approved_at, approved_by, published_at')
+          .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by')
           .eq('id', propertyId)
           .single();
         
@@ -299,6 +333,9 @@ export default function AdminListings() {
             console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
             console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
             console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
+          } else if (newStatus === 'rejected') {
+            console.log('Rejected At Set:', verifyData?.rejected_at ? '✅ YES' : '❌ NO');
+            console.log('Rejected By Set:', verifyData?.rejected_by ? '✅ YES' : '❌ NO');
           }
         }
         console.groupEnd();
@@ -316,8 +353,6 @@ export default function AdminListings() {
             console.warn('Failed to log audit action, continuing anyway:', auditError);
           }
 
-          // Facebook webhook removed from client-side
-          // Use Supabase Database Webhooks (configured in dashboard) or manual retry button
           toast.success(isRTL ? 'تم اعتماد الإعلان' : 'Listing approved');
         } else if (newStatus === 'rejected') {
           try {
@@ -325,7 +360,10 @@ export default function AdminListings() {
               action: 'reject',
               entity_type: 'property',
               entity_id: propertyId,
-              metadata: { title: property?.title_fr || '' },
+              metadata: { 
+                title: property?.title_fr || '',
+                reason: reason || '',
+              },
             });
           } catch (auditError) {
             console.warn('Failed to log audit action, continuing anyway:', auditError);
@@ -338,7 +376,19 @@ export default function AdminListings() {
           );
         }
 
-        await fetchProperties();
+        // Update UI: if current filter is 'pending', remove the row; otherwise update status
+        if (statusFilter === 'pending') {
+          // Remove from list since it's no longer pending
+          setProperties(prev => prev.filter(p => p.id !== propertyId));
+          setTotalCount(prev => Math.max(0, prev - 1));
+        } else {
+          // Update the row status in place
+          setProperties(prev => prev.map(p => 
+            p.id === propertyId 
+              ? { ...p, status: newStatus, ...updateData }
+              : p
+          ));
+        }
       }
     } catch (error) {
       console.error('Status change error:', error);
@@ -346,6 +396,32 @@ export default function AdminListings() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectingPropertyId) return;
+    
+    setRejectDialogOpen(false);
+    await performStatusChange(rejectingPropertyId, 'rejected', rejectionReason);
+    
+    // Reset state
+    setRejectingPropertyId(null);
+    setRejectionReason('');
+  };
+
+  const handleRejectCancel = () => {
+    setRejectDialogOpen(false);
+    setRejectingPropertyId(null);
+    setRejectionReason('');
+  };
+
+  const handleImageClick = (images: string[] | null | undefined) => {
+    if (!images || images.length === 0) return;
+    
+    const displayUrls = images.map(img => getDisplayImageUrl(img));
+    setModalImages(displayUrls);
+    setModalInitialIndex(0);
+    setImageModalOpen(true);
   };
 
   const handleDelete = async (property: Property) => {
@@ -603,22 +679,34 @@ export default function AdminListings() {
                   {properties.map((property) => {
                     const firstImg = getFirstImage(property.images);
                     const imgUrl = firstImg ? getDisplayImageUrl(firstImg) : null;
+                    const imageCount = property.images?.length || 0;
 
                     return (
                       <TableRow key={property.id}>
                         <TableCell>
                           {imgUrl ? (
-                            <img
-                              src={imgUrl}
-                              alt="property"
-                              className="h-14 w-24 object-cover rounded border"
-                              loading="lazy"
-                              onError={(e) => {
-                                // helpful debug
-                                console.warn('IMAGE LOAD ERROR:', imgUrl);
-                                (e.currentTarget as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
+                            <div className="relative">
+                              <img
+                                src={imgUrl}
+                                alt="property"
+                                className="h-14 w-24 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                                loading="lazy"
+                                onClick={() => handleImageClick(property.images)}
+                                onError={(e) => {
+                                  // helpful debug
+                                  console.warn('IMAGE LOAD ERROR:', imgUrl);
+                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                              {imageCount > 1 && (
+                                <div 
+                                  className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded cursor-pointer"
+                                  onClick={() => handleImageClick(property.images)}
+                                >
+                                  +{imageCount - 1}
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div className="h-14 w-24 rounded border bg-muted flex items-center justify-center text-xs text-muted-foreground">
                               {isRTL ? 'بدون صورة' : 'No image'}
@@ -732,6 +820,38 @@ export default function AdminListings() {
           )}
         </div>
       </div>
+
+      {/* Reject Confirmation Dialog */}
+      <ConfirmDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        onConfirm={handleRejectConfirm}
+        title={isRTL ? 'رفض الإعلان' : 'Reject Listing'}
+        description={isRTL ? 'واش متأكد بغيت ترفض هاد الإعلان؟' : 'Are you sure you want to reject this listing?'}
+        confirmText={isRTL ? 'رفض' : 'Reject'}
+        cancelText={isRTL ? 'إلغاء' : 'Cancel'}
+        destructive={true}
+      >
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            {isRTL ? 'سبب الرفض (اختياري)' : 'Rejection Reason (optional)'}
+          </label>
+          <Textarea
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            placeholder={isRTL ? 'أدخل سبب رفض الإعلان...' : 'Enter reason for rejection...'}
+            rows={3}
+          />
+        </div>
+      </ConfirmDialog>
+
+      {/* Image Modal */}
+      <ImageModal
+        images={modalImages}
+        open={imageModalOpen}
+        onOpenChange={setImageModalOpen}
+        initialIndex={modalInitialIndex}
+      />
     </AdminLayout>
   );
 }
