@@ -11,14 +11,14 @@ This PR fixes two critical issues in the TopAffaireImmo application:
 
 #### Problem
 - The PropertyDetails page was attempting to select `company_name` from the `properties` table
-- This column doesn't exist in the properties table (line 66 in type definition)
-- The UI displayed `property.company_name` which would always be undefined (line 615)
+- This column doesn't exist in the properties table (it was incorrectly included in the type definition)
+- The UI displayed `property.company_name` which would always be undefined
 - No data was being fetched about the property owner
 
 #### Solution
 **File: `src/pages/PropertyDetails.tsx`**
 
-1. **Updated Type Definition** (lines 35-72)
+1. **Updated Type Definition**
    - Removed `company_name` from the direct properties
    - Added `owner` object with nested profile data:
      ```typescript
@@ -30,19 +30,21 @@ This PR fixes two critical issues in the TopAffaireImmo application:
        email?: string | null;
      } | null;
      ```
+   - Created `SupabasePropertyResponse` type for type-safe handling of Supabase's array responses
 
-2. **Updated Supabase Query** (lines 101-129)
+2. **Updated Supabase Query**
    - Added join to profiles table via owner_id:
      ```typescript
      owner:profiles(company_name, agency_name, full_name, phone, email),
      ```
 
-3. **Fixed Data Handling** (lines 137-154)
-   - Added proper handling for Supabase nested query responses
-   - Arrays returned by Supabase for single relationships are now properly converted
-   - Type-safe conversion with proper null checks
+3. **Fixed Data Handling with Type Safety**
+   - Added proper type-safe handling for Supabase nested query responses
+   - Uses `SupabasePropertyResponse` type instead of `any`
+   - Arrays returned by Supabase for single relationships are properly converted
+   - Proper null checks throughout
 
-4. **Updated UI Display** (lines 611-629)
+4. **Updated UI Display**
    - Changed from `property.company_name` to fallback logic:
      ```typescript
      {property.owner?.company_name || property.owner?.agency_name || "TopAffaireImmo"}

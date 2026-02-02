@@ -78,6 +78,19 @@ type DbPropertyDetails = {
   neighborhood?: { name_fr: string | null; name_ar: string | null } | null;
 };
 
+// Type for Supabase response with nested relationships (which return arrays)
+type SupabasePropertyResponse = Omit<DbPropertyDetails, 'city' | 'neighborhood' | 'owner'> & {
+  city?: { name_fr: string | null; name_ar: string | null }[] | null;
+  neighborhood?: { name_fr: string | null; name_ar: string | null }[] | null;
+  owner?: {
+    company_name?: string | null;
+    agency_name?: string | null;
+    full_name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  }[] | null;
+};
+
 function getPublicImageUrl(pathOrUrl: string) {
   if (!pathOrUrl) return "";
   if (pathOrUrl.startsWith("http")) return pathOrUrl;
@@ -147,8 +160,8 @@ export default function PropertyDetails() {
           setProperty(null);
           setLoadError(error.message);
         } else if (data) {
-          // Type assertion to handle Supabase nested query response
-          const typedData = data as any;
+          // Handle Supabase nested query response - converts arrays to single objects
+          const typedData = data as SupabasePropertyResponse;
           setProperty({
             ...typedData,
             city: Array.isArray(typedData?.city) ? typedData.city[0] : typedData?.city,
