@@ -122,7 +122,6 @@ export default function SearchResults() {
               neighborhood:neighborhoods(name_fr, name_ar)
             `
           )
-          // Only show published properties on public search page
           .eq("status", "published");
 
         // ✅ Type filter (SQL) - نخففو فالfrontend filter final

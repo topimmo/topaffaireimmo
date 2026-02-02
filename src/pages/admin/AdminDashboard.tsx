@@ -53,10 +53,10 @@ export default function AdminDashboard() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');
 
-    const { count: approvedCount } = await supabase
+    const { count: publishedCount } = await supabase
       .from('properties')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'approved');
+      .eq('status', 'published');
 
     const { count: publishedCount } = await supabase
       .from('properties')
@@ -92,8 +92,8 @@ export default function AdminDashboard() {
 
     setStats({
       pendingListings: pendingCount || 0,
-      approvedListings: approvedCount || 0,
-      publishedListings: publishedCount || 0,
+      approvedListings: publishedCount || 0,
+
       rejectedListings: rejectedCount || 0,
       totalListings: allListingsCount || 0,
       totalUsers: usersCount || 0,
@@ -117,12 +117,12 @@ export default function AdminDashboard() {
       link: '/admin/listings?status=pending',
     },
     {
-      title: isRTL ? 'الإعلانات المعتمدة' : 'Approved Listings',
+      title: isRTL ? 'الإعلانات المنشورة' : 'Published Listings',
       value: stats.approvedListings,
       icon: CheckCircle,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
-      link: '/admin/listings?status=approved',
+      link: '/admin/listings?status=published',
     },
     {
       title: isRTL ? 'الإعلانات المنشورة' : 'Published Listings',

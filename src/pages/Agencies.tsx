@@ -88,7 +88,7 @@ export default function Agencies() {
         .from("properties")
         .select("owner_id")
         .in("owner_id", agencyIds)
-        // Only count published properties on public agencies page
+
         .eq("status", "published");
 
       if (propsErr) throw propsErr;
