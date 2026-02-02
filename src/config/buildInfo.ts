@@ -1,6 +1,11 @@
 /**
  * Build and deployment information
  * Used to verify which version is deployed to production
+ * 
+ * Note: buildTime represents when the bundle was created during the build process.
+ * It will be the same for all clients since it's captured at module evaluation time
+ * during the Vite build. This is intentional and provides a consistent timestamp
+ * for the build.
  */
 
 export const BUILD_INFO = {
@@ -9,7 +14,7 @@ export const BUILD_INFO = {
              import.meta.env.VERCEL_GIT_COMMIT_SHA || 
              'local-dev',
   
-  // Build timestamp
+  // Build timestamp (set when module is evaluated during build)
   buildTime: new Date().toISOString(),
   
   // Environment

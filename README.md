@@ -141,19 +141,13 @@ See [Deployment Guide](docs/DEPLOYMENT.md) for detailed instructions.
 
 After deploying to production, you can verify which version is running:
 
-1. **Check Build Info in Admin Panel**:
+1. **Check Build Info in Admin Panel** (Recommended):
    - Log in as an admin
    - Navigate to Settings (`/admin/settings`)
    - Scroll to the "Build Information" section
    - Verify the Commit SHA matches your latest commit
 
-2. **Via Browser Console**:
-   ```javascript
-   // In your browser console on the production site
-   console.log('Build Info:', window.__BUILD_INFO__);
-   ```
-
-3. **Check Vercel Dashboard**:
+2. **Check Vercel Dashboard**:
    - Go to your Vercel project dashboard
    - Click on the latest deployment
    - Verify the commit SHA and deployment status
