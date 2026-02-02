@@ -157,17 +157,22 @@ export default function AdminListingDetail() {
       // Prepare update data
       const updateData: any = { status: newStatus };
       
-      // If approving, set approval fields
-      if (newStatus === 'approved') {
+      // If approving, set approval fields and change to published
+      if (newStatus === 'approved' || newStatus === 'published') {
         const now = new Date().toISOString();
+        updateData.status = 'published'; // Approved goes directly to published
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
+        updateData.is_archived = false;
       } else if (newStatus === 'rejected') {
         const now = new Date().toISOString();
         updateData.rejected_at = now;
         updateData.rejected_by = user?.id || null;
+        updateData.is_archived = false;
         // rejection_reason should be set separately via the UI
+      } else if (newStatus === 'archived') {
+        updateData.is_archived = true;
       }
       
       // ===== STEP B: Confirm network request is sent =====
@@ -460,7 +465,7 @@ export default function AdminListingDetail() {
                 ) : (
                   <CheckCircle className="h-4 w-4 mr-2" />
                 )}
-                {isRTL ? 'اعتماد' : 'Approve'}
+                {isRTL ? 'اعتماد ونشر' : 'Approuver et publier'}
               </Button>
               <Button
                 onClick={() => handleStatusChange('rejected')}
@@ -472,12 +477,42 @@ export default function AdminListingDetail() {
                 ) : (
                   <XCircle className="h-4 w-4 mr-2" />
                 )}
-                {isRTL ? 'رفض' : 'Reject'}
+                {isRTL ? 'رفض' : 'Rejeter'}
               </Button>
             </>
           )}
 
-          {/* ✅ Delete button for all statuses */}
+          {(property.status === 'published' || property.status === 'approved') && !property.is_archived && (
+            <Button
+              onClick={() => handleStatusChange('archived')}
+              disabled={actionLoading}
+              variant="outline"
+            >
+              {actionLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-2" />
+              )}
+              {isRTL ? 'أرشفة / إلغاء النشر' : 'Archiver / Dépublier'}
+            </Button>
+          )}
+
+          {property.status === 'archived' && (
+            <Button
+              onClick={() => handleStatusChange('published')}
+              disabled={actionLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {actionLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              {isRTL ? 'نشر مرة أخرى' : 'Republier'}
+            </Button>
+          )}
+
+          {/* Delete button for all statuses */}
           <Button
             onClick={handleDelete}
             disabled={actionLoading}
@@ -489,7 +524,7 @@ export default function AdminListingDetail() {
             ) : (
               <Trash2 className="h-4 w-4 mr-2" />
             )}
-            {isRTL ? 'حذف' : 'Delete'}
+            {isRTL ? 'حذف' : 'Supprimer'}
           </Button>
         </div>
 

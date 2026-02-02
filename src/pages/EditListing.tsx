@@ -29,8 +29,10 @@ import {
   CheckCircle,
   Loader2,
   ArrowLeft,
+  Lock,
 } from 'lucide-react';
 import { cn, mapTransactionType } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface City {
   id: number;
@@ -72,6 +74,8 @@ export default function EditListing() {
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showCustomNeighborhood, setShowCustomNeighborhood] = useState(false);
   const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
+  const [propertyStatus, setPropertyStatus] = useState<string>('');
+  const [isLocked, setIsLocked] = useState(false);
 
   const [formData, setFormData] = useState({
     transactionType: 'sale',
@@ -133,9 +137,27 @@ export default function EditListing() {
       .eq('owner_id', user!.id)
       .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      console.error('Error fetching property:', error);
+      toast.error('Failed to load property');
       navigate('/dashboard');
       return;
+    }
+
+    if (!data) {
+      toast.error('Property not found or you do not have permission to edit it');
+      navigate('/dashboard');
+      return;
+    }
+
+    // Check if listing is locked based on status
+    const lockedStatuses = ['pending', 'approved', 'published', 'archived'];
+    const locked = lockedStatuses.includes(data.status || '');
+    setPropertyStatus(data.status || '');
+    setIsLocked(locked);
+
+    if (locked) {
+      toast.warning(`Listing is locked (status: ${data.status}). Only admins can modify it.`);
     }
 
     setFormData({
@@ -505,6 +527,31 @@ export default function EditListing() {
             </h1>
           </div>
 
+          {/* Locked Status Message */}
+          {isLocked && (
+            <div className="mb-8 bg-amber-50 border-2 border-amber-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <Lock className="h-6 w-6 text-amber-600 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-900 mb-2">
+                    {isRTL ? 'الإعلان مقفل' : 'Annonce verrouillée'}
+                  </h3>
+                  <p className="text-amber-800 text-sm mb-2">
+                    {isRTL 
+                      ? `لا يمكن تعديل هذا الإعلان لأنه في مرحلة المراجعة. فقط المسؤولون يمكنهم تعديله.`
+                      : `Cette annonce ne peut pas être modifiée car elle est en cours de révision. Seuls les administrateurs peuvent la modifier.`
+                    }
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    {isRTL
+                      ? 'إذا كنت بحاجة إلى تغيير، يرجى الاتصال بالدعم.'
+                      : 'Si vous avez besoin de modifications, veuillez contacter le support.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="bg-white rounded-xl border p-6">
               <h2 className="font-display text-xl font-semibold mb-4">
@@ -513,24 +560,28 @@ export default function EditListing() {
               <div className="flex gap-4">
                 <button
                   type="button"
+                  disabled={isLocked}
                   onClick={() => handleSelectChange('transactionType', 'sale')}
                   className={cn(
                     'flex-1 py-4 px-6 rounded-lg border-2 transition-all',
                     formData.transactionType === 'sale'
                       ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-muted hover:border-primary/30'
+                      : 'border-muted hover:border-primary/30',
+                    isLocked && 'opacity-50 cursor-not-allowed'
                   )}
                 >
                   <p className="font-semibold">{t('hero.forSale')}</p>
                 </button>
                 <button
                   type="button"
+                  disabled={isLocked}
                   onClick={() => handleSelectChange('transactionType', 'rent')}
                   className={cn(
                     'flex-1 py-4 px-6 rounded-lg border-2 transition-all',
                     formData.transactionType === 'rent'
                       ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-muted hover:border-primary/30'
+                      : 'border-muted hover:border-primary/30',
+                    isLocked && 'opacity-50 cursor-not-allowed'
                   )}
                 >
                   <p className="font-semibold">{t('hero.forRent')}</p>
@@ -547,12 +598,14 @@ export default function EditListing() {
                   <button
                     key={type.value}
                     type="button"
+                    disabled={isLocked}
                     onClick={() => handleSelectChange('propertyType', type.value)}
                     className={cn(
                       'p-4 rounded-lg border-2 transition-all text-center',
                       formData.propertyType === type.value
                         ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-muted hover:border-primary/30'
+                        : 'border-muted hover:border-primary/30',
+                      isLocked && 'opacity-50 cursor-not-allowed'
                     )}
                   >
                     <type.icon className="h-6 w-6 mx-auto mb-2" />
@@ -836,12 +889,17 @@ export default function EditListing() {
               type="submit"
               size="lg"
               className="w-full text-base"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLocked}
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   {uploadProgress || (isRTL ? 'جاري المعالجة...' : 'Traitement...')}
+                </span>
+              ) : isLocked ? (
+                <span className="flex items-center gap-2">
+                  <Lock className="h-5 w-5" />
+                  {isRTL ? 'الإعلان مقفل' : 'Annonce verrouillée'}
                 </span>
               ) : (
                 t('common.save')
