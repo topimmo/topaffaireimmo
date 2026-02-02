@@ -1,8 +1,7 @@
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import SEO from '../components/SEO';
 import { MOROCCO_CITIES } from '../lib/seo';
-import SearchResults from '../components/search/SearchResults';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import MobileFAB from '../components/layout/MobileFAB';
@@ -95,35 +94,71 @@ export default function CityTransactionPage() {
             <BannerSlot page="search" position="hero" />
           </div>
 
-          {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              {transactionText} {language === 'fr' ? 'Immobilier à' : ''} {cityName}
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {isRental
-                ? language === 'fr'
-                  ? `Parcourez les meilleures offres de location à ${cityName}. Appartements, maisons et villas disponibles.`
-                  : `تصفح أفضل عروض الإيجار في ${cityName}. شقق ومنازل وفيلات متاحة.`
-                : language === 'fr'
-                  ? `Découvrez les propriétés à vendre à ${cityName}. Appartements, villas, maisons et terrains.`
-                  : `اكتشف العقارات المعروضة للبيع في ${cityName}. شقق وفيلات ومنازل وأراضي.`}
-            </p>
-          </div>
+          <div className="max-w-4xl mx-auto">
+            {/* Page Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3">
+                {transactionText} {language === 'fr' ? 'Immobilier à' : ''} {cityName}
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                {isRental
+                  ? language === 'fr'
+                    ? `Parcourez les meilleures offres de location à ${cityName}. Appartements, maisons et villas disponibles.`
+                    : `تصفح أفضل عروض الإيجار في ${cityName}. شقق ومنازل وفيلات متاحة.`
+                  : language === 'fr'
+                    ? `Découvrez les propriétés à vendre à ${cityName}. Appartements, villas, maisons et terrains.`
+                    : `اكتشف العقارات المعروضة للبيع في ${cityName}. شقق وفيلات ومنازل وأراضي.`}
+              </p>
+            </div>
 
-          {/* Middle Banner */}
-          <div className="mb-6">
-            <BannerSlot page="search" position="middle" />
-          </div>
+            {/* Middle Banner */}
+            <div className="mb-8">
+              <BannerSlot page="search" position="middle" />
+            </div>
 
-          {/* Search Results */}
-          <SearchResults
-            filters={{
-              transaction_type: transactionType,
-              city: cityData.name_fr,
-            }}
-            showFilters={true}
-          />
+            {/* Coming Soon Message with CTA */}
+            <div className="bg-card border rounded-lg p-8 mb-8">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-4">
+                  {language === 'fr' ? 'Annonces disponibles prochainement' : 'الإعلانات متاحة قريباً'}
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  {language === 'fr'
+                    ? `Les annonces de ${type} pour ${cityName} seront bientôt disponibles. En attendant, parcourez toutes nos annonces ou publiez la vôtre.`
+                    : `ستتوفر إعلانات ${type === 'vente' ? 'البيع' : 'الإيجار'} لـ ${cityName} قريبًا. في هذه الأثناء، تصفح جميع إعلاناتنا أو انشر إعلانك.`}
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link
+                    to="/search"
+                    className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    {language === 'fr' ? 'Voir toutes les annonces' : 'عرض جميع الإعلانات'}
+                  </Link>
+                  <Link
+                    to="/add-listing"
+                    className="inline-flex items-center justify-center px-6 py-3 border border-input rounded-lg hover:bg-accent transition-colors"
+                  >
+                    {language === 'fr' ? 'Publier une annonce' : 'نشر إعلان'}
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* SEO Content */}
+            <div className="prose prose-lg max-w-none">
+              <h2 className="text-2xl font-semibold mb-4">
+                {language === 'fr' 
+                  ? `Pourquoi ${type === 'vente' ? 'acheter' : 'louer'} à ${cityName} ?`
+                  : `لماذا ${type === 'vente' ? 'الشراء' : 'الإيجار'} في ${cityName}؟`}
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {language === 'fr'
+                  ? `${cityName} offre de nombreuses opportunités immobilières pour tous les budgets. Que vous recherchiez un appartement moderne, une villa spacieuse ou une maison traditionnelle, vous trouverez des options variées dans cette ville.`
+                  : `تقدم ${cityName} العديد من الفرص العقارية لجميع الميزانيات. سواء كنت تبحث عن شقة حديثة أو فيلا واسعة أو منزل تقليدي، ستجد خيارات متنوعة في هذه المدينة.`}
+              </p>
+            </div>
+          </div>
         </main>
 
         <Footer />
