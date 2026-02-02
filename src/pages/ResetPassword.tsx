@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
+import { parseHashParams, clearUrlHash } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+
+// Wait time for Supabase's detectSessionInUrl to automatically process session from URL
+const SESSION_WAIT_MS = 1000;
+// Delay before redirecting after successful password update
+const SUCCESS_REDIRECT_DELAY_MS = 2000;
 
 export default function ResetPassword() {
   const { t, isRTL } = useLanguage();
@@ -20,24 +26,164 @@ export default function ResetPassword() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    // Check if user has a valid password reset session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setValidSession(!!session);
-      setCheckingSession(false);
-    };
-    
-    checkSession();
+    // Handle password reset session establishment
+    const establishSession = async () => {
+      try {
+        console.log('🔐 Reset password page loaded');
+        console.log('  - Current URL:', window.location.href);
 
-    // Listen for auth state changes (happens when user clicks email link)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        // Check for PKCE code in query params
+        const queryParams = new URLSearchParams(window.location.search);
+        const code = queryParams.get('code');
+
+        // Check for hash-based tokens
+        const hashParams = parseHashParams();
+        const accessToken = hashParams.access_token;
+        const refreshToken = hashParams.refresh_token;
+        const type = hashParams.type || queryParams.get('type');
+
+        console.log('  - Auth parameters:', { 
+          hasCode: !!code,
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          type
+        });
+
+        // Check for errors in URL
+        const errorParam = hashParams.error || queryParams.get('error');
+        const errorDescription = hashParams.error_description || queryParams.get('error_description');
+
+        if (errorParam) {
+          console.error('❌ Error in reset password URL:', errorParam, errorDescription);
+          setError(errorDescription || errorParam);
+          setCheckingSession(false);
+          return;
+        }
+
+        // PKCE flow: Exchange code for session
+        if (code) {
+          console.log('🔑 PKCE flow detected - exchanging code for session');
+          
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (exchangeError) {
+            console.error('❌ Error exchanging code for session:', exchangeError);
+            setError(isRTL 
+              ? 'فشل في التحقق من الرابط. يرجى طلب رابط جديد.'
+              : 'Échec de la vérification du lien. Veuillez demander un nouveau lien.');
+            setCheckingSession(false);
+            return;
+          }
+          
+          if (data.session) {
+            console.log('✅ Session established via PKCE code exchange');
+            console.log('  - User ID:', data.session.user.id);
+            console.log('  - User Email:', data.session.user.email);
+            
+            setValidSession(true);
+            setCheckingSession(false);
+            
+            // Clear the code from URL for cleaner UX
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState(null, '', cleanUrl);
+          } else {
+            console.error('❌ No session returned after code exchange');
+            setError(isRTL 
+              ? 'فشل في إنشاء الجلسة. يرجى تسجيل الدخول.'
+              : 'Impossible de créer une session. Veuillez vous connecter.');
+            setCheckingSession(false);
+          }
+          return;
+        }
+
+        // Hash-based flow: Tokens in URL hash
+        if (accessToken && refreshToken && type === 'recovery') {
+          console.log('🔑 Hash-based recovery flow detected - setting session');
+          
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (sessionError) {
+            console.error('❌ Error setting session:', sessionError);
+            setError(isRTL 
+              ? 'فشل في إنشاء الجلسة. يرجى طلب رابط جديد.'
+              : 'Échec de création de session. Veuillez demander un nouveau lien.');
+            setCheckingSession(false);
+            return;
+          }
+          
+          if (data.session) {
+            console.log('✅ Session established via hash tokens');
+            console.log('  - User ID:', data.session.user.id);
+            console.log('  - User Email:', data.session.user.email);
+            
+            setValidSession(true);
+            setCheckingSession(false);
+            
+            // Clear hash from URL for cleaner UX
+            clearUrlHash();
+          } else {
+            console.error('❌ No session returned after setting session');
+            setError(isRTL 
+              ? 'فشل في إنشاء الجلسة. يرجى تسجيل الدخول.'
+              : 'Impossible de créer une session. Veuillez vous connecter.');
+            setCheckingSession(false);
+          }
+          return;
+        }
+
+        // No code or tokens - check if user already has a valid session
+        // (e.g., from detectSessionInUrl auto-processing)
+        console.log('ℹ️ No explicit code or tokens, checking for existing session');
+        
+        // Wait a moment for Supabase detectSessionInUrl to process
+        await new Promise(resolve => setTimeout(resolve, SESSION_WAIT_MS));
+        
+        const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
+        
+        if (getSessionError) {
+          console.error('❌ Error getting session:', getSessionError);
+          setValidSession(false);
+          setCheckingSession(false);
+          return;
+        }
+
+        if (session) {
+          console.log('✅ Valid session found');
+          console.log('  - User ID:', session.user.id);
+          console.log('  - User Email:', session.user.email);
+          setValidSession(true);
+        } else {
+          console.log('⚠️ No valid session found');
+          setValidSession(false);
+        }
+        
+        setCheckingSession(false);
+      } catch (err) {
+        console.error('❌ Exception in session establishment:', err);
+        setError(isRTL 
+          ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'
+          : 'Une erreur inattendue s\'est produite. Veuillez réessayer.');
+        setCheckingSession(false);
+      }
+    };
+
+    establishSession();
+
+    // Listen for auth state changes (PASSWORD_RECOVERY event)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state changed:', event);
       if (event === 'PASSWORD_RECOVERY') {
+        console.log('✅ PASSWORD_RECOVERY event - session valid');
         setValidSession(true);
+        setCheckingSession(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, []); // Run only once on mount
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +201,8 @@ export default function ResetPassword() {
 
     setLoading(true);
 
+    console.log('🔐 Updating user password');
+
     const { error: updateError } = await supabase.auth.updateUser({
       password: password,
     });
@@ -62,14 +210,18 @@ export default function ResetPassword() {
     setLoading(false);
 
     if (updateError) {
+      console.error('❌ Password update error:', updateError);
       setError(updateError.message);
       return;
     }
 
+    console.log('✅ Password updated successfully');
     setSuccess(true);
+    
+    // Redirect to home page after success
     setTimeout(() => {
-      navigate('/dashboard');
-    }, 3000);
+      navigate('/');
+    }, SUCCESS_REDIRECT_DELAY_MS);
   };
 
   if (checkingSession) {
