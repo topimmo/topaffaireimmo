@@ -35,7 +35,7 @@ export default function Login() {
     
     // Use getSiteUrl() helper for consistent redirect URL
     const siteUrl = getSiteUrl();
-    const redirectTo = `${siteUrl}/auth/callback`;
+    const redirectTo = `${siteUrl}/reset-password`;
     
     console.log('🔐 Password reset requested');
     console.log('  - Redirect URL:', redirectTo);

@@ -77,3 +77,49 @@ export function mapTransactionType(value: string): 'sale' | 'rent' {
   // Default to 'sale' for any unrecognized value
   return 'sale';
 }
+
+/**
+ * Parse hash parameters from URL
+ * Safely extracts parameters from URL hash (e.g., #access_token=...&refresh_token=...)
+ * Used for handling Supabase auth flows that use hash-based tokens
+ * 
+ * @returns Object containing parsed hash parameters
+ */
+export function parseHashParams(): Record<string, string> {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  const hash = window.location.hash.substring(1); // Remove the '#'
+  if (!hash) {
+    return {};
+  }
+
+  const params: Record<string, string> = {};
+  const pairs = hash.split('&');
+
+  for (const pair of pairs) {
+    const [key, value] = pair.split('=');
+    if (key && value) {
+      params[decodeURIComponent(key)] = decodeURIComponent(value);
+    }
+  }
+
+  return params;
+}
+
+/**
+ * Clear URL hash without reloading the page
+ * Useful after extracting auth tokens from hash to clean up the URL
+ */
+export function clearUrlHash(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  // Use history.replaceState to remove hash without page reload
+  if (window.history && window.history.replaceState) {
+    const urlWithoutHash = window.location.pathname + window.location.search;
+    window.history.replaceState(null, '', urlWithoutHash);
+  }
+}
