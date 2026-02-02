@@ -14,14 +14,9 @@ interface FacebookWebhookResponse {
   data?: any;
 }
 
-// Track if we've already warned about webhook issues (prevent spam)
-// This is intentionally module-level to warn only once per session
-// Multiple simultaneous calls are acceptable since we only care about suppressing repeated logs
-let hasWarnedAboutWebhook = false;
-
 /**
  * Send a listing to Make for Facebook posting via Supabase Edge Function
- * This is called manually via retry button (not automatically on approval)
+ * This is called after admin approves a listing
  * 
  * @param listingId - The UUID of the approved listing
  * @returns Response from the Edge Function
@@ -34,10 +29,7 @@ export async function sendFacebookWebhook(
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     
     if (!supabaseUrl) {
-      if (!hasWarnedAboutWebhook) {
-        console.warn('Facebook webhook: VITE_SUPABASE_URL not configured');
-        hasWarnedAboutWebhook = true;
-      }
+      console.warn('Facebook webhook: VITE_SUPABASE_URL not configured');
       return {
         success: false,
         error: 'VITE_SUPABASE_URL not configured'
@@ -51,10 +43,7 @@ export async function sendFacebookWebhook(
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      if (!hasWarnedAboutWebhook) {
-        console.warn('Facebook webhook: No active session - webhook disabled');
-        hasWarnedAboutWebhook = true;
-      }
+      console.warn('Facebook webhook: No active session');
       return {
         success: false,
         error: 'No active session'
@@ -76,23 +65,16 @@ export async function sendFacebookWebhook(
     try {
       result = await response.json();
     } catch (parseError) {
-      if (!hasWarnedAboutWebhook) {
-        console.warn('Facebook webhook: Failed to parse response JSON');
-        hasWarnedAboutWebhook = true;
-      }
+      console.warn('Facebook webhook: Failed to parse response JSON:', parseError);
       result = {};
     }
 
     if (!response.ok) {
-      // Only log once to prevent console spam
-      if (!hasWarnedAboutWebhook) {
-        console.warn('Facebook webhook failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          message: 'This is expected if Edge Function is not configured. Use manual retry if needed.'
-        });
-        hasWarnedAboutWebhook = true;
-      }
+      console.warn('Facebook webhook failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: result
+      });
       return {
         success: false,
         status: response.status,
@@ -103,11 +85,7 @@ export async function sendFacebookWebhook(
 
     return result;
   } catch (error) {
-    // Silent failure - only warn once
-    if (!hasWarnedAboutWebhook) {
-      console.warn('Facebook webhook error:', String(error), '- This will not block moderation.');
-      hasWarnedAboutWebhook = true;
-    }
+    console.warn('Facebook webhook error:', error);
     return {
       success: false,
       error: String(error)
@@ -132,7 +110,7 @@ export async function retryFacebookPost(listingId: string): Promise<FacebookWebh
     .eq('id', listingId);
 
   if (updateError) {
-    console.warn('Failed to reset listing for retry:', updateError.message);
+    console.warn('Failed to reset listing for retry:', updateError);
     return {
       success: false,
       error: `Failed to reset listing: ${updateError.message}`

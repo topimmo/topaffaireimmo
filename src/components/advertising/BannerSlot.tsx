@@ -38,13 +38,6 @@ export default function BannerSlot({
   const [activeBanner, setActiveBanner] = useState<ActiveBannerRow | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Block header/top positions globally (only allow middle/bottom)
-  const isBlockedPosition = position === 'after_header' || position === 'header' || position === 'hero';
-  
-  if (isBlockedPosition) {
-    return null;
-  }
-
   useEffect(() => {
     let mounted = true;
 
@@ -71,7 +64,7 @@ export default function BannerSlot({
         .eq("slot.page", page)
         .eq("slot.position", position)
         .lte("start_date", now)
-        .or(`end_date.is.null,end_date.gte.${now}`)
+        .gte("end_date", now)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -79,15 +72,10 @@ export default function BannerSlot({
       if (!mounted) return;
 
       if (error) {
-        // Silent fallback - don't spam console with 406 errors
-        if (error.code !== 'PGRST116') {
-          console.warn("[BannerSlot] fetch error:", error.message);
-        }
+        console.log("[BannerSlot] fetch error:", error);
         setActiveBanner(null);
       } else {
-        // Supabase returns nested arrays for joined relations when using inner join
-        // Cast to unknown first to satisfy TypeScript since the actual shape may vary
-        setActiveBanner((data as unknown as ActiveBannerRow) ?? null);
+        setActiveBanner((data as ActiveBannerRow) ?? null);
       }
 
       setLoading(false);
