@@ -544,7 +544,7 @@ export default function AdminListings() {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
+      approved: 'bg-green-100 text-green-800', // Legacy status (migrated to 'published' in migration 067)
       published: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
       sold: 'bg-blue-100 text-blue-800',
@@ -553,7 +553,7 @@ export default function AdminListings() {
 
     const labels: Record<string, { fr: string; ar: string }> = {
       pending: { fr: 'En attente', ar: 'قيد الانتظار' },
-      approved: { fr: 'Approuvé', ar: 'معتمد' },
+      approved: { fr: 'Approuvé (ancien)', ar: 'معتمد (قديم)' }, // Legacy - all migrated to 'published'
       published: { fr: 'Publié', ar: 'منشور' },
       rejected: { fr: 'Rejeté', ar: 'مرفوض' },
       sold: { fr: 'Vendu', ar: 'مباع' },
