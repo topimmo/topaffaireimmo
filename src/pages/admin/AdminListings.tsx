@@ -296,7 +296,7 @@ export default function AdminListings() {
         .update(updateData)
         .eq('id', propertyId)
         .select()
-        .single();
+        .maybeSingle();
 
       // ===== STEP C: Confirm Supabase response and errors =====
       console.group('🔍 [STEP C] Supabase Response');
@@ -311,10 +311,18 @@ export default function AdminListings() {
         
         toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
         return;
-      } else {
-        console.log('✅ Success - No Error');
-        console.log('Response Data:', data);
+      }
+      
+      if (!data) {
+        console.warn('⚠️ No data returned from update (property may not exist)');
         console.groupEnd();
+        toast.error(isRTL ? 'لم يتم العثور على الإعلان' : 'Property not found');
+        return;
+      }
+      
+      console.log('✅ Success - No Error');
+      console.log('Response Data:', data);
+      console.groupEnd();
         
         // ===== STEP D: Confirm DB update happens =====
         console.group('🔍 [STEP D] Verifying DB Update');
@@ -322,7 +330,7 @@ export default function AdminListings() {
           .from('properties')
           .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by')
           .eq('id', propertyId)
-          .single();
+          .maybeSingle();
         
         if (verifyError) {
           console.error('❌ Verification Query Error:', verifyError);

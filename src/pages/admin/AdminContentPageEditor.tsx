@@ -62,7 +62,7 @@ export default function AdminContentPageEditor() {
         .from('site_pages')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching page:', error);
@@ -71,18 +71,23 @@ export default function AdminContentPageEditor() {
         return;
       }
 
-      if (data) {
-        setPageData({
-          slug: data.slug,
-          title_fr: data.title_fr,
-          title_ar: data.title_ar,
-          content_fr: data.content_fr,
-          content_ar: data.content_ar,
-          meta_description_fr: data.meta_description_fr || '',
-          meta_description_ar: data.meta_description_ar || '',
-          is_published: data.is_published,
-        });
+      if (!data) {
+        console.warn('Page not found:', id);
+        toast.error(isRTL ? 'الصفحة غير موجودة' : 'Page not found');
+        navigate('/admin/content/pages');
+        return;
       }
+
+      setPageData({
+        slug: data.slug,
+        title_fr: data.title_fr,
+        title_ar: data.title_ar,
+        content_fr: data.content_fr,
+        content_ar: data.content_ar,
+        meta_description_fr: data.meta_description_fr || '',
+        meta_description_ar: data.meta_description_ar || '',
+        is_published: data.is_published,
+      });
     } catch (error) {
       console.error('Error:', error);
       toast.error(isRTL ? 'خطأ غير متوقع' : 'Unexpected error');

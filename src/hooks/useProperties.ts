@@ -139,9 +139,13 @@ export function useProperty(id: string | undefined) {
             owner:profiles(id, full_name, phone, email, agency_name, agency_logo, advertiser_type)
           `)
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (fetchError) throw fetchError;
+        
+        if (!data) {
+          throw new Error('Property not found');
+        }
 
         // Increment view count
         await supabase

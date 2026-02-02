@@ -110,13 +110,17 @@ export default function AdminListingDetail() {
         owner:profiles(id, email, full_name, phone)
       `)
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('[AdminListingDetail] Error loading listing:', error);
       toast.error(isRTL ? 'خطأ في تحميل الإعلان' : 'Error loading listing');
       navigate('/admin/listings');
-    } else if (data) {
+    } else if (!data) {
+      console.warn('[AdminListingDetail] Listing not found:', id);
+      toast.error(isRTL ? 'الإعلان غير موجود' : 'Listing not found');
+      navigate('/admin/listings');
+    } else {
       // ✅ Debug log (for image display issue diagnosis - Issue #2)
       console.log('[AdminListingDetail] Property loaded:', {
         id: data.id,
@@ -202,7 +206,7 @@ export default function AdminListingDetail() {
         .from('properties')
         .select('id, status, approved_at, approved_by, published_at')
         .eq('id', property.id)
-        .single();
+        .maybeSingle();
       
       if (verifyError) {
         console.error('❌ Verification Query Error:', verifyError);
