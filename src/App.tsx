@@ -55,6 +55,9 @@ const NeighborhoodPage = lazy(() => import("./pages/NeighborhoodPage"));
 const PropertyTypeNeighborhoodPage = lazy(
   () => import("./pages/PropertyTypeNeighborhoodPage")
 );
+const CityTransactionPage = lazy(() => import("./pages/CityTransactionPage"));
+const CityPropertyTypePage = lazy(() => import("./pages/CityPropertyTypePage"));
+const MoroccanSaharaPage = lazy(() => import("./pages/MoroccanSaharaPage"));
 
 function LoadingSpinner() {
   return (
@@ -146,13 +149,8 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
-            {/* SEO cities */}
-            <Route path="/casablanca" element={<CityPage />} />
-            <Route path="/rabat" element={<CityPage />} />
-            <Route path="/marrakech" element={<CityPage />} />
-            <Route path="/tanger" element={<CityPage />} />
-            <Route path="/agadir" element={<CityPage />} />
-            <Route path="/fes" element={<CityPage />} />
+            {/* Moroccan Sahara dedicated page */}
+            <Route path="/sahara-marocain" element={<MoroccanSaharaPage />} />
 
             {/* SEO immobilier */}
             <Route path="/immobilier/:city" element={<CityImmobilierPage />} />
@@ -181,24 +179,24 @@ function App() {
             <Route path="/louer-villa" element={<TransactionPage />} />
             <Route path="/louer-maison" element={<TransactionPage />} />
             <Route path="/louer-commercial" element={<TransactionPage />} />
-            <Route path="/acheter-casablanca" element={<TransactionPage />} />
-            <Route path="/acheter-rabat" element={<TransactionPage />} />
-            <Route path="/acheter-marrakech" element={<TransactionPage />} />
-            <Route path="/acheter-tanger" element={<TransactionPage />} />
-            <Route path="/acheter-agadir" element={<TransactionPage />} />
-            <Route path="/acheter-fes" element={<TransactionPage />} />
-            <Route path="/louer-casablanca" element={<TransactionPage />} />
-            <Route path="/louer-rabat" element={<TransactionPage />} />
-            <Route path="/louer-marrakech" element={<TransactionPage />} />
-            <Route path="/louer-tanger" element={<TransactionPage />} />
-            <Route path="/louer-agadir" element={<TransactionPage />} />
-            <Route path="/louer-fes" element={<TransactionPage />} />
             <Route path="/acheter-appartement-:city" element={<TransactionPage />} />
             <Route path="/acheter-villa-:city" element={<TransactionPage />} />
             <Route path="/acheter-maison-:city" element={<TransactionPage />} />
             <Route path="/louer-appartement-:city" element={<TransactionPage />} />
             <Route path="/louer-villa-:city" element={<TransactionPage />} />
             <Route path="/louer-maison-:city" element={<TransactionPage />} />
+            
+            {/* City sub-pages: transaction types and property types */}
+            <Route path="/:city/vente" element={<CityTransactionPage />} />
+            <Route path="/:city/location" element={<CityTransactionPage />} />
+            <Route path="/:city/appartements" element={<CityPropertyTypePage />} />
+            <Route path="/:city/maisons" element={<CityPropertyTypePage />} />
+            <Route path="/:city/villas" element={<CityPropertyTypePage />} />
+            <Route path="/:city/terrains" element={<CityPropertyTypePage />} />
+            <Route path="/:city/commerciaux" element={<CityPropertyTypePage />} />
+
+            {/* SEO cities - Dynamic city landing pages (MUST BE LAST) */}
+            <Route path="/:city" element={<CityPage />} />
           </Route>
 
           {/* ✅ Protected Routes (خليتهم برا layout) */}
