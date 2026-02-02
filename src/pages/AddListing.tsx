@@ -512,6 +512,11 @@ export default function AddListing() {
         const errorMessage = getErrorMessage(insertError, isRTL, import.meta.env.DEV);
         throw new Error(errorMessage);
       }
+      
+      if (!insertedProperty) {
+        console.error('[AddListing] ❌ No data returned after insert');
+        throw new Error(isRTL ? 'خطأ في إنشاء الإعلان' : 'Error creating listing');
+      }
 
       console.log('[AddListing] Listing created successfully:', {
         id: insertedProperty.id,

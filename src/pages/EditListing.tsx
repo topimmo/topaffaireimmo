@@ -131,7 +131,7 @@ export default function EditListing() {
       .select('*')
       .eq('id', id)
       .eq('owner_id', user!.id)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       navigate('/dashboard');

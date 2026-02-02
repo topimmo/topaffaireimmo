@@ -110,13 +110,17 @@ export default function AdminListingDetail() {
         owner:profiles(id, email, full_name, phone)
       `)
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('[AdminListingDetail] Error loading listing:', error);
       toast.error(isRTL ? 'خطأ في تحميل الإعلان' : 'Error loading listing');
       navigate('/admin/listings');
-    } else if (data) {
+    } else if (!data) {
+      console.warn('[AdminListingDetail] Listing not found:', id);
+      toast.error(isRTL ? 'الإعلان غير موجود' : 'Listing not found');
+      navigate('/admin/listings');
+    } else {
       // ✅ Debug log (for image display issue diagnosis - Issue #2)
       console.log('[AdminListingDetail] Property loaded:', {
         id: data.id,
@@ -159,6 +163,11 @@ export default function AdminListingDetail() {
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
+      } else if (newStatus === 'rejected') {
+        const now = new Date().toISOString();
+        updateData.rejected_at = now;
+        updateData.rejected_by = user?.id || null;
+        // rejection_reason should be set separately via the UI
       }
       
       // ===== STEP B: Confirm network request is sent =====
@@ -200,9 +209,9 @@ export default function AdminListingDetail() {
       console.group('🔍 [STEP D] Verifying DB Update');
       const { data: verifyData, error: verifyError } = await supabase
         .from('properties')
-        .select('id, status, approved_at, approved_by, published_at')
+        .select('id, status, approved_at, approved_by, published_at, rejected_at, rejected_by')
         .eq('id', property.id)
-        .single();
+        .maybeSingle();
       
       if (verifyError) {
         console.error('❌ Verification Query Error:', verifyError);
@@ -213,6 +222,9 @@ export default function AdminListingDetail() {
           console.log('Approved At Set:', verifyData?.approved_at ? '✅ YES' : '❌ NO');
           console.log('Approved By Set:', verifyData?.approved_by ? '✅ YES' : '❌ NO');
           console.log('Published At Set:', verifyData?.published_at ? '✅ YES' : '❌ NO');
+        } else if (newStatus === 'rejected') {
+          console.log('Rejected At Set:', verifyData?.rejected_at ? '✅ YES' : '❌ NO');
+          console.log('Rejected By Set:', verifyData?.rejected_by ? '✅ YES' : '❌ NO');
         }
       }
       console.groupEnd();
