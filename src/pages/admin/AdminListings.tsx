@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
-import { sendFacebookWebhook } from '@/lib/facebookWebhook';
 import { logAdminAction } from '@/lib/auditLog';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -317,14 +316,9 @@ export default function AdminListings() {
             console.warn('Failed to log audit action, continuing anyway:', auditError);
           }
 
-          // Send Facebook webhook (non-blocking)
-          const webhookResult = await sendFacebookWebhook(propertyId);
-          if (webhookResult.success) {
-            toast.success(isRTL ? 'تم اعتماد الإعلان ونشره على فيسبوك' : 'Listing approved and posted to Facebook');
-          } else {
-            console.warn('Facebook webhook failed, listing already approved:', webhookResult.error);
-            toast.warning(isRTL ? 'تم اعتماد الإعلان لكن فشل النشر على فيسبوك' : 'Listing approved but Facebook webhook failed');
-          }
+          // Facebook webhook removed from client-side
+          // Use Supabase Database Webhooks (configured in dashboard) or manual retry button
+          toast.success(isRTL ? 'تم اعتماد الإعلان' : 'Listing approved');
         } else if (newStatus === 'rejected') {
           try {
             await logAdminAction({
