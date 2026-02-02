@@ -56,17 +56,11 @@ async function testDatabaseConnectivity(): Promise<{ errors: string[]; warnings:
   try {
     // Simple connectivity test using a basic query that doesn't depend on RLS
     // This just checks if we can communicate with the database
-    const { error } = await supabase.rpc('current_user')
+    const { error } = await supabase.from('cities').select('id').limit(1)
     
-    if (error) {
-      // If RPC fails, try a simple table query as fallback
-      const { error: tableError } = await supabase.from('profiles').select('id').limit(0)
-      
-      if (tableError && tableError.code !== 'PGRST116') {
-        errors.push(`Database connectivity test failed: ${tableError.message}`)
-      } else {
-        console.log('✅ Database connectivity test passed')
-      }
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = no rows returned, which is fine for connectivity test
+      errors.push(`Database connectivity test failed: ${error.message}`)
     } else {
       console.log('✅ Database connectivity test passed')
     }
@@ -100,23 +94,27 @@ async function validateStorageBuckets(): Promise<{ errors: string[]; warnings: s
     const { data: buckets, error } = await supabase.storage.listBuckets()
     
     if (error) {
-      warnings.push(`Could not list storage buckets: ${error.message}`)
+      // If we can't list buckets due to permissions, that's OK - just skip validation
+      // This prevents noisy warnings when buckets exist but user lacks list permission
+      console.log(`ℹ️ Could not list storage buckets (may be due to permissions): ${error.message}`)
       return { errors, warnings }
     }
     
     const bucketNames = buckets?.map(b => b.name) || []
     
-    for (const bucketName of requiredBuckets) {
-      if (!bucketNames.includes(bucketName)) {
-        warnings.push(`Storage bucket '${bucketName}' not found - image upload may fail`)
-      }
+    // Only warn if we successfully listed buckets but some are missing
+    const missingBuckets = requiredBuckets.filter(name => !bucketNames.includes(name))
+    
+    if (missingBuckets.length > 0) {
+      warnings.push(`Storage bucket(s) not found: ${missingBuckets.join(', ')} - image upload may fail`)
     }
     
     if (bucketNames.length > 0) {
       console.log(`✅ Found ${bucketNames.length} storage bucket(s):`, bucketNames.join(', '))
     }
   } catch (exception) {
-    warnings.push(`Storage bucket validation exception: ${exception instanceof Error ? exception.message : 'Unknown error'}`)
+    // Catch-all for unexpected errors - log but don't fail startup
+    console.log(`ℹ️ Storage bucket validation exception: ${exception instanceof Error ? exception.message : 'Unknown error'}`)
   }
   
   return { errors, warnings }
