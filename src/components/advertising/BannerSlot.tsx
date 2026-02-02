@@ -85,6 +85,8 @@ export default function BannerSlot({
         }
         setActiveBanner(null);
       } else {
+        // Supabase returns nested arrays for joined relations when using inner join
+        // Cast to unknown first to satisfy TypeScript since the actual shape may vary
         setActiveBanner((data as unknown as ActiveBannerRow) ?? null);
       }
 

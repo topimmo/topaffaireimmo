@@ -15,6 +15,8 @@ interface FacebookWebhookResponse {
 }
 
 // Track if we've already warned about webhook issues (prevent spam)
+// This is intentionally module-level to warn only once per session
+// Multiple simultaneous calls are acceptable since we only care about suppressing repeated logs
 let hasWarnedAboutWebhook = false;
 
 /**
