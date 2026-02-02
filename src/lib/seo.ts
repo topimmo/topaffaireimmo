@@ -38,16 +38,52 @@ export function slugify(text: string): string {
 }
 
 /**
- * Morocco cities (major ones for SEO)
+ * Morocco cities - ALL major cities including Moroccan Sahara
  */
 export const MOROCCO_CITIES = [
+  // Major metropolitan cities
   { id: 'casablanca', name_fr: 'Casablanca', name_ar: 'الدار البيضاء', slug: 'casablanca' },
   { id: 'rabat', name_fr: 'Rabat', name_ar: 'الرباط', slug: 'rabat' },
   { id: 'marrakech', name_fr: 'Marrakech', name_ar: 'مراكش', slug: 'marrakech' },
   { id: 'tanger', name_fr: 'Tanger', name_ar: 'طنجة', slug: 'tanger' },
   { id: 'agadir', name_fr: 'Agadir', name_ar: 'أكادير', slug: 'agadir' },
   { id: 'fes', name_fr: 'Fès', name_ar: 'فاس', slug: 'fes' },
+  { id: 'meknes', name_fr: 'Meknès', name_ar: 'مكناس', slug: 'meknes' },
+  { id: 'oujda', name_fr: 'Oujda', name_ar: 'وجدة', slug: 'oujda' },
+  { id: 'kenitra', name_fr: 'Kenitra', name_ar: 'القنيطرة', slug: 'kenitra' },
+  { id: 'tetouan', name_fr: 'Tétouan', name_ar: 'تطوان', slug: 'tetouan' },
+  { id: 'nador', name_fr: 'Nador', name_ar: 'الناظور', slug: 'nador' },
+  { id: 'el-jadida', name_fr: 'El Jadida', name_ar: 'الجديدة', slug: 'el-jadida' },
+  { id: 'safi', name_fr: 'Safi', name_ar: 'آسفي', slug: 'safi' },
+  { id: 'settat', name_fr: 'Settat', name_ar: 'سطات', slug: 'settat' },
+  { id: 'beni-mellal', name_fr: 'Beni Mellal', name_ar: 'بني ملال', slug: 'beni-mellal' },
+  { id: 'khouribga', name_fr: 'Khouribga', name_ar: 'خريبكة', slug: 'khouribga' },
+  { id: 'mohammedia', name_fr: 'Mohammedia', name_ar: 'المحمدية', slug: 'mohammedia' },
+  { id: 'essaouira', name_fr: 'Essaouira', name_ar: 'الصويرة', slug: 'essaouira' },
+  { id: 'ouarzazate', name_fr: 'Ouarzazate', name_ar: 'ورزازات', slug: 'ouarzazate' },
+  { id: 'taza', name_fr: 'Taza', name_ar: 'تازة', slug: 'taza' },
+  { id: 'berkane', name_fr: 'Berkane', name_ar: 'بركان', slug: 'berkane' },
+  
+  // Moroccan Sahara cities (Provinces du Sud)
+  { id: 'laayoune', name_fr: 'Laâyoune', name_ar: 'العيون', slug: 'laayoune' },
+  { id: 'dakhla', name_fr: 'Dakhla', name_ar: 'الداخلة', slug: 'dakhla' },
+  { id: 'boujdour', name_fr: 'Boujdour', name_ar: 'بوجدور', slug: 'boujdour' },
+  { id: 'smara', name_fr: 'Smara', name_ar: 'السمارة', slug: 'smara' },
+  { id: 'tarfaya', name_fr: 'Tarfaya', name_ar: 'طرفاية', slug: 'tarfaya' },
 ] as const;
+
+/**
+ * Moroccan Sahara cities - Southern provinces
+ */
+export const SAHARA_CITIES = [
+  'laayoune',
+  'dakhla',
+  'boujdour',
+  'smara',
+  'tarfaya',
+] as const;
+
+export type SaharaCityId = typeof SAHARA_CITIES[number];
 
 /**
  * Property types for SEO URLs
