@@ -512,7 +512,7 @@ export default function AdminListingDetail() {
             </Button>
           )}
 
-          {/* ✅ Delete button for all statuses */}
+          {/* Delete button for all statuses */}
           <Button
             onClick={handleDelete}
             disabled={actionLoading}

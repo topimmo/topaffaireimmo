@@ -538,8 +538,8 @@ export default function EditListing() {
                   </h3>
                   <p className="text-amber-800 text-sm mb-2">
                     {isRTL 
-                      ? `لا يمكن تعديل هذا الإعلان لأنه في مرحلة ${propertyStatus}. فقط المسؤولون يمكنهم تعديله.`
-                      : `Cette annonce ne peut pas être modifiée car elle est en statut "${propertyStatus}". Seuls les administrateurs peuvent la modifier.`
+                      ? `لا يمكن تعديل هذا الإعلان لأنه في مرحلة المراجعة. فقط المسؤولون يمكنهم تعديله.`
+                      : `Cette annonce ne peut pas être modifiée car elle est en cours de révision. Seuls les administrateurs peuvent la modifier.`
                     }
                   </p>
                   <p className="text-amber-700 text-xs">

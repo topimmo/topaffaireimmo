@@ -1056,9 +1056,10 @@ export default function AddListing() {
                 variant="outline"
                 className="flex-1 text-base"
                 disabled={isSubmitting}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.preventDefault();
                   setSubmitAction('draft');
-                  handleSubmit(e as any);
+                  handleSubmit(e as unknown as React.FormEvent);
                 }}
               >
                 {isRTL ? 'حفظ كمسودة' : 'Enregistrer comme brouillon'}
