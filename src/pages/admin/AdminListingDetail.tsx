@@ -117,7 +117,7 @@ export default function AdminListingDetail() {
       toast.error(isRTL ? 'خطأ في تحميل الإعلان' : 'Error loading listing');
       navigate('/admin/listings');
     } else if (!data) {
-      console.warn('[AdminListingDetail] Listing not found:', id);
+      console.warn('[Admin] Record not found', { id });
       toast.error(isRTL ? 'الإعلان غير موجود' : 'Listing not found');
       navigate('/admin/listings');
     } else {
@@ -203,7 +203,7 @@ export default function AdminListingDetail() {
       }
       
       if (!data) {
-        console.warn('[AdminListingDetail] Property not found during update:', property.id);
+        console.warn('[Admin] Record not found', { id: property.id });
         console.groupEnd();
         toast.error(isRTL ? 'الإعلان غير موجود' : 'Listing not found');
         setActionLoading(false);
