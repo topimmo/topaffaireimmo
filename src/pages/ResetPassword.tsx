@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
+// Wait time for Supabase's detectSessionInUrl to automatically process session from URL
 const SESSION_WAIT_MS = 1000;
+// Delay before redirecting after successful password update
+const SUCCESS_REDIRECT_DELAY_MS = 2000;
 
 export default function ResetPassword() {
   const { t, isRTL } = useLanguage();
@@ -180,7 +183,7 @@ export default function ResetPassword() {
     });
 
     return () => subscription.unsubscribe();
-  }, [isRTL]);
+  }, []); // Run only once on mount
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,7 +221,7 @@ export default function ResetPassword() {
     // Redirect to home page after success
     setTimeout(() => {
       navigate('/');
-    }, 2000);
+    }, SUCCESS_REDIRECT_DELAY_MS);
   };
 
   if (checkingSession) {
