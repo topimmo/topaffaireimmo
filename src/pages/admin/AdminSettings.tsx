@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { BUILD_INFO, getBuildInfoDisplay } from '@/config/buildInfo';
 
 interface Settings {
   contact_email?: string;
@@ -300,6 +301,61 @@ export default function AdminSettings() {
                     }
                     placeholder="123456789012345"
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Build Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  {isRTL ? 'معلومات البناء' : 'Build Information'}
+                </CardTitle>
+                <CardDescription>
+                  {isRTL
+                    ? 'معلومات عن إصدار التطبيق المنشور حاليًا'
+                    : 'Information about the currently deployed application version'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-semibold text-muted-foreground">
+                      {isRTL ? 'الإصدار' : 'Version'}
+                    </p>
+                    <p className="font-mono">{BUILD_INFO.version}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-muted-foreground">
+                      {isRTL ? 'معرف الالتزام' : 'Commit SHA'}
+                    </p>
+                    <p className="font-mono break-all">{BUILD_INFO.commitSha}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-muted-foreground">
+                      {isRTL ? 'البيئة' : 'Environment'}
+                    </p>
+                    <p className="font-mono">
+                      {BUILD_INFO.isProduction ? 'Production' : 'Development'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-muted-foreground">
+                      {isRTL ? 'وقت البناء' : 'Build Time'}
+                    </p>
+                    <p className="font-mono text-xs">
+                      {new Date(BUILD_INFO.buildTime).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="font-semibold text-muted-foreground mb-2">
+                      {isRTL ? 'سلسلة الإصدار الكاملة' : 'Full Version String'}
+                    </p>
+                    <code className="bg-muted px-3 py-2 rounded-md block">
+                      {getBuildInfoDisplay()}
+                    </code>
+                  </div>
                 </div>
               </CardContent>
             </Card>

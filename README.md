@@ -135,6 +135,48 @@ Required variables (see `.env.example`):
 
 See [Deployment Guide](docs/DEPLOYMENT.md) for detailed instructions.
 
+#### Verifying Production Deployments
+
+After deploying to production, you can verify which version is running:
+
+1. **Check Build Info in Admin Panel**:
+   - Log in as an admin
+   - Navigate to Settings (`/admin/settings`)
+   - Scroll to the "Build Information" section
+   - Verify the Commit SHA matches your latest commit
+
+2. **Via Browser Console**:
+   ```javascript
+   // In your browser console on the production site
+   console.log('Build Info:', window.__BUILD_INFO__);
+   ```
+
+3. **Check Vercel Dashboard**:
+   - Go to your Vercel project dashboard
+   - Click on the latest deployment
+   - Verify the commit SHA and deployment status
+
+#### Promoting Preview to Production
+
+If you need to promote a specific preview deployment to production:
+
+1. Go to your Vercel project dashboard
+2. Find the preview deployment you want to promote
+3. Click the "..." menu on the deployment
+4. Select "Promote to Production"
+5. Verify the deployment completes successfully
+6. Check the build info in Admin Settings to confirm the correct version is live
+
+#### Cache Busting
+
+Vercel automatically handles cache busting for static assets. However, if you need to force users to get the latest version:
+
+1. The `index.html` file is configured with `no-cache` headers
+2. All JS/CSS files include content hashes in their filenames
+3. If needed, you can clear Vercel's cache from the project settings
+
+**Important**: Always verify the commit SHA after deployment to ensure the latest changes are live!
+
 ## 🗄️ Database
 
 The platform uses Supabase PostgreSQL with:
