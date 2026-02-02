@@ -68,7 +68,8 @@ export default function PropertyTypeNeighborhoodPage() {
   // Build filters for useProperties hook
   const filters: any = {
     neighborhood_id: neighborhoodData.id,
-    status: 'approved',
+    // Only show published properties on public city/neighborhood pages
+    status: 'published',
   };
 
   if (propertyTypeData) {

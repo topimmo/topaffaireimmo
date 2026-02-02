@@ -87,9 +87,11 @@ export function useProperties(filters?: PropertyFilters) {
         query = query.eq('owner_id', filters.owner_id);
       }
 
-      // Default: only approved properties unless owner_id is specified
+      // Default: only published properties for public viewing
+      // Published = approved by admin AND live on the site (not pending/approved but unpublished)
+      // When owner_id is specified, users see their own properties regardless of status
       if (!filters?.owner_id && !filters?.status) {
-        query = query.eq('status', 'approved');
+        query = query.eq('status', 'published');
       }
 
       query = query.order('created_at', { ascending: false });
@@ -168,7 +170,8 @@ export function useProperty(id: string | undefined) {
 }
 
 export function useFeaturedProperties(limit = 6) {
-  return useProperties({ featured: true, status: 'approved' });
+  // Only show published properties on public site
+  return useProperties({ featured: true, status: 'published' });
 }
 
 export function useLatestProperties(limit = 12) {
@@ -184,7 +187,8 @@ export function useLatestProperties(limit = 12) {
           city:cities(id, name_fr, name_ar),
           owner:profiles(id, full_name, agency_name, advertiser_type)
         `)
-        .eq('status', 'approved')
+        // Only show published properties on public site (not pending/approved)
+        .eq('status', 'published')
         .order('created_at', { ascending: false })
         .limit(limit);
 
