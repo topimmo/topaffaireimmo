@@ -183,7 +183,8 @@ export default function AdminListingDetail() {
         .from('properties')
         .update(updateData)
         .eq('id', property.id)
-        .select();
+        .select()
+        .maybeSingle();
 
       // ===== STEP C: Confirm Supabase response and errors =====
       console.group('🔍 [STEP C] Supabase Response');
@@ -198,6 +199,15 @@ export default function AdminListingDetail() {
         
         toast.error(isRTL ? 'خطأ في تحديث الحالة' : 'Error updating status');
         setActionLoading(false);
+        return;
+      }
+      
+      if (!data) {
+        console.warn('[AdminListingDetail] Property not found during update:', property.id);
+        console.groupEnd();
+        toast.error(isRTL ? 'الإعلان غير موجود' : 'Listing not found');
+        setActionLoading(false);
+        navigate('/admin/listings');
         return;
       }
       
