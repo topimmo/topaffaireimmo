@@ -71,7 +71,9 @@ on:
 
 ```typescript
 export const BUILD_INFO = {
-  commitSha: import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'local-dev',
+  commitSha: import.meta.env.VERCEL_GIT_COMMIT_SHA || 
+             import.meta.env.GITHUB_SHA || 
+             'local',
   buildTime: new Date().toISOString(),
   isProduction: import.meta.env.PROD,
   version: '1.0.0',
@@ -79,7 +81,7 @@ export const BUILD_INFO = {
 ```
 
 **Features**:
-- Captures commit SHA from Vercel during build
+- Captures commit SHA from Vercel (automatic) or GitHub Actions
 - Provides build timestamp
 - Exposes environment information
 - Helper functions for display formatting
@@ -101,13 +103,9 @@ Added "Build Information" card showing:
 
 **File**: `vercel.json` (MODIFIED)
 
-```json
-"env": {
-  "VITE_VERCEL_GIT_COMMIT_SHA": "@vercel-git-commit-sha"
-}
-```
+Vercel provides `VERCEL_GIT_COMMIT_SHA` automatically; no manual env needed.
 
-Ensures Vercel passes commit SHA to the build process.
+This environment variable is automatically passed to the build process by Vercel.
 
 ### 3. Comprehensive Documentation
 

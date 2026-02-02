@@ -32,7 +32,7 @@ All requirements from the problem statement have been successfully implemented a
 | Feature | Implementation | File(s) | Status |
 |---------|----------------|---------|--------|
 | Expose commit SHA in Admin Settings | Build Information card with commit SHA | AdminSettings.tsx | ✅ Complete |
-| Vercel deployment reflects latest main | `buildInfo.ts` captures `VITE_VERCEL_GIT_COMMIT_SHA` | buildInfo.ts, vercel.json | ✅ Complete |
+| Vercel deployment reflects latest main | `buildInfo.ts` captures `VERCEL_GIT_COMMIT_SHA` | buildInfo.ts, vercel.json | ✅ Complete |
 | Prevent "merged but not deployed" confusion | Admins can verify exact deployed commit at `/admin/settings` | AdminSettings.tsx | ✅ Complete |
 
 ### ✅ 4. CI/Guardrails
@@ -121,10 +121,9 @@ v1.0.0 (25117b3) - production
 ```
 
 **How it works:**
-1. Vercel sets `VERCEL_GIT_COMMIT_SHA` during build
-2. `vercel.json` exposes it as `VITE_VERCEL_GIT_COMMIT_SHA`
-3. `buildInfo.ts` captures it at build time
-4. `AdminSettings.tsx` displays it in UI
+1. Vercel provides `VERCEL_GIT_COMMIT_SHA` automatically; no manual env needed
+2. `buildInfo.ts` captures it at build time
+3. `AdminSettings.tsx` displays it in UI
 
 ---
 

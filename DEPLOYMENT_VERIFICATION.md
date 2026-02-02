@@ -32,7 +32,7 @@ For quick checks, you can also inspect the build info directly:
 
 ```javascript
 // Open browser console on the production site
-console.log('Commit SHA:', import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA);
+console.log('Commit SHA:', import.meta.env.VERCEL_GIT_COMMIT_SHA);
 ```
 
 ## CI/CD Pipeline
@@ -63,7 +63,7 @@ Key settings:
 - Build command: `npm run build`
 - Output directory: `dist`
 - Framework: Vite
-- Environment variable: `VITE_VERCEL_GIT_COMMIT_SHA` (auto-populated)
+- Environment variable: Vercel provides `VERCEL_GIT_COMMIT_SHA` automatically; no manual env needed.
 
 ## Troubleshooting Deployment Issues
 
