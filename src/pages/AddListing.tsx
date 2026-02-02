@@ -114,6 +114,7 @@ export default function AddListing() {
   >([]);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showCustomNeighborhood, setShowCustomNeighborhood] = useState(false);
+  const [submitAction, setSubmitAction] = useState<'draft' | 'pending'>('draft');
 
   const [formData, setFormData] = useState({
     transactionType: 'sale',
@@ -439,7 +440,8 @@ export default function AddListing() {
         images: [],
         // Schema uses contact_phone not phone
         contact_phone: formData.phone || null,
-        // Let database default handle status (defaults to 'pending')
+        // Set status based on submit action: 'draft' or 'pending'
+        status: submitAction,
       };
 
       // Log payload for debugging schema alignment issues
@@ -1047,16 +1049,38 @@ export default function AddListing() {
               </div>
             </div>
 
-            <Button type="submit" size="lg" className="w-full text-base" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  {uploadProgress || (isRTL ? 'جاري المعالجة...' : 'Traitement...')}
-                </span>
-              ) : (
-                t('addListing.submit')
-              )}
-            </Button>
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="flex-1 text-base"
+                disabled={isSubmitting}
+                onClick={(e) => {
+                  setSubmitAction('draft');
+                  handleSubmit(e as any);
+                }}
+              >
+                {isRTL ? 'حفظ كمسودة' : 'Enregistrer comme brouillon'}
+              </Button>
+              
+              <Button
+                type="submit"
+                size="lg"
+                className="flex-1 text-base"
+                disabled={isSubmitting}
+                onClick={() => setSubmitAction('pending')}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    {uploadProgress || (isRTL ? 'جاري المعالجة...' : 'Traitement...')}
+                  </span>
+                ) : (
+                  isRTL ? 'إرسال للمراجعة' : 'Soumettre pour révision'
+                )}
+              </Button>
+            </div>
 
             {uploadProgress && (
               <p className="text-sm text-muted-foreground text-center animate-pulse">{uploadProgress}</p>

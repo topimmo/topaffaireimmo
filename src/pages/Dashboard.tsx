@@ -56,9 +56,12 @@ const propertyIcons: Record<string, typeof Building> = {
 };
 
 const statusColors: Record<string, string> = {
+  draft: 'bg-gray-100 text-gray-800',
   pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
+  approved: 'bg-blue-100 text-blue-800',
+  published: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-800',
+  archived: 'bg-slate-100 text-slate-600',
   inactive: 'bg-gray-100 text-gray-800',
 };
 
@@ -128,9 +131,12 @@ export default function Dashboard() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
+      draft: isRTL ? 'مسودة' : 'Brouillon',
       pending: t('dashboard.pending'),
-      approved: t('dashboard.approved'),
+      approved: isRTL ? 'تمت الموافقة' : 'Approuvé',
+      published: isRTL ? 'منشور' : 'Publié',
       rejected: t('dashboard.rejected'),
+      archived: isRTL ? 'مؤرشف' : 'Archivé',
       inactive: t('dashboard.inactive'),
     };
     return labels[status] || status;
@@ -259,21 +265,50 @@ export default function Dashboard() {
 
                     {/* Actions */}
                     <div className="flex sm:flex-col gap-2">
-                      <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
-                        <Link to={`/edit-listing/${property.id}`}>
+                      {/* Edit button - disabled when locked */}
+                      {(['draft', 'rejected'].includes(property.status)) ? (
+                        <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
+                          <Link to={`/edit-listing/${property.id}`}>
+                            <Edit className="h-4 w-4" />
+                            <span className="sm:hidden">{t('dashboard.edit')}</span>
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled 
+                          className="flex-1 sm:flex-none opacity-50 cursor-not-allowed"
+                          title={isRTL ? 'الإعلان مقفل - اتصل بالدعم' : 'Annonce verrouillée - contactez le support'}
+                        >
                           <Edit className="h-4 w-4" />
                           <span className="sm:hidden">{t('dashboard.edit')}</span>
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeleteId(property.id)}
-                        className="flex-1 sm:flex-none text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sm:hidden">{t('dashboard.delete')}</span>
-                      </Button>
+                        </Button>
+                      )}
+                      
+                      {/* Delete button - only for draft/rejected */}
+                      {(['draft', 'rejected'].includes(property.status)) ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeleteId(property.id)}
+                          className="flex-1 sm:flex-none text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sm:hidden">{t('dashboard.delete')}</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="flex-1 sm:flex-none opacity-50 cursor-not-allowed"
+                          title={isRTL ? 'لا يمكن الحذف' : 'Suppression non autorisée'}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sm:hidden">{t('dashboard.delete')}</span>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
