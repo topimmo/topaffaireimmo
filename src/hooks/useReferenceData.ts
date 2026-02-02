@@ -116,7 +116,7 @@ export function useSiteSettings(category?: string) {
         setSettings({});
       } else {
         const settingsMap: Record<string, unknown> = {};
-        data?.forEach((setting: { key: string; value: any }) => {
+        data?.forEach((setting: Pick<SiteSetting, 'key' | 'value'>) => {
           try {
             // If value is already parsed JSON, use it directly
             settingsMap[setting.key] = typeof setting.value === 'string' 

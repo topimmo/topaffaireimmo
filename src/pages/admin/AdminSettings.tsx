@@ -48,7 +48,14 @@ export default function AdminSettings() {
         // Convert array of key-value pairs to settings object
         const settingsMap: Record<string, any> = {};
         data.forEach((item) => {
-          settingsMap[item.key] = item.value;
+          try {
+            // If value is already parsed JSON, use it directly
+            settingsMap[item.key] = typeof item.value === 'string' 
+              ? JSON.parse(item.value) 
+              : item.value;
+          } catch {
+            settingsMap[item.key] = item.value;
+          }
         });
 
         setSettings({
