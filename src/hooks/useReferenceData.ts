@@ -8,13 +8,19 @@ export function useCities() {
 
   useEffect(() => {
     const fetchCities = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('cities')
         .select('*')
         .eq('is_active', true)
         .order('display_order');
 
-      setCities(data || []);
+      if (error) {
+        console.error('Error fetching cities:', error);
+        // Handle errors gracefully - set empty array
+        setCities([]);
+      } else {
+        setCities(data || []);
+      }
       setLoading(false);
     };
 
@@ -37,13 +43,19 @@ export function useNeighborhoods(cityId?: number) {
 
     const fetchNeighborhoods = async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('neighborhoods')
         .select('*')
         .eq('city_id', cityId)
         .order('name_fr');
 
-      setNeighborhoods(data || []);
+      if (error) {
+        console.error('Error fetching neighborhoods:', error);
+        // Handle errors gracefully - set empty array
+        setNeighborhoods([]);
+      } else {
+        setNeighborhoods(data || []);
+      }
       setLoading(false);
     };
 
@@ -59,13 +71,19 @@ export function usePropertyTypes() {
 
   useEffect(() => {
     const fetchTypes = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('property_types')
         .select('*')
         .eq('is_active', true)
         .order('display_order');
 
-      setPropertyTypes(data || []);
+      if (error) {
+        console.error('Error fetching property types:', error);
+        // Handle errors gracefully - set empty array
+        setPropertyTypes([]);
+      } else {
+        setPropertyTypes(data || []);
+      }
       setLoading(false);
     };
 
@@ -83,25 +101,34 @@ export function useSiteSettings(category?: string) {
     const fetchSettings = async () => {
       let query = supabase
         .from('site_settings')
-        .select('*')
+        .select('key, value')
         .eq('is_public', true);
 
       if (category) {
         query = query.eq('category', category);
       }
 
-      const { data } = await query;
+      const { data, error } = await query;
 
-      const settingsMap: Record<string, unknown> = {};
-      data?.forEach((setting: SiteSetting) => {
-        try {
-          settingsMap[setting.key] = JSON.parse(setting.value as string);
-        } catch {
-          settingsMap[setting.key] = setting.value;
-        }
-      });
+      if (error) {
+        console.error('Error fetching site settings:', error);
+        // Handle errors gracefully - set empty object
+        setSettings({});
+      } else {
+        const settingsMap: Record<string, unknown> = {};
+        data?.forEach((setting: Pick<SiteSetting, 'key' | 'value'>) => {
+          try {
+            // If value is already parsed JSON, use it directly
+            settingsMap[setting.key] = typeof setting.value === 'string' 
+              ? JSON.parse(setting.value) 
+              : setting.value;
+          } catch {
+            settingsMap[setting.key] = setting.value;
+          }
+        });
 
-      setSettings(settingsMap);
+        setSettings(settingsMap);
+      }
       setLoading(false);
     };
 
@@ -117,15 +144,22 @@ export function useSiteSetting(key: string) {
 
   useEffect(() => {
     const fetchSetting = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('site_settings')
         .select('value')
         .eq('key', key)
         .single();
 
-      if (data) {
+      if (error) {
+        if (error.code !== 'PGRST116') {
+          // PGRST116 = no rows returned
+          console.error(`Error fetching setting '${key}':`, error);
+        }
+        setValue(null);
+      } else if (data) {
         try {
-          setValue(JSON.parse(data.value as string));
+          // If value is already parsed JSON, use it directly
+          setValue(typeof data.value === 'string' ? JSON.parse(data.value) : data.value);
         } catch {
           setValue(data.value);
         }

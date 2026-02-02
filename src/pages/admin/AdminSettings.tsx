@@ -37,23 +37,35 @@ export default function AdminSettings() {
     setLoading(true);
 
     try {
+      // site_settings is a key-value store, so we fetch all settings
       const { data, error } = await supabase
         .from('site_settings')
-        .select('*')
-        .single();
+        .select('key, value');
 
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 = no rows returned
+      if (error) {
         console.error('Error fetching settings:', error);
-      } else if (data) {
+      } else if (data && Array.isArray(data)) {
+        // Convert array of key-value pairs to settings object
+        const settingsMap: Record<string, any> = {};
+        data.forEach((item) => {
+          try {
+            // If value is already parsed JSON, use it directly
+            settingsMap[item.key] = typeof item.value === 'string' 
+              ? JSON.parse(item.value) 
+              : item.value;
+          } catch {
+            settingsMap[item.key] = item.value;
+          }
+        });
+
         setSettings({
-          contact_email: data.contact_email || '',
-          contact_phone: data.contact_phone || '',
-          contact_whatsapp: data.contact_whatsapp || '',
-          maintenance_mode: data.maintenance_mode || false,
-          adsense_header_slot: data.adsense_header_slot || '',
-          adsense_sidebar_slot: data.adsense_sidebar_slot || '',
-          adsense_footer_slot: data.adsense_footer_slot || '',
+          contact_email: settingsMap.contact_email || '',
+          contact_phone: settingsMap.contact_phone || '',
+          contact_whatsapp: settingsMap.contact_whatsapp || '',
+          maintenance_mode: settingsMap.maintenance_mode || false,
+          adsense_header_slot: settingsMap.adsense_header_slot || '',
+          adsense_sidebar_slot: settingsMap.adsense_sidebar_slot || '',
+          adsense_footer_slot: settingsMap.adsense_footer_slot || '',
         });
       }
     } catch (error) {
@@ -67,26 +79,21 @@ export default function AdminSettings() {
     setSaving(true);
 
     try {
-      // Check if settings exist
-      const { data: existing } = await supabase
+      // site_settings is a key-value store, so we upsert each setting individually
+      const settingsToSave = Object.entries(settings).map(([key, value]) => ({
+        key,
+        value,
+        category: 'general',
+        is_public: false,
+      }));
+
+      // Use upsert to insert or update each setting
+      const { error } = await supabase
         .from('site_settings')
-        .select('id')
-        .single();
+        .upsert(settingsToSave, { onConflict: 'key' });
 
-      let result;
-      if (existing) {
-        // Update existing
-        result = await supabase
-          .from('site_settings')
-          .update(settings)
-          .eq('id', existing.id);
-      } else {
-        // Insert new
-        result = await supabase.from('site_settings').insert(settings);
-      }
-
-      if (result.error) {
-        console.error('Save error:', result.error);
+      if (error) {
+        console.error('Save error:', error);
         toast.error(isRTL ? 'خطأ في الحفظ' : 'Error saving settings');
         return;
       }
