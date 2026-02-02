@@ -146,9 +146,18 @@ export default function PropertyDetails() {
         if (error) {
           setProperty(null);
           setLoadError(error.message);
-        } else {
-          setProperty((data as DbPropertyDetails) ?? null);
+        } else if (data) {
+          // Type assertion to handle Supabase nested query response
+          const typedData = data as any;
+          setProperty({
+            ...typedData,
+            city: Array.isArray(typedData?.city) ? typedData.city[0] : typedData?.city,
+            neighborhood: Array.isArray(typedData?.neighborhood) ? typedData.neighborhood[0] : typedData?.neighborhood,
+            owner: Array.isArray(typedData?.owner) ? typedData.owner[0] : typedData?.owner,
+          } as DbPropertyDetails);
           setCurrentImage(0);
+        } else {
+          setProperty(null);
         }
       } catch (e: any) {
         if (!mounted) return;
