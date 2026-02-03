@@ -12,7 +12,7 @@ function Home() {
       <HeroSearch />
 
       {/* Promo Banner (home-top) - After hero, before featured properties */}
-      <section className="py-8">
+      <section className="py-6">
         <PromoBanner position="home-top" />
       </section>
 
