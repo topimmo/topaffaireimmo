@@ -127,6 +127,8 @@ export default function SearchResults() {
           .eq("status", "published")
           .eq("is_archived", false);
 
+        console.log('📋 [SearchResults] Fetching properties with filter: status=published, is_archived=false');
+
         // ✅ Type filter (SQL) - نخففو فالfrontend filter final
         if (selectedType !== "all-types") {
           q = q.ilike("property_type", `%${selectedType}%`);
@@ -142,6 +144,15 @@ export default function SearchResults() {
         }
 
         const { data, error } = await q.limit(200);
+
+        console.log(`✅ [SearchResults] Fetched ${data?.length || 0} properties`);
+        if (data && data.length > 0) {
+          const statusCounts = data.reduce((acc, prop: any) => {
+            acc[prop.status] = (acc[prop.status] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+          console.log('📊 [SearchResults] Status distribution:', statusCounts);
+        }
 
         if (error) {
           setError(error.message);
