@@ -27,6 +27,10 @@ export interface PropertyWithRelations extends Property {
     agency_name: string | null;
     advertiser_type: string | null;
   };
+  images?: string[] | null;
+  title_fr?: string | null;
+  title_ar?: string | null;
+  address?: string | null;
 }
 
 export function useProperties(filters?: PropertyFilters) {
@@ -171,7 +175,25 @@ export function useProperty(id: string | undefined) {
 
 export function useFeaturedProperties(limit = 6) {
   // Only show published properties on public site
-  return useProperties({ featured: true, status: 'published' });
+  const result = useProperties({ featured: true, status: 'published' });
+  
+  // 🔍 DEBUG: Log featured properties query results
+  console.group('🔍 Featured Properties Query');
+  console.log('Total properties fetched:', result.properties.length);
+  console.log('Loading:', result.loading);
+  console.log('Error:', result.error);
+  if (result.properties.length > 0) {
+    console.log('Sample property:', {
+      id: result.properties[0].id,
+      title_fr: result.properties[0].title_fr,
+      status: result.properties[0].status,
+      featured: result.properties[0].featured,
+      owner_type: result.properties[0].owner?.advertiser_type
+    });
+  }
+  console.groupEnd();
+  
+  return result;
 }
 
 export function useLatestProperties(limit = 12) {
@@ -191,6 +213,19 @@ export function useLatestProperties(limit = 12) {
         .eq('status', 'published')
         .order('created_at', { ascending: false })
         .limit(limit);
+
+      // 🔍 DEBUG: Log latest properties query results
+      console.group('🔍 Latest Properties Query');
+      console.log('Total properties fetched:', data?.length || 0);
+      if (data && data.length > 0) {
+        console.log('Sample property:', {
+          id: data[0].id,
+          title_fr: data[0].title_fr,
+          status: data[0].status,
+          owner_type: (data[0] as any).owner?.advertiser_type
+        });
+      }
+      console.groupEnd();
 
       setProperties(data as PropertyWithRelations[] || []);
       setLoading(false);
