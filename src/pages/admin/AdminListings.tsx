@@ -271,6 +271,8 @@ export default function AdminListings() {
 
       if (newStatus === 'approved') {
         const now = new Date().toISOString();
+        // When admin approves, set status to 'published' to make it publicly visible
+        updateData.status = 'published';
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
@@ -537,6 +539,7 @@ export default function AdminListings() {
     const variants: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       approved: 'bg-green-100 text-green-800',
+      published: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
       sold: 'bg-blue-100 text-blue-800',
       rented: 'bg-purple-100 text-purple-800',
@@ -545,6 +548,7 @@ export default function AdminListings() {
     const labels: Record<string, { fr: string; ar: string }> = {
       pending: { fr: 'En attente', ar: 'قيد الانتظار' },
       approved: { fr: 'Approuvé', ar: 'معتمد' },
+      published: { fr: 'Approuvé', ar: 'معتمد' },
       rejected: { fr: 'Rejeté', ar: 'مرفوض' },
       sold: { fr: 'Vendu', ar: 'مباع' },
       rented: { fr: 'Loué', ar: 'مؤجر' },

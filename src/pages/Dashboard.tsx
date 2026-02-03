@@ -134,7 +134,7 @@ export default function Dashboard() {
       draft: isRTL ? 'مسودة' : 'Brouillon',
       pending: t('dashboard.pending'),
       approved: isRTL ? 'تمت الموافقة' : 'Approuvé',
-      published: isRTL ? 'منشور' : 'Publié',
+      published: isRTL ? 'تمت الموافقة' : 'Approuvé', // Show "Approved" for published listings in advertiser view
       rejected: t('dashboard.rejected'),
       archived: isRTL ? 'مؤرشف' : 'Archivé',
       inactive: t('dashboard.inactive'),
@@ -264,14 +264,14 @@ export default function Dashboard() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex sm:flex-col gap-2 sm:items-end">
+                    <div className="flex sm:flex-col gap-2 sm:gap-3 sm:items-end justify-end">
                       {/* Edit button - disabled when locked */}
                       {(['draft', 'rejected'].includes(property.status)) ? (
                         <Button 
                           variant="outline" 
                           size="sm" 
                           asChild 
-                          className="flex-1 sm:w-24 gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                          className="min-w-[100px] sm:w-28 gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
                         >
                           <Link to={`/edit-listing/${property.id}`}>
                             <Edit className="h-4 w-4" />
@@ -283,7 +283,7 @@ export default function Dashboard() {
                           variant="outline" 
                           size="sm" 
                           disabled 
-                          className="flex-1 sm:w-24 gap-2 opacity-50 cursor-not-allowed"
+                          className="min-w-[100px] sm:w-28 gap-2 opacity-50 cursor-not-allowed"
                           title={isRTL ? 'الإعلان مقفل - اتصل بالدعم' : 'Annonce verrouillée - contactez le support'}
                         >
                           <Edit className="h-4 w-4" />
@@ -297,7 +297,7 @@ export default function Dashboard() {
                           variant="outline"
                           size="sm"
                           onClick={() => setDeleteId(property.id)}
-                          className="flex-1 sm:w-24 gap-2 text-destructive border-destructive hover:bg-destructive hover:text-white transition-colors"
+                          className="min-w-[120px] sm:w-28 gap-2 text-destructive border-destructive hover:bg-destructive hover:text-white transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span>{t('dashboard.delete')}</span>
@@ -307,7 +307,7 @@ export default function Dashboard() {
                           variant="outline"
                           size="sm"
                           disabled
-                          className="flex-1 sm:w-24 gap-2 opacity-50 cursor-not-allowed"
+                          className="min-w-[120px] sm:w-28 gap-2 opacity-50 cursor-not-allowed"
                           title={isRTL ? 'لا يمكن الحذف' : 'Suppression non autorisée'}
                         >
                           <Trash2 className="h-4 w-4" />
