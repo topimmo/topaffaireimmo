@@ -12,7 +12,7 @@ const content = {
   fr: {
     title: "Contact – TopAffaireImmo",
     metaDescription: "Contactez TopAffaireImmo pour toute question liée aux annonces immobilières ou à l'utilisation de la plateforme.",
-    pageHeading: "Contactez-nous",
+    heading: "Contactez-nous",
     subtitle: "Vous avez une question ou besoin d'assistance ?\nL'équipe TopAffaireImmo est à votre écoute.\nVous pouvez nous contacter pour toute demande liée aux annonces, aux comptes utilisateurs ou au fonctionnement de la plateforme.\nNous nous engageons à vous répondre dans les meilleurs délais.",
     getInTouch: "Nos Coordonnées",
     address: "Adresse",
@@ -42,7 +42,7 @@ const content = {
   ar: {
     title: "اتصل بنا – TopAffaireImmo",
     metaDescription: "تواصل مع فريق TopAffaireImmo لأي استفسار يخص الإعلانات العقارية أو استخدام المنصة.",
-    pageHeading: "اتصل بنا",
+    heading: "اتصل بنا",
     subtitle: "هل لديك سؤال أو تحتاج إلى مساعدة؟\nفريق TopAffaireImmo رهن إشارتك.\nيمكنك التواصل معنا بخصوص الإعلانات، حسابات المستخدمين أو أي استفسار متعلق بالمنصة.\nنحرص على الرد في أقرب وقت ممكن.",
     getInTouch: "معلومات الاتصال",
     address: "العنوان",
@@ -102,7 +102,7 @@ export default function Contact() {
           {/* Header */}
           <div className="max-w-2xl mb-12">
             <h1 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
-              {c.pageHeading}
+              {c.heading}
             </h1>
             <p className="text-lg text-muted-foreground whitespace-pre-line">
               {c.subtitle}
