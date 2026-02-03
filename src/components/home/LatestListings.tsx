@@ -1,103 +1,53 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PropertyCard, { Property } from "./PropertyCard";
 import { Button } from "@/components/ui/button";
 import { Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { useLatestProperties } from "@/hooks/useProperties";
+import { supabase } from "@/lib/supabase";
 
-const allListings: Property[] = [
-  {
-    id: "5",
-    title: "Spacious Family Apartment",
-    titleAr: "شقة عائلية واسعة",
-    price: 1850000,
-    priceType: "sale",
-    type: "Apartment",
-    city: "Casablanca",
-    cityAr: "الدار البيضاء",
-    address: "Maarif District",
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 145,
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
-  },
-  {
-    id: "6",
-    title: "Modern Studio for Rent",
-    titleAr: "ستوديو عصري للإيجار",
-    price: 6500,
-    priceType: "rent",
-    type: "Apartment",
-    city: "Rabat",
-    cityAr: "الرباط",
-    address: "Hassan District",
-    bedrooms: 1,
-    bathrooms: 1,
-    area: 55,
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
-  },
-  {
-    id: "7",
-    title: "Commercial Space in Prime Location",
-    titleAr: "محل تجاري في موقع متميز",
-    price: 25000,
-    priceType: "rent",
-    type: "Commercial",
-    city: "Casablanca",
-    cityAr: "الدار البيضاء",
-    address: "Boulevard Zerktouni",
-    area: 200,
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
-  },
-  {
-    id: "8",
-    title: "Traditional Riad with Modern Amenities",
-    titleAr: "رياض تقليدي بمرافق عصرية",
-    price: 3200000,
-    priceType: "sale",
-    type: "House",
-    city: "Marrakech",
-    cityAr: "مراكش",
-    address: "Medina",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 280,
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
-  },
-  {
-    id: "9",
-    title: "Building Plot with Sea View",
-    titleAr: "قطعة أرض مع إطلالة بحرية",
-    price: 1500000,
-    priceType: "sale",
-    type: "Land",
-    city: "Agadir",
-    cityAr: "أكادير",
-    address: "Taghazout Bay",
-    area: 500,
-    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80",
-  },
-  {
-    id: "10",
-    title: "Cozy 2-Bedroom Apartment",
-    titleAr: "شقة مريحة بغرفتين",
-    price: 8000,
-    priceType: "rent",
-    type: "Apartment",
-    city: "Tangier",
-    cityAr: "طنجة",
-    address: "City Center",
-    bedrooms: 2,
-    bathrooms: 1,
-    area: 85,
-    image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
-  },
-];
+// Helper to get public image URL
+function getPublicImageUrl(pathOrUrl: string) {
+  if (!pathOrUrl) return "";
+  if (pathOrUrl.startsWith("http")) return pathOrUrl;
+  return supabase.storage.from("property-images").getPublicUrl(pathOrUrl).data.publicUrl;
+}
 
 export default function LatestListings() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [activeFilter, setActiveFilter] = useState("all");
+  
+  // Fetch real latest properties from database (published only)
+  const { properties: dbProperties, loading } = useLatestProperties(12);
+  
+  // Map database properties to PropertyCard format
+  const allListings: Property[] = useMemo(() => {
+    return dbProperties.map((prop) => {
+      const firstImg = prop.images?.[0] || "";
+      const image = firstImg
+        ? getPublicImageUrl(firstImg)
+        : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
+
+      return {
+        id: prop.id,
+        title: language === "ar" ? prop.title_ar || prop.title_fr || "Annonce" : prop.title_fr || prop.title_ar || "Annonce",
+        titleAr: prop.title_ar || undefined,
+        price: prop.price || 0,
+        priceType: (prop.transaction_type as "sale" | "rent") || "sale",
+        type: prop.property_type || "Property",
+        city: language === "ar" ? prop.city?.name_ar || prop.city?.name_fr || "" : prop.city?.name_fr || prop.city?.name_ar || "",
+        cityAr: prop.city?.name_ar || undefined,
+        address: prop.address || (language === "ar" ? prop.neighborhood?.name_ar : prop.neighborhood?.name_fr) || "",
+        bedrooms: prop.bedrooms || undefined,
+        bathrooms: prop.bathrooms || undefined,
+        area: prop.area || undefined,
+        image,
+        featured: prop.featured || false,
+      };
+    });
+  }, [dbProperties, language]);
   
   const filters = [
     { value: "all", label: isRTL ? "الكل" : "Tous" },
@@ -114,6 +64,24 @@ export default function LatestListings() {
       : allListings.filter(
           (listing) => listing.type.toLowerCase() === activeFilter
         );
+  
+  // Show loading state
+  if (loading) {
+    return (
+      <section className={`py-16 md:py-24 bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`}>
+        <div className="container">
+          <div className="text-center text-muted-foreground">
+            {isRTL ? 'جاري التحميل...' : 'Chargement...'}
+          </div>
+        </div>
+      </section>
+    );
+  }
+  
+  // Don't render section if no listings
+  if (allListings.length === 0) {
+    return null;
+  }
 
   return (
     <section className={`py-16 md:py-24 bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`}>

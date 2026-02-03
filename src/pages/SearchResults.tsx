@@ -124,7 +124,8 @@ export default function SearchResults() {
             `
           )
           // Only show published properties on public search page
-          .eq("status", "published");
+          .eq("status", "published")
+          .eq("is_archived", false);
 
         // ✅ Type filter (SQL) - نخففو فالfrontend filter final
         if (selectedType !== "all-types") {

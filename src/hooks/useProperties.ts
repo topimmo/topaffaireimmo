@@ -27,6 +27,10 @@ export interface PropertyWithRelations extends Property {
     agency_name: string | null;
     advertiser_type: string | null;
   };
+  images?: string[] | null;
+  title_fr?: string | null;
+  title_ar?: string | null;
+  address?: string | null;
 }
 
 export function useProperties(filters?: PropertyFilters) {
@@ -91,7 +95,7 @@ export function useProperties(filters?: PropertyFilters) {
       // Published = approved by admin AND live on the site (not pending/approved but unpublished)
       // When owner_id is specified, users see their own properties regardless of status
       if (!filters?.owner_id && !filters?.status) {
-        query = query.eq('status', 'published');
+        query = query.eq('status', 'published').eq('is_archived', false);
       }
 
       query = query.order('created_at', { ascending: false });
@@ -189,6 +193,7 @@ export function useLatestProperties(limit = 12) {
         `)
         // Only show published properties on public site (not pending/approved)
         .eq('status', 'published')
+        .eq('is_archived', false)
         .order('created_at', { ascending: false })
         .limit(limit);
 

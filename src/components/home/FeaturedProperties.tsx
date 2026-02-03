@@ -1,79 +1,51 @@
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PropertyCard, { Property } from "./PropertyCard";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { useFeaturedProperties } from "@/hooks/useProperties";
+import { supabase } from "@/lib/supabase";
 
-const featuredProperties: Property[] = [
-  {
-    id: "1",
-    title: "Luxury Penthouse with Ocean View",
-    titleAr: "بنتهاوس فاخر مع إطلالة على المحيط",
-    price: 4500000,
-    priceType: "sale",
-    type: "Apartment",
-    city: "Casablanca",
-    cityAr: "الدار البيضاء",
-    address: "Corniche Ain Diab",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 280,
-    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-    featured: true,
-  },
-  {
-    id: "2",
-    title: "Modern Villa in Prestigious Neighborhood",
-    titleAr: "فيلا عصرية في حي راقي",
-    price: 8200000,
-    priceType: "sale",
-    type: "Villa",
-    city: "Marrakech",
-    cityAr: "مراكش",
-    address: "Amelkis Golf Resort",
-    bedrooms: 5,
-    bathrooms: 4,
-    area: 450,
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
-    featured: true,
-  },
-  {
-    id: "3",
-    title: "Contemporary Apartment in City Center",
-    titleAr: "شقة معاصرة في وسط المدينة",
-    price: 2800000,
-    priceType: "sale",
-    type: "Apartment",
-    city: "Rabat",
-    cityAr: "الرباط",
-    address: "Agdal District",
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 165,
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
-    featured: true,
-  },
-  {
-    id: "4",
-    title: "Beachfront House with Private Pool",
-    titleAr: "منزل على الشاطئ مع مسبح خاص",
-    price: 6500000,
-    priceType: "sale",
-    type: "House",
-    city: "Tangier",
-    cityAr: "طنجة",
-    address: "Cap Spartel",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 320,
-    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80",
-    featured: true,
-  },
-];
+// Helper to get public image URL
+function getPublicImageUrl(pathOrUrl: string) {
+  if (!pathOrUrl) return "";
+  if (pathOrUrl.startsWith("http")) return pathOrUrl;
+  return supabase.storage.from("property-images").getPublicUrl(pathOrUrl).data.publicUrl;
+}
 
 export default function FeaturedProperties() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch real featured properties from database
+  const { properties: dbProperties, loading } = useFeaturedProperties(6);
+  
+  // Map database properties to PropertyCard format
+  const featuredProperties: Property[] = useMemo(() => {
+    return dbProperties.map((prop) => {
+      const firstImg = prop.images?.[0] || "";
+      const image = firstImg
+        ? getPublicImageUrl(firstImg)
+        : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
+
+      return {
+        id: prop.id,
+        title: language === "ar" ? prop.title_ar || prop.title_fr || "Annonce" : prop.title_fr || prop.title_ar || "Annonce",
+        titleAr: prop.title_ar || undefined,
+        price: prop.price || 0,
+        priceType: (prop.transaction_type as "sale" | "rent") || "sale",
+        type: prop.property_type || "Property",
+        city: language === "ar" ? prop.city?.name_ar || prop.city?.name_fr || "" : prop.city?.name_fr || prop.city?.name_ar || "",
+        cityAr: prop.city?.name_ar || undefined,
+        address: prop.address || (language === "ar" ? prop.neighborhood?.name_ar : prop.neighborhood?.name_fr) || "",
+        bedrooms: prop.bedrooms || undefined,
+        bathrooms: prop.bathrooms || undefined,
+        area: prop.area || undefined,
+        image,
+        featured: prop.featured || false,
+      };
+    });
+  }, [dbProperties, language]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -87,6 +59,24 @@ export default function FeaturedProperties() {
       });
     }
   };
+  
+  // Show loading state
+  if (loading) {
+    return (
+      <section className={`py-16 md:py-24 bg-background noise-texture ${isRTL ? 'rtl' : 'ltr'}`}>
+        <div className="container">
+          <div className="text-center text-muted-foreground">
+            {isRTL ? 'جاري التحميل...' : 'Chargement...'}
+          </div>
+        </div>
+      </section>
+    );
+  }
+  
+  // Don't render section if no featured properties
+  if (featuredProperties.length === 0) {
+    return null;
+  }
 
   return (
     <section className={`py-16 md:py-24 bg-background noise-texture ${isRTL ? 'rtl' : 'ltr'}`}>
