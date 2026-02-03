@@ -482,7 +482,9 @@ async function seedSampleListings() {
         images,
         is_sample: true,
         external_key: `sample_${cityKey}_${template.type}_${i}`,
-        status: 'approved', // Sample listings are pre-approved
+        status: 'published', // Sample listings are published and publicly visible
+        is_archived: false,
+        published_at: new Date().toISOString(),
         advertiser_type: 'owner',
         contact_phone: '+212 6 00 00 00 00',
         contact_whatsapp: '+212 6 00 00 00 00',
