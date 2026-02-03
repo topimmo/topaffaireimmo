@@ -32,6 +32,9 @@ const PEXELS_API_KEY = process.env.PEXELS_API_KEY || '';
 const LISTINGS_COUNT = parseInt(process.env.LISTINGS_COUNT || '50', 10);
 const FORCE_SEED = process.env.FORCE_SEED === 'true';
 
+// PostgreSQL error codes
+const POSTGRES_DUPLICATE_KEY_ERROR = '23505';
+
 // Validate required environment variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('❌ ERROR: Missing required environment variables:');
@@ -427,8 +430,9 @@ async function seedSampleListings() {
     // No admin user found - create a dedicated system user for sample listings
     console.log('⚠️  No admin user found. Creating system user for sample listings...');
     
-    // Use a deterministic UUID for the system user (namespace UUID for 'sample-listings-system')
-    // This allows the script to be idempotent across runs
+    // Use a deterministic UUID for the system user
+    // This is a well-known nil UUID (all zeros except last byte) that allows 
+    // the script to be idempotent across runs by always using the same ID
     const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001';
     
     // Try to create or use existing system user profile
@@ -449,7 +453,7 @@ async function seedSampleListings() {
       .select()
       .single();
     
-    if (systemUserError && systemUserError.code !== '23505') { // Ignore duplicate key errors
+    if (systemUserError && systemUserError.code !== POSTGRES_DUPLICATE_KEY_ERROR) { // Ignore duplicate key errors
       console.error('❌ Error creating system user:', systemUserError);
       console.error('');
       console.error('Please ensure:');
