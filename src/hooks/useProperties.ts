@@ -95,8 +95,8 @@ export function useProperties(filters?: PropertyFilters) {
       // Published = approved by admin AND live on the site (not pending/approved but unpublished)
       // When owner_id is specified, users see their own properties regardless of status
       if (!filters?.owner_id && !filters?.status) {
-        query = query.eq('status', 'published').eq('is_archived', false);
-        console.log('📋 [useProperties] Applying public filter: status=published, is_archived=false');
+        query = query.eq('status', 'published').or('is_archived.is.null,is_archived.eq.false');
+        console.log('📋 [useProperties] Applying public filter: status=published, is_archived IS DISTINCT FROM true');
       }
 
       query = query.order('created_at', { ascending: false });
@@ -204,7 +204,7 @@ export function useLatestProperties(limit = 12) {
         `)
         // Only show published properties on public site (not pending/approved)
         .eq('status', 'published')
-        .eq('is_archived', false)
+        .or('is_archived.is.null,is_archived.eq.false')
         .order('created_at', { ascending: false })
         .limit(limit);
 
