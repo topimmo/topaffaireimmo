@@ -231,13 +231,14 @@ export function useMyProperties() {
         return;
       }
 
+      // Filter by created_by OR owner_id to show all user's listings
       const { data } = await supabase
         .from('properties')
         .select(`
           *,
           city:cities(id, name_fr, name_ar)
         `)
-        .eq('owner_id', user.id)
+        .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
       setProperties(data as PropertyWithRelations[] || []);
