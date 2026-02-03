@@ -6,10 +6,11 @@
  * 
  * Requirements:
  * - Node.js >= 18
- * - Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PEXELS_API_KEY
+ * - Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FORCE_SEED=true
+ * - Optional: PEXELS_API_KEY (for real images instead of placeholders)
  * 
  * Usage:
- *   npm run seed:sample-listings
+ *   FORCE_SEED=true npm run seed:sample-listings
  * 
  * Features:
  * - Idempotent: Uses external_key to prevent duplicates
@@ -17,6 +18,8 @@
  * - Realistic pricing by region
  * - Stock photos from Pexels (no scraping)
  * - Bilingual content (French + Arabic)
+ * - Safety guard: Requires FORCE_SEED=true to prevent accidental seeding
+ * - Auto-creates system user if no admin exists
  */
 
 import 'dotenv/config';
@@ -30,6 +33,10 @@ const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY || '';
 const LISTINGS_COUNT = parseInt(process.env.LISTINGS_COUNT || '50', 10);
+const FORCE_SEED = process.env.FORCE_SEED === 'true';
+
+// PostgreSQL error codes
+const POSTGRES_DUPLICATE_KEY_ERROR = '23505';
 
 // Validate required environment variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -37,6 +44,18 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('  - SUPABASE_URL:', SUPABASE_URL ? '✓' : '✗');
   console.error('  - SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗');
   console.error('  - PEXELS_API_KEY:', PEXELS_API_KEY ? '✓ (optional)' : '⚠️  (will use placeholder images)');
+  console.error('  - FORCE_SEED:', FORCE_SEED ? '✓' : '✗ (safety guard active)');
+  process.exit(1);
+}
+
+// Safety guard: Prevent accidental seeding in production without explicit flag
+if (!FORCE_SEED) {
+  console.error('❌ ERROR: FORCE_SEED must be set to "true" to run this script');
+  console.error('');
+  console.error('This is a safety measure to prevent accidental data seeding.');
+  console.error('To run the script, set the environment variable:');
+  console.error('  FORCE_SEED=true npm run seed:sample-listings');
+  console.error('');
   process.exit(1);
 }
 
@@ -361,8 +380,17 @@ function calculatePrice(
 // =====================================================
 
 async function seedSampleListings() {
-  console.log('🌱 Starting sample listings seed...');
-  console.log(`📊 Target: ${LISTINGS_COUNT} listings`);
+  console.log('');
+  console.log('═══════════════════════════════════════════════════════');
+  console.log('🌱 Starting Sample Listings Seed Script');
+  console.log('═══════════════════════════════════════════════════════');
+  console.log(`📊 Configuration:`);
+  console.log(`   - Target listings: ${LISTINGS_COUNT}`);
+  console.log(`   - FORCE_SEED: ${FORCE_SEED}`);
+  console.log(`   - Supabase URL: ${SUPABASE_URL.substring(0, 30)}...`);
+  console.log(`   - Using service role key: ✓`);
+  console.log(`   - Pexels API: ${PEXELS_API_KEY ? '✓' : '✗ (using placeholders)'}`);
+  console.log('═══════════════════════════════════════════════════════');
   console.log('');
 
   // Step 1: Get cities from database
@@ -389,7 +417,7 @@ async function seedSampleListings() {
   // Step 2: Get or create a system user for sample listings
   console.log('👤 Setting up system user for sample listings...');
   
-  // Try to find existing admin user
+  // Try to find existing admin user first
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id')
@@ -402,8 +430,43 @@ async function seedSampleListings() {
     ownerId = profiles[0].id;
     console.log(`✓ Using existing admin user: ${ownerId}`);
   } else {
-    console.error('❌ No admin user found. Please create an admin user first.');
-    return;
+    // No admin user found - create a dedicated system user for sample listings
+    console.log('⚠️  No admin user found. Creating system user for sample listings...');
+    
+    // Use a deterministic UUID for the system user
+    // This is a well-known nil UUID (all zeros except last byte) that allows 
+    // the script to be idempotent across runs by always using the same ID
+    const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001';
+    
+    // Try to create or use existing system user profile
+    const { data: systemUser, error: systemUserError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: SYSTEM_USER_ID,
+        email: 'system+sample-listings@topaffaireimmo.ma',
+        full_name: 'System User (Sample Listings)',
+        user_role: 'admin',
+        is_admin: true,
+        is_active: true,
+        is_verified: true
+      }, {
+        onConflict: 'id',
+        ignoreDuplicates: false
+      })
+      .select()
+      .single();
+    
+    if (systemUserError && systemUserError.code !== POSTGRES_DUPLICATE_KEY_ERROR) { // Ignore duplicate key errors
+      console.error('❌ Error creating system user:', systemUserError);
+      console.error('');
+      console.error('Please ensure:');
+      console.error('1. You have at least one admin user in your database, OR');
+      console.error('2. The service role key has permission to create profiles');
+      return;
+    }
+    
+    ownerId = SYSTEM_USER_ID;
+    console.log(`✓ Created/using system user: ${ownerId}`);
   }
 
   // Step 3: Delete existing sample listings (for idempotency)
@@ -547,9 +610,18 @@ async function seedSampleListings() {
 
   // Step 6: Summary
   console.log('');
-  console.log('✅ Seed completed!');
-  console.log(`  Success: ${successCount} listings`);
-  console.log(`  Errors: ${errorCount} listings`);
+  console.log('═══════════════════════════════════════════════════════');
+  console.log('✅ Seed Completed Successfully!');
+  console.log('═══════════════════════════════════════════════════════');
+  console.log(`📊 Results:`);
+  console.log(`   - Total generated: ${sampleListings.length} listings`);
+  console.log(`   - Successfully inserted: ${successCount} listings`);
+  console.log(`   - Errors: ${errorCount} listings`);
+  console.log(`   - All sample listings have: is_sample = true`);
+  console.log('═══════════════════════════════════════════════════════');
+  console.log('');
+  console.log('🔍 To verify the insert, run this query in Supabase:');
+  console.log('   SELECT COUNT(*) FROM public.properties WHERE is_sample = true;');
   console.log('');
 }
 
