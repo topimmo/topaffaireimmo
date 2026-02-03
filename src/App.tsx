@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
 import { runStartupValidation } from "./lib/startup-validation";
+import { Toaster } from "@/components/ui/sonner";
 
 // ✅ Layout imports
 import Header from "@/components/layout/Header";
@@ -410,6 +411,7 @@ function App() {
 
       {/* ⚠️ دابا MobileFAB راه داخل PublicLayout، إلى بغيتيه هنا حيدو من PublicLayout */}
       <DebugMode />
+      <Toaster />
     </>
   );
 }
