@@ -6,10 +6,11 @@
  * 
  * Requirements:
  * - Node.js >= 18
- * - Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PEXELS_API_KEY
+ * - Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FORCE_SEED=true
+ * - Optional: PEXELS_API_KEY (for real images instead of placeholders)
  * 
  * Usage:
- *   npm run seed:sample-listings
+ *   FORCE_SEED=true npm run seed:sample-listings
  * 
  * Features:
  * - Idempotent: Uses external_key to prevent duplicates
@@ -17,6 +18,8 @@
  * - Realistic pricing by region
  * - Stock photos from Pexels (no scraping)
  * - Bilingual content (French + Arabic)
+ * - Safety guard: Requires FORCE_SEED=true to prevent accidental seeding
+ * - Auto-creates system user if no admin exists
  */
 
 import 'dotenv/config';
