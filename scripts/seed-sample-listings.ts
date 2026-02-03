@@ -93,7 +93,7 @@ const MOROCCO_CITIES: Record<string, CityData> = {
   agadir: {
     name_fr: 'Agadir',
     name_ar: 'أكادير',
-    neighborhoods: ['Talborjt', 'Dakhla Road area', 'Founty', 'Secteur Touristique', 'Tikiouine'],
+    neighborhoods: ['Talborjt', 'Hay Dakhla', 'Founty', 'Secteur Touristique', 'Tikiouine'],
     priceMultiplier: 0.85,
     region: 'south'
   },
@@ -325,10 +325,18 @@ async function fetchPexelsImages(query: string, count: number = 3): Promise<stri
 // HELPER FUNCTIONS
 // =====================================================
 
+/**
+ * Generate a random integer between min and max (inclusive)
+ * Simple utility function tested through usage in property generation
+ */
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/**
+ * Randomly select an element from an array
+ * Simple utility function tested through usage in property generation
+ */
 function randomChoice<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
