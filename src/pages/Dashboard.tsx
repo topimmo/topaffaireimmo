@@ -114,7 +114,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteId || !user) return;
     setDeleting(true);
 
     try {
@@ -122,7 +122,7 @@ export default function Dashboard() {
         .from('properties')
         .delete()
         .eq('id', deleteId)
-        .eq('owner_id', user!.id); // Ensure only owner can delete
+        .eq('owner_id', user.id); // Ensure only owner can delete
 
       if (error) {
         console.error('Delete error:', error);
