@@ -112,7 +112,7 @@ export default function CityTransactionPage() {
                 {isRental
                   ? language === 'fr'
                     ? `Parcourez les meilleures offres de location à ${cityName}. Appartements, maisons et villas disponibles avec prix et contact direct.`
-                    : `تصفح أفضل عروض الإيجار في ${cityName}. شقق ومنازل وفيلات متاحة مع أسعار وتواصل مباشر.`
+                    : `تصفح أفضل عروض الإيجار في ${cityName}. شقق ومنازل وفيلات متاحة مع الأسعار والتواصل المباشر.`
                   : language === 'fr'
                     ? `Découvrez les propriétés à vendre à ${cityName}. Large sélection d'appartements, villas, maisons et terrains avec annonces vérifiées.`
                     : `اكتشف العقارات المعروضة للبيع في ${cityName}. مجموعة واسعة من الشقق والفيلات والمنازل والأراضي مع إعلانات مؤكدة.`}
