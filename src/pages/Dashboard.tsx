@@ -318,8 +318,8 @@ export default function Dashboard() {
                         </Button>
                       )}
                       
-                      {/* Delete button - only for draft/rejected */}
-                      {(['draft', 'rejected'].includes(property.status)) ? (
+                      {/* Delete button - enabled for draft/rejected/approved */}
+                      {(['draft', 'rejected', 'approved'].includes(property.status)) ? (
                         <Button
                           variant="outline"
                           size="sm"
