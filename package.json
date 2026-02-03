@@ -16,7 +16,8 @@
     "preview": "vite preview",
     "types:supabase": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/supabase.ts",
     "generate:sitemaps": "npx tsx scripts/generate-sitemaps.ts",
-    "seed:sample-listings": "npx tsx scripts/seed-sample-listings.ts"
+    "seed:sample-listings": "npx tsx scripts/seed-sample-listings.ts",
+    "generate:moroccan-listings": "npx tsx scripts/generate-moroccan-listings.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
