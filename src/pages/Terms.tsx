@@ -1,5 +1,3 @@
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 
@@ -149,10 +147,8 @@ export default function Terms() {
   const t = content[language];
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <Header />
-
-      <main className="flex-1 pt-24 pb-16">
+    <div className={`bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="pt-24 pb-16">
         <CMSPageWrapper 
           slug="terms" 
           defaultTitle={{ fr: t.title, ar: t.title }}
@@ -200,9 +196,7 @@ export default function Terms() {
           </div>
         </div>
         </CMSPageWrapper>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }

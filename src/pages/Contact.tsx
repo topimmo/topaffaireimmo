@@ -1,6 +1,4 @@
 import { useState } from "react";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -83,10 +81,8 @@ export default function Contact() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <Header />
-
-      <main className="flex-1 pt-24 pb-16">
+    <div className={`bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="pt-24 pb-16">
         <CMSPageWrapper 
           slug="contact" 
           defaultTitle={{ fr: c.title, ar: c.title }}
@@ -257,9 +253,7 @@ export default function Contact() {
           </div>
         </div>
         </CMSPageWrapper>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }
