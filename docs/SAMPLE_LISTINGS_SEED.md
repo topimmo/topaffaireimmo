@@ -18,7 +18,7 @@ This script generates realistic sample property listings across Morocco, includi
 - **Rabat**: Agdal, Hay Riad, Hassan, Souissi
 - **Marrakech**: Guéliz, Hivernage, Palmeraie
 - **Tanger**: Malabata, Iberia, Marshan
-- **Agadir**: Talborjt, Dakhla Road area
+- **Agadir**: Talborjt, Hay Dakhla
 - **Fès**: Ville Nouvelle, Narjiss
 - **Oujda**: Hay Al Qods
 
