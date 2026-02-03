@@ -152,7 +152,7 @@ export default function PropertyDetails() {
           .eq("id", id)
           // Only show published properties on public property details page
           .eq("status", "published")
-          .eq("is_archived", false)
+          .or('is_archived.is.null,is_archived.eq.false')
           .maybeSingle();
 
         if (!mounted) return;

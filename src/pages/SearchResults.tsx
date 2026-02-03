@@ -126,9 +126,9 @@ export default function SearchResults() {
           )
           // Only show published properties on public search page
           .eq("status", "published")
-          .eq("is_archived", false);
+          .or('is_archived.is.null,is_archived.eq.false');
 
-        console.log('📋 [SearchResults] Fetching properties with filter: status=published, is_archived=false');
+        console.log('📋 [SearchResults] Fetching properties with filter: status=published, is_archived IS DISTINCT FROM true');
 
         // Filter by owner (agency) if specified in URL
         if (urlOwnerId) {
