@@ -71,7 +71,7 @@ export default function SearchResults() {
   // ✅ derive initial values from URL (never empty)
   const urlType = useMemo(() => normalize(searchParams.get("type") || ""), [searchParams]);
   const urlCity = useMemo(() => normalize(searchParams.get("city") || ""), [searchParams]);
-  const urlOwner = useMemo(() => searchParams.get("owner"), [searchParams]);
+  const urlOwnerId = useMemo(() => searchParams.get("owner"), [searchParams]);
 
   const initialType = urlType ? urlType : "all-types";
   const initialCity = urlCity ? urlCity : "all-cities";
@@ -131,9 +131,9 @@ export default function SearchResults() {
         console.log('📋 [SearchResults] Fetching properties with filter: status=published, is_archived=false');
 
         // Filter by owner (agency) if specified in URL
-        if (urlOwner) {
-          q = q.eq("owner_id", urlOwner);
-          console.log(`🏢 [SearchResults] Filtering by owner_id: ${urlOwner}`);
+        if (urlOwnerId) {
+          q = q.eq("owner_id", urlOwnerId);
+          console.log(`🏢 [SearchResults] Filtering by owner_id: ${urlOwnerId}`);
         }
 
         // ✅ Type filter (SQL) - نخففو فالfrontend filter final
@@ -177,7 +177,7 @@ export default function SearchResults() {
     };
 
     fetchData();
-  }, [selectedType, sortBy, urlOwner]);
+  }, [selectedType, sortBy, urlOwnerId]);
 
   // ✅ frontend filters (city + exact type + price)
   const filteredRows = useMemo(() => {
