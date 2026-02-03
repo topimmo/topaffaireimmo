@@ -56,9 +56,7 @@ export default function Agencies() {
       // 1) جيب الوكالات
       const { data: agencyData, error: agencyErr } = await supabase
         .from("profiles")
-        .select(
-          "id, full_name, email, phone, agency_name, agency_logo, agency_description_fr, agency_description_ar, agency_cities"
-        )
+        .select("*")
         .eq("user_type", "agency");
 
       if (agencyErr) throw agencyErr;
