@@ -95,7 +95,7 @@ export function useProperties(filters?: PropertyFilters) {
       // Published = approved by admin AND live on the site (not pending/approved but unpublished)
       // When owner_id is specified, users see their own properties regardless of status
       if (!filters?.owner_id && !filters?.status) {
-        query = query.eq('status', 'published');
+        query = query.eq('status', 'published').eq('is_archived', false);
       }
 
       query = query.order('created_at', { ascending: false });
@@ -211,6 +211,7 @@ export function useLatestProperties(limit = 12) {
         `)
         // Only show published properties on public site (not pending/approved)
         .eq('status', 'published')
+        .eq('is_archived', false)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -222,6 +223,7 @@ export function useLatestProperties(limit = 12) {
           id: data[0].id,
           title_fr: data[0].title_fr,
           status: data[0].status,
+          is_archived: data[0].is_archived,
           owner_type: (data[0] as any).owner?.advertiser_type
         });
       }
