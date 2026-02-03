@@ -30,7 +30,7 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 console.log('\n🔧 TopAffaireImmo Quick Fix Tool\n');
-console.log('=' .repeat(80));
+console.log('='.repeat(80));
 
 // Validate configuration
 if (!supabaseUrl || !supabaseServiceKey) {
@@ -199,7 +199,7 @@ async function runQuickFix() {
     }
     
     // Final summary
-    console.log('\n' + '=' .repeat(80));
+    console.log('\n' + '='.repeat(80));
     console.log('📋 SUMMARY\n');
     
     if (publicCount && publicCount > 0) {
@@ -223,7 +223,7 @@ async function runQuickFix() {
       console.log('3. Manually update property status if needed');
     }
     
-    console.log('\n' + '=' .repeat(80));
+    console.log('\n' + '='.repeat(80));
     console.log('Quick fix complete!\n');
     
   } catch (error) {

@@ -24,7 +24,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
 console.log('\n🔍 TopAffaireImmo Listings Diagnostic Tool\n');
-console.log('=' .repeat(80));
+console.log('='.repeat(80));
 
 // Validate configuration
 if (!supabaseUrl) {
@@ -42,7 +42,7 @@ console.log('✅ Configuration loaded:');
 console.log(`   - Supabase URL: ${supabaseUrl.substring(0, 40)}...`);
 console.log(`   - Service Key: ${supabaseServiceKey ? '✓ Available' : '✗ Not available'}`);
 console.log(`   - Anon Key: ${supabaseAnonKey ? '✓ Available' : '✗ Not available'}`);
-console.log('=' .repeat(80));
+console.log('='.repeat(80));
 
 // Create Supabase clients
 const serviceClient = supabaseServiceKey 
@@ -219,7 +219,7 @@ async function runDiagnostics() {
   }
 
   console.log('\n📊 D) DIAGNOSIS & RECOMMENDATIONS\n');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
   
   // Determine root cause
   if (anonClient) {
@@ -254,7 +254,7 @@ async function runDiagnostics() {
     }
   }
 
-  console.log('\n' + '=' .repeat(80));
+  console.log('\n' + '='.repeat(80));
   console.log('Diagnostic complete!\n');
 }
 
