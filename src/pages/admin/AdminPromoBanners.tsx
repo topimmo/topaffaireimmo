@@ -149,9 +149,13 @@ export default function AdminPromoBanners() {
 
         if (error) throw error;
 
-        await logAdminAction('promo_banner_updated', {
-          banner_id: editingBanner.id,
-          title: formData.title,
+        await logAdminAction({
+          action: 'update',
+          entity_type: 'other',
+          metadata: {
+            banner_id: editingBanner.id,
+            title: formData.title,
+          },
         });
 
         toast.success('Banner updated successfully');
@@ -163,8 +167,12 @@ export default function AdminPromoBanners() {
 
         if (error) throw error;
 
-        await logAdminAction('promo_banner_created', {
-          title: formData.title,
+        await logAdminAction({
+          action: 'create',
+          entity_type: 'other',
+          metadata: {
+            title: formData.title,
+          },
         });
 
         toast.success('Banner created successfully');
@@ -189,9 +197,13 @@ export default function AdminPromoBanners() {
 
       if (error) throw error;
 
-      await logAdminAction('promo_banner_toggled', {
-        banner_id: banner.id,
-        is_active: !banner.is_active,
+      await logAdminAction({
+        action: 'update',
+        entity_type: 'other',
+        metadata: {
+          banner_id: banner.id,
+          is_active: !banner.is_active,
+        },
       });
 
       toast.success(
@@ -217,9 +229,13 @@ export default function AdminPromoBanners() {
 
       if (error) throw error;
 
-      await logAdminAction('promo_banner_deleted', {
-        banner_id: banner.id,
-        title: banner.title,
+      await logAdminAction({
+        action: 'delete',
+        entity_type: 'other',
+        metadata: {
+          banner_id: banner.id,
+          title: banner.title,
+        },
       });
 
       toast.success('Banner deleted successfully');
