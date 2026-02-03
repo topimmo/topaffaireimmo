@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, MapPin, Phone, Home, Loader2, Users } from "lucide-react";
+import PromoBanner from "@/components/PromoBanner";
 
 type Agency = {
   id: string;
@@ -128,6 +129,11 @@ export default function Agencies() {
     <>
       <main className="flex-1 pt-24 pb-16">
         <div className="container">
+          {/* Promo Banner at top of agencies page */}
+          <div className="py-6">
+            <PromoBanner position="agencies-top" />
+          </div>
+
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-4">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import PromoSlot from '@/components/PromoSlot';
 
 interface PromoBanner {
   id: string;
@@ -14,7 +15,7 @@ interface PromoBanner {
 }
 
 interface PromoBannerProps {
-  position: 'home-top' | 'home-middle' | 'listing-top';
+  position: 'home-top' | 'home-middle' | 'listing-top' | 'agencies-top';
   className?: string;
 }
 
@@ -64,7 +65,7 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
   }
 
   const BannerContent = () => (
-    <div className={cn('relative overflow-hidden rounded-lg', className)}>
+    <div className="relative overflow-hidden rounded-lg shadow-sm">
       <img
         src={banner.image_url}
         alt={banner.title}
@@ -74,18 +75,22 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
     </div>
   );
 
-  if (banner.link_url) {
-    return (
-      <a
-        href={banner.link_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block hover:opacity-90 transition-opacity"
-      >
-        <BannerContent />
-      </a>
-    );
-  }
+  const content = banner.link_url ? (
+    <a
+      href={banner.link_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block hover:opacity-90 transition-opacity"
+    >
+      <BannerContent />
+    </a>
+  ) : (
+    <BannerContent />
+  );
 
-  return <BannerContent />;
+  return (
+    <PromoSlot className={className} emptyBehavior="collapse">
+      {content}
+    </PromoSlot>
+  );
 }

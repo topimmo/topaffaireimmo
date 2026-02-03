@@ -11,11 +11,9 @@ function Home() {
       {/* Hero Section */}
       <HeroSearch />
 
-      {/* Promo Banner (home-top) */}
-      <section className="mt-8">
-        <div className="container mx-auto px-4">
-          <PromoBanner position="home-top" />
-        </div>
+      {/* Promo Banner (home-top) - After hero, before featured properties */}
+      <section className="py-8">
+        <PromoBanner position="home-top" />
       </section>
 
       {/* Featured properties */}
@@ -24,8 +22,8 @@ function Home() {
       </section>
 
       {/* ✅ Ad banner (home middle) */}
-      <section className="mt-12">
-        <div className="my-6 min-h-[90px]">
+      <section className="py-6">
+        <div className="min-h-[90px]">
           <AdBanner
             page="home"
             position="home-middle"
@@ -34,11 +32,9 @@ function Home() {
         </div>
       </section>
 
-      {/* Promo Banner (home-middle) */}
-      <section className="mt-8">
-        <div className="container mx-auto px-4">
-          <PromoBanner position="home-middle" />
-        </div>
+      {/* Promo Banner (home-middle) - Between sections */}
+      <section className="py-6">
+        <PromoBanner position="home-middle" />
       </section>
 
       {/* Latest listings */}

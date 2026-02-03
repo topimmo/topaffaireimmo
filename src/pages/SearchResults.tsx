@@ -234,8 +234,8 @@ export default function SearchResults() {
   return (
     <div className="pt-24 pb-16">
       <div className="container">
-        {/* Promo Banner at top of listing page */}
-        <div className="mb-8">
+        {/* Promo Banner at top of listing page - Before page header */}
+        <div className="py-6">
           <PromoBanner position="listing-top" />
         </div>
 
