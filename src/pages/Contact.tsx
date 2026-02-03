@@ -6,11 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock, CheckCircle } from "lucide-react";
+import { useSEO } from "@/components/SEO";
 
 const content = {
   fr: {
-    title: "Contactez-nous",
-    subtitle: "Vous avez des questions ou besoin d'assistance ? Nous sommes là pour vous aider. Contactez notre équipe et nous vous répondrons dans les plus brefs délais.",
+    title: "Contact – TopAffaireImmo",
+    metaDescription: "Contactez TopAffaireImmo pour toute question liée aux annonces immobilières ou à l'utilisation de la plateforme.",
+    heading: "Contactez-nous",
+    subtitle: "Vous avez une question ou besoin d'assistance ?\nL'équipe TopAffaireImmo est à votre écoute.\nVous pouvez nous contacter pour toute demande liée aux annonces, aux comptes utilisateurs ou au fonctionnement de la plateforme.\nNous nous engageons à vous répondre dans les meilleurs délais.",
     getInTouch: "Nos Coordonnées",
     address: "Adresse",
     addressValue: "123 Boulevard Mohammed V\nCasablanca, Maroc",
@@ -37,8 +40,10 @@ const content = {
     placeholderMessage: "Votre message...",
   },
   ar: {
-    title: "اتصل بنا",
-    subtitle: "هل لديك أسئلة أو تحتاج إلى مساعدة؟ نحن هنا لمساعدتك. تواصل مع فريقنا وسنرد عليك في أقرب وقت ممكن.",
+    title: "اتصل بنا – TopAffaireImmo",
+    metaDescription: "تواصل مع فريق TopAffaireImmo لأي استفسار يخص الإعلانات العقارية أو استخدام المنصة.",
+    heading: "اتصل بنا",
+    subtitle: "هل لديك سؤال أو تحتاج إلى مساعدة؟\nفريق TopAffaireImmo رهن إشارتك.\nيمكنك التواصل معنا بخصوص الإعلانات، حسابات المستخدمين أو أي استفسار متعلق بالمنصة.\nنحرص على الرد في أقرب وقت ممكن.",
     getInTouch: "معلومات الاتصال",
     address: "العنوان",
     addressValue: "123 شارع محمد الخامس\nالدار البيضاء، المغرب",
@@ -72,6 +77,12 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Set SEO metadata
+  useSEO({
+    title: c.title,
+    description: c.metaDescription,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -91,9 +102,9 @@ export default function Contact() {
           {/* Header */}
           <div className="max-w-2xl mb-12">
             <h1 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
-              {c.title}
+              {c.heading}
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground whitespace-pre-line">
               {c.subtitle}
             </p>
           </div>
