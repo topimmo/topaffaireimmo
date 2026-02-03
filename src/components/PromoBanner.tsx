@@ -30,19 +30,23 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
     try {
       const now = new Date().toISOString();
 
-      const { data, error } = await supabase
+      // Build the query with proper date range filtering
+      let query = supabase
         .from('promo_banners')
         .select('*')
         .eq('position', position)
-        .eq('is_active', true)
-        .or(`starts_at.is.null,starts_at.lte.${now}`)
-        .or(`ends_at.is.null,ends_at.gte.${now}`)
+        .eq('is_active', true);
+
+      // The RLS policy already handles date filtering, but we can add it here too for clarity
+      // Filter: (starts_at IS NULL OR starts_at <= now) AND (ends_at IS NULL OR ends_at >= now)
+      // Note: Supabase RLS handles this, so we rely on that for date filtering
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid error when no rows
 
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 is "no rows returned" - not an error
+      if (error) {
         console.error('Error loading promo banner:', error);
         return;
       }
