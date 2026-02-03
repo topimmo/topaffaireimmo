@@ -107,9 +107,12 @@ const statusColors: Record<string, string> = {
 };
 
 const propertyStatusColors: Record<string, string> = {
+  draft: 'bg-gray-100 text-gray-800',
   pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
+  published: 'bg-green-100 text-green-800',
+  approved: 'bg-green-100 text-green-800', // Legacy, should be published
   rejected: 'bg-red-100 text-red-800',
+  archived: 'bg-slate-100 text-slate-800',
   sold: 'bg-blue-100 text-blue-800',
   rented: 'bg-purple-100 text-purple-800',
 };
@@ -302,8 +305,25 @@ export default function AdminPanel() {
     if (propertyActionType === 'delete') {
       await supabase.from('properties').delete().eq('id', selectedProperty.id);
     } else {
-      const status = propertyActionType === 'approve' ? 'approved' : 'rejected';
-      await supabase.from('properties').update({ status }).eq('id', selectedProperty.id);
+      // Fix: Set status to 'published' instead of 'approved' to make listings visible publicly
+      const updateData: any = {};
+      
+      if (propertyActionType === 'approve') {
+        const now = new Date().toISOString();
+        updateData.status = 'published'; // Changed from 'approved' to 'published'
+        updateData.approved_at = now;
+        updateData.approved_by = user?.id || null;
+        updateData.published_at = now;
+        updateData.is_archived = false;
+      } else {
+        // Rejected
+        const now = new Date().toISOString();
+        updateData.status = 'rejected';
+        updateData.rejected_at = now;
+        updateData.rejected_by = user?.id || null;
+      }
+      
+      await supabase.from('properties').update(updateData).eq('id', selectedProperty.id);
     }
 
     setProcessing(false);
@@ -499,9 +519,13 @@ export default function AdminPanel() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
                               <Badge className={propertyStatusColors[property.status]}>
-                                {property.status === 'pending' ? (isRTL ? 'قيد الانتظار' : 'En attente') :
-                                 property.status === 'approved' ? (isRTL ? 'موافق عليه' : 'Approuvé') :
-                                 property.status === 'rejected' ? (isRTL ? 'مرفوض' : 'Rejeté') : property.status}
+                                {property.status === 'draft' ? (isRTL ? 'مسودة' : 'Brouillon') :
+                                 property.status === 'pending' ? (isRTL ? 'قيد الانتظار' : 'En attente') :
+                                 property.status === 'published' ? (isRTL ? 'منشور' : 'Publié') :
+                                 property.status === 'approved' ? (isRTL ? 'منشور' : 'Publié') :  // Legacy, treat as published
+                                 property.status === 'rejected' ? (isRTL ? 'مرفوض' : 'Rejeté') :
+                                 property.status === 'archived' ? (isRTL ? 'مؤرشف' : 'Archivé') :
+                                 property.status}
                               </Badge>
                               <Badge variant="outline">
                                 {property.transaction_type === 'sale' ? (isRTL ? 'للبيع' : 'Vente') : (isRTL ? 'للإيجار' : 'Location')}
