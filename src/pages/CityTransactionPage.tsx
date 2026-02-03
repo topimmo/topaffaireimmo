@@ -30,15 +30,20 @@ export default function CityTransactionPage() {
   const isRental = type === 'location';
   const transactionType = isRental ? 'rent' : 'sale';
   
-  // Generate SEO metadata
+  // Generate unique SEO metadata for transaction type pages
   const transactionText = isRental 
     ? (language === 'fr' ? 'Location' : 'إيجار')
     : (language === 'fr' ? 'Vente' : 'بيع');
   
-  const pageTitle = `${transactionText} Immobilier à ${cityName} | TopAffaireImmo`;
+  // Unique SEO title for transaction pages
+  const pageTitle = isRental
+    ? `Location Immobilier à ${cityName} – Appartements & Maisons à Louer | TopAffaireImmo`
+    : `Vente Immobilier à ${cityName} – Appartements & Maisons à Vendre | TopAffaireImmo`;
+  
+  // Unique meta description for transaction pages
   const pageDescription = isRental
-    ? `Découvrez les meilleures annonces de location à ${cityName} : appartements, maisons et villas à louer. Prix, photos et contact direct.`
-    : `Trouvez les meilleures propriétés à vendre à ${cityName} : appartements, villas, maisons et terrains. Annonces vérifiées avec prix et photos.`;
+    ? `Découvrez les meilleures annonces de location à ${cityName} : appartements, maisons et villas à louer. Prix, photos et contact direct avec les propriétaires.`
+    : `Trouvez les meilleures propriétés à vendre à ${cityName} : appartements, villas, maisons et terrains. Annonces vérifiées avec prix et photos détaillées.`;
 
   // Structured data
   const structuredData = [
@@ -97,17 +102,20 @@ export default function CityTransactionPage() {
           <div className="max-w-4xl mx-auto">
             {/* Page Header */}
             <div className="mb-8">
+              {/* Unique H1 for transaction pages */}
               <h1 className="text-3xl md:text-4xl font-bold mb-3">
-                {transactionText} {language === 'fr' ? 'Immobilier à' : ''} {cityName}
+                {language === 'fr'
+                  ? `${transactionText} Immobilier à ${cityName}`
+                  : `${transactionText} العقارات في ${cityName}`}
               </h1>
               <p className="text-lg text-muted-foreground">
                 {isRental
                   ? language === 'fr'
-                    ? `Parcourez les meilleures offres de location à ${cityName}. Appartements, maisons et villas disponibles.`
-                    : `تصفح أفضل عروض الإيجار في ${cityName}. شقق ومنازل وفيلات متاحة.`
+                    ? `Parcourez les meilleures offres de location à ${cityName}. Appartements, maisons et villas disponibles avec prix et contact direct.`
+                    : `تصفح أفضل عروض الإيجار في ${cityName}. شقق ومنازل وفيلات متاحة مع الأسعار والتواصل المباشر.`
                   : language === 'fr'
-                    ? `Découvrez les propriétés à vendre à ${cityName}. Appartements, villas, maisons et terrains.`
-                    : `اكتشف العقارات المعروضة للبيع في ${cityName}. شقق وفيلات ومنازل وأراضي.`}
+                    ? `Découvrez les propriétés à vendre à ${cityName}. Large sélection d'appartements, villas, maisons et terrains avec annonces vérifiées.`
+                    : `اكتشف العقارات المعروضة للبيع في ${cityName}. مجموعة واسعة من الشقق والفيلات والمنازل والأراضي مع إعلانات مؤكدة.`}
               </p>
             </div>
 

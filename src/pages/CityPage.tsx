@@ -28,13 +28,13 @@ export default function CityPage() {
   }
 
   const cityName = language === 'ar' ? cityData.name_ar : cityData.name_fr;
-  const pageTitle = `Immobilier ${cityName} - Vente et Location | TopAffaireImmo`;
-  const pageDescription =
-    `Découvrez les meilleures offres immobilières à ${cityName}, Maroc. ` +
-    `Appartements, villas, maisons et terrains à vendre ou à louer. ` +
-    `Annonces vérifiées et prix transparents.`;
+  // SEO Title format: "Immobilier à {City} – Vente & Location d'Appartements"
+  const pageTitle = `Immobilier à ${cityName} – Vente & Location d'Appartements | TopAffaireImmo`;
+  // Meta description format from requirements
+  const pageDescription = 
+    `Découvrez les meilleures annonces immobilières à ${cityName} : vente et location d'appartements, maisons et terrains.`;
 
-  // Enhanced structured data for the city with BreadcrumbList
+  // Enhanced structured data for the city with BreadcrumbList and CollectionPage
   const structuredData = [
     {
       '@context': 'https://schema.org',
@@ -70,6 +70,22 @@ export default function CityPage() {
         },
       ],
     },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: `Immobilier à ${cityName}`,
+      description: pageDescription,
+      url: `${SITE_URL}/${cityData.slug}`,
+      about: {
+        '@type': 'RealEstateAgent',
+        name: 'TopAffaireImmo',
+        areaServed: {
+          '@type': 'City',
+          name: cityData.name_fr,
+          addressCountry: 'MA',
+        },
+      },
+    },
   ];
 
   return (
@@ -98,13 +114,17 @@ export default function CityPage() {
               <div className="max-w-4xl mx-auto">
                 {/* City Header */}
                 <div className="mb-8 text-center">
+                  {/* H1 format: "Immobilier à {City} : Vente et Location" */}
                   <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                    {t('realEstate')} {cityName}
-                  </h1>
-                  <p className="text-xl text-muted-foreground">
                     {language === 'fr'
-                      ? `Trouvez votre propriété idéale à ${cityName}`
-                      : `ابحث عن العقار المثالي في ${cityName}`}
+                      ? `Immobilier à ${cityName} : Vente et Location`
+                      : `العقارات في ${cityName}: البيع والإيجار`}
+                  </h1>
+                  {/* SEO-friendly intro text (2-3 lines, natural) */}
+                  <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                    {language === 'fr'
+                      ? `Trouvez les meilleures offres immobilières à ${cityName}. Appartements, villas et maisons disponibles à la vente et à la location avec photos et prix transparents.`
+                      : `اعثر على أفضل العروض العقارية في ${cityName}. شقق وفيلات ومنازل متاحة للبيع والإيجار مع صور وأسعار شفافة.`}
                   </p>
                 </div>
 
