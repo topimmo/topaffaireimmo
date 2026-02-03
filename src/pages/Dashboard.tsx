@@ -30,6 +30,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Property {
   id: string;
@@ -113,20 +114,46 @@ export default function Dashboard() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteId || !user) return;
     setDeleting(true);
 
-    const { error } = await supabase
-      .from('properties')
-      .delete()
-      .eq('id', deleteId);
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', deleteId)
+        .eq('owner_id', user.id); // Ensure only owner can delete
 
-    if (!error) {
+      if (error) {
+        console.error('Delete error:', error);
+        toast.error(
+          isRTL 
+            ? 'خطأ في حذف الإعلان. يرجى المحاولة مرة أخرى.'
+            : 'Erreur lors de la suppression de l\'annonce. Veuillez réessayer.'
+        );
+        setDeleting(false);
+        setDeleteId(null);
+        return;
+      }
+
+      // Successfully deleted - update UI
       setProperties((prev) => prev.filter((p) => p.id !== deleteId));
+      toast.success(
+        isRTL 
+          ? 'تم حذف الإعلان بنجاح'
+          : 'Annonce supprimée avec succès'
+      );
+    } catch (error) {
+      console.error('Unexpected error during delete:', error);
+      toast.error(
+        isRTL 
+          ? 'حدث خطأ غير متوقع'
+          : 'Une erreur inattendue s\'est produite'
+      );
+    } finally {
+      setDeleteId(null);
+      setDeleting(false);
     }
-
-    setDeleteId(null);
-    setDeleting(false);
   };
 
   const getStatusLabel = (status: string) => {
