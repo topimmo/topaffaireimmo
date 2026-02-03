@@ -44,6 +44,7 @@ The app will be available at `http://localhost:5173`
 - [Email Configuration](docs/setup/EMAIL_CONFIGURATION.md)
 - [Facebook Auto-Publishing](docs/features/FACEBOOK_AUTO_PUBLISH_SETUP.md)
 - [Morocco SEO Implementation](docs/features/MOROCCO_SEO_IMPLEMENTATION.md)
+- [Sample Listings Seed Script](docs/SAMPLE_LISTINGS_SEED.md)
 
 ## 🏗️ Tech Stack
 
@@ -109,12 +110,22 @@ topaffaireimmo/
 ## 🔧 Available Scripts
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run typecheck    # Run TypeScript type checking
-npm run lint         # Run ESLint
+npm run dev                    # Start development server
+npm run build                  # Build for production
+npm run preview                # Preview production build
+npm run typecheck              # Run TypeScript type checking
+npm run lint                   # Run ESLint
+npm run seed:sample-listings   # Generate sample property listings
 ```
+
+### Sample Listings
+
+The project includes a seed script to generate realistic sample property listings across Morocco. This is useful for:
+- Development and testing
+- Demonstrating the platform
+- Populating the database with diverse data
+
+See [Sample Listings Documentation](docs/SAMPLE_LISTINGS_SEED.md) for setup and usage instructions.
 
 ## 🌍 Environment Variables
 
