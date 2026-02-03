@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import PropertyCard, { Property } from "@/components/home/PropertyCard";
 import AdBanner from "@/components/home/AdBanner";
+import PromoBanner from "@/components/PromoBanner";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -233,6 +234,11 @@ export default function SearchResults() {
   return (
     <div className="pt-24 pb-16">
       <div className="container">
+        {/* Promo Banner at top of listing page */}
+        <div className="mb-8">
+          <PromoBanner position="listing-top" />
+        </div>
+
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-2">

@@ -17,7 +17,8 @@ import {
   BookOpen,
   FolderTree,
   Menu,
-  X
+  X,
+  ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,6 +78,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: '/admin/content/pages',
       icon: BookOpen,
       current: location.pathname.startsWith('/admin/content'),
+    },
+    {
+      name: isRTL ? 'اللافتات الترويجية' : 'Promo Banners',
+      href: '/admin/promo-banners',
+      icon: ImageIcon,
+      current: location.pathname === '/admin/promo-banners',
     },
     {
       name: isRTL ? 'الإعدادات' : 'Settings',
