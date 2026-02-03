@@ -472,12 +472,18 @@ async function seedSampleListings() {
       const images = await fetchPexelsImages(template.pexels_query, 3);
 
       // Create property object
+      // NOTE: For sample/demo listings, we store the neighborhood name directly in custom_neighborhood
+      // instead of using a neighborhoods table FK (neighborhood_id). This approach:
+      // - Avoids complexity of mapping to neighborhoods table IDs in the seed script
+      // - Allows simple analytics/grouping queries in Supabase without joins
+      // - Makes sample listings self-contained and easier to manage
       const property = {
         owner_id: ownerId,
         created_by: ownerId,
         transaction_type: template.transaction,
         property_type: template.type,
         city_id: cityId,
+        neighborhood_id: null, // Explicitly null for sample listings (see comment above)
         custom_neighborhood: neighborhood,
         price,
         area,
