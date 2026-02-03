@@ -96,6 +96,7 @@ export function useProperties(filters?: PropertyFilters) {
       // When owner_id is specified, users see their own properties regardless of status
       if (!filters?.owner_id && !filters?.status) {
         query = query.eq('status', 'published').eq('is_archived', false);
+        console.log('📋 [useProperties] Applying public filter: status=published, is_archived=false');
       }
 
       query = query.order('created_at', { ascending: false });
@@ -103,6 +104,16 @@ export function useProperties(filters?: PropertyFilters) {
       const { data, error: fetchError, count: totalCount } = await query;
 
       if (fetchError) throw fetchError;
+
+      console.log(`✅ [useProperties] Fetched ${data?.length || 0} properties (total: ${totalCount || 0})`);
+      if (data && data.length > 0) {
+        const statusCounts = data.reduce((acc, prop) => {
+          const status = (prop as PropertyWithRelations).status || 'unknown';
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        console.log('📊 [useProperties] Status distribution:', statusCounts);
+      }
 
       setProperties(data as PropertyWithRelations[] || []);
       setCount(totalCount || 0);
