@@ -40,9 +40,9 @@ export default function CityPropertyTypePage() {
   const cityName = language === 'ar' ? cityData.name_ar : cityData.name_fr;
   const propertyName = language === 'ar' ? propertyData.name_ar : propertyData.name_fr;
   
-  // Generate SEO metadata
+  // Generate unique SEO metadata for property type pages
   const pageTitle = `${propertyName}s à ${cityName} – Vente & Location | TopAffaireImmo`;
-  const pageDescription = `Découvrez les meilleures annonces de ${propertyName.toLowerCase()}s à ${cityName} : vente et location. Prix, photos, caractéristiques et contact direct avec les propriétaires.`;
+  const pageDescription = `Découvrez les meilleures annonces de ${propertyName.toLowerCase()}s à ${cityName} : vente et location. Large sélection avec prix, photos, caractéristiques et contact direct.`;
 
   // Structured data
   const structuredData = [
@@ -101,13 +101,16 @@ export default function CityPropertyTypePage() {
           <div className="max-w-4xl mx-auto">
             {/* Page Header */}
             <div className="mb-8">
+              {/* Unique H1 for property type pages */}
               <h1 className="text-3xl md:text-4xl font-bold mb-3">
-                {propertyName}s à {cityName}
+                {language === 'fr'
+                  ? `${propertyName}s à ${cityName} : Vente et Location`
+                  : `${propertyData.name_ar} في ${cityName}: البيع والإيجار`}
               </h1>
               <p className="text-lg text-muted-foreground">
                 {language === 'fr'
-                  ? `Explorez notre sélection de ${propertyName.toLowerCase()}s à ${cityName}. Trouvez votre propriété idéale parmi nos annonces vérifiées.`
-                  : `استكشف مجموعتنا من ${propertyData.name_ar} في ${cityName}. اعثر على العقار المثالي بين إعلاناتنا المؤكدة.`}
+                  ? `Explorez notre sélection de ${propertyName.toLowerCase()}s à ${cityName}. Trouvez votre ${propertyName.toLowerCase()} idéal parmi nos annonces vérifiées à vendre ou à louer.`
+                  : `استكشف مجموعتنا من ${propertyData.name_ar} في ${cityName}. اعثر على ${propertyData.name_ar} المثالي بين إعلاناتنا المؤكدة للبيع أو الإيجار.`}
               </p>
             </div>
 

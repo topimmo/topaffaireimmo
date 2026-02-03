@@ -21,6 +21,7 @@ export default function MoroccanSaharaPage() {
     SAHARA_CITIES.includes(c.id as typeof SAHARA_CITIES[number])
   );
 
+  // Exact title format from requirements: "Immobilier au Sahara Marocain – Vente & Location"
   const pageTitle = 'Immobilier au Sahara Marocain – Vente & Location | TopAffaireImmo';
   const pageDescription = 
     'Découvrez les opportunités immobilières dans les provinces du Sud du Maroc : Laâyoune, Dakhla, Boujdour, Smara et Tarfaya. Appartements, villas et terrains à vendre ou à louer.';
