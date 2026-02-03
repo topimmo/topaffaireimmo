@@ -421,6 +421,7 @@ export default function AddListing() {
 
       const insertData: Record<string, unknown> = {
         owner_id: user.id,
+        created_by: user.id, // Track original creator
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         advertiser_type: mapAnnouncerType(formData.announcerType),

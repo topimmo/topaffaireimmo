@@ -134,7 +134,7 @@ export default function EditListing() {
       .from('properties')
       .select('*')
       .eq('id', id)
-      .eq('owner_id', user!.id)
+      .or(`created_by.eq.${user!.id},owner_id.eq.${user!.id}`)
       .maybeSingle();
 
     if (error) {
@@ -433,8 +433,7 @@ export default function EditListing() {
           contact_phone: formData.phone,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', id)
-        .eq('owner_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('[EditListing] Failed to update listing:', {

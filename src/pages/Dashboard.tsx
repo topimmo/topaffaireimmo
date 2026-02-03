@@ -104,7 +104,8 @@ export default function Dashboard() {
         created_at,
         city:cities(name_fr, name_ar)
       `)
-      .eq('owner_id', user!.id)
+      // Filter by created_by OR owner_id to show all user's listings
+      .or(`created_by.eq.${user!.id},owner_id.eq.${user!.id}`)
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -121,15 +122,20 @@ export default function Dashboard() {
       const { error } = await supabase
         .from('properties')
         .delete()
-        .eq('id', deleteId)
-        .eq('owner_id', user.id); // Ensure only owner can delete
+        .eq('id', deleteId);
 
       if (error) {
-        console.error('Delete error:', error);
+        // Log error code and message for debugging
+        console.error('Delete error:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         toast.error(
           isRTL 
-            ? 'خطأ في حذف الإعلان. يرجى المحاولة مرة أخرى.'
-            : 'Erreur lors de la suppression de l\'annonce. Veuillez réessayer.'
+            ? `خطأ في حذف الإعلان: ${error.message}`
+            : `Erreur lors de la suppression: ${error.message}`
         );
         setDeleting(false);
         setDeleteId(null);
