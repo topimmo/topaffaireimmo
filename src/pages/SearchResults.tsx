@@ -147,8 +147,9 @@ export default function SearchResults() {
 
         console.log(`✅ [SearchResults] Fetched ${data?.length || 0} properties`);
         if (data && data.length > 0) {
-          const statusCounts = data.reduce((acc, prop: any) => {
-            acc[prop.status] = (acc[prop.status] || 0) + 1;
+          const statusCounts = data.reduce((acc, prop) => {
+            const status = prop.status || 'unknown';
+            acc[status] = (acc[status] || 0) + 1;
             return acc;
           }, {} as Record<string, number>);
           console.log('📊 [SearchResults] Status distribution:', statusCounts);

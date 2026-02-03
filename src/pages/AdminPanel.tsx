@@ -306,11 +306,22 @@ export default function AdminPanel() {
       await supabase.from('properties').delete().eq('id', selectedProperty.id);
     } else {
       // Fix: Set status to 'published' instead of 'approved' to make listings visible publicly
-      const updateData: any = {};
+      interface PropertyUpdateData {
+        status: string;
+        approved_at?: string;
+        approved_by?: string | null;
+        published_at?: string;
+        is_archived?: boolean;
+        rejected_at?: string;
+        rejected_by?: string | null;
+      }
+      
+      const updateData: PropertyUpdateData = {
+        status: propertyActionType === 'approve' ? 'published' : 'rejected'
+      };
       
       if (propertyActionType === 'approve') {
         const now = new Date().toISOString();
-        updateData.status = 'published'; // Changed from 'approved' to 'published'
         updateData.approved_at = now;
         updateData.approved_by = user?.id || null;
         updateData.published_at = now;
@@ -318,7 +329,6 @@ export default function AdminPanel() {
       } else {
         // Rejected
         const now = new Date().toISOString();
-        updateData.status = 'rejected';
         updateData.rejected_at = now;
         updateData.rejected_by = user?.id || null;
       }

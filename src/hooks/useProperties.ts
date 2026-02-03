@@ -107,8 +107,9 @@ export function useProperties(filters?: PropertyFilters) {
 
       console.log(`✅ [useProperties] Fetched ${data?.length || 0} properties (total: ${totalCount || 0})`);
       if (data && data.length > 0) {
-        const statusCounts = data.reduce((acc, prop: any) => {
-          acc[prop.status] = (acc[prop.status] || 0) + 1;
+        const statusCounts = data.reduce((acc, prop) => {
+          const status = (prop as PropertyWithRelations).status || 'unknown';
+          acc[status] = (acc[status] || 0) + 1;
           return acc;
         }, {} as Record<string, number>);
         console.log('📊 [useProperties] Status distribution:', statusCounts);
