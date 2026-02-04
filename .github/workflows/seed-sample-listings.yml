@@ -2,6 +2,11 @@ name: Seed Sample Listings
 
 on:
   workflow_dispatch:
+    inputs:
+      listings_count:
+        description: "How many listings to seed?"
+        required: false
+        default: "50"
 
 jobs:
   seed:
@@ -18,43 +23,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Preflight - validate secrets
-        shell: bash
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-        run: |
-          set -e
-          echo "✅ Checking required environment variables..."
-          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-            echo "❌ Missing SUPABASE_SERVICE_ROLE_KEY"
-            exit 1
-          fi
-
-          # Prefer SUPABASE_URL, fallback to VITE_SUPABASE_URL
-          FINAL_URL="${SUPABASE_URL:-$VITE_SUPABASE_URL}"
-          if [ -z "$FINAL_URL" ]; then
-            echo "❌ Missing SUPABASE URL (set SUPABASE_URL or VITE_SUPABASE_URL)"
-            exit 1
-          fi
-
-          echo "✅ SUPABASE_URL is set (preview): $(echo "$FINAL_URL" | cut -c1-30)..."
-          if [ -n "$PEXELS_API_KEY" ]; then
-            echo "✅ PEXELS_API_KEY is set"
-          else
-            echo "ℹ️ PEXELS_API_KEY not set (will use placeholders)"
-          fi
-
       - name: Run seed script
         env:
-          # Provide both names for compatibility
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          # ✅ secrets
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+
+          # ✅ seed options
           FORCE_SEED: "true"
+          LISTINGS_COUNT: ${{ inputs.listings_count }}
+          ADMIN_EMAIL: "contact@topaffaireimmo.com"
         run: npm run seed:sample-listings
 
       - name: Done
