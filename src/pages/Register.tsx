@@ -24,6 +24,10 @@ export default function Register() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    // Clear error when user starts typing
+    if (error) {
+      setError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,15 +105,21 @@ export default function Register() {
                     ? 'أنشئ حسابك للوصول إلى المنصة'
                     : 'Créez votre compte pour accéder à la plateforme'}
                 </p>
+                
+                {/* Error message under title - soft alert style */}
+                {error && (
+                  <div 
+                    className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    {error}
+                  </div>
+                )}
               </div>
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-                {error && (
-                  <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
-                    {error}
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="email">{t('auth.email')}</Label>
