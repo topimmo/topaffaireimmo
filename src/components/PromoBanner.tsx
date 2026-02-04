@@ -48,14 +48,23 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
         .maybeSingle(); // Use maybeSingle instead of single to avoid error when no rows
 
       if (error) {
-        console.error('Error loading promo banner:', error);
+        // Log error but don't block the page - promo banners are optional
+        console.warn(`[PromoBanner] Failed to load banner for position "${position}":`, error.message);
+        // If table doesn't exist (PGRST205 or PostgreSQL error 42P01), gracefully continue without banner
+        if (error.code === 'PGRST205' || error.code === '42P01' || error.message.includes('promo_banners')) {
+          console.warn('[PromoBanner] promo_banners table may not exist - this is non-critical');
+        }
+        setBanner(null);
         return;
       }
 
       setBanner(data || null);
     } catch (error) {
-      console.error('Error loading promo banner:', error);
+      // Catch any unexpected errors and continue gracefully
+      console.warn('[PromoBanner] Unexpected error loading promo banner:', error);
+      setBanner(null);
     } finally {
+      // ALWAYS set loading to false to prevent blocking the UI
       setLoading(false);
     }
   };
