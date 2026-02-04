@@ -144,7 +144,7 @@ export default function PropertyDetails() {
             contact_whatsapp,
             contact_email,
             advertiser_type,
-            owner:profiles(company_name, agency_name, full_name, phone, email),
+            owner:profiles!properties_owner_id_fkey(company_name, agency_name, full_name, phone, email),
             city:cities(name_fr, name_ar),
             neighborhood:neighborhoods(name_fr, name_ar)
           `

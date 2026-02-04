@@ -50,7 +50,7 @@ export function useProperties(filters?: PropertyFilters) {
           *,
           city:cities(id, name_fr, name_ar),
           neighborhood:neighborhoods(id, name_fr, name_ar),
-          owner:profiles(id, full_name, phone, agency_name, advertiser_type)
+          owner:profiles!properties_owner_id_fkey(id, full_name, phone, agency_name, advertiser_type)
         `, { count: 'exact' });
 
       // Apply filters
@@ -153,7 +153,7 @@ export function useProperty(id: string | undefined) {
             *,
             city:cities(id, name_fr, name_ar, region_fr, region_ar),
             neighborhood:neighborhoods(id, name_fr, name_ar),
-            owner:profiles(id, full_name, phone, email, agency_name, agency_logo, advertiser_type)
+            owner:profiles!properties_owner_id_fkey(id, full_name, phone, email, agency_name, agency_logo, advertiser_type)
           `)
           .eq('id', id)
           .maybeSingle();
@@ -200,7 +200,7 @@ export function useLatestProperties(limit = 12) {
         .select(`
           *,
           city:cities(id, name_fr, name_ar),
-          owner:profiles(id, full_name, agency_name, advertiser_type)
+          owner:profiles!properties_owner_id_fkey(id, full_name, agency_name, advertiser_type)
         `)
         // Only show published properties on public site (not pending/approved)
         .eq('status', 'published')
