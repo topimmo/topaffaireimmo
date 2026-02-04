@@ -5,8 +5,24 @@
 
 import { supabase } from './supabase';
 
-export type AuditAction = 'approve' | 'reject' | 'delete' | 'feature' | 'unfeature' | 'update' | 'create' | 'bulk_action';
-export type AuditEntityType = 'property' | 'user' | 'page' | 'category' | 'settings' | 'location' | 'other';
+export type AuditAction = 
+  | 'approve' 
+  | 'reject' 
+  | 'delete' 
+  | 'feature' 
+  | 'unfeature' 
+  | 'update' 
+  | 'create' 
+  | 'bulk_action'
+  | 'mark_featured'
+  | 'unmark_featured'
+  | 'create_dummy_property'
+  | 'update_dummy_property'
+  | 'delete_dummy_property'
+  | 'activate_dummy_property'
+  | 'deactivate_dummy_property'
+  | 'delete_property';
+export type AuditEntityType = 'property' | 'user' | 'page' | 'category' | 'settings' | 'location' | 'dummy_property' | 'other';
 
 export interface AuditLogEntry {
   action: AuditAction;

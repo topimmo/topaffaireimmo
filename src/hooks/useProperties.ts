@@ -31,6 +31,7 @@ export interface PropertyWithRelations extends Property {
   title_fr?: string | null;
   title_ar?: string | null;
   address?: string | null;
+  status?: string;
 }
 
 export function useProperties(filters?: PropertyFilters) {

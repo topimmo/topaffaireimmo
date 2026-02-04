@@ -519,30 +519,6 @@ export default function AdminListings() {
     }
   };
 
-      if (error) {
-        console.error('Delete error:', error);
-        toast.error(isRTL ? `فشل حذف الإعلان: ${error.message}` : `Failed to delete: ${error.message}`);
-        return;
-      }
-
-      // Log audit action
-      await logAdminAction({
-        action: 'delete',
-        entity_type: 'property',
-        entity_id: property.id,
-        metadata: { title: property.title_fr },
-      });
-
-      toast.success(isRTL ? 'تم حذف الإعلان' : 'Listing deleted');
-      await fetchProperties();
-    } catch (e: any) {
-      console.error(e);
-      toast.error(isRTL ? 'وقع خطأ غير متوقع فالحذف' : 'Unexpected delete error');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
   const handleExportCSV = () => {
     try {
       // Prepare CSV headers
