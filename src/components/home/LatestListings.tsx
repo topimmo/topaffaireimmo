@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PropertyCard, { Property } from "./PropertyCard";
+import PropertyCardSkeleton from "./PropertyCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -65,13 +66,66 @@ export default function LatestListings() {
           (listing) => listing.type.toLowerCase() === activeFilter
         );
   
-  // Show loading state
+  // Show loading state with skeleton cards
   if (loading) {
+    // Show 6 skeleton cards (responsive grid layout via CSS: 1 col mobile, 2 cols tablet, 3 cols desktop)
+    const skeletonCount = 6;
+    
     return (
       <section className={`py-16 md:py-24 bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="container">
-          <div className="text-center text-muted-foreground">
-            {isRTL ? 'جاري التحميل...' : 'Chargement...'}
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                  {isRTL ? 'أضيف مؤخراً' : 'Récemment ajouté'}
+                </span>
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground">
+                {t('latest.title')}
+              </h2>
+              <p className="text-muted-foreground mt-2 max-w-xl">
+                {t('latest.subtitle')}
+              </p>
+            </div>
+
+            <Link to="/search">
+              <Button variant="outline" className="gap-2" disabled>
+                {t('viewAll')}
+                <ArrowRight className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
+              </Button>
+            </Link>
+          </div>
+
+          {/* Filter Pills - Show as disabled during loading */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            {filters.map((filter) => (
+              <button
+                key={filter.value}
+                disabled
+                className="px-4 py-2 rounded-full text-sm font-medium bg-white text-foreground/40 border border-muted cursor-not-allowed"
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Skeleton Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: skeletonCount }).map((_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  {
+                    "lg:col-span-2 lg:row-span-1": index === 0,
+                  }
+                )}
+              >
+                <PropertyCardSkeleton size={index === 0 ? "large" : "default"} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
