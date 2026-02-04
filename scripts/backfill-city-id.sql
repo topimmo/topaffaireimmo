@@ -328,7 +328,7 @@ DO $$
 DECLARE
   updated_count INTEGER := 0;
 BEGIN
-  RAISE NOTICE 'Strategy C: Attempting to extract city from address...';
+  RAISE NOTICE 'Strategy D: Attempting to extract city from address...';
   
   -- Look for city names in address field
   -- Uses pattern matching: address contains city name
@@ -354,9 +354,9 @@ BEGIN
   GET DIAGNOSTICS updated_count = ROW_COUNT;
   
   IF updated_count > 0 THEN
-    RAISE NOTICE '✅ Strategy C completed: Updated % properties', updated_count;
+    RAISE NOTICE '✅ Strategy D completed: Updated % properties', updated_count;
   ELSE
-    RAISE NOTICE '⚠️  Strategy C: No matches found in address';
+    RAISE NOTICE '⚠️  Strategy D: No matches found in address';
   END IF;
 END $$;
 */

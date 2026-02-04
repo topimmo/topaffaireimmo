@@ -69,7 +69,25 @@ WHERE p.city_id IS NULL
 **Handles:**
 - Cases where city name is in `custom_neighborhood` field
 
-### Strategy C: Address Extraction (Commented Out)
+### Strategy C: Best-Effort Neighborhood Backfill
+```sql
+UPDATE properties p
+SET neighborhood_id = n.id
+FROM neighborhoods n
+WHERE p.neighborhood_id IS NULL
+  AND p.city_id = n.city_id  -- Match only within same city
+  AND (
+    LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(n.name_fr))
+    OR LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(n.name_ar))
+  );
+```
+
+**Handles:**
+- Matches neighborhoods when custom_neighborhood field exists
+- Validates match is within the same city (prevents false positives)
+- Only updates NULL neighborhood_id
+
+### Strategy D: Address Extraction (Commented Out)
 - More aggressive pattern matching on address field
 - Intentionally disabled by default to avoid false positives
 - Can be enabled if needed after testing
