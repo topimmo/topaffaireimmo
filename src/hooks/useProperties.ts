@@ -43,6 +43,12 @@ export function useProperties(filters?: PropertyFilters) {
     setLoading(true);
     setError(null);
 
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.warn('[useProperties] Loading timeout - setting loading to false');
+      setLoading(false);
+    }, 10000); // 10 second timeout
+
     try {
       let query = supabase
         .from('properties')
@@ -120,6 +126,7 @@ export function useProperties(filters?: PropertyFilters) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
+      clearTimeout(loadingTimeout);
       setLoading(false);
     }
   }, [filters]);
@@ -194,6 +201,16 @@ export function useLatestProperties(limit = 12) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isCancelled = false;
+    
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (!isCancelled) {
+        console.warn('[useLatestProperties] Loading timeout - setting loading to false');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
     const fetchLatest = async () => {
       try {
         const { data, error } = await supabase
@@ -209,6 +226,8 @@ export function useLatestProperties(limit = 12) {
           .order('created_at', { ascending: false })
           .limit(limit);
 
+        if (isCancelled) return;
+
         if (error) {
           console.error('Error loading latest properties:', error);
           setProperties([]);
@@ -216,14 +235,23 @@ export function useLatestProperties(limit = 12) {
           setProperties(data as PropertyWithRelations[] || []);
         }
       } catch (error) {
+        if (isCancelled) return;
         console.error('Exception loading latest properties:', error);
         setProperties([]);
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          clearTimeout(loadingTimeout);
+          setLoading(false);
+        }
       }
     };
 
     fetchLatest();
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(loadingTimeout);
+    };
   }, [limit]);
 
   return { properties, loading };
@@ -234,12 +262,24 @@ export function useMyProperties() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isCancelled = false;
+    
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (!isCancelled) {
+        console.warn('[useMyProperties] Loading timeout - setting loading to false');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
     const fetchMyProperties = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          setLoading(false);
+          if (!isCancelled) {
+            setLoading(false);
+          }
           return;
         }
 
@@ -253,6 +293,8 @@ export function useMyProperties() {
           .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
+        if (isCancelled) return;
+
         if (error) {
           console.error('Error loading user properties:', error);
           setProperties([]);
@@ -260,14 +302,23 @@ export function useMyProperties() {
           setProperties(data as PropertyWithRelations[] || []);
         }
       } catch (error) {
+        if (isCancelled) return;
         console.error('Exception loading user properties:', error);
         setProperties([]);
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          clearTimeout(loadingTimeout);
+          setLoading(false);
+        }
       }
     };
 
     fetchMyProperties();
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   return { properties, loading };
