@@ -50,8 +50,8 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
       if (error) {
         // Log error but don't block the page - promo banners are optional
         console.warn(`[PromoBanner] Failed to load banner for position "${position}":`, error.message);
-        // If table doesn't exist (404/PGRST205), gracefully continue without banner
-        if (error.code === 'PGRST204' || error.message.includes('promo_banners')) {
+        // If table doesn't exist (PGRST205 or PostgreSQL error 42P01), gracefully continue without banner
+        if (error.code === 'PGRST205' || error.code === '42P01' || error.message.includes('promo_banners')) {
           console.warn('[PromoBanner] promo_banners table may not exist - this is non-critical');
         }
         setBanner(null);
