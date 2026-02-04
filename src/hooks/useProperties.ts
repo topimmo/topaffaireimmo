@@ -195,21 +195,32 @@ export function useLatestProperties(limit = 12) {
 
   useEffect(() => {
     const fetchLatest = async () => {
-      const { data } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          city:cities(id, name_fr, name_ar),
-          owner:profiles!properties_owner_id_fkey(id, full_name, agency_name, advertiser_type)
-        `)
-        // Only show published properties on public site (not pending/approved)
-        .eq('status', 'published')
-        .or('is_archived.is.null,is_archived.eq.false')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select(`
+            *,
+            city:cities(id, name_fr, name_ar),
+            owner:profiles!properties_owner_id_fkey(id, full_name, agency_name, advertiser_type)
+          `)
+          // Only show published properties on public site (not pending/approved)
+          .eq('status', 'published')
+          .or('is_archived.is.null,is_archived.eq.false')
+          .order('created_at', { ascending: false })
+          .limit(limit);
 
-      setProperties(data as PropertyWithRelations[] || []);
-      setLoading(false);
+        if (error) {
+          console.error('Error loading latest properties:', error);
+          setProperties([]);
+        } else {
+          setProperties(data as PropertyWithRelations[] || []);
+        }
+      } catch (error) {
+        console.error('Exception loading latest properties:', error);
+        setProperties([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchLatest();
@@ -224,25 +235,36 @@ export function useMyProperties() {
 
   useEffect(() => {
     const fetchMyProperties = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        // Filter by created_by OR owner_id to show all user's listings
+        const { data, error } = await supabase
+          .from('properties')
+          .select(`
+            *,
+            city:cities(id, name_fr, name_ar)
+          `)
+          .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading user properties:', error);
+          setProperties([]);
+        } else {
+          setProperties(data as PropertyWithRelations[] || []);
+        }
+      } catch (error) {
+        console.error('Exception loading user properties:', error);
+        setProperties([]);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // Filter by created_by OR owner_id to show all user's listings
-      const { data } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          city:cities(id, name_fr, name_ar)
-        `)
-        .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
-
-      setProperties(data as PropertyWithRelations[] || []);
-      setLoading(false);
     };
 
     fetchMyProperties();
