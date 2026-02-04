@@ -7,10 +7,13 @@
  * Requirements:
  * - Node.js >= 18
  * - Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FORCE_SEED=true
+ * - Admin profile must exist in public.profiles with is_admin=true
  * - Optional: PEXELS_API_KEY (for real images instead of placeholders)
+ * - Optional: ADMIN_EMAIL (defaults to contact@topaffaireimmo.com)
+ * - Optional: LISTINGS_COUNT (defaults to 50)
  * 
  * Usage:
- *   FORCE_SEED=true npm run seed:sample-listings
+ *   FORCE_SEED=true ADMIN_EMAIL=contact@topaffaireimmo.com npm run seed:sample-listings
  * 
  * Features:
  * - Idempotent: Uses external_key to prevent duplicates
@@ -19,7 +22,14 @@
  * - Stock photos from Pexels (no scraping)
  * - Bilingual content (French + Arabic)
  * - Safety guard: Requires FORCE_SEED=true to prevent accidental seeding
- * - Auto-creates system user if no admin exists
+ * - Uses existing admin profile (NO hardcoded system user creation)
+ * - Strong error handling and logging for CI/CD debugging
+ * 
+ * SECURITY NOTES:
+ * - Uses service role key to bypass RLS for seeding
+ * - Fetches admin profile by email (ADMIN_EMAIL env variable)
+ * - Never creates profiles directly (avoids FK constraint violations with auth.users)
+ * - All sample listings are marked with is_sample=true for easy cleanup
  */
 
 import 'dotenv/config';
@@ -36,6 +46,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY || '';
 const LISTINGS_COUNT = parseInt(process.env.LISTINGS_COUNT || '50', 10);
 const FORCE_SEED = process.env.FORCE_SEED === 'true';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'contact@topaffaireimmo.com';
 
 // PostgreSQL error codes
 const POSTGRES_DUPLICATE_KEY_ERROR = '23505';
@@ -45,6 +56,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('❌ ERROR: Missing required environment variables:');
   console.error('  - SUPABASE_URL or VITE_SUPABASE_URL:', SUPABASE_URL ? '✓' : '✗');
   console.error('  - SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗');
+  console.error('  - ADMIN_EMAIL:', ADMIN_EMAIL ? `✓ (${ADMIN_EMAIL})` : '✗');
   console.error('  - PEXELS_API_KEY:', PEXELS_API_KEY ? '✓ (optional)' : '⚠️  (will use placeholder images)');
   console.error('  - FORCE_SEED:', FORCE_SEED ? '✓' : '✗ (safety guard active)');
   console.error('');
@@ -393,6 +405,7 @@ async function seedSampleListings() {
   console.log(`📊 Configuration:`);
   console.log(`   - Target listings: ${LISTINGS_COUNT}`);
   console.log(`   - FORCE_SEED: ${FORCE_SEED}`);
+  console.log(`   - Admin email: ${ADMIN_EMAIL}`);
   console.log(`   - Supabase URL: ${SUPABASE_URL.slice(0, 30)}...`);
   console.log(`   - Using service role key: ✓`);
   console.log(`   - Pexels API: ${PEXELS_API_KEY ? '✓' : '✗ (using placeholders)'}`);
@@ -422,62 +435,90 @@ async function seedSampleListings() {
     cityNameToId.set(normalizedName, city.id);
   });
 
-  // Step 2: Get or create a system user for sample listings
-  console.log('👤 Setting up system user for sample listings...');
+  // Step 2: Get admin user by email
+  console.log('👤 Looking up admin user by email...');
+  console.log(`   - Admin email: ${ADMIN_EMAIL}`);
   
-  // Try to find existing admin user first
-  const { data: profiles } = await supabase
+  const { data: adminProfile, error: adminError } = await supabase
     .from('profiles')
-    .select('id')
-    .eq('user_role', 'admin')
-    .limit(1);
+    .select('id, email, is_admin')
+    .eq('email', ADMIN_EMAIL)
+    .single();
 
-  let ownerId: string;
-  
-  if (profiles && profiles.length > 0) {
-    ownerId = profiles[0].id;
-    console.log(`✓ Using existing admin user: ${ownerId}`);
+  if (adminError || !adminProfile) {
+    console.error('');
+    console.error('❌ ERROR: Admin profile not found!');
+    console.error('═══════════════════════════════════════════════════════');
+    console.error(`Admin email searched: ${ADMIN_EMAIL}`);
+    console.error('');
+    console.error('Details:', adminError || 'No profile found with this email');
+    console.error('');
+    console.error('REQUIRED ACTION:');
+    console.error('1. Verify that a profile exists in public.profiles with this email:');
+    console.error(`   SELECT id, email, is_admin FROM public.profiles WHERE email = '${ADMIN_EMAIL}';`);
+    console.error('');
+    console.error('2. Ensure the profile has is_admin = true:');
+    console.error(`   UPDATE public.profiles SET is_admin = true WHERE email = '${ADMIN_EMAIL}';`);
+    console.error('');
+    console.error('3. If no profile exists, create one through the admin signup UI or using:');
+    console.error('   - Sign up through the application with this email');
+    console.error('   - Set is_admin = true in the database after signup');
+    console.error('');
+    console.error('NOTE: Do NOT create profiles directly in SQL without corresponding auth.users entry!');
+    console.error('This will cause foreign key constraint violations.');
+    console.error('═══════════════════════════════════════════════════════');
+    console.error('');
+    process.exit(1);
+  }
+
+  if (!adminProfile.is_admin) {
+    console.error('');
+    console.error('❌ ERROR: Profile found but is_admin is not true!');
+    console.error('═══════════════════════════════════════════════════════');
+    console.error(`Email: ${adminProfile.email}`);
+    console.error(`Profile ID: ${adminProfile.id}`);
+    console.error(`is_admin: ${adminProfile.is_admin}`);
+    console.error('');
+    console.error('REQUIRED ACTION:');
+    console.error('Run this SQL to grant admin privileges:');
+    console.error(`   UPDATE public.profiles SET is_admin = true WHERE id = '${adminProfile.id}';`);
+    console.error('═══════════════════════════════════════════════════════');
+    console.error('');
+    process.exit(1);
+  }
+
+  const ownerId = adminProfile.id;
+  console.log(`✓ Admin profile found:`);
+  console.log(`   - ID: ${ownerId}`);
+  console.log(`   - Email: ${adminProfile.email}`);
+  console.log(`   - is_admin: ${adminProfile.is_admin}`);
+
+  // Step 2.5: Check current properties count
+  console.log('');
+  console.log('📊 Checking current properties count...');
+  const { count: beforeCount, error: beforeCountError } = await supabase
+    .from('properties')
+    .select('*', { count: 'exact', head: true });
+
+  if (beforeCountError) {
+    console.warn('⚠️  Warning: Could not count existing properties:', beforeCountError);
   } else {
-    // No admin user found - create a dedicated system user for sample listings
-    console.log('⚠️  No admin user found. Creating system user for sample listings...');
-    
-    // Use a deterministic UUID for the system user
-    // This is a well-known nil UUID (all zeros except last byte) that allows 
-    // the script to be idempotent across runs by always using the same ID
-    const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001';
-    
-    // Try to create or use existing system user profile
-    const { data: systemUser, error: systemUserError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: SYSTEM_USER_ID,
-        email: 'system+sample-listings@topaffaireimmo.ma',
-        full_name: 'System User (Sample Listings)',
-        user_role: 'admin',
-        is_admin: true,
-        is_active: true,
-        is_verified: true
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: false
-      })
-      .select()
-      .single();
-    
-    if (systemUserError && systemUserError.code !== POSTGRES_DUPLICATE_KEY_ERROR) { // Ignore duplicate key errors
-      console.error('❌ Error creating system user:', systemUserError);
-      console.error('');
-      console.error('Please ensure:');
-      console.error('1. You have at least one admin user in your database, OR');
-      console.error('2. The service role key has permission to create profiles');
-      return;
-    }
-    
-    ownerId = SYSTEM_USER_ID;
-    console.log(`✓ Created/using system user: ${ownerId}`);
+    console.log(`   - Total properties: ${beforeCount || 0}`);
+  }
+
+  const { count: publishedBeforeCount, error: publishedBeforeError } = await supabase
+    .from('properties')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'published');
+
+  if (publishedBeforeError) {
+    console.warn('⚠️  Warning: Could not count published properties:', publishedBeforeError);
+  } else {
+    console.log(`   - Published properties: ${publishedBeforeCount || 0}`);
   }
 
   // Step 3: Delete existing sample listings (for idempotency)
+  console.log('');
   console.log('🧹 Cleaning up existing sample listings...');
   const { error: deleteError } = await supabase
     .from('properties')
@@ -486,6 +527,9 @@ async function seedSampleListings() {
 
   if (deleteError) {
     console.warn('⚠️  Warning: Could not delete existing samples:', deleteError);
+    console.warn('   - This may cause duplicates if external_key conflicts occur');
+  } else {
+    console.log('✓ Cleanup completed successfully');
   }
 
   // Step 4: Generate sample listings
@@ -647,6 +691,7 @@ async function seedSampleListings() {
   if (verifyError) {
     console.error('❌ Error verifying inserted data:', verifyError);
     console.error('   Please manually check the database');
+    process.exit(1);
   } else {
     console.log(`✓ Verification complete: ${verifyCount} sample listings found in database`);
     
@@ -661,6 +706,25 @@ async function seedSampleListings() {
       console.error('⚠️  Could not verify published status');
     } else {
       console.log(`✓ Published listings: ${publishedCount}/${verifyCount}`);
+      
+      // CRITICAL CHECK: Fail if no published properties exist
+      if (publishedCount === 0) {
+        console.error('');
+        console.error('❌ CRITICAL ERROR: No published properties found after seeding!');
+        console.error('═══════════════════════════════════════════════════════');
+        console.error('The seeding script completed but no published properties exist.');
+        console.error('This means the website will show no listings.');
+        console.error('');
+        console.error('Possible causes:');
+        console.error('1. Database insert failed silently');
+        console.error('2. RLS policies preventing inserts');
+        console.error('3. Status not being set to "published"');
+        console.error('');
+        console.error('Please check the logs above for errors.');
+        console.error('═══════════════════════════════════════════════════════');
+        console.error('');
+        process.exit(1);
+      }
     }
   }
   console.log('');

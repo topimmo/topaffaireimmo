@@ -1,0 +1,119 @@
+name: Seed Sample Listings
+
+on:
+  workflow_dispatch:
+    inputs:
+      listings_count:
+        description: 'Number of sample listings to generate'
+        required: false
+        default: '50'
+      admin_email:
+        description: 'Admin email to use for listings ownership'
+        required: false
+        default: 'contact@topaffaireimmo.com'
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Count properties BEFORE seeding
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 BEFORE SEEDING - Properties Count"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+          (async () => {
+            const { count: total } = await supabase.from('properties').select('*', { count: 'exact', head: true });
+            const { count: published } = await supabase.from('properties').select('*', { count: 'exact', head: true }).eq('status', 'published');
+            const { count: sample } = await supabase.from('properties').select('*', { count: 'exact', head: true }).eq('is_sample', true);
+            console.log('Total properties:', total || 0);
+            console.log('Published properties:', published || 0);
+            console.log('Sample properties:', sample || 0);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          })();
+          "
+
+      - name: Run seed script
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          FORCE_SEED: 'true'
+          ADMIN_EMAIL: ${{ github.event.inputs.admin_email || 'contact@topaffaireimmo.com' }}
+          LISTINGS_COUNT: ${{ github.event.inputs.listings_count || '50' }}
+        run: |
+          echo "Starting seed script with configuration:"
+          echo "  - ADMIN_EMAIL: $ADMIN_EMAIL"
+          echo "  - LISTINGS_COUNT: $LISTINGS_COUNT"
+          echo "  - FORCE_SEED: $FORCE_SEED"
+          echo ""
+          npm run seed:sample-listings
+
+      - name: Count properties AFTER seeding
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 AFTER SEEDING - Properties Count"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+          (async () => {
+            const { count: total } = await supabase.from('properties').select('*', { count: 'exact', head: true });
+            const { count: published } = await supabase.from('properties').select('*', { count: 'exact', head: true }).eq('status', 'published');
+            const { count: sample } = await supabase.from('properties').select('*', { count: 'exact', head: true }).eq('is_sample', true);
+            console.log('Total properties:', total || 0);
+            console.log('Published properties:', published || 0);
+            console.log('Sample properties:', sample || 0);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('');
+            if (published === 0) {
+              console.error('❌ WORKFLOW FAILED: No published properties found after seeding!');
+              console.error('The database is still empty. Check the seed script logs above for errors.');
+              process.exit(1);
+            } else {
+              console.log('✅ SUCCESS: Seeding completed with', published, 'published properties');
+            }
+          })();
+          "
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 Workflow Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "If this workflow failed, check which step failed above:"
+          echo ""
+          echo "1. 'Install dependencies' - npm ci failed (check package.json)"
+          echo "2. 'Count properties BEFORE' - Database connection issue"
+          echo "3. 'Run seed script' - Main seeding logic failed (check seed script logs)"
+          echo "4. 'Count properties AFTER' - Verification failed (no published properties)"
+          echo ""
+          echo "Common issues:"
+          echo "- Admin profile not found: Verify ADMIN_EMAIL exists in profiles"
+          echo "- FK constraint violation: Admin profile exists but auth.users entry missing"
+          echo "- No published properties: RLS policies blocking inserts"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

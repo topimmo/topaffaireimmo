@@ -15,8 +15,6 @@ import { BUILD_INFO, getBuildInfoDisplay } from '@/config/buildInfo';
 
 interface Settings {
   contact_email?: string;
-  contact_phone?: string;
-  contact_whatsapp?: string;
   maintenance_mode?: boolean;
   adsense_header_slot?: string;
   adsense_sidebar_slot?: string;
@@ -60,8 +58,6 @@ export default function AdminSettings() {
 
         setSettings({
           contact_email: settingsMap.contact_email || '',
-          contact_phone: settingsMap.contact_phone || '',
-          contact_whatsapp: settingsMap.contact_whatsapp || '',
           maintenance_mode: settingsMap.maintenance_mode || false,
           adsense_header_slot: settingsMap.adsense_header_slot || '',
           adsense_sidebar_slot: settingsMap.adsense_sidebar_slot || '',
@@ -154,32 +150,11 @@ export default function AdminSettings() {
                     }
                     placeholder="contact@topaffaireimmo.com"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="contact_phone">{isRTL ? 'الهاتف' : 'Phone'}</Label>
-                  <Input
-                    id="contact_phone"
-                    type="tel"
-                    value={settings.contact_phone || ''}
-                    onChange={(e) =>
-                      setSettings({ ...settings, contact_phone: e.target.value })
-                    }
-                    placeholder="+212 6XX XXX XXX"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="contact_whatsapp">{isRTL ? 'واتساب' : 'WhatsApp'}</Label>
-                  <Input
-                    id="contact_whatsapp"
-                    type="tel"
-                    value={settings.contact_whatsapp || ''}
-                    onChange={(e) =>
-                      setSettings({ ...settings, contact_whatsapp: e.target.value })
-                    }
-                    placeholder="+212 6XX XXX XXX"
-                  />
+                  <p className="text-sm text-muted-foreground">
+                    {isRTL 
+                      ? 'عنوان البريد الإلكتروني الرئيسي للموقع' 
+                      : 'Primary email address for the site'}
+                  </p>
                 </div>
               </CardContent>
             </Card>
