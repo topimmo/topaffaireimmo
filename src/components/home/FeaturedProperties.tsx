@@ -63,7 +63,7 @@ export default function FeaturedProperties() {
   
   // Show loading state with skeleton cards
   if (loading) {
-    // Responsive skeleton counts: 1-2 mobile, 2-3 tablet, 3-4 desktop
+    // Show 4 skeleton cards (responsive visibility handled by carousel scroll)
     const skeletonCount = 4;
     
     return (

@@ -68,8 +68,8 @@ export default function LatestListings() {
   
   // Show loading state with skeleton cards
   if (loading) {
-    // Responsive skeleton counts: 1-2 mobile, 2-3 tablet, 3-4 desktop
-    const skeletonCount = 6; // Show 6 skeletons in grid (responsive via CSS)
+    // Show 6 skeleton cards (responsive grid layout via CSS: 1 col mobile, 2 cols tablet, 3 cols desktop)
+    const skeletonCount = 6;
     
     return (
       <section className={`py-16 md:py-24 bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`}>
