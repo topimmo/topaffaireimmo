@@ -48,12 +48,14 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
         .maybeSingle(); // Use maybeSingle instead of single to avoid error when no rows
 
       if (error) {
-        // Log error but don't block the page - promo banners are optional
-        console.warn(`[PromoBanner] Failed to load banner for position "${position}":`, error.message);
-        // If table doesn't exist (PGRST205 or PostgreSQL error 42P01), gracefully continue without banner
-        if (error.code === 'PGRST205' || error.code === '42P01' || error.message.includes('promo_banners')) {
-          console.warn('[PromoBanner] promo_banners table may not exist - this is non-critical');
+        // If table doesn't exist (PGRST204 schema cache, PGRST205 relation, or PostgreSQL error 42P01), gracefully skip
+        if (error.code === 'PGRST204' || error.code === 'PGRST205' || error.code === '42P01' || error.message.includes('promo_banners')) {
+          // Silently skip - table doesn't exist, which is acceptable
+          setBanner(null);
+          return;
         }
+        // Log other errors but don't block the page - promo banners are optional
+        console.warn(`[PromoBanner] Failed to load banner for position "${position}":`, error.message);
         setBanner(null);
         return;
       }

@@ -14,7 +14,7 @@ export default function AdSenseBanner({
   // Standard dimensions: Desktop 728×90, Mobile 320×50
   
   return (
-    <div className={`adsense-banner-wrapper ${className}`}>
+    <div className={`adsense-banner-wrapper min-h-[50px] md:min-h-[90px] ${className}`}>
       <div className="adsense-banner bg-muted/30 rounded-lg flex items-center justify-center border border-dashed border-muted h-full">
         <div className="text-center text-sm text-muted-foreground">
           <p>Google AdSense</p>
