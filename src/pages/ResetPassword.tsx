@@ -8,6 +8,54 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
+/**
+ * PASSWORD RESET PAGE - SUPABASE CONFIGURATION REQUIREMENTS
+ * 
+ * This page handles Supabase password reset flow. For this to work correctly,
+ * you MUST configure the following in your Supabase Dashboard:
+ * 
+ * 1. Navigate to: Authentication → URL Configuration
+ * 
+ * 2. Set Site URL:
+ *    Production: https://topaffaireimmo.com
+ *    (or https://www.topaffaireimmo.com if using www)
+ * 
+ * 3. Add Redirect URLs (one per line):
+ *    Production:
+ *      - https://topaffaireimmo.com/**
+ *      - https://www.topaffaireimmo.com/**
+ *      - https://topaffaireimmo.com/reset-password
+ *      - https://www.topaffaireimmo.com/reset-password
+ *    
+ *    Development:
+ *      - http://localhost:5173/**
+ *      - http://localhost:5173/reset-password
+ *      - http://127.0.0.1:5173/**
+ *    
+ *    Vercel Previews (if using Vercel):
+ *      - https://*.vercel.app/**
+ * 
+ * 4. Email Template Configuration:
+ *    - The password reset email should use {{ .ConfirmationURL }} which will
+ *      automatically redirect to the configured Site URL + /reset-password
+ * 
+ * IMPORTANT NOTES:
+ * - Without proper redirect URL configuration, you will see errors like:
+ *   - "otp_expired" (even when clicked immediately)
+ *   - "access_denied"
+ *   - "Invalid redirect URL"
+ * 
+ * - This page supports both auth flows:
+ *   - PKCE flow (modern): ?code=... in query params
+ *   - Hash-based flow (legacy): #access_token=...&refresh_token=... in URL hash
+ * 
+ * - The Supabase client is configured with:
+ *   - flowType: 'pkce' (see src/lib/supabase.ts)
+ *   - detectSessionInUrl: true (automatically handles URL parameters)
+ * 
+ * For more details, see: /docs/SUPABASE_AUTH_REDIRECT_URLS.md
+ */
+
 // Wait time for Supabase's detectSessionInUrl to automatically process session from URL
 const SESSION_WAIT_MS = 1000;
 // Delay before redirecting after successful password update
@@ -52,10 +100,29 @@ export default function ResetPassword() {
         // Check for errors in URL
         const errorParam = hashParams.error || queryParams.get('error');
         const errorDescription = hashParams.error_description || queryParams.get('error_description');
+        const errorCode = hashParams.error_code || queryParams.get('error_code');
 
         if (errorParam) {
-          console.error('❌ Error in reset password URL:', errorParam, errorDescription);
-          setError(errorDescription || errorParam);
+          console.error('❌ Error in reset password URL:');
+          console.error('  - Error:', errorParam);
+          console.error('  - Error Code:', errorCode);
+          console.error('  - Description:', errorDescription);
+          console.error('  - Full URL:', window.location.href);
+          
+          // Provide specific error messages based on error type
+          let userMessage = errorDescription || errorParam;
+          
+          if (errorCode === 'otp_expired' || errorParam === 'otp_expired') {
+            userMessage = isRTL 
+              ? 'انتهت صلاحية رابط إعادة تعيين كلمة المرور. يرجى طلب رابط جديد من صفحة تسجيل الدخول.'
+              : 'Le lien de réinitialisation du mot de passe a expiré. Veuillez demander un nouveau lien depuis la page de connexion.';
+          } else if (errorParam === 'access_denied') {
+            userMessage = isRTL 
+              ? 'تم رفض الوصول. قد يكون الرابط قد استخدم بالفعل أو انتهت صلاحيته.'
+              : 'Accès refusé. Le lien a peut-être déjà été utilisé ou a expiré.';
+          }
+          
+          setError(userMessage);
           setCheckingSession(false);
           return;
         }
@@ -67,10 +134,25 @@ export default function ResetPassword() {
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
           if (exchangeError) {
-            console.error('❌ Error exchanging code for session:', exchangeError);
-            setError(isRTL 
+            console.error('❌ Error exchanging code for session:');
+            console.error('  - Error Object:', JSON.stringify(exchangeError, null, 2));
+            console.error('  - Error Message:', exchangeError.message);
+            console.error('  - Error Name:', exchangeError.name);
+            console.error('  - Error Status:', (exchangeError as any).status);
+            
+            // Provide specific error messages
+            let userMessage = isRTL 
               ? 'فشل في التحقق من الرابط. يرجى طلب رابط جديد.'
-              : 'Échec de la vérification du lien. Veuillez demander un nouveau lien.');
+              : 'Échec de la vérification du lien. Veuillez demander un nouveau lien.';
+            
+            // Check if error indicates OTP expiration
+            if (exchangeError.message?.includes('expired') || exchangeError.message?.includes('invalid')) {
+              userMessage = isRTL 
+                ? 'انتهت صلاحية رابط إعادة تعيين كلمة المرور أو تم استخدامه. يرجى طلب رابط جديد.'
+                : 'Le lien de réinitialisation a expiré ou a déjà été utilisé. Veuillez demander un nouveau lien.';
+            }
+            
+            setError(userMessage);
             setCheckingSession(false);
             return;
           }
@@ -106,10 +188,24 @@ export default function ResetPassword() {
           });
           
           if (sessionError) {
-            console.error('❌ Error setting session:', sessionError);
-            setError(isRTL 
+            console.error('❌ Error setting session:');
+            console.error('  - Error Object:', JSON.stringify(sessionError, null, 2));
+            console.error('  - Error Message:', sessionError.message);
+            console.error('  - Error Name:', sessionError.name);
+            console.error('  - Error Status:', (sessionError as any).status);
+            
+            let userMessage = isRTL 
               ? 'فشل في إنشاء الجلسة. يرجى طلب رابط جديد.'
-              : 'Échec de création de session. Veuillez demander un nouveau lien.');
+              : 'Échec de création de session. Veuillez demander un nouveau lien.';
+              
+            // Check if error indicates token expiration
+            if (sessionError.message?.includes('expired') || sessionError.message?.includes('invalid')) {
+              userMessage = isRTL 
+                ? 'انتهت صلاحية رابط إعادة تعيين كلمة المرور. يرجى طلب رابط جديد.'
+                : 'Le lien de réinitialisation a expiré. Veuillez demander un nouveau lien.';
+            }
+            
+            setError(userMessage);
             setCheckingSession(false);
             return;
           }
@@ -144,7 +240,9 @@ export default function ResetPassword() {
         const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
         
         if (getSessionError) {
-          console.error('❌ Error getting session:', getSessionError);
+          console.error('❌ Error getting session:');
+          console.error('  - Error Object:', JSON.stringify(getSessionError, null, 2));
+          console.error('  - Error Message:', getSessionError.message);
           setValidSession(false);
           setCheckingSession(false);
           return;
@@ -210,8 +308,20 @@ export default function ResetPassword() {
     setLoading(false);
 
     if (updateError) {
-      console.error('❌ Password update error:', updateError);
-      setError(updateError.message);
+      console.error('❌ Password update error:');
+      console.error('  - Error Object:', JSON.stringify(updateError, null, 2));
+      console.error('  - Error Message:', updateError.message);
+      console.error('  - Error Name:', updateError.name);
+      
+      // Provide user-friendly error message
+      let userMessage = updateError.message;
+      if (updateError.message?.includes('session')) {
+        userMessage = isRTL 
+          ? 'انتهت صلاحية الجلسة. يرجى طلب رابط جديد لإعادة تعيين كلمة المرور.'
+          : 'La session a expiré. Veuillez demander un nouveau lien de réinitialisation.';
+      }
+      
+      setError(userMessage);
       return;
     }
 
