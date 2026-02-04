@@ -96,20 +96,17 @@ SELECT
   id,
   title_fr,
   city_id,
-  -- Try to show any city-related text fields that exist
-  -- Note: This query will show NULL for columns that don't exist
-  COALESCE(
-    (SELECT column_name FROM information_schema.columns 
-     WHERE table_name = 'properties' AND column_name = 'city' LIMIT 1),
-    'N/A'
-  ) as has_city_column,
   custom_neighborhood,
-  SUBSTRING(address FROM 1 FOR 50) as address_preview
+  SUBSTRING(COALESCE(address, '') FROM 1 FOR 50) as address_preview
 FROM public.properties
 WHERE city_id IS NULL
   AND status IN ('published', 'approved', 'pending')
 ORDER BY created_at DESC
 LIMIT 5;
+
+\echo ''
+\echo 'Note: If "city" column exists, it will be checked in the backfill strategies.'
+\echo 'Address column shown above if it exists (empty if column does not exist).'
 
 \echo ''
 
@@ -122,7 +119,7 @@ LIMIT 5;
 \echo ''
 
 -- Strategy A: If properties.city column exists, match on it
--- This is the most direct approach mentioned in the problem statement
+-- Matches against BOTH cities.name_fr AND cities.name_ar for comprehensive coverage
 
 DO $$
 DECLARE
@@ -140,17 +137,20 @@ BEGIN
   IF has_city_column THEN
     RAISE NOTICE 'Strategy A: Found city column, proceeding with backfill...';
     
-    -- Update city_id by matching city text with cities.name_fr
-    -- Uses TRIM and case-insensitive comparison (ILIKE)
+    -- Update city_id by matching city text with cities.name_fr OR cities.name_ar
+    -- Uses LOWER + TRIM normalization for robust matching
     WITH matched_cities AS (
       SELECT DISTINCT
         p.id as property_id,
         c.id as matched_city_id,
         p.city as property_city_text,
-        c.name_fr as matched_city_name
+        COALESCE(c.name_fr, c.name_ar) as matched_city_name
       FROM public.properties p
       INNER JOIN public.cities c 
-        ON TRIM(UPPER(p.city)) = TRIM(UPPER(c.name_fr))
+        ON (
+          LOWER(TRIM(p.city)) = LOWER(TRIM(c.name_fr))
+          OR LOWER(TRIM(p.city)) = LOWER(TRIM(c.name_ar))
+        )
       WHERE p.city_id IS NULL
         AND p.city IS NOT NULL
         AND TRIM(p.city) != ''
@@ -162,7 +162,7 @@ BEGIN
       AND p.city_id IS NULL;  -- Double-check NULL to be extra safe
     
     GET DIAGNOSTICS updated_count = ROW_COUNT;
-    RAISE NOTICE '✅ Strategy A completed: Updated % properties', updated_count;
+    RAISE NOTICE '✅ Strategy A completed: Updated % properties (matched against name_fr and name_ar)', updated_count;
     
   ELSE
     RAISE NOTICE '⚠️  Strategy A skipped: city column does not exist';
@@ -181,16 +181,19 @@ BEGIN
   RAISE NOTICE 'Strategy B: Attempting to match city from custom_neighborhood...';
   
   -- Only match if custom_neighborhood exactly matches a city name
-  -- This is conservative to avoid false positives
+  -- Matches against BOTH name_fr and name_ar
   WITH matched_cities AS (
     SELECT DISTINCT
       p.id as property_id,
       c.id as matched_city_id,
       p.custom_neighborhood as property_neighborhood_text,
-      c.name_fr as matched_city_name
+      COALESCE(c.name_fr, c.name_ar) as matched_city_name
     FROM public.properties p
     INNER JOIN public.cities c 
-      ON TRIM(UPPER(p.custom_neighborhood)) = TRIM(UPPER(c.name_fr))
+      ON (
+        LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(c.name_fr))
+        OR LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(c.name_ar))
+      )
     WHERE p.city_id IS NULL
       AND p.custom_neighborhood IS NOT NULL
       AND TRIM(p.custom_neighborhood) != ''
@@ -208,6 +211,110 @@ BEGIN
   ELSE
     RAISE NOTICE '⚠️  Strategy B: No matches found in custom_neighborhood';
   END IF;
+END $$;
+
+\echo ''
+
+-- =====================================================
+-- STRATEGY C: NEIGHBORHOOD BACKFILL (Best-effort)
+-- =====================================================
+
+\echo 'Strategy C: Best-effort neighborhood_id backfill'
+\echo '------------------------------------------------'
+
+-- This strategy attempts to match neighborhood names only when:
+-- 1. neighborhood_id IS NULL
+-- 2. custom_neighborhood contains text
+-- 3. city_id is already set (for context)
+-- 4. There's an exact match in neighborhoods table for that city
+
+DO $$
+DECLARE
+  has_neighborhood_column BOOLEAN;
+  updated_count INTEGER := 0;
+BEGIN
+  -- Check if neighborhood column exists (might be legacy column)
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public'
+      AND table_name = 'properties' 
+      AND column_name = 'neighborhood'
+  ) INTO has_neighborhood_column;
+  
+  IF has_neighborhood_column THEN
+    RAISE NOTICE 'Strategy C1: Attempting neighborhood match using "neighborhood" TEXT column...';
+    
+    -- Match using neighborhood TEXT column with city_id context
+    WITH matched_neighborhoods AS (
+      SELECT DISTINCT
+        p.id as property_id,
+        n.id as matched_neighborhood_id,
+        p.neighborhood as property_neighborhood_text,
+        n.name_fr as matched_neighborhood_name
+      FROM public.properties p
+      INNER JOIN public.neighborhoods n 
+        ON (
+          LOWER(TRIM(p.neighborhood)) = LOWER(TRIM(n.name_fr))
+          OR LOWER(TRIM(p.neighborhood)) = LOWER(TRIM(n.name_ar))
+        )
+        AND p.city_id = n.city_id  -- CRITICAL: Match only within same city
+      WHERE p.neighborhood_id IS NULL
+        AND p.city_id IS NOT NULL  -- Required for safe matching
+        AND p.neighborhood IS NOT NULL
+        AND TRIM(p.neighborhood) != ''
+    )
+    UPDATE public.properties p
+    SET neighborhood_id = mn.matched_neighborhood_id
+    FROM matched_neighborhoods mn
+    WHERE p.id = mn.property_id
+      AND p.neighborhood_id IS NULL;
+    
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    RAISE NOTICE '✅ Strategy C1 completed: Updated % properties', updated_count;
+  END IF;
+  
+  -- Strategy C2: Try matching custom_neighborhood with neighborhoods table
+  RAISE NOTICE 'Strategy C2: Attempting neighborhood match using "custom_neighborhood" column...';
+  
+  WITH matched_neighborhoods AS (
+    SELECT DISTINCT
+      p.id as property_id,
+      n.id as matched_neighborhood_id,
+      p.custom_neighborhood as property_neighborhood_text,
+      n.name_fr as matched_neighborhood_name
+    FROM public.properties p
+    INNER JOIN public.neighborhoods n 
+      ON (
+        LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(n.name_fr))
+        OR LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(n.name_ar))
+      )
+      AND p.city_id = n.city_id  -- CRITICAL: Match only within same city
+    WHERE p.neighborhood_id IS NULL
+      AND p.city_id IS NOT NULL  -- Required for safe matching
+      AND p.custom_neighborhood IS NOT NULL
+      AND TRIM(p.custom_neighborhood) != ''
+      -- Skip if custom_neighborhood matches a city name (avoid false positives)
+      AND NOT EXISTS (
+        SELECT 1 FROM public.cities c
+        WHERE LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(c.name_fr))
+           OR LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(c.name_ar))
+      )
+  )
+  UPDATE public.properties p
+  SET neighborhood_id = mn.matched_neighborhood_id
+  FROM matched_neighborhoods mn
+  WHERE p.id = mn.property_id
+    AND p.neighborhood_id IS NULL;
+  
+  GET DIAGNOSTICS updated_count = ROW_COUNT;
+  
+  IF updated_count > 0 THEN
+    RAISE NOTICE '✅ Strategy C2 completed: Updated % properties', updated_count;
+  ELSE
+    RAISE NOTICE '⚠️  Strategy C2: No reliable neighborhood matches found';
+  END IF;
+  
+  RAISE NOTICE 'ℹ️  Note: Neighborhood backfill is best-effort only. Properties without matches keep NULL neighborhood_id.';
 END $$;
 
 \echo ''
@@ -296,13 +403,25 @@ SELECT
   p.title_fr,
   p.city_id,
   c.name_fr as city_name,
+  p.neighborhood_id,
+  n.name_fr as neighborhood_name,
   p.status
 FROM public.properties p
 LEFT JOIN public.cities c ON p.city_id = c.id
+LEFT JOIN public.neighborhoods n ON p.neighborhood_id = n.id
 WHERE p.status IN ('published', 'approved')
   AND p.city_id IS NOT NULL
 ORDER BY p.updated_at DESC
 LIMIT 5;
+
+\echo ''
+
+-- Count neighborhoods that were backfilled
+SELECT 
+  COUNT(*) as properties_with_neighborhood
+FROM public.properties
+WHERE neighborhood_id IS NOT NULL
+  AND status IN ('published', 'approved');
 
 \echo ''
 \echo '============================================='
@@ -311,13 +430,16 @@ LIMIT 5;
 \echo ''
 \echo 'Summary:'
 \echo '  ✓ Only updated properties with NULL city_id'
-\echo '  ✓ Used case-insensitive matching with TRIM'
-\echo '  ✓ No changes to profiles, advertiser_type, neighborhoods'
+\echo '  ✓ Matched against cities.name_fr AND cities.name_ar'
+\echo '  ✓ Used LOWER + TRIM normalization'
+\echo '  ✓ Best-effort neighborhood_id backfill completed'
+\echo '  ✓ No changes to profiles, advertiser_type'
 \echo '  ✓ No schema changes'
 \echo '  ✓ Idempotent and safe to re-run'
 \echo ''
 \echo 'Next steps:'
-\echo '  1. Verify listings are now visible on public website'
-\echo '  2. Test search functionality'
-\echo '  3. Check that city filters work correctly'
+\echo '  1. Run defensive constraint/trigger script (prevent-null-city-id.sql)'
+\echo '  2. Verify listings are now visible on public website'
+\echo '  3. Test search functionality'
+\echo '  4. Check that city filters work correctly'
 \echo '============================================='

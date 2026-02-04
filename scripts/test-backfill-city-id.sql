@@ -18,9 +18,14 @@
 
 \echo '1. Creating temporary test tables...'
 
--- Create temporary cities table (copy structure)
-CREATE TEMP TABLE IF NOT EXISTS test_cities AS
-SELECT * FROM public.cities WHERE 1=0; -- Empty copy of structure
+-- Create temporary cities table (explicit structure for test)
+CREATE TEMP TABLE IF NOT EXISTS test_cities (
+  id INTEGER PRIMARY KEY,
+  name_fr TEXT NOT NULL,
+  name_ar TEXT NOT NULL,
+  region_fr TEXT,
+  is_active BOOLEAN DEFAULT true
+);
 
 -- Insert sample cities
 INSERT INTO test_cities (id, name_fr, name_ar, region_fr, is_active)
