@@ -43,10 +43,15 @@ export function useProperties(filters?: PropertyFilters) {
     setLoading(true);
     setError(null);
 
+    let hasCompleted = false;
+
     // Set a timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
-      console.warn('[useProperties] Loading timeout - setting loading to false');
-      setLoading(false);
+      if (!hasCompleted) {
+        console.warn('[useProperties] Loading timeout - setting loading to false');
+        hasCompleted = true;
+        setLoading(false);
+      }
     }, 10000); // 10 second timeout
 
     try {
@@ -127,7 +132,10 @@ export function useProperties(filters?: PropertyFilters) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       clearTimeout(loadingTimeout);
-      setLoading(false);
+      if (!hasCompleted) {
+        hasCompleted = true;
+        setLoading(false);
+      }
     }
   }, [filters]);
 
@@ -202,11 +210,13 @@ export function useLatestProperties(limit = 12) {
 
   useEffect(() => {
     let isCancelled = false;
+    let hasCompleted = false;
     
     // Set a timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
-      if (!isCancelled) {
+      if (!isCancelled && !hasCompleted) {
         console.warn('[useLatestProperties] Loading timeout - setting loading to false');
+        hasCompleted = true;
         setLoading(false);
       }
     }, 10000); // 10 second timeout
@@ -239,8 +249,9 @@ export function useLatestProperties(limit = 12) {
         console.error('Exception loading latest properties:', error);
         setProperties([]);
       } finally {
-        if (!isCancelled) {
-          clearTimeout(loadingTimeout);
+        clearTimeout(loadingTimeout);
+        if (!isCancelled && !hasCompleted) {
+          hasCompleted = true;
           setLoading(false);
         }
       }
@@ -263,11 +274,13 @@ export function useMyProperties() {
 
   useEffect(() => {
     let isCancelled = false;
+    let hasCompleted = false;
     
     // Set a timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
-      if (!isCancelled) {
+      if (!isCancelled && !hasCompleted) {
         console.warn('[useMyProperties] Loading timeout - setting loading to false');
+        hasCompleted = true;
         setLoading(false);
       }
     }, 10000); // 10 second timeout
@@ -277,7 +290,8 @@ export function useMyProperties() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          if (!isCancelled) {
+          if (!isCancelled && !hasCompleted) {
+            hasCompleted = true;
             setLoading(false);
           }
           return;
@@ -306,8 +320,9 @@ export function useMyProperties() {
         console.error('Exception loading user properties:', error);
         setProperties([]);
       } finally {
-        if (!isCancelled) {
-          clearTimeout(loadingTimeout);
+        clearTimeout(loadingTimeout);
+        if (!isCancelled && !hasCompleted) {
+          hasCompleted = true;
           setLoading(false);
         }
       }
