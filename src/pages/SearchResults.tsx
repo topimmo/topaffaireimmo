@@ -16,6 +16,7 @@ import { SlidersHorizontal, Grid3X3, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/contexts/LanguageContext";
+import SortSelect, { SortOption } from "@/components/SortSelect";
 
 // ✅ Supabase -> PropertyCard mapping
 type DbProperty = {
@@ -83,7 +84,7 @@ export default function SearchResults() {
   // ✅ IMPORTANT: Select value must NEVER be ""
   const [selectedType, setSelectedType] = useState<string>(initialType);
   const [selectedCity, setSelectedCity] = useState<string>(initialCity);
-  const [sortBy, setSortBy] = useState<string>("newest");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const [loading, setLoading] = useState(true);
   const [dbRows, setDbRows] = useState<DbProperty[]>([]);
@@ -342,16 +343,7 @@ export default function SearchResults() {
 
           <div className="flex gap-4 items-center">
             {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[140px] sm:w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                <SelectItem value="price-desc">Price: High to Low</SelectItem>
-              </SelectContent>
-            </Select>
+            <SortSelect value={sortBy} onValueChange={setSortBy} />
 
             {/* View Toggle */}
             <div className="hidden md:flex border rounded-lg overflow-hidden">
