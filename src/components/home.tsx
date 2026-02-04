@@ -16,13 +16,14 @@ function Home() {
         <PromoBanner position="home-top" />
       </section>
 
-      {/* Featured properties */}
+      {/* Featured properties - Reduced spacing for compact design */}
       <FeaturedProperties />
 
-      {/* ✅ Ad banner (home middle) */}
+      {/* ✅ Ad banner (home middle) - Small gap above Featured section */}
       <AdBanner
         page="home"
         position="home-middle"
+        className="-mt-4"
       />
 
       {/* Promo Banner (home-middle) - Between sections */}

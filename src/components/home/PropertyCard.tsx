@@ -70,7 +70,7 @@ export default function PropertyCard({
       <div
         className={cn(
           "relative overflow-hidden",
-          size === "large" ? "aspect-[4/3]" : "aspect-[16/10]"
+          size === "large" ? "aspect-[16/11]" : "aspect-[16/10]"
         )}
       >
         <img
@@ -120,11 +120,11 @@ export default function PropertyCard({
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-5">
+      <div className={cn("p-4", size === "large" ? "md:p-4" : "md:p-5")}>
         <h3
           className={cn(
             "font-display font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors",
-            size === "large" ? "text-xl" : "text-lg"
+            size === "large" ? "text-lg md:text-xl" : "text-lg"
           )}
         >
           {displayTitle}
@@ -144,7 +144,10 @@ export default function PropertyCard({
         </div>
 
         {/* Features */}
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-muted">
+        <div className={cn(
+          "flex items-center gap-4 border-t border-muted",
+          size === "large" ? "mt-3 pt-3" : "mt-4 pt-4"
+        )}>
           {property.bedrooms !== undefined && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Bed className="h-4 w-4" />
