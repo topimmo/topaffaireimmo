@@ -47,7 +47,12 @@ export default function Login() {
     setLoading(false);
     
     if (resetError) {
-      console.error('❌ Password reset error:', resetError);
+      console.error('❌ Password reset error:');
+      if (import.meta.env.DEV) {
+        console.error('  - Error Object:', JSON.stringify(resetError, null, 2));
+      }
+      console.error('  - Error Message:', resetError.message);
+      console.error('  - Redirect URL used:', redirectTo);
       setError(resetError.message);
       return;
     }
