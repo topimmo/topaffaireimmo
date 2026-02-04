@@ -1,6 +1,7 @@
 import { useRef, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PropertyCard, { Property } from "./PropertyCard";
+import PropertyCardSkeleton from "./PropertyCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useFeaturedProperties } from "@/hooks/useProperties";
@@ -60,13 +61,62 @@ export default function FeaturedProperties() {
     }
   };
   
-  // Show loading state
+  // Show loading state with skeleton cards
   if (loading) {
+    // Responsive skeleton counts: 1-2 mobile, 2-3 tablet, 3-4 desktop
+    const skeletonCount = 4;
+    
     return (
       <section className={`py-16 md:py-24 bg-background noise-texture ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="container">
-          <div className="text-center text-muted-foreground">
-            {isRTL ? 'جاري التحميل...' : 'Chargement...'}
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                  {isRTL ? 'مختارة لك' : 'Sélectionné pour vous'}
+                </span>
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground">
+                {t('featured.title')}
+              </h2>
+              <p className="text-muted-foreground mt-2 max-w-xl">
+                {t('featured.subtitle')}
+              </p>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                disabled
+                className="rounded-full h-11 w-11 border-muted"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled
+                className="rounded-full h-11 w-11 border-muted"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Skeleton Carousel */}
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+            {Array.from({ length: skeletonCount }).map((_, index) => (
+              <div
+                key={index}
+                className="flex-shrink-0 w-[320px] md:w-[380px] snap-start"
+              >
+                <PropertyCardSkeleton size="large" />
+              </div>
+            ))}
           </div>
         </div>
       </section>
