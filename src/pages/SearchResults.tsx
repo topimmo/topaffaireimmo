@@ -141,14 +141,8 @@ export default function SearchResults() {
           q = q.ilike("property_type", `%${selectedType}%`);
         }
 
-        // Sorting
-        if (sortBy === "newest") {
-          q = q.order("created_at", { ascending: false });
-        } else if (sortBy === "price-asc") {
-          q = q.order("price", { ascending: true, nullsFirst: false });
-        } else if (sortBy === "price-desc") {
-          q = q.order("price", { ascending: false, nullsFirst: false });
-        }
+        // Always order by created_at by default for consistent results
+        q = q.order("created_at", { ascending: false });
 
         const { data, error } = await q.limit(200);
 
@@ -177,7 +171,7 @@ export default function SearchResults() {
     };
 
     fetchData();
-  }, [selectedType, sortBy, urlOwnerId]);
+  }, [selectedType, urlOwnerId]);
 
   // ✅ frontend filters (city + exact type + price)
   const filteredRows = useMemo(() => {
@@ -206,9 +200,25 @@ export default function SearchResults() {
     return rows;
   }, [dbRows, selectedCity, selectedType, priceRange, language]);
 
+  // ✅ client-side sorting
+  const sortedRows = useMemo(() => {
+    const rows = [...filteredRows];
+
+    if (sortBy === "price-asc") {
+      rows.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+    } else if (sortBy === "price-desc") {
+      rows.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+    } else {
+      // "newest" - already sorted by created_at from DB, but ensure consistency
+      rows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+
+    return rows;
+  }, [filteredRows, sortBy]);
+
   // ✅ map to PropertyCard type
   const properties: Property[] = useMemo(() => {
-    return filteredRows.map((r) => {
+    return sortedRows.map((r) => {
       const title =
         language === "ar"
           ? r.title_ar || r.title_fr || "Annonce"
@@ -237,7 +247,7 @@ export default function SearchResults() {
         featured: !!r.featured,
       };
     });
-  }, [filteredRows, language]);
+  }, [sortedRows, language]);
 
   const clearFilters = () => {
     setSelectedType("all-types");
@@ -326,7 +336,7 @@ export default function SearchResults() {
           <div className="flex gap-4 items-center">
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[140px] sm:w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
