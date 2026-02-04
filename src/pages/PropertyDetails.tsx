@@ -96,8 +96,8 @@ function getPublicImageUrl(pathOrUrl: string) {
   if (pathOrUrl.startsWith("http")) return pathOrUrl;
 
   // ✅ نفس اسم البوكت اللي كتستعمل فـ SearchResults
-  return supabase.storage.from("property-images").getPublicUrl(pathOrUrl).data
-    .publicUrl;
+  const result = supabase.storage.from("property-images").getPublicUrl(pathOrUrl);
+  return result?.data?.publicUrl || "";
 }
 
 export default function PropertyDetails() {
@@ -165,9 +165,9 @@ export default function PropertyDetails() {
           const typedData = data as SupabasePropertyResponse;
           setProperty({
             ...typedData,
-            city: Array.isArray(typedData?.city) ? typedData.city[0] : typedData?.city,
-            neighborhood: Array.isArray(typedData?.neighborhood) ? typedData.neighborhood[0] : typedData?.neighborhood,
-            owner: Array.isArray(typedData?.owner) ? typedData.owner[0] : typedData?.owner,
+            city: Array.isArray(typedData?.city) && typedData.city.length > 0 ? typedData.city[0] : typedData?.city,
+            neighborhood: Array.isArray(typedData?.neighborhood) && typedData.neighborhood.length > 0 ? typedData.neighborhood[0] : typedData?.neighborhood,
+            owner: Array.isArray(typedData?.owner) && typedData.owner.length > 0 ? typedData.owner[0] : typedData?.owner,
           } as DbPropertyDetails);
           setCurrentImage(0);
         } else {
@@ -278,7 +278,7 @@ export default function PropertyDetails() {
 
   const cityNameForSlug = property.city?.name_fr || "";
   const cityData = MOROCCO_CITIES.find(
-    (c) => c.name_fr.toLowerCase() === cityNameForSlug.toLowerCase()
+    (c) => c.name_fr?.toLowerCase() === cityNameForSlug.toLowerCase()
   );
   const citySlug = cityData?.slug || slugify(cityNameForSlug);
 
@@ -288,6 +288,11 @@ export default function PropertyDetails() {
     : "";
 
   const structuredData = useMemo(() => {
+    // Guard clause: don't generate structured data if property is null
+    if (!property) {
+      return [];
+    }
+
     return [
       {
         "@context": "https://schema.org",
