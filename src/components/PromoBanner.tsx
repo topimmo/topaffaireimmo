@@ -49,7 +49,7 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
 
       if (error) {
         // If table doesn't exist (PGRST204 schema cache, PGRST205 relation, or PostgreSQL error 42P01), gracefully skip
-        if (error.code === 'PGRST204' || error.code === 'PGRST205' || error.code === '42P01' || error.message.includes('promo_banners')) {
+        if (error.code === 'PGRST204' || error.code === 'PGRST205' || error.code === '42P01') {
           // Silently skip - table doesn't exist, which is acceptable
           setBanner(null);
           return;
