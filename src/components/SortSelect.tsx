@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export type SortOption = "newest" | "price-asc" | "price-desc";
 
@@ -17,7 +18,7 @@ interface SortSelectProps {
 
 export default function SortSelect({ value, onValueChange, className }: SortSelectProps) {
   return (
-    <div className={`flex items-center gap-2 ${className || ""}`}>
+    <div className={cn("flex items-center gap-2", className)}>
       <ArrowUpDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger className="w-[140px] sm:w-[180px]">
