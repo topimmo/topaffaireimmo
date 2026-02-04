@@ -20,15 +20,10 @@ function Home() {
       <FeaturedProperties />
 
       {/* ✅ Ad banner (home middle) */}
-      <section className="py-6">
-        <div className="min-h-[90px]">
-          <AdBanner
-            page="home"
-            position="home-middle"
-            className="max-w-6xl mx-auto"
-          />
-        </div>
-      </section>
+      <AdBanner
+        page="home"
+        position="home-middle"
+      />
 
       {/* Promo Banner (home-middle) - Between sections */}
       <section className="py-6">

@@ -46,7 +46,7 @@ export default function AdBanner({
   }
   
   return (
-    <section className={cn("py-4 md:py-6", className)}>
+    <section className={cn("my-4 md:my-6", className)}>
       <div className="container">
         <BannerSlot 
           page={page} 
