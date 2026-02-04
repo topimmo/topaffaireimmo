@@ -29,7 +29,9 @@ import { createClient } from '@supabase/supabase-js';
 // CONFIGURATION
 // =====================================================
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
+// Support both SUPABASE_URL and VITE_SUPABASE_URL for flexibility
+// This allows the script to work in both CI/CD and local development environments
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY || '';
 const LISTINGS_COUNT = parseInt(process.env.LISTINGS_COUNT || '50', 10);
@@ -41,10 +43,14 @@ const POSTGRES_DUPLICATE_KEY_ERROR = '23505';
 // Validate required environment variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('❌ ERROR: Missing required environment variables:');
-  console.error('  - SUPABASE_URL:', SUPABASE_URL ? '✓' : '✗');
+  console.error('  - SUPABASE_URL or VITE_SUPABASE_URL:', SUPABASE_URL ? '✓' : '✗');
   console.error('  - SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗');
   console.error('  - PEXELS_API_KEY:', PEXELS_API_KEY ? '✓ (optional)' : '⚠️  (will use placeholder images)');
   console.error('  - FORCE_SEED:', FORCE_SEED ? '✓' : '✗ (safety guard active)');
+  console.error('');
+  console.error('Environment variable sources checked:');
+  console.error('  - SUPABASE_URL:', process.env.SUPABASE_URL ? `✓ (${process.env.SUPABASE_URL.slice(0, 30)}...)` : '✗');
+  console.error('  - VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? `✓ (${process.env.VITE_SUPABASE_URL.slice(0, 30)}...)` : '✗');
   process.exit(1);
 }
 
@@ -387,9 +393,11 @@ async function seedSampleListings() {
   console.log(`📊 Configuration:`);
   console.log(`   - Target listings: ${LISTINGS_COUNT}`);
   console.log(`   - FORCE_SEED: ${FORCE_SEED}`);
-  console.log(`   - Supabase URL: ${SUPABASE_URL.substring(0, 30)}...`);
+  console.log(`   - Supabase URL: ${SUPABASE_URL.slice(0, 30)}...`);
   console.log(`   - Using service role key: ✓`);
   console.log(`   - Pexels API: ${PEXELS_API_KEY ? '✓' : '✗ (using placeholders)'}`);
+  console.log(`   - Target schema: public`);
+  console.log(`   - Target table: properties`);
   console.log('═══════════════════════════════════════════════════════');
   console.log('');
 
@@ -587,6 +595,10 @@ async function seedSampleListings() {
 
   // Step 5: Insert listings into database
   console.log('💾 Inserting listings into database...');
+  console.log(`   - Schema: public`);
+  console.log(`   - Table: properties`);
+  console.log(`   - Batch size: 10 listings per insert`);
+  console.log('');
   
   // Insert in batches of 10 to avoid overwhelming the database
   const batchSize = 10;
@@ -599,6 +611,10 @@ async function seedSampleListings() {
 
     if (insertError) {
       console.error(`❌ Error inserting batch ${i / batchSize + 1}:`, insertError);
+      console.error(`   - Error code: ${insertError.code}`);
+      console.error(`   - Error message: ${insertError.message}`);
+      console.error(`   - Error details:`, insertError.details);
+      console.error(`   - Error hint:`, insertError.hint);
       errorCount += batch.length;
     } else {
       successCount += batch.length;
@@ -620,8 +636,37 @@ async function seedSampleListings() {
   console.log(`   - All sample listings have: is_sample = true`);
   console.log('═══════════════════════════════════════════════════════');
   console.log('');
+  
+  // Step 7: Verify the insert by querying the database
+  console.log('🔍 Verifying inserted data...');
+  const { count: verifyCount, error: verifyError } = await supabase
+    .from('properties')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_sample', true);
+  
+  if (verifyError) {
+    console.error('❌ Error verifying inserted data:', verifyError);
+    console.error('   Please manually check the database');
+  } else {
+    console.log(`✓ Verification complete: ${verifyCount} sample listings found in database`);
+    
+    // Check published status
+    const { count: publishedCount, error: publishedError } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_sample', true)
+      .eq('status', 'published');
+    
+    if (publishedError) {
+      console.error('⚠️  Could not verify published status');
+    } else {
+      console.log(`✓ Published listings: ${publishedCount}/${verifyCount}`);
+    }
+  }
+  console.log('');
   console.log('🔍 To verify the insert, run this query in Supabase:');
   console.log('   SELECT COUNT(*) FROM public.properties WHERE is_sample = true;');
+  console.log('   SELECT COUNT(*) FROM public.properties WHERE status = \'published\';');
   console.log('');
 }
 
