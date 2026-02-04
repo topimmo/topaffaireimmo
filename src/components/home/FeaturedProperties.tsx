@@ -123,10 +123,7 @@ export default function FeaturedProperties() {
     );
   }
   
-  // Don't render section if no featured properties
-  if (featuredProperties.length === 0) {
-    return null;
-  }
+  // Always render section - never empty (fallback to dummy properties handled in hook)
 
   return (
     <section className={`py-8 md:py-12 bg-background noise-texture ${isRTL ? 'rtl' : 'ltr'}`}>
