@@ -17,9 +17,7 @@ function Home() {
       </section>
 
       {/* Featured properties */}
-      <section className="mt-12">
-        <FeaturedProperties />
-      </section>
+      <FeaturedProperties />
 
       {/* ✅ Ad banner (home middle) */}
       <section className="py-6">
