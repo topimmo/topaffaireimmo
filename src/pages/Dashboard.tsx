@@ -119,10 +119,12 @@ export default function Dashboard() {
     setDeleting(true);
 
     try {
+      // Delete with ownership check - user must be the creator or owner
       const { error } = await supabase
         .from('properties')
         .delete()
-        .eq('id', deleteId);
+        .eq('id', deleteId)
+        .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`);
 
       if (error) {
         // Log error code and message for debugging
