@@ -5,17 +5,7 @@
 
 import { supabase } from './supabase';
 
-export type AuditAction = 
-  | 'approve' 
-  | 'reject' 
-  | 'delete' 
-  | 'feature' 
-  | 'unfeature' 
-  | 'update' 
-  | 'create' 
-  | 'bulk_action'
-  | 'activate'
-  | 'deactivate';
+export type AuditAction = 'approve' | 'reject' | 'delete' | 'feature' | 'unfeature' | 'update' | 'create' | 'bulk_action' | 'activate' | 'deactivate';
 export type AuditEntityType = 'property' | 'user' | 'page' | 'category' | 'settings' | 'location' | 'dummy_property' | 'other';
 
 export interface AuditLogEntry {

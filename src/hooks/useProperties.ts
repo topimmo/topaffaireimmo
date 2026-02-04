@@ -292,7 +292,7 @@ export function useFeaturedProperties(limit = 6) {
             status: 'published',
             owner_id: null,
             created_at: dummy.created_at || new Date().toISOString(),
-            updated_at: dummy.created_at || new Date().toISOString()
+            updated_at: dummy.updated_at || new Date().toISOString()
           } as PropertyWithRelations));
 
           // Combine real featured and dummy properties

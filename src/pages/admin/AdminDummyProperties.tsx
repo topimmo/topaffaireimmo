@@ -244,7 +244,7 @@ export default function AdminDummyProperties() {
         await logAdminAction({
           action: 'create',
           resource_type: 'dummy_property',
-          resource_id: newProperty?.id,
+          resource_id: newProperty.id, // Safe to use without optional chaining since error would have been thrown
           details: { title_fr: formData.title_fr },
         });
 
