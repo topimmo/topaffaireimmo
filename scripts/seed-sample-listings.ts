@@ -49,8 +49,8 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('  - FORCE_SEED:', FORCE_SEED ? '✓' : '✗ (safety guard active)');
   console.error('');
   console.error('Environment variable sources checked:');
-  console.error('  - SUPABASE_URL:', process.env.SUPABASE_URL ? `✓ (${process.env.SUPABASE_URL.substring(0, 30)}...)` : '✗');
-  console.error('  - VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? `✓ (${process.env.VITE_SUPABASE_URL.substring(0, 30)}...)` : '✗');
+  console.error('  - SUPABASE_URL:', process.env.SUPABASE_URL ? `✓ (${process.env.SUPABASE_URL.slice(0, 30)}...)` : '✗');
+  console.error('  - VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? `✓ (${process.env.VITE_SUPABASE_URL.slice(0, 30)}...)` : '✗');
   process.exit(1);
 }
 
@@ -393,7 +393,7 @@ async function seedSampleListings() {
   console.log(`📊 Configuration:`);
   console.log(`   - Target listings: ${LISTINGS_COUNT}`);
   console.log(`   - FORCE_SEED: ${FORCE_SEED}`);
-  console.log(`   - Supabase URL: ${SUPABASE_URL.substring(0, 30)}...`);
+  console.log(`   - Supabase URL: ${SUPABASE_URL.slice(0, 30)}...`);
   console.log(`   - Using service role key: ✓`);
   console.log(`   - Pexels API: ${PEXELS_API_KEY ? '✓' : '✗ (using placeholders)'}`);
   console.log(`   - Target schema: public`);
