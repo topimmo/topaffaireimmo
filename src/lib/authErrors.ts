@@ -12,24 +12,48 @@ interface ErrorMessage {
 
 // Error code/message patterns and their user-friendly translations
 const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
-  // Signup errors
+  // Signup errors - Email conflicts
   'already registered': {
     fr: 'Cet email est déjà enregistré',
-    ar: 'هذا البريد الإلكتروني مسجل بالفعل'
+    ar: 'هذا البريد الإلكتروني مسجل مسبقًا'
   },
   'user already registered': {
     fr: 'Cet email est déjà enregistré',
-    ar: 'هذا البريد الإلكتروني مسجل بالفعل'
+    ar: 'هذا البريد الإلكتروني مسجل مسبقًا'
   },
+  'email_exists': {
+    fr: 'Cet email est déjà enregistré',
+    ar: 'هذا البريد الإلكتروني مسجل مسبقًا'
+  },
+  'email exists': {
+    fr: 'Cet email est déjà enregistré',
+    ar: 'هذا البريد الإلكتروني مسجل مسبقًا'
+  },
+  
+  // Email validation errors
   'invalid email': {
     fr: 'Email invalide',
     ar: 'البريد الإلكتروني غير صالح'
   },
+  'invalid_email': {
+    fr: 'Email invalide',
+    ar: 'البريد الإلكتروني غير صالح'
+  },
+  
+  // Password validation errors
   'weak password': {
-    fr: 'Mot de passe trop faible',
-    ar: 'كلمة المرور ضعيفة جداً'
+    fr: 'Mot de passe trop faible (6 caractères minimum)',
+    ar: 'كلمة المرور ضعيفة (6 أحرف على الأقل)'
   },
   'password should be at least': {
+    fr: 'Le mot de passe doit contenir au moins 6 caractères',
+    ar: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
+  },
+  'invalid_password': {
+    fr: 'Mot de passe trop faible (6 caractères minimum)',
+    ar: 'كلمة المرور ضعيفة (6 أحرف على الأقل)'
+  },
+  'password is too short': {
     fr: 'Le mot de passe doit contenir au moins 6 caractères',
     ar: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
   },
@@ -39,6 +63,10 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     fr: 'Erreur d\'envoi d\'email. Vérifiez votre adresse email.',
     ar: 'خطأ في إرسال البريد الإلكتروني. تحقق من عنوان بريدك الإلكتروني.'
   },
+  'email_provider_disabled': {
+    fr: 'L\'inscription par email est désactivée',
+    ar: 'التسجيل عبر البريد الإلكتروني معطل'
+  },
   'smtp': {
     fr: 'Erreur du serveur d\'email. Veuillez réessayer dans quelques instants.',
     ar: 'خطأ في خادم البريد الإلكتروني. يرجى المحاولة مرة أخرى بعد قليل.'
@@ -47,9 +75,21 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     fr: 'Trop de demandes. Veuillez patienter avant de réessayer.',
     ar: 'طلبات كثيرة جداً. يرجى الانتظار قبل المحاولة مرة أخرى.'
   },
+  'rate_limit_exceeded': {
+    fr: 'Trop de demandes. Veuillez patienter avant de réessayer.',
+    ar: 'طلبات كثيرة جداً. يرجى الانتظار قبل المحاولة مرة أخرى.'
+  },
+  '429': {
+    fr: 'Trop de demandes. Veuillez patienter avant de réessayer.',
+    ar: 'طلبات كثيرة جداً. يرجى الانتظار قبل المحاولة مرة أخرى.'
+  },
   'email delivery': {
     fr: 'Impossible d\'envoyer l\'email de confirmation. Vérifiez votre adresse.',
     ar: 'تعذر إرسال بريد التأكيد الإلكتروني. تحقق من عنوانك.'
+  },
+  'email_address_not_authorized': {
+    fr: 'Cette adresse email n\'est pas autorisée',
+    ar: 'عنوان البريد الإلكتروني هذا غير مصرح به'
   },
   
   // Redirect/URL errors
@@ -58,6 +98,10 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     ar: 'عنوان URL لإعادة التوجيه غير مصرح به. اتصل بالدعم.'
   },
   'redirect_not_allowed': {
+    fr: 'URL de redirection non autorisée. Contactez le support.',
+    ar: 'عنوان URL لإعادة التوجيه غير مصرح به. اتصل بالدعم.'
+  },
+  'invalid_redirect_url': {
     fr: 'URL de redirection non autorisée. Contactez le support.',
     ar: 'عنوان URL لإعادة التوجيه غير مصرح به. اتصل بالدعم.'
   },
@@ -74,18 +118,34 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
   
   // Network errors
   'network': {
-    fr: 'Erreur de connexion réseau',
-    ar: 'خطأ في الاتصال بالشبكة'
+    fr: 'Problème de connexion, vérifiez votre internet',
+    ar: 'مشكل في الاتصال، تحقق من الإنترنت'
   },
   'Failed to fetch': {
-    fr: 'Erreur de connexion réseau',
-    ar: 'خطأ في الاتصال بالشبكة'
+    fr: 'Problème de connexion, vérifiez votre internet',
+    ar: 'مشكل في الاتصال، تحقق من الإنترنت'
+  },
+  'network_error': {
+    fr: 'Problème de connexion, vérifiez votre internet',
+    ar: 'مشكل في الاتصال، تحقق من الإنترنت'
+  },
+  'timeout': {
+    fr: 'Problème de connexion, vérifiez votre internet',
+    ar: 'مشكل في الاتصال، تحقق من الإنترنت'
+  },
+  'connection refused': {
+    fr: 'Problème de connexion, vérifiez votre internet',
+    ar: 'مشكل في الاتصال، تحقق من الإنترنت'
   },
   
   // Database errors
   'Database error': {
     fr: 'Erreur de base de données. Veuillez réessayer.',
     ar: 'خطأ في قاعدة البيانات. يرجى المحاولة مرة أخرى.'
+  },
+  'unexpected_failure': {
+    fr: 'Erreur inattendue. Veuillez réessayer.',
+    ar: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'
   },
   'permission denied': {
     fr: 'Accès refusé. Veuillez contacter le support.',
@@ -102,6 +162,10 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
   'duplicate': {
     fr: 'Cet enregistrement existe déjà.',
     ar: 'هذا السجل موجود بالفعل.'
+  },
+  'conflict': {
+    fr: 'Conflit de données. Veuillez réessayer.',
+    ar: 'تعارض في البيانات. يرجى المحاولة مرة أخرى.'
   },
   
   // Generic fallback
