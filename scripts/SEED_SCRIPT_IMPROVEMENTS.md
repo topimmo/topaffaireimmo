@@ -74,8 +74,10 @@ const property = {
   // ... other fields
 };
 
-// Remove the plain text 'city' field entirely
+// Remove or deprecate the plain text 'city' field
+// NOTE: Keep it temporarily for backward compatibility during migration
 // The frontend will get city info via: city:cities(name_fr, name_ar)
+// Once all data is migrated and backfill is complete, this field can be removed
 ```
 
 ### 3. **Fetch Neighborhoods with City Context**

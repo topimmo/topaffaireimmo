@@ -319,9 +319,9 @@ END $$;
 
 \echo ''
 
--- Strategy C: Try extracting city from address field
+-- Strategy D: Try extracting city from address field (COMMENTED OUT)
 -- This is more aggressive and may have false positives
--- Only uncomment if Strategies A and B don't work
+-- Only uncomment if Strategies A, B, and C don't provide sufficient coverage
 
 /*
 DO $$
