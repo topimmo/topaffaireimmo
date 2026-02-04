@@ -97,13 +97,43 @@ function App() {
   const [validationFailed, setValidationFailed] = useState(false);
 
   useEffect(() => {
-    runStartupValidation().then((result) => {
-      setValidationComplete(true);
-      if (!result.valid && result.errors.length > 0) {
-        console.error("⚠️ Startup validation found errors, but app will continue");
+    let hasCompleted = false;
+
+    // Add a timeout to prevent indefinite blocking
+    const timeout = setTimeout(() => {
+      if (!hasCompleted) {
+        console.warn("⚠️ Startup validation timeout - proceeding anyway");
+        hasCompleted = true;
+        setValidationComplete(true);
         setValidationFailed(true);
       }
-    });
+    }, 10000); // 10 second timeout
+
+    runStartupValidation()
+      .then((result) => {
+        if (!hasCompleted) {
+          hasCompleted = true;
+          clearTimeout(timeout);
+          setValidationComplete(true);
+          if (!result.valid && result.errors.length > 0) {
+            console.error("⚠️ Startup validation found errors, but app will continue");
+            setValidationFailed(true);
+          }
+        }
+      })
+      .catch((error) => {
+        if (!hasCompleted) {
+          hasCompleted = true;
+          clearTimeout(timeout);
+          console.error("⚠️ Startup validation exception:", error);
+          setValidationComplete(true);
+          setValidationFailed(true);
+        }
+      });
+
+    return () => {
+      clearTimeout(timeout);
+    };
   }, []);
 
   if (!validationComplete) return <LoadingSpinner />;
