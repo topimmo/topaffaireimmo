@@ -32,6 +32,10 @@ import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/config/site";
 
+// ✅ Helper functions to safely handle null/undefined values
+const safeLower = (v?: string | null): string => (v ?? "").toLowerCase();
+const safeStr = (v: any): string => (v == null ? "" : String(v));
+
 type DbPropertyDetails = {
   id: string;
   title_fr: string | null;
@@ -256,14 +260,36 @@ export default function PropertyDetails() {
   const prevImage = () =>
     setCurrentImage((prev) => (prev === 0 ? safeImages.length - 1 : prev - 1));
 
-  // SEO metadata
-  const seoTitle = `${title} - ${
-    property.neighborhood?.name_fr ? property.neighborhood.name_fr + ", " : ""
-  }${property.city?.name_fr || ""} | TopAffaireImmo`;
+  // ✅ Safe city lookup - prevents calling methods on null values
+  const cityNameForSlug = safeStr(property.city?.name_fr);
+  const target = safeLower(cityNameForSlug);
+  const cityData = target
+    ? MOROCCO_CITIES.find(c => safeLower(c?.name_fr) === target)
+    : undefined;
+  const citySlug = cityData?.slug ?? slugify(cityNameForSlug);
 
-  const seoDescription = `${property.property_type || "Bien"} ${
+  // ✅ Safe neighborhood slug generation
+  const neighborhoodNameForSlug = safeStr(property.neighborhood?.name_fr);
+  const neighborhoodSlug = neighborhoodNameForSlug
+    ? slugify(neighborhoodNameForSlug)
+    : "";
+
+  // ✅ Safe labels for display
+  const cityLabel = safeStr(property.city?.name_fr);
+  const neighborhoodLabel = safeStr(property.neighborhood?.name_fr);
+
+  // ✅ Safe phone numbers with fallbacks
+  const phone = safeStr(property.contact_phone);
+  const whatsapp = safeStr(property.contact_whatsapp);
+
+  // ✅ SEO metadata - safely constructed
+  const seoTitle = `${title} - ${
+    neighborhoodLabel ? neighborhoodLabel + ", " : ""
+  }${cityLabel || ""} | TopAffaireImmo`;
+
+  const seoDescription = `${safeStr(property.property_type) || "Bien"} ${
     property.transaction_type === "sale" ? "à vendre" : "à louer"
-  } à ${property.city?.name_fr || ""}. ${
+  } à ${cityLabel || ""}. ${
     property.bedrooms || 0
   } chambres, ${property.area || 0}m². Prix: ${formatPrice(
     property.price || 0
@@ -276,45 +302,41 @@ export default function PropertyDetails() {
     .toISOString()
     .split("T")[0];
 
-  const cityNameForSlug = property.city?.name_fr || "";
-  const cityData = cityNameForSlug
-    ? MOROCCO_CITIES.find(
-        (c) => c.name_fr?.toLowerCase() === cityNameForSlug.toLowerCase()
-      )
-    : undefined;
-  const citySlug = cityData?.slug || slugify(cityNameForSlug);
-
-  const neighborhoodNameForSlug = property.neighborhood?.name_fr || "";
-  const neighborhoodSlug = neighborhoodNameForSlug
-    ? slugify(neighborhoodNameForSlug)
-    : "";
-
   const structuredData = useMemo(() => {
-    // Guard clause: don't generate structured data if property is null
+    // ✅ Guard clause: don't generate structured data if property is null/undefined
     if (!property) {
       return [];
     }
+
+    // ✅ Safe value extraction with fallbacks
+    const safeTitle = safeStr(title);
+    const safeDescription = safeStr(description);
+    const safeCityName = safeStr(cityNameForSlug);
+    const safeNeighborhoodName = safeStr(neighborhoodNameForSlug);
+    const safePrice = property.price ?? 0;
+    const safeAddress = safeStr(property.address);
+    const safeCreatedAt = safeStr(property.created_at) || new Date().toISOString();
 
     return [
       {
         "@context": "https://schema.org",
         "@type": "RealEstateListing",
         "@id": `${SITE_URL}/property/${property.id}`,
-        name: title,
-        description: description,
+        name: safeTitle,
+        description: safeDescription,
         url: `${SITE_URL}/property/${property.id}`,
         offers: {
           "@type": "Offer",
-          price: property.price ?? 0,
+          price: safePrice,
           priceCurrency: "MAD",
           availability: "https://schema.org/InStock",
           priceValidUntil,
         },
         address: {
           "@type": "PostalAddress",
-          streetAddress: property.address || "",
-          addressLocality: neighborhoodNameForSlug || cityNameForSlug,
-          addressRegion: cityNameForSlug,
+          streetAddress: safeAddress,
+          addressLocality: safeNeighborhoodName || safeCityName,
+          addressRegion: safeCityName,
           addressCountry: "MA",
         },
         numberOfRooms: property.bedrooms ?? undefined,
@@ -325,11 +347,11 @@ export default function PropertyDetails() {
           unitCode: "MTK",
           unitText: "m²",
         },
-        datePosted: property.created_at || new Date().toISOString(),
+        datePosted: safeCreatedAt,
         image: safeImages.map((img, index) => ({
           "@type": "ImageObject",
           url: img,
-          name: `${title} - Image ${index + 1}`,
+          name: `${safeTitle} - Image ${index + 1}`,
         })),
       },
       {
@@ -345,7 +367,7 @@ export default function PropertyDetails() {
           {
             "@type": "ListItem",
             position: 2,
-            name: cityNameForSlug || "Ville",
+            name: safeCityName || "Ville",
             item: `${SITE_URL}/immobilier/${citySlug}`,
           },
           ...(neighborhoodSlug
@@ -353,7 +375,7 @@ export default function PropertyDetails() {
                 {
                   "@type": "ListItem",
                   position: 3,
-                  name: neighborhoodNameForSlug,
+                  name: safeNeighborhoodName,
                   item: `${SITE_URL}/immobilier/${citySlug}/${neighborhoodSlug}`,
                 },
               ]
@@ -361,7 +383,7 @@ export default function PropertyDetails() {
           {
             "@type": "ListItem",
             position: neighborhoodSlug ? 4 : 3,
-            name: title,
+            name: safeTitle,
           },
         ],
       },
@@ -377,13 +399,6 @@ export default function PropertyDetails() {
     cityNameForSlug,
     neighborhoodNameForSlug,
   ]);
-
-  const cityLabel = property.city?.name_fr || "";
-  const neighborhoodLabel = property.neighborhood?.name_fr || "";
-
-  // ✅ هنا التصحيح الكبير: نفس أسماء الأعمدة ديال DB
-  const phone = property.contact_phone || "";
-  const whatsapp = property.contact_whatsapp || "";
 
   return (
     <>
@@ -592,7 +607,7 @@ export default function PropertyDetails() {
                   Description
                 </h2>
                 <div className="prose prose-neutral max-w-none">
-                  {String(description)
+                  {safeStr(description)
                     .split("\n")
                     .filter(Boolean)
                     .map((paragraph, index) => (
@@ -651,7 +666,7 @@ export default function PropertyDetails() {
                     <p className="font-semibold">Annonceur</p>
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Building2 className="h-4 w-4" />
-                      {property.owner?.company_name || property.owner?.agency_name || "TopAffaireImmo"}
+                      {safeStr(property.owner?.company_name || property.owner?.agency_name || "TopAffaireImmo")}
                     </div>
 
                     {property.advertiser_type && (
@@ -686,7 +701,7 @@ export default function PropertyDetails() {
                     <a
                       href={
                         whatsapp
-                          ? `https://wa.me/${whatsapp.replace(/[^\d]/g, "")}`
+                          ? `https://wa.me/${safeStr(whatsapp).replace(/[^\d]/g, "")}`
                           : "#"
                       }
                       target="_blank"
