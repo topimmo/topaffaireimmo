@@ -457,7 +457,7 @@ export default function AdminListings() {
 
       // Log admin action
       await logAdminAction({
-        action: 'delete_property',
+        action: 'delete',
         resource_type: 'property',
         resource_id: property.id,
         details: { title_fr: property.title_fr },
@@ -493,7 +493,7 @@ export default function AdminListings() {
 
       // Log admin action
       await logAdminAction({
-        action: newFeatured ? 'mark_featured' : 'unmark_featured',
+        action: newFeatured ? 'feature' : 'unfeature',
         resource_type: 'property',
         resource_id: propertyId,
         details: { featured: newFeatured },

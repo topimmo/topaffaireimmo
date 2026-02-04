@@ -43,6 +43,7 @@ interface City {
 
 interface Neighborhood {
   id: number;
+  city_id: number;
   name_fr: string;
   name_ar: string;
 }
@@ -223,7 +224,7 @@ export default function AdminDummyProperties() {
         if (error) throw error;
 
         await logAdminAction({
-          action: 'update_dummy_property',
+          action: 'update',
           resource_type: 'dummy_property',
           resource_id: editingProperty.id,
           details: { title_fr: formData.title_fr },
@@ -231,16 +232,19 @@ export default function AdminDummyProperties() {
 
         toast.success(isRTL ? 'تم تحديث الإعلان الوهمي بنجاح' : 'Dummy property updated successfully');
       } else {
-        // Create new
-        const { error } = await supabase
+        // Create new - use select to get the created record
+        const { data: newProperty, error } = await supabase
           .from('dummy_properties')
-          .insert(dataToSave);
+          .insert(dataToSave)
+          .select()
+          .single();
 
         if (error) throw error;
 
         await logAdminAction({
-          action: 'create_dummy_property',
+          action: 'create',
           resource_type: 'dummy_property',
+          resource_id: newProperty?.id,
           details: { title_fr: formData.title_fr },
         });
 
@@ -273,7 +277,7 @@ export default function AdminDummyProperties() {
       if (error) throw error;
 
       await logAdminAction({
-        action: 'delete_dummy_property',
+        action: 'delete',
         resource_type: 'dummy_property',
         resource_id: id,
       });
@@ -300,7 +304,7 @@ export default function AdminDummyProperties() {
       if (error) throw error;
 
       await logAdminAction({
-        action: currentActive ? 'deactivate_dummy_property' : 'activate_dummy_property',
+        action: currentActive ? 'deactivate' : 'activate',
         resource_type: 'dummy_property',
         resource_id: id,
       });
@@ -542,7 +546,7 @@ export default function AdminDummyProperties() {
                   </SelectTrigger>
                   <SelectContent>
                     {neighborhoods
-                      .filter((n) => n.id.toString().startsWith(formData.city_id) || formData.city_id === '')
+                      .filter((n) => !formData.city_id || n.city_id === parseInt(formData.city_id))
                       .map((neighborhood) => (
                         <SelectItem key={neighborhood.id} value={neighborhood.id.toString()}>
                           {isRTL ? neighborhood.name_ar : neighborhood.name_fr}

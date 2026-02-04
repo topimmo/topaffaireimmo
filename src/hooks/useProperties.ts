@@ -32,6 +32,7 @@ export interface PropertyWithRelations extends Property {
   title_ar?: string | null;
   address?: string | null;
   status?: string;
+  isDummy?: boolean; // Flag to indicate if this is a dummy property (fallback)
 }
 
 export function useProperties(filters?: PropertyFilters) {
@@ -286,13 +287,13 @@ export function useFeaturedProperties(limit = 6) {
           // Map dummy properties to match PropertyWithRelations interface
           const dummyProperties = (dummyData || []).map(dummy => ({
             ...dummy,
-            featured: false, // Dummy properties should not show featured badge
+            featured: true, // Show featured badge since they're in the featured section
             isDummy: true,
             status: 'published',
             owner_id: null,
             created_at: dummy.created_at || new Date().toISOString(),
             updated_at: dummy.created_at || new Date().toISOString()
-          } as PropertyWithRelations & { isDummy: boolean }));
+          } as PropertyWithRelations));
 
           // Combine real featured and dummy properties
           setProperties([...realFeatured, ...dummyProperties]);
