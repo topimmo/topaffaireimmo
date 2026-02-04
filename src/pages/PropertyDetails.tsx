@@ -91,7 +91,7 @@ type SupabasePropertyResponse = Omit<DbPropertyDetails, 'city' | 'neighborhood' 
   }[] | null;
 };
 
-function getPublicImageUrl(pathOrUrl: string) {
+function getPublicImageUrl(pathOrUrl: string): string {
   if (!pathOrUrl) return "";
   if (pathOrUrl.startsWith("http")) return pathOrUrl;
 
@@ -277,9 +277,11 @@ export default function PropertyDetails() {
     .split("T")[0];
 
   const cityNameForSlug = property.city?.name_fr || "";
-  const cityData = MOROCCO_CITIES.find(
-    (c) => c.name_fr?.toLowerCase() === cityNameForSlug.toLowerCase()
-  );
+  const cityData = cityNameForSlug
+    ? MOROCCO_CITIES.find(
+        (c) => c.name_fr?.toLowerCase() === cityNameForSlug.toLowerCase()
+      )
+    : undefined;
   const citySlug = cityData?.slug || slugify(cityNameForSlug);
 
   const neighborhoodNameForSlug = property.neighborhood?.name_fr || "";
