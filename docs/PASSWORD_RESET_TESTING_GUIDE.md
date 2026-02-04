@@ -132,7 +132,7 @@ Ensure SMTP is configured in Supabase Dashboard → Settings → Auth → SMTP S
 
 **Steps:**
 1. Request a password reset from `/login`
-2. Wait 1 hour (or configure Supabase to use shorter expiry for testing)
+2. Wait for the link to expire (Supabase default: 1 hour, configurable in Dashboard)
 3. Click the reset link
 4. Verify you see an error message
 
@@ -187,7 +187,8 @@ Ensure SMTP is configured in Supabase Dashboard → Settings → Auth → SMTP S
 
 **Steps:**
 1. Follow Test 1 steps 1-9 to get to the password reset form
-2. Wait 15+ minutes (typical session timeout)
+2. Wait for session to timeout (Supabase default: 1 hour, check your Dashboard settings)
+   - Note: For faster testing, you can manually clear the session from localStorage
 3. Try to submit the new password
 4. Verify you see an appropriate error message
 

@@ -36,8 +36,11 @@ import { Building2, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react
  *      - https://*.vercel.app/**
  * 
  * 4. Email Template Configuration:
- *    - The password reset email should use {{ .ConfirmationURL }} which will
- *      automatically redirect to the configured Site URL + /reset-password
+ *    - In Supabase Dashboard → Authentication → Email Templates
+ *    - The password reset email template should use {{ .ConfirmationURL }}
+ *      (this is Supabase's Go template syntax, not JavaScript)
+ *    - This will automatically redirect to: Site URL + /reset-password
+ *    - Example: https://topaffaireimmo.com/reset-password?code=...
  * 
  * IMPORTANT NOTES:
  * - Without proper redirect URL configuration, you will see errors like:
@@ -135,7 +138,9 @@ export default function ResetPassword() {
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:');
-            console.error('  - Error Object:', JSON.stringify(exchangeError, null, 2));
+            if (import.meta.env.DEV) {
+              console.error('  - Error Object:', JSON.stringify(exchangeError, null, 2));
+            }
             console.error('  - Error Message:', exchangeError.message);
             console.error('  - Error Name:', exchangeError.name);
             console.error('  - Error Status:', (exchangeError as any).status);
@@ -189,7 +194,9 @@ export default function ResetPassword() {
           
           if (sessionError) {
             console.error('❌ Error setting session:');
-            console.error('  - Error Object:', JSON.stringify(sessionError, null, 2));
+            if (import.meta.env.DEV) {
+              console.error('  - Error Object:', JSON.stringify(sessionError, null, 2));
+            }
             console.error('  - Error Message:', sessionError.message);
             console.error('  - Error Name:', sessionError.name);
             console.error('  - Error Status:', (sessionError as any).status);
@@ -241,7 +248,9 @@ export default function ResetPassword() {
         
         if (getSessionError) {
           console.error('❌ Error getting session:');
-          console.error('  - Error Object:', JSON.stringify(getSessionError, null, 2));
+          if (import.meta.env.DEV) {
+            console.error('  - Error Object:', JSON.stringify(getSessionError, null, 2));
+          }
           console.error('  - Error Message:', getSessionError.message);
           setValidSession(false);
           setCheckingSession(false);
@@ -309,7 +318,9 @@ export default function ResetPassword() {
 
     if (updateError) {
       console.error('❌ Password update error:');
-      console.error('  - Error Object:', JSON.stringify(updateError, null, 2));
+      if (import.meta.env.DEV) {
+        console.error('  - Error Object:', JSON.stringify(updateError, null, 2));
+      }
       console.error('  - Error Message:', updateError.message);
       console.error('  - Error Name:', updateError.name);
       
