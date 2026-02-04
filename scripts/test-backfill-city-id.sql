@@ -121,7 +121,10 @@ BEGIN
       c.name_fr as matched_city_name
     FROM test_properties p
     INNER JOIN test_cities c 
-      ON TRIM(UPPER(p.city)) = TRIM(UPPER(c.name_fr))
+      ON (
+        LOWER(TRIM(p.city)) = LOWER(TRIM(c.name_fr))
+        OR LOWER(TRIM(p.city)) = LOWER(TRIM(c.name_ar))
+      )
     WHERE p.city_id IS NULL
       AND p.city IS NOT NULL
       AND TRIM(p.city) != ''
@@ -157,7 +160,10 @@ BEGIN
       c.name_fr as matched_city_name
     FROM test_properties p
     INNER JOIN test_cities c 
-      ON TRIM(UPPER(p.custom_neighborhood)) = TRIM(UPPER(c.name_fr))
+      ON (
+        LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(c.name_fr))
+        OR LOWER(TRIM(p.custom_neighborhood)) = LOWER(TRIM(c.name_ar))
+      )
     WHERE p.city_id IS NULL
       AND p.custom_neighborhood IS NOT NULL
       AND TRIM(p.custom_neighborhood) != ''
