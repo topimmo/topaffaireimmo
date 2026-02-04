@@ -178,7 +178,7 @@ export default function AdminPanel() {
         created_at,
         images,
         city:cities(name_fr, name_ar),
-        owner:profiles(email, full_name)
+        owner:profiles!properties_owner_id_fkey(email, full_name)
       `)
       .order('created_at', { ascending: false });
 

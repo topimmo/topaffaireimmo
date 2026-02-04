@@ -107,7 +107,7 @@ export default function AdminListingDetail() {
         *,
         city:cities(name_fr, name_ar),
         neighborhood:neighborhoods(name_fr, name_ar),
-        owner:profiles(id, email, full_name, phone)
+        owner:profiles!properties_owner_id_fkey(id, email, full_name, phone)
       `)
       .eq('id', id)
       .maybeSingle();
