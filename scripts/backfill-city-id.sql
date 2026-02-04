@@ -60,7 +60,7 @@ SELECT
 FROM public.properties
 WHERE city_id IS NULL
 GROUP BY status
-ORDER BY count DESC;
+ORDER BY count_with_null_city_id DESC;
 
 \echo ''
 
@@ -276,7 +276,7 @@ SELECT
 FROM public.properties
 WHERE city_id IS NULL
 GROUP BY status
-ORDER BY count DESC;
+ORDER BY count_with_null_city_id DESC;
 
 \echo ''
 
