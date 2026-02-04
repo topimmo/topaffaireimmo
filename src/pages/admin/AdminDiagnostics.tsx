@@ -46,38 +46,48 @@ export default function AdminDiagnostics() {
       details: supabaseUrl ? 'Supabase URL is configured' : 'Supabase URL is missing',
     });
 
-    // 3. Check required columns in properties table
+    // 3. Check contact email in site_settings
     try {
       const { data, error } = await supabase
-        .from('properties')
-        .select('contact_phone, contact_whatsapp, contact_email')
-        .limit(1);
+        .from('site_settings')
+        .select('key, value')
+        .eq('key', 'contact_email')
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned
         diagnostics.push({
-          name: isRTL ? 'أعمدة معلومات الاتصال' : 'Contact Columns',
+          name: isRTL ? 'معلومات الاتصال' : 'Contact Information',
           status: 'error',
-          message: isRTL ? 'خطأ في التحقق' : 'Error checking columns',
+          message: isRTL ? 'خطأ في التحقق' : 'Error checking settings',
           details: error.message,
         });
-      } else {
-        const hasColumns = data && data.length > 0;
+      } else if (!data) {
         diagnostics.push({
-          name: isRTL ? 'أعمدة معلومات الاتصال' : 'Contact Columns',
-          status: hasColumns ? 'success' : 'warning',
-          message: hasColumns
-            ? isRTL
-              ? 'جميع الأعمدة موجودة'
-              : 'All columns exist'
-            : isRTL
-            ? 'لا توجد بيانات للتحقق'
-            : 'No data to verify',
-          details: 'contact_phone, contact_whatsapp, contact_email',
+          name: isRTL ? 'معلومات الاتصال' : 'Contact Information',
+          status: 'warning',
+          message: isRTL ? 'لا توجد بيانات للتواصل' : 'No contact email configured',
+          details: 'contact_email not found in site_settings',
+        });
+      } else {
+        // Try to extract email value from JSONB
+        let emailValue = '';
+        try {
+          emailValue = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+        } catch {
+          emailValue = data.value;
+        }
+        
+        diagnostics.push({
+          name: isRTL ? 'معلومات الاتصال' : 'Contact Information',
+          status: 'success',
+          message: isRTL ? 'تم تكوين البريد الإلكتروني' : 'Email configured',
+          details: `contact_email: ${emailValue}`,
         });
       }
     } catch (err) {
       diagnostics.push({
-        name: isRTL ? 'أعمدة معلومات الاتصال' : 'Contact Columns',
+        name: isRTL ? 'معلومات الاتصال' : 'Contact Information',
         status: 'error',
         message: isRTL ? 'فشل التحقق' : 'Check failed',
         details: String(err),
