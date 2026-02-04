@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Building2, Mail, Phone, MapPin, ChevronDown } from "lucide-react";
+import { Building2, Mail, MapPin, ChevronDown } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -107,10 +107,6 @@ export default function Footer() {
                     <span>{isRTL ? 'الدار البيضاء، المغرب' : 'Casablanca, Maroc'}</span>
                   </li>
                   <li className="flex items-center gap-2 text-xs text-background/60">
-                    <Phone className="h-3 w-3 text-primary flex-shrink-0" />
-                    <span>+212 5XX XX XX XX</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-xs text-background/60">
                     <Mail className="h-3 w-3 text-primary flex-shrink-0" />
                     <span>contact@topaffaireimmo.com</span>
                   </li>
@@ -204,10 +200,6 @@ export default function Footer() {
               <li className="flex items-center gap-2 text-sm text-background/60">
                 <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
                 <span>{isRTL ? 'الدار البيضاء، المغرب' : 'Casablanca, Maroc'}</span>
-              </li>
-              <li className="flex items-center gap-2 text-sm text-background/60">
-                <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                <span>+212 5XX XX XX XX</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-background/60">
                 <Mail className="h-4 w-4 text-primary flex-shrink-0" />
