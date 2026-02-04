@@ -32,6 +32,10 @@ import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/config/site";
 
+// ✅ Helper functions to safely handle null/undefined values
+const safeLower = (v?: string | null): string => (v ?? "").toLowerCase();
+const safeStr = (v: any): string => (v == null ? "" : String(v));
+
 type DbPropertyDetails = {
   id: string;
   title_fr: string | null;
@@ -188,11 +192,127 @@ export default function PropertyDetails() {
     };
   }, [id]);
 
+  // ✅ useMemo hook MUST run before any conditional returns (Rules of Hooks)
+  // All hooks must execute in the same order every render
+  const structuredData = useMemo(() => {
+    // Guard clause: don't generate structured data if property is null/undefined
+    if (!property) {
+      return [];
+    }
+
+    // Safe value extraction
+    const title = property.title_fr || property.title_ar || "Annonce immobilière";
+    const description = property.description_fr || property.description_ar || property.description || "";
+    
+    const rawImages: string[] = Array.isArray(property.images) ? property.images : [];
+    const safeImages = rawImages.length > 0
+      ? rawImages.map(getPublicImageUrl)
+      : ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80"];
+
+    const cityNameForSlug = safeStr(property.city?.name_fr);
+    const target = safeLower(cityNameForSlug);
+    const cityData = target
+      ? MOROCCO_CITIES.find(c => safeLower(c?.name_fr) === target)
+      : undefined;
+    const citySlug = cityData?.slug ?? slugify(cityNameForSlug);
+
+    const neighborhoodNameForSlug = safeStr(property.neighborhood?.name_fr);
+    const neighborhoodSlug = neighborhoodNameForSlug ? slugify(neighborhoodNameForSlug) : "";
+
+    const safeTitle = safeStr(title);
+    const safeDescription = safeStr(description);
+    const safeCityName = safeStr(cityNameForSlug);
+    const safeNeighborhoodName = safeStr(neighborhoodNameForSlug);
+    const safePrice = property.price ?? 0;
+    const safeAddress = safeStr(property.address);
+    const safeCreatedAt = safeStr(property.created_at) || new Date().toISOString();
+
+    const PRICE_VALIDITY_DAYS = 90;
+    const priceValidUntil = new Date(
+      Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000
+    ).toISOString().split("T")[0];
+
+    return [
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateListing",
+        "@id": `${SITE_URL}/property/${property.id}`,
+        name: safeTitle,
+        description: safeDescription,
+        url: `${SITE_URL}/property/${property.id}`,
+        offers: {
+          "@type": "Offer",
+          price: safePrice,
+          priceCurrency: "MAD",
+          availability: "https://schema.org/InStock",
+          priceValidUntil,
+        },
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: safeAddress,
+          addressLocality: safeNeighborhoodName || safeCityName,
+          addressRegion: safeCityName,
+          addressCountry: "MA",
+        },
+        numberOfRooms: property.bedrooms ?? undefined,
+        numberOfBathroomsTotal: property.bathrooms ?? undefined,
+        floorSize: {
+          "@type": "QuantitativeValue",
+          value: property.area ?? undefined,
+          unitCode: "MTK",
+          unitText: "m²",
+        },
+        datePosted: safeCreatedAt,
+        image: safeImages.map((img, index) => ({
+          "@type": "ImageObject",
+          url: img,
+          name: `${safeTitle} - Image ${index + 1}`,
+        })),
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Accueil",
+            item: `${SITE_URL}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: safeCityName || "Ville",
+            item: `${SITE_URL}/immobilier/${citySlug}`,
+          },
+          ...(neighborhoodSlug
+            ? [
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: safeNeighborhoodName,
+                  item: `${SITE_URL}/immobilier/${citySlug}/${neighborhoodSlug}`,
+                },
+              ]
+            : []),
+          {
+            "@type": "ListItem",
+            position: neighborhoodSlug ? 4 : 3,
+            name: safeTitle,
+          },
+        ],
+      },
+    ];
+  }, [property]);
+
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("fr-MA", {
       style: "decimal",
       maximumFractionDigits: 0,
     }).format(price);
+
+  // ✅ ALL HOOKS ABOVE - CONDITIONAL RETURNS BELOW
+  // This ensures hooks are called in the same order every render (Rules of Hooks)
 
   // ✅ Loading UI
   if (loading) {
@@ -256,134 +376,40 @@ export default function PropertyDetails() {
   const prevImage = () =>
     setCurrentImage((prev) => (prev === 0 ? safeImages.length - 1 : prev - 1));
 
-  // SEO metadata
-  const seoTitle = `${title} - ${
-    property.neighborhood?.name_fr ? property.neighborhood.name_fr + ", " : ""
-  }${property.city?.name_fr || ""} | TopAffaireImmo`;
-
-  const seoDescription = `${property.property_type || "Bien"} ${
-    property.transaction_type === "sale" ? "à vendre" : "à louer"
-  } à ${property.city?.name_fr || ""}. ${
-    property.bedrooms || 0
-  } chambres, ${property.area || 0}m². Prix: ${formatPrice(
-    property.price || 0
-  )} MAD.`;
-
-  const PRICE_VALIDITY_DAYS = 90;
-  const priceValidUntil = new Date(
-    Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000
-  )
-    .toISOString()
-    .split("T")[0];
-
-  const cityNameForSlug = property.city?.name_fr || "";
-  const cityData = cityNameForSlug
-    ? MOROCCO_CITIES.find(
-        (c) => c.name_fr?.toLowerCase() === cityNameForSlug.toLowerCase()
-      )
+  // ✅ Safe city lookup - prevents calling methods on null values
+  const cityNameForSlug = safeStr(property.city?.name_fr);
+  const target = safeLower(cityNameForSlug);
+  const cityData = target
+    ? MOROCCO_CITIES.find(c => safeLower(c?.name_fr) === target)
     : undefined;
-  const citySlug = cityData?.slug || slugify(cityNameForSlug);
+  const citySlug = cityData?.slug ?? slugify(cityNameForSlug);
 
-  const neighborhoodNameForSlug = property.neighborhood?.name_fr || "";
+  // ✅ Safe neighborhood slug generation
+  const neighborhoodNameForSlug = safeStr(property.neighborhood?.name_fr);
   const neighborhoodSlug = neighborhoodNameForSlug
     ? slugify(neighborhoodNameForSlug)
     : "";
 
-  const structuredData = useMemo(() => {
-    // Guard clause: don't generate structured data if property is null
-    if (!property) {
-      return [];
-    }
+  // ✅ Safe labels for display
+  const cityLabel = safeStr(property.city?.name_fr);
+  const neighborhoodLabel = safeStr(property.neighborhood?.name_fr);
 
-    return [
-      {
-        "@context": "https://schema.org",
-        "@type": "RealEstateListing",
-        "@id": `${SITE_URL}/property/${property.id}`,
-        name: title,
-        description: description,
-        url: `${SITE_URL}/property/${property.id}`,
-        offers: {
-          "@type": "Offer",
-          price: property.price ?? 0,
-          priceCurrency: "MAD",
-          availability: "https://schema.org/InStock",
-          priceValidUntil,
-        },
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: property.address || "",
-          addressLocality: neighborhoodNameForSlug || cityNameForSlug,
-          addressRegion: cityNameForSlug,
-          addressCountry: "MA",
-        },
-        numberOfRooms: property.bedrooms ?? undefined,
-        numberOfBathroomsTotal: property.bathrooms ?? undefined,
-        floorSize: {
-          "@type": "QuantitativeValue",
-          value: property.area ?? undefined,
-          unitCode: "MTK",
-          unitText: "m²",
-        },
-        datePosted: property.created_at || new Date().toISOString(),
-        image: safeImages.map((img, index) => ({
-          "@type": "ImageObject",
-          url: img,
-          name: `${title} - Image ${index + 1}`,
-        })),
-      },
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Accueil",
-            item: `${SITE_URL}/`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: cityNameForSlug || "Ville",
-            item: `${SITE_URL}/immobilier/${citySlug}`,
-          },
-          ...(neighborhoodSlug
-            ? [
-                {
-                  "@type": "ListItem",
-                  position: 3,
-                  name: neighborhoodNameForSlug,
-                  item: `${SITE_URL}/immobilier/${citySlug}/${neighborhoodSlug}`,
-                },
-              ]
-            : []),
-          {
-            "@type": "ListItem",
-            position: neighborhoodSlug ? 4 : 3,
-            name: title,
-          },
-        ],
-      },
-    ];
-  }, [
-    property,
-    title,
-    description,
-    priceValidUntil,
-    safeImages,
-    citySlug,
-    neighborhoodSlug,
-    cityNameForSlug,
-    neighborhoodNameForSlug,
-  ]);
+  // ✅ Safe phone numbers with fallbacks
+  const phone = safeStr(property.contact_phone);
+  const whatsapp = safeStr(property.contact_whatsapp);
 
-  const cityLabel = property.city?.name_fr || "";
-  const neighborhoodLabel = property.neighborhood?.name_fr || "";
+  // ✅ SEO metadata - safely constructed
+  const seoTitle = `${title} - ${
+    neighborhoodLabel ? neighborhoodLabel + ", " : ""
+  }${cityLabel || ""} | TopAffaireImmo`;
 
-  // ✅ هنا التصحيح الكبير: نفس أسماء الأعمدة ديال DB
-  const phone = property.contact_phone || "";
-  const whatsapp = property.contact_whatsapp || "";
+  const seoDescription = `${safeStr(property.property_type) || "Bien"} ${
+    property.transaction_type === "sale" ? "à vendre" : "à louer"
+  } à ${cityLabel || ""}. ${
+    property.bedrooms || 0
+  } chambres, ${property.area || 0}m². Prix: ${formatPrice(
+    property.price || 0
+  )} MAD.`;
 
   return (
     <>
@@ -592,7 +618,7 @@ export default function PropertyDetails() {
                   Description
                 </h2>
                 <div className="prose prose-neutral max-w-none">
-                  {String(description)
+                  {safeStr(description)
                     .split("\n")
                     .filter(Boolean)
                     .map((paragraph, index) => (
@@ -651,7 +677,7 @@ export default function PropertyDetails() {
                     <p className="font-semibold">Annonceur</p>
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Building2 className="h-4 w-4" />
-                      {property.owner?.company_name || property.owner?.agency_name || "TopAffaireImmo"}
+                      {safeStr(property.owner?.company_name || property.owner?.agency_name || "TopAffaireImmo")}
                     </div>
 
                     {property.advertiser_type && (
@@ -686,7 +712,7 @@ export default function PropertyDetails() {
                     <a
                       href={
                         whatsapp
-                          ? `https://wa.me/${whatsapp.replace(/[^\d]/g, "")}`
+                          ? `https://wa.me/${safeStr(whatsapp).replace(/[^\d]/g, "")}`
                           : "#"
                       }
                       target="_blank"
