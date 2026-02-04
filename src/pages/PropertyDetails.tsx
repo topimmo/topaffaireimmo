@@ -192,11 +192,127 @@ export default function PropertyDetails() {
     };
   }, [id]);
 
+  // ✅ useMemo hook MUST run before any conditional returns (Rules of Hooks)
+  // All hooks must execute in the same order every render
+  const structuredData = useMemo(() => {
+    // Guard clause: don't generate structured data if property is null/undefined
+    if (!property) {
+      return [];
+    }
+
+    // Safe value extraction
+    const title = property.title_fr || property.title_ar || "Annonce immobilière";
+    const description = property.description_fr || property.description_ar || property.description || "";
+    
+    const rawImages: string[] = Array.isArray(property.images) ? property.images : [];
+    const safeImages = rawImages.length > 0
+      ? rawImages.map(getPublicImageUrl)
+      : ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80"];
+
+    const cityNameForSlug = safeStr(property.city?.name_fr);
+    const target = safeLower(cityNameForSlug);
+    const cityData = target
+      ? MOROCCO_CITIES.find(c => safeLower(c?.name_fr) === target)
+      : undefined;
+    const citySlug = cityData?.slug ?? slugify(cityNameForSlug);
+
+    const neighborhoodNameForSlug = safeStr(property.neighborhood?.name_fr);
+    const neighborhoodSlug = neighborhoodNameForSlug ? slugify(neighborhoodNameForSlug) : "";
+
+    const safeTitle = safeStr(title);
+    const safeDescription = safeStr(description);
+    const safeCityName = safeStr(cityNameForSlug);
+    const safeNeighborhoodName = safeStr(neighborhoodNameForSlug);
+    const safePrice = property.price ?? 0;
+    const safeAddress = safeStr(property.address);
+    const safeCreatedAt = safeStr(property.created_at) || new Date().toISOString();
+
+    const PRICE_VALIDITY_DAYS = 90;
+    const priceValidUntil = new Date(
+      Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000
+    ).toISOString().split("T")[0];
+
+    return [
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateListing",
+        "@id": `${SITE_URL}/property/${property.id}`,
+        name: safeTitle,
+        description: safeDescription,
+        url: `${SITE_URL}/property/${property.id}`,
+        offers: {
+          "@type": "Offer",
+          price: safePrice,
+          priceCurrency: "MAD",
+          availability: "https://schema.org/InStock",
+          priceValidUntil,
+        },
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: safeAddress,
+          addressLocality: safeNeighborhoodName || safeCityName,
+          addressRegion: safeCityName,
+          addressCountry: "MA",
+        },
+        numberOfRooms: property.bedrooms ?? undefined,
+        numberOfBathroomsTotal: property.bathrooms ?? undefined,
+        floorSize: {
+          "@type": "QuantitativeValue",
+          value: property.area ?? undefined,
+          unitCode: "MTK",
+          unitText: "m²",
+        },
+        datePosted: safeCreatedAt,
+        image: safeImages.map((img, index) => ({
+          "@type": "ImageObject",
+          url: img,
+          name: `${safeTitle} - Image ${index + 1}`,
+        })),
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Accueil",
+            item: `${SITE_URL}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: safeCityName || "Ville",
+            item: `${SITE_URL}/immobilier/${citySlug}`,
+          },
+          ...(neighborhoodSlug
+            ? [
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: safeNeighborhoodName,
+                  item: `${SITE_URL}/immobilier/${citySlug}/${neighborhoodSlug}`,
+                },
+              ]
+            : []),
+          {
+            "@type": "ListItem",
+            position: neighborhoodSlug ? 4 : 3,
+            name: safeTitle,
+          },
+        ],
+      },
+    ];
+  }, [property]);
+
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("fr-MA", {
       style: "decimal",
       maximumFractionDigits: 0,
     }).format(price);
+
+  // ✅ ALL HOOKS ABOVE - CONDITIONAL RETURNS BELOW
+  // This ensures hooks are called in the same order every render (Rules of Hooks)
 
   // ✅ Loading UI
   if (loading) {
@@ -294,111 +410,6 @@ export default function PropertyDetails() {
   } chambres, ${property.area || 0}m². Prix: ${formatPrice(
     property.price || 0
   )} MAD.`;
-
-  const PRICE_VALIDITY_DAYS = 90;
-  const priceValidUntil = new Date(
-    Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000
-  )
-    .toISOString()
-    .split("T")[0];
-
-  const structuredData = useMemo(() => {
-    // ✅ Guard clause: don't generate structured data if property is null/undefined
-    if (!property) {
-      return [];
-    }
-
-    // ✅ Safe value extraction with fallbacks
-    const safeTitle = safeStr(title);
-    const safeDescription = safeStr(description);
-    const safeCityName = safeStr(cityNameForSlug);
-    const safeNeighborhoodName = safeStr(neighborhoodNameForSlug);
-    const safePrice = property.price ?? 0;
-    const safeAddress = safeStr(property.address);
-    const safeCreatedAt = safeStr(property.created_at) || new Date().toISOString();
-
-    return [
-      {
-        "@context": "https://schema.org",
-        "@type": "RealEstateListing",
-        "@id": `${SITE_URL}/property/${property.id}`,
-        name: safeTitle,
-        description: safeDescription,
-        url: `${SITE_URL}/property/${property.id}`,
-        offers: {
-          "@type": "Offer",
-          price: safePrice,
-          priceCurrency: "MAD",
-          availability: "https://schema.org/InStock",
-          priceValidUntil,
-        },
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: safeAddress,
-          addressLocality: safeNeighborhoodName || safeCityName,
-          addressRegion: safeCityName,
-          addressCountry: "MA",
-        },
-        numberOfRooms: property.bedrooms ?? undefined,
-        numberOfBathroomsTotal: property.bathrooms ?? undefined,
-        floorSize: {
-          "@type": "QuantitativeValue",
-          value: property.area ?? undefined,
-          unitCode: "MTK",
-          unitText: "m²",
-        },
-        datePosted: safeCreatedAt,
-        image: safeImages.map((img, index) => ({
-          "@type": "ImageObject",
-          url: img,
-          name: `${safeTitle} - Image ${index + 1}`,
-        })),
-      },
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Accueil",
-            item: `${SITE_URL}/`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: safeCityName || "Ville",
-            item: `${SITE_URL}/immobilier/${citySlug}`,
-          },
-          ...(neighborhoodSlug
-            ? [
-                {
-                  "@type": "ListItem",
-                  position: 3,
-                  name: safeNeighborhoodName,
-                  item: `${SITE_URL}/immobilier/${citySlug}/${neighborhoodSlug}`,
-                },
-              ]
-            : []),
-          {
-            "@type": "ListItem",
-            position: neighborhoodSlug ? 4 : 3,
-            name: safeTitle,
-          },
-        ],
-      },
-    ];
-  }, [
-    property,
-    title,
-    description,
-    priceValidUntil,
-    safeImages,
-    citySlug,
-    neighborhoodSlug,
-    cityNameForSlug,
-    neighborhoodNameForSlug,
-  ]);
 
   return (
     <>
