@@ -205,13 +205,20 @@ export default function SearchResults() {
     const rows = [...filteredRows];
 
     if (sortBy === "price-asc") {
-      rows.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+      rows.sort((a, b) => {
+        const priceA = a.price ?? Infinity; // null prices go to end
+        const priceB = b.price ?? Infinity;
+        return priceA - priceB;
+      });
     } else if (sortBy === "price-desc") {
-      rows.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
-    } else {
-      // "newest" - already sorted by created_at from DB, but ensure consistency
-      rows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      rows.sort((a, b) => {
+        const priceA = a.price ?? -Infinity; // null prices go to end
+        const priceB = b.price ?? -Infinity;
+        return priceB - priceA;
+      });
     }
+    // For "newest", rows are already sorted by created_at from DB query (line 145)
+    // No need to re-sort
 
     return rows;
   }, [filteredRows, sortBy]);
