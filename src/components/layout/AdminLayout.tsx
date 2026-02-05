@@ -38,7 +38,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { t, isRTL } = useLanguage();
-  const { signOut, profile } = useAuth();
+  const { signOut, user } = useAuth();
   const location = useLocation();
   const { notifications, unreadCount, refresh } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -200,7 +200,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </DropdownMenu>
 
             <span className="text-sm text-muted-foreground hidden sm:inline">
-              {profile?.email}
+              {user?.email}
             </span>
             
             {/* Mobile menu toggle */}

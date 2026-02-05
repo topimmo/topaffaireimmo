@@ -119,7 +119,7 @@ const propertyStatusColors: Record<string, string> = {
 
 export default function AdminPanel() {
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState<'properties' | 'ads' | 'content' | 'users'>('properties');
@@ -137,17 +137,14 @@ export default function AdminPanel() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !profileLoading && profile) {
-      if (!profile.is_admin) {
-        navigate('/');
-      } else {
-        fetchRequests();
-        fetchProperties();
-      }
-    } else if (!authLoading && !profileLoading && !user) {
+    if (!authLoading && user) {
+      // Admin check is handled by AdminProtectedRoute
+      fetchRequests();
+      fetchProperties();
+    } else if (!authLoading && !user) {
       navigate('/login');
     }
-  }, [user, profile, authLoading, profileLoading, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchRequests = async () => {
     const { data } = await supabase
@@ -400,7 +397,7 @@ export default function AdminPanel() {
     return labels[type]?.[language] || type;
   };
 
-  if (authLoading || profileLoading || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -408,7 +405,8 @@ export default function AdminPanel() {
     );
   }
 
-  if (!profile?.is_admin) {
+  // This route should be protected by AdminProtectedRoute
+  if (!user) {
     return (
       <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
         <Header />
