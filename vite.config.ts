@@ -2,6 +2,7 @@ import path from "path";
 import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 // Plugin to inject build timestamp, version, and production domain into HTML
 function buildMetadataPlugin(): Plugin {
@@ -36,6 +37,16 @@ export default defineConfig({
   plugins: [
     react(),
     buildMetadataPlugin(),
+    // Sentry plugin for source maps (only in production builds with auth token)
+    process.env.SENTRY_AUTH_TOKEN && sentryVitePlugin({
+      org: process.env.SENTRY_ORG || "topaffaireimmo",
+      project: process.env.SENTRY_PROJECT || "topaffaireimmo-web",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: {
+        assets: "./dist/**",
+      },
+      telemetry: false,
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -114,7 +125,7 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    sourcemap: false,
+    sourcemap: process.env.SENTRY_AUTH_TOKEN ? true : false, // Enable source maps for Sentry
     minify: "esbuild",
     rollupOptions: {
       output: {
