@@ -106,10 +106,57 @@ const { data, error } = await supabase.functions.invoke('send-push-notification'
 
 ## Production Notes
 
-The current implementation uses a simplified approach for demonstration. For production:
+⚠️ **IMPORTANT**: The current implementation uses a simplified approach for demonstration purposes.
 
-1. Use a proper Web Push library with full encryption support
-2. Implement proper VAPID authentication headers
-3. Add retry logic for failed pushes
-4. Monitor and log push notification delivery
-5. Implement rate limiting to prevent abuse
+### Current Limitations
+- Simplified Web Push protocol implementation
+- No payload encryption (requires full web-push library)
+- No proper VAPID signing (requires full web-push library)
+- Manual subscription cleanup only on 410 errors
+
+### For Production Deployment
+
+**Option 1: Use a Web Push Service** (Recommended)
+- Use a service like Firebase Cloud Messaging (FCM)
+- Or OneSignal, Pushwoosh, etc.
+- These handle all encryption and VAPID signing
+
+**Option 2: Implement Full Web Push Protocol**
+1. Use the `web-push` npm package (supports Deno)
+2. Implement proper payload encryption with AES-GCM
+3. Add VAPID signing to all requests
+4. Handle all HTTP headers correctly
+
+Example with web-push library:
+```typescript
+import webpush from 'npm:web-push@3.6.6'
+
+// Configure VAPID
+webpush.setVapidDetails(
+  VAPID_SUBJECT,
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY
+)
+
+// Send notification
+const result = await webpush.sendNotification(
+  {
+    endpoint: subscription.endpoint,
+    keys: {
+      p256dh: subscription.p256dh,
+      auth: subscription.auth
+    }
+  },
+  JSON.stringify(payload)
+)
+```
+
+### Additional Production Requirements
+1. Add retry logic for failed pushes
+2. Implement rate limiting to prevent abuse
+3. Add monitoring and logging for push delivery
+4. Set up alerts for high failure rates
+5. Implement push notification analytics
+6. Add user preference management (notification types)
+7. Consider implementing a queue system for bulk sends
+

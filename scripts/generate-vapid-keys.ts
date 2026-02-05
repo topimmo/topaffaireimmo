@@ -7,7 +7,7 @@
  * Run this once and add the keys to your .env file and Supabase secrets.
  * 
  * Usage:
- *   node scripts/generate-vapid-keys.js
+ *   npm run generate:vapid-keys
  *   # or
  *   npx tsx scripts/generate-vapid-keys.ts
  */

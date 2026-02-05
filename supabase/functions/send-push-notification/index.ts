@@ -36,6 +36,8 @@ interface PushSubscription {
 }
 
 // Helper to send push using Web Push Protocol
+// NOTE: This is a simplified demonstration implementation
+// For production, use a proper web-push library with full encryption and VAPID signing
 async function sendWebPush(
   subscription: PushSubscription,
   payload: PushPayload
@@ -44,8 +46,13 @@ async function sendWebPush(
     // Create the notification payload
     const notificationPayload = JSON.stringify(payload)
 
-    // Create VAPID headers (simplified version for demo)
-    // In production, you should use a proper web-push library
+    // PRODUCTION TODO: Implement proper Web Push encryption
+    // This simplified version demonstrates the concept but should be replaced
+    // with a full implementation using a web-push library that handles:
+    // - Proper VAPID signing
+    // - Payload encryption (AES-GCM)
+    // - Correct HTTP headers
+    
     const vapidHeaders = {
       'TTL': '86400', // 24 hours
       'Content-Type': 'application/json',
@@ -53,7 +60,6 @@ async function sendWebPush(
     }
 
     // For now, we'll use the subscription endpoint directly
-    // In production, implement full Web Push encryption
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: vapidHeaders,
@@ -213,11 +219,19 @@ serve(async (req) => {
         
         // If subscription is invalid (410 Gone), mark as inactive
         if (result.status === 'fulfilled' && result.value.error?.includes('410')) {
+          // Handle database update errors properly
           supabase
             .from('push_subscriptions')
             .update({ is_active: false })
             .eq('id', subscriptions[index].id)
-            .then()
+            .then(({ error: updateError }) => {
+              if (updateError) {
+                console.error('Error marking subscription as inactive:', updateError)
+              }
+            })
+            .catch(err => {
+              console.error('Failed to update subscription:', err)
+            })
         }
       }
     })

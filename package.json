@@ -16,6 +16,7 @@
     "preview": "vite preview",
     "types:supabase": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/supabase.ts",
     "generate:sitemaps": "npx tsx scripts/generate-sitemaps.ts",
+    "generate:vapid-keys": "npx tsx scripts/generate-vapid-keys.ts",
     "seed:sample-listings": "npx tsx scripts/seed-sample-listings.ts",
     "generate:moroccan-listings": "npx tsx scripts/generate-moroccan-listings.ts",
     "debug:listings": "npx tsx scripts/debug-listings.ts",
