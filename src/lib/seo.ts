@@ -164,8 +164,8 @@ export function getAllNeighborhoods() {
 /**
  * Get neighborhoods for a specific city
  */
-export function getNeighborhoodsByCity(citySlug: string) {
-  return MOROCCO_NEIGHBORHOODS[citySlug as keyof typeof MOROCCO_NEIGHBORHOODS] || [];
+export function getNeighborhoodsByCity(citySlug: string): Array<{ id: string; name_fr: string; name_ar: string; slug: string; city_id: string }> {
+  return (MOROCCO_NEIGHBORHOODS[citySlug as keyof typeof MOROCCO_NEIGHBORHOODS] || []) as Array<{ id: string; name_fr: string; name_ar: string; slug: string; city_id: string }>;
 }
 
 /**

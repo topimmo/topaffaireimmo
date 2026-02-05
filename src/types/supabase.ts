@@ -171,7 +171,7 @@ export interface Neighborhood {
   name_en?: string | null
   name_fr: string
   name_ar: string
-  slug?: string | null
+  slug: string // URL-friendly slug for SEO
   is_custom?: boolean | null
   is_active?: boolean | null
   created_by?: string | null // UUID
