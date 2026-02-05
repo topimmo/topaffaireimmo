@@ -45,6 +45,10 @@ The app will be available at `http://localhost:5173`
 - [Facebook Auto-Publishing](docs/features/FACEBOOK_AUTO_PUBLISH_SETUP.md)
 - [Morocco SEO Implementation](docs/features/MOROCCO_SEO_IMPLEMENTATION.md)
 - [Sample Listings Seed Script](docs/SAMPLE_LISTINGS_SEED.md)
+- **[VAPID Web Push Notifications Setup](VAPID_SETUP_GUIDE.md)** - 🔔 Step-by-step guide for non-experts
+  - [Quick Start](PUSH_NOTIFICATIONS_QUICK_START.md) - Quick developer setup
+  - [Full Implementation](PUSH_NOTIFICATIONS_IMPLEMENTATION.md) - Technical details
+  - [UI Guide](PUSH_NOTIFICATIONS_UI_GUIDE.md) - User interface guide
 
 ## 🏗️ Tech Stack
 
@@ -56,6 +60,7 @@ The app will be available at `http://localhost:5173`
 - **Deployment**: Vercel
 - **Internationalization**: Custom i18n (French/Arabic)
 - **PWA**: vite-plugin-pwa + Workbox (offline support, installable)
+- **Notifications**: Web Push API + VAPID (real-time user notifications)
 
 ## 🔑 Key Features
 
@@ -81,6 +86,7 @@ The app will be available at `http://localhost:5173`
 - Advanced search and filtering
 - SEO-optimized landing pages for Morocco cities
 - Responsive design (mobile-first)
+- Web push notifications for new property alerts (opt-in)
 
 ## 🔒 User Roles
 
