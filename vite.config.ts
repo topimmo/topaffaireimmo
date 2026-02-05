@@ -39,6 +39,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       
       // Manifest configuration
       manifest: {
@@ -85,113 +88,11 @@ export default defineConfig({
       // Include additional assets
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
 
-      // Workbox configuration
-      workbox: {
-        // Don't precache all assets - only critical ones
+      // Inject manifest options (for custom service worker)
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        
-        // Runtime caching strategies
-        runtimeCaching: [
-          {
-            // Cache images (CacheFirst)
-            urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Supabase Storage images (CacheFirst)
-            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'supabase-images-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Supabase API calls (NetworkFirst) - EXCLUDE auth endpoints
-            urlPattern: ({ url, request }) => {
-              // Only cache GET requests
-              if (request.method !== 'GET') return false;
-              
-              // Don't cache auth endpoints
-              if (url.pathname.includes('/auth/')) return false;
-              
-              // Don't cache if has auth header (to avoid caching user-specific data)
-              const hasAuthHeader = request.headers.has('Authorization') || 
-                                   request.headers.has('apikey');
-              if (hasAuthHeader) return false;
-              
-              // Cache Supabase REST API calls
-              return url.hostname.includes('supabase.co') && 
-                     url.pathname.includes('/rest/');
-            },
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Google Fonts (CacheFirst)
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Google Fonts static resources (CacheFirst)
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-static-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ],
-        
-        // Offline fallback
-        navigateFallback: '/offline.html',
-        navigateFallbackDenylist: [
-          // Don't use offline page for API calls
-          /^\/api\//,
-          /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/
-        ]
+        // Don't inject into the service worker since we handle it manually
+        injectionPoint: undefined,
       },
 
       // Dev options (disable in production)
