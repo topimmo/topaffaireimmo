@@ -62,53 +62,47 @@ function isBot(): boolean {
 
 /**
  * Check if we're in a production environment
- * Only register SW in production builds
+ * Only register SW on the actual production domain
  */
 function isProductionEnvironment(): boolean {
-  // Check Vite environment mode
+  // Never register in development mode
   if (import.meta.env.DEV) {
     return false;
   }
 
-  // Check if this is a Vercel production deployment
-  // Preview deployments will have VERCEL_ENV set to 'preview'
-  const isVercelProduction = import.meta.env.VITE_VERCEL_ENV === 'production';
-  const isVercelPreview = import.meta.env.VITE_VERCEL_ENV === 'preview';
-  
-  // If on Vercel, only allow production, not preview
-  if (isVercelPreview) {
+  // Never register in Vercel preview deployments
+  const vercelEnv = import.meta.env.VITE_VERCEL_ENV;
+  if (vercelEnv === 'preview' || vercelEnv === 'development') {
     return false;
   }
 
-  // For production builds, check domain (optional additional check)
+  // Check hostname - only allow actual production domain
   if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
+    const currentHost = window.location.hostname;
     
-    // Allow localhost for testing production builds locally
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return true;
-    }
-    
-    // Get production domain from environment variable
+    // Get the expected production domain
     const productionDomain = import.meta.env.VITE_PRODUCTION_DOMAIN || 'topaffaireimmo.com';
     
-    // Only allow production domain, not preview URLs
-    const isProductionDomain = 
-      hostname === productionDomain ||
-      hostname === `www.${productionDomain}`;
-    
-    const isVercelPreviewDomain = hostname.includes('vercel.app');
-    
-    // If it's a Vercel preview domain, don't register
-    if (isVercelPreviewDomain && !isVercelProduction) {
+    // Block all vercel.app domains (preview deployments)
+    if (currentHost.includes('vercel.app')) {
       return false;
     }
     
-    // For production builds, prefer production domain but allow others if PROD mode
-    return import.meta.env.PROD;
+    // Only allow exact production domain match
+    const allowedHosts = [
+      productionDomain,
+      `www.${productionDomain}`,
+      'localhost', // For local production build testing
+      '127.0.0.1'
+    ];
+    
+    if (!allowedHosts.includes(currentHost)) {
+      console.log(`[SW] Skipped: hostname "${currentHost}" not in allowed list`);
+      return false;
+    }
   }
 
-  // Default: if we're in PROD mode and not explicitly preview, allow it
+  // Must be in production mode
   return import.meta.env.PROD;
 }
 
