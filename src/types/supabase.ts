@@ -441,6 +441,48 @@ export interface PushSubscription {
 }
 
 // ============================================================================
+// LEAD TRACKING TABLES
+// ============================================================================
+
+export interface PropertyView {
+  id: string // UUID
+  property_id: string // UUID
+  user_id?: string | null // nullable for anonymous visitors
+  ip_address?: string | null
+  user_agent?: string | null
+  referrer?: string | null
+  session_id?: string | null
+  created_at: string
+}
+
+export interface PropertyContactClick {
+  id: string // UUID
+  property_id: string // UUID
+  contact_type: 'phone' | 'whatsapp' | 'email'
+  user_id?: string | null // nullable for anonymous
+  ip_address?: string | null
+  session_id?: string | null
+  created_at: string
+}
+
+export interface PropertyLead {
+  id: string // UUID
+  property_id: string // UUID
+  advertiser_id: string // UUID - property owner
+  name: string
+  email?: string | null
+  phone?: string | null
+  message?: string | null
+  source: 'form' | 'phone' | 'whatsapp' | 'email'
+  status: 'new' | 'contacted' | 'qualified' | 'closed' | 'spam'
+  notes?: string | null
+  advertiser_notes?: string | null
+  created_at: string
+  updated_at: string
+  contacted_at?: string | null
+}
+
+// ============================================================================
 // HELPER TYPES FOR QUERIES
 // ============================================================================
 
@@ -572,6 +614,21 @@ export interface Database {
         Row: PushSubscription
         Insert: Omit<PushSubscription, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<PushSubscription, 'id'>>
+      }
+      property_views: {
+        Row: PropertyView
+        Insert: Omit<PropertyView, 'id' | 'created_at'>
+        Update: never
+      }
+      property_contact_clicks: {
+        Row: PropertyContactClick
+        Insert: Omit<PropertyContactClick, 'id' | 'created_at'>
+        Update: never
+      }
+      property_leads: {
+        Row: PropertyLead
+        Insert: Omit<PropertyLead, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<PropertyLead, 'id' | 'property_id' | 'advertiser_id'>>
       }
     }
     Views: {}
