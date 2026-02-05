@@ -40,6 +40,13 @@ The app will be available at `http://localhost:5173`
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and folder structure  
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment to Vercel
 
+### Diagnostic & Maintenance Tools
+- **[Migration Diagnostic Tool](MIGRATION_DIAGNOSTIC_TOOL.md)** - 🔍 Check migration status (new)
+  - [Quick Reference](MIGRATION_DIAGNOSTIC_QUICK_REFERENCE.md) - Fast migration check guide
+  - Detects pending, missing, and out-of-order migrations
+  - Automatic SQL impact analysis
+  - Usage: `npm run check:migrations`
+
 ### Feature Documentation
 - [Email Configuration](docs/setup/EMAIL_CONFIGURATION.md)
 - [Facebook Auto-Publishing](docs/features/FACEBOOK_AUTO_PUBLISH_SETUP.md)
@@ -122,6 +129,7 @@ npm run build                  # Build for production
 npm run preview                # Preview production build
 npm run typecheck              # Run TypeScript type checking
 npm run lint                   # Run ESLint
+npm run check:migrations       # 🆕 Check database migration status (pending, missing, order issues)
 npm run seed:sample-listings   # Generate sample property listings
 ```
 

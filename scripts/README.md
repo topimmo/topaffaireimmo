@@ -35,6 +35,34 @@ npx tsx scripts/debug-listings.ts
 
 ## Available Tools
 
+### 0. Migration Diagnostic (NEW!)
+**File**: `scripts/check-migrations.ts`  
+**Command**: `npm run check:migrations`  
+**Documentation**: `/MIGRATION_DIAGNOSTIC_TOOL.md`
+
+Analyzes database migrations to identify:
+- ✅ Pending migrations (not yet applied)
+- ✅ Missing migrations (applied but files deleted)
+- ✅ Order issues (timestamp inconsistencies)
+- ✅ Impact analysis for each migration
+- ✅ Actionable recommendations
+
+**Features**:
+- Read-only (no destructive actions)
+- Automatic SQL impact analysis
+- Color-coded terminal output
+- Detailed migration summaries
+
+**Requirements**:
+- `VITE_SUPABASE_URL` or `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` (recommended) or `VITE_SUPABASE_ANON_KEY`
+
+**When to use**:
+- Before deploying to production
+- When migrations seem out of sync
+- To verify database state
+- Before applying new migrations
+
 ### 1. Quick Fix (Recommended First Step)
 **File**: `scripts/quick-fix-listings.ts`  
 **Command**: `npm run fix:listings`
@@ -113,6 +141,25 @@ Automatically:
 **Safe to run multiple times** (idempotent)
 
 ## Typical Workflow
+
+### Scenario 0: Pre-Deployment Migration Check (NEW!)
+
+```bash
+# Step 1: Check migration status
+npm run check:migrations
+
+# Step 2: Review pending migrations and their impact
+# Look for destructive operations (DROP, DELETE)
+
+# Step 3: Apply migrations if needed
+# Via Supabase CLI:
+supabase db push
+
+# Or manually via Supabase Dashboard → SQL Editor
+
+# Step 4: Verify migrations were applied
+npm run check:migrations
+```
 
 ### Scenario 1: Listings Not Showing (Unknown Cause)
 
@@ -202,6 +249,7 @@ Get these from:
 
 | Command | Description |
 |---------|-------------|
+| `npm run check:migrations` | **NEW!** Analyze database migrations (pending, missing, order issues) |
 | `npm run fix:listings` | Quick automated fix for common issues |
 | `npm run debug:listings` | Full diagnostic with detailed output |
 | `npm run seed:sample-listings` | Seed 50+ sample properties (requires `FORCE_SEED=true`) |
@@ -300,9 +348,10 @@ If issues persist:
 
 ```
 scripts/
+├── check-migrations.ts            # Migration diagnostic tool (NEW!)
 ├── debug-listings-diagnostic.sql   # SQL diagnostic queries (17 tests)
 ├── debug-listings.ts               # TypeScript diagnostic tool
-├── quick-fix-listings.ts          # Automated quick fix (NEW!)
+├── quick-fix-listings.ts          # Automated quick fix
 ├── fix-listings-issues.sql        # SQL fix script
 ├── browser-diagnostic.js          # Browser console diagnostic
 └── seed-sample-listings.ts        # Sample data seeding
@@ -310,5 +359,5 @@ scripts/
 
 ---
 
-**Last updated**: 2026-02-03  
-**Version**: 1.0
+**Last updated**: 2026-02-05  
+**Version**: 1.1 (Added migration diagnostic tool)
