@@ -11,7 +11,7 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 // Service Worker version - increment to force update
-const SW_VERSION = '1.0.2';
+const SW_VERSION = '1.0.3';
 
 // Take control of all clients immediately
 clientsClaim();
