@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { InstallPWAButton } from "@/components/pwa/InstallPWAButton";
 import {
   Menu,
   X,
@@ -93,6 +94,7 @@ export default function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-3">
+          <InstallPWAButton />
           <LanguageSwitcher />
           {user ? (
             <DropdownMenu>
@@ -153,6 +155,7 @@ export default function Header() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-2">
+          <InstallPWAButton />
           <LanguageSwitcher />
           <button
             className="p-2"
