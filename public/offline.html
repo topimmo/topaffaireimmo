@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopAffaireImmo - Hors ligne</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 32px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #6b6b6b;
+      margin-bottom: 32px;
+    }
+
+    .retry-btn {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .retry-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .retry-btn:active {
+      transform: translateY(0);
+    }
+
+    .offline-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 32px 24px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      p {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">TA</div>
+    <div class="offline-icon">📡</div>
+    <h1>Vous êtes hors ligne</h1>
+    <p>Il semble que vous n'ayez pas de connexion Internet. Veuillez vérifier votre connexion et réessayer.</p>
+    <p style="font-size: 14px; margin-bottom: 24px;">You are offline. Please check your internet connection and try again.</p>
+    <button class="retry-btn" onclick="window.location.reload()">
+      Réessayer / Retry
+    </button>
+  </div>
+
+  <script>
+    // Check if back online and auto-reload
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+
+    // Update RTL if language is Arabic
+    if (navigator.language.startsWith('ar')) {
+      document.documentElement.dir = 'rtl';
+      document.querySelector('h1').textContent = 'أنت غير متصل بالإنترنت';
+      document.querySelector('p').textContent = 'يبدو أنك لا تملك اتصال بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى.';
+    }
+  </script>
+</body>
+</html>

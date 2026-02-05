@@ -194,6 +194,15 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.viewPayment': 'Voir le paiement',
     'admin.viewBanner': 'Voir la bannière',
     'admin.notes': 'Notes',
+    
+    // PWA Install
+    'pwa.install': 'Installer l\'app',
+    'pwa.installPrompt': 'Installer TopAffaireImmo sur votre appareil',
+    'pwa.installDescription': 'Accédez rapidement à TopAffaireImmo depuis votre écran d\'accueil',
+    'pwa.installButton': 'Installer',
+    'pwa.installLater': 'Plus tard',
+    'pwa.iosInstructions': 'Sur iPhone: appuyez sur le bouton Partager puis "Ajouter à l\'écran d\'accueil"',
+    'pwa.iosTitle': 'Comment installer sur iOS',
   },
   ar: {
     // Navigation
@@ -377,6 +386,15 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.viewPayment': 'عرض الدفع',
     'admin.viewBanner': 'عرض البانر',
     'admin.notes': 'ملاحظات',
+    
+    // PWA Install
+    'pwa.install': 'تثبيت التطبيق',
+    'pwa.installPrompt': 'تثبيت TopAffaireImmo على جهازك',
+    'pwa.installDescription': 'الوصول السريع إلى TopAffaireImmo من شاشتك الرئيسية',
+    'pwa.installButton': 'تثبيت',
+    'pwa.installLater': 'لاحقاً',
+    'pwa.iosInstructions': 'في الآيفون: اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"',
+    'pwa.iosTitle': 'كيفية التثبيت على iOS',
   },
 };
 

@@ -55,6 +55,7 @@ The app will be available at `http://localhost:5173`
 - **Backend**: Supabase (PostgreSQL + Auth + Storage)
 - **Deployment**: Vercel
 - **Internationalization**: Custom i18n (French/Arabic)
+- **PWA**: vite-plugin-pwa + Workbox (offline support, installable)
 
 ## 🔑 Key Features
 
@@ -117,6 +118,105 @@ npm run typecheck              # Run TypeScript type checking
 npm run lint                   # Run ESLint
 npm run seed:sample-listings   # Generate sample property listings
 ```
+
+## 📱 Progressive Web App (PWA)
+
+TopAffaireImmo is a fully-featured Progressive Web App that can be installed on Android and iOS devices for a native app-like experience.
+
+### PWA Features
+
+- **Installable**: Users can install the app on their home screen (Android, iOS, Desktop)
+- **Offline Support**: Branded offline fallback page when network is unavailable
+- **Smart Caching**: 
+  - Static assets cached for fast loading
+  - Images cached with CacheFirst strategy
+  - API calls use NetworkFirst to ensure fresh data
+  - Auth endpoints and tokens are never cached
+- **Auto-Updates**: Service worker automatically updates when new version is deployed
+- **Standalone Display**: Runs fullscreen without browser UI
+
+### Install Prompt
+
+The app displays an install button in the header that:
+- Shows install prompt on Android Chrome (using `beforeinstallprompt` event)
+- Shows installation instructions modal on iOS Safari
+- Supports both French and Arabic (RTL) languages
+- Auto-hides after installation or dismissal
+
+### Testing PWA Locally
+
+1. **Build the app** (PWA only works in production builds):
+   ```bash
+   npm run build
+   npm run preview
+   ```
+
+2. **Test in Chrome DevTools**:
+   - Open Chrome DevTools (F12)
+   - Navigate to Application tab
+   - Check "Manifest" section for manifest.json
+   - Check "Service Workers" section for registered worker
+   - Use Lighthouse to audit PWA compliance
+
+3. **Test Installation**:
+   - **Android Chrome**: Install prompt should appear in header
+   - **iOS Safari**: Tap install button → follow instructions in modal
+   - **Desktop Chrome**: Install prompt appears in header or address bar
+
+### Testing PWA in Production
+
+1. Deploy to production (Vercel automatically serves PWA assets)
+2. Visit production URL on mobile device
+3. Check for install prompt/instructions
+4. Install app and verify:
+   - App opens in standalone mode (no browser UI)
+   - Icons display correctly
+   - Offline page works (turn off network)
+   - Updates automatically when new version deployed
+
+### Lighthouse PWA Checklist
+
+The app meets all core PWA requirements:
+- ✅ Installable (manifest + service worker)
+- ✅ Works offline (offline fallback page)
+- ✅ Configured for mobile (viewport, icons, theme-color)
+- ✅ HTTPS (required for PWA, provided by Vercel)
+- ✅ Fast load times (asset precaching + code splitting)
+
+### Updating PWA Assets
+
+To update icons or manifest:
+
+1. **Update icons**: Replace files in `/public/icons/`
+   - icon-192.png (192x192)
+   - icon-512.png (512x512)
+   - icon-192-maskable.png (with safe padding)
+   - icon-512-maskable.png (with safe padding)
+   - apple-touch-icon.png (180x180)
+
+2. **Update manifest**: Edit `vite.config.ts` → `VitePWA.manifest` section
+
+3. **Rebuild**: Run `npm run build`
+
+4. **Note**: To regenerate icons from scratch, run:
+   ```bash
+   npx tsx scripts/generate-pwa-icons.ts
+   ```
+
+### PWA Architecture
+
+- **Plugin**: `vite-plugin-pwa` generates service worker and manifest
+- **Workbox**: Runtime caching strategies (NetworkFirst, CacheFirst)
+- **Auto-registration**: Service worker auto-registers on page load
+- **Component**: `InstallPWAButton` handles install UX
+- **Offline**: `/public/offline.html` shown when offline
+
+### Browser Support
+
+- ✅ Android Chrome (full support including install prompt)
+- ✅ iOS Safari 11.3+ (manual "Add to Home Screen")
+- ✅ Desktop Chrome/Edge (install prompt supported)
+- ⚠️ Firefox/Opera (manual install only)
 
 ### Sample Listings
 
