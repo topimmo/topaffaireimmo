@@ -6,7 +6,9 @@ import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: Array<{ url: string; revision: string }>;
+};
 
 // Service Worker version - increment to force update
 const SW_VERSION = '1.0.1';
@@ -141,9 +143,13 @@ self.addEventListener('push', (event: PushEvent) => {
       tag: data.tag || 'default',
       requireInteraction: data.requireInteraction || false,
       data: data.data || {},
-      // Action buttons (optional)
-      actions: data.actions || [],
-    };
+      // Action buttons (optional) - Typed as any to avoid NotificationOptions type issues
+    } as NotificationOptions & { actions?: Array<{ action: string; title: string }> };
+
+    // Add actions if provided
+    if (data.actions) {
+      (options as any).actions = data.actions;
+    }
 
     event.waitUntil(
       self.registration.showNotification(title, options)

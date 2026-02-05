@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { t, isRTL } = useLanguage();
-  const { user, profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
@@ -102,14 +102,13 @@ export default function Header() {
                 <Button variant="outline" size="sm" className="gap-2">
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
-                    {profile?.full_name || profile?.email?.split('@')[0]}
+                    {user?.email?.split('@')[0] || 'User'}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {profile?.user_role !== 'commercial_advertiser' && (
-                  <>
-                    <DropdownMenuItem asChild>
+                <>
+                  <DropdownMenuItem asChild>
                       <Link to="/dashboard" className="flex items-center gap-2">
                         <LayoutDashboard className="h-4 w-4" />
                         {t('nav.dashboard')}
@@ -122,7 +121,6 @@ export default function Header() {
                       </Link>
                     </DropdownMenuItem>
                   </>
-                )}
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center gap-2">
@@ -204,9 +202,8 @@ export default function Header() {
             </Link>
             {user ? (
               <>
-                {profile?.user_role !== 'commercial_advertiser' && (
-                  <>
-                    <Link
+                <>
+                  <Link
                       to="/dashboard"
                       className="text-sm font-medium py-2"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -220,7 +217,6 @@ export default function Header() {
                       </Link>
                     </Button>
                   </>
-                )}
                 {isAdmin && (
                   <Link
                     to="/admin"

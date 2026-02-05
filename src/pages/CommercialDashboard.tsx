@@ -223,7 +223,7 @@ const statusIcons: Record<string, typeof Clock> = {
 export default function CommercialDashboard() {
   const { language, isRTL } = useLanguage();
   const c = content[language];
-  const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [requests, setRequests] = useState<BannerRequest[]>([]);
@@ -232,6 +232,8 @@ export default function CommercialDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [profile, setProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -248,6 +250,34 @@ export default function CommercialDashboard() {
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  // Fetch user profile
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) {
+        setProfileLoading(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setProfile(data);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+    
+    fetchProfile();
+  }, [user]);
 
   useEffect(() => {
     if (!authLoading && !profileLoading && !user) {

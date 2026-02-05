@@ -48,7 +48,7 @@ const pricing: Record<number, number> = {
 
 export default function NewAdRequest() {
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedSlot = searchParams.get('slot');
@@ -58,15 +58,50 @@ export default function NewAdRequest() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [bannerPreview, setBannerPreview] = useState<string>('');
   const [paymentPreview, setPaymentPreview] = useState<string>('');
+  const [profile, setProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     slotId: preselectedSlot || '',
     companyName: '',
-    contactEmail: profile?.email || '',
-    contactPhone: profile?.phone || '',
+    contactEmail: '',
+    contactPhone: '',
     durationDays: '',
     targetUrl: '',
   });
+
+  // Fetch user profile
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) {
+        setProfileLoading(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setProfile(data);
+          setFormData(prev => ({
+            ...prev,
+            contactEmail: data.email || '',
+            contactPhone: data.phone || '',
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+    
+    fetchProfile();
+  }, [user]);
 
   useEffect(() => {
     fetchSlots();
@@ -78,16 +113,6 @@ export default function NewAdRequest() {
       navigate('/dashboard');
     }
   }, [authLoading, profileLoading, profile, navigate]);
-
-  useEffect(() => {
-    if (profile) {
-      setFormData(prev => ({
-        ...prev,
-        contactEmail: profile.email || '',
-        contactPhone: profile.phone || '',
-      }));
-    }
-  }, [profile]);
 
   const fetchSlots = async () => {
     const { data } = await supabase

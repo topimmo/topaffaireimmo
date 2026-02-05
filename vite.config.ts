@@ -2,6 +2,7 @@ import path from "path";
 import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 // Plugin to inject build timestamp, version, and production domain into HTML
 function buildMetadataPlugin(): Plugin {
@@ -36,6 +37,16 @@ export default defineConfig({
   plugins: [
     react(),
     buildMetadataPlugin(),
+    // Sentry plugin for source maps (only in production builds with auth token)
+    process.env.SENTRY_AUTH_TOKEN && sentryVitePlugin({
+      org: process.env.SENTRY_ORG || "topaffaireimmo",
+      project: process.env.SENTRY_PROJECT || "topaffaireimmo-web",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: {
+        assets: "./dist/**",
+      },
+      telemetry: false,
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -114,13 +125,56 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    sourcemap: false,
+    sourcemap: process.env.SENTRY_AUTH_TOKEN ? true : false, // Enable source maps for Sentry
     minify: "esbuild",
     rollupOptions: {
       output: {
         manualChunks: {
+          // Core vendor chunks
           vendor: ["react", "react-dom", "react-router-dom"],
           supabase: ["@supabase/supabase-js"],
+          
+          // UI library chunks
+          radix: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-toast",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-alert-dialog",
+            "@radix-ui/react-avatar",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-label",
+            "@radix-ui/react-radio-group",
+            "@radix-ui/react-separator",
+            "@radix-ui/react-slider",
+            "@radix-ui/react-switch",
+          ],
+          
+          // Form handling
+          forms: [
+            "react-hook-form",
+            "@hookform/resolvers",
+            "zod",
+          ],
+          
+          // Icons and animations
+          ui: [
+            "lucide-react",
+            "framer-motion",
+          ],
+          
+          // Charts (only loaded in admin/analytics)
+          charts: [
+            "recharts",
+          ],
+          
+          // Error monitoring (Sentry)
+          monitoring: [
+            "@sentry/react",
+          ],
         },
       },
     },

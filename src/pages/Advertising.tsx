@@ -79,12 +79,42 @@ const pricing = [
 
 export default function Advertising() {
   const { t, language, isRTL } = useLanguage();
-  const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [slots, setSlots] = useState<BannerSlot[]>([]);
   const [requests, setRequests] = useState<BannerRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Fetch user profile
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) {
+        setProfileLoading(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setProfile(data);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+    
+    fetchProfile();
+  }, [user]);
 
   // Redirect real estate advertisers away from commercial advertising
   useEffect(() => {

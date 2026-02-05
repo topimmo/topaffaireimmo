@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/config/site";
+import { trackPropertyView, trackContactClick } from "@/lib/lead-tracking";
 
 // ✅ Helper functions to safely handle null/undefined values
 const safeLower = (v?: string | null): string => (v ?? "").toLowerCase();
@@ -174,6 +175,13 @@ export default function PropertyDetails() {
             owner: Array.isArray(typedData?.owner) && typedData.owner.length > 0 ? typedData.owner[0] : typedData?.owner,
           } as DbPropertyDetails);
           setCurrentImage(0);
+          
+          // Track property view for analytics
+          if (id) {
+            trackPropertyView(id).catch(err => {
+              console.warn('Failed to track property view:', err);
+            });
+          }
         } else {
           setProperty(null);
         }
@@ -695,7 +703,19 @@ export default function PropertyDetails() {
                 </div>
 
                 <div className="space-y-3">
-                  <Button className="w-full gap-2" size="lg" asChild disabled={!phone}>
+                  <Button 
+                    className="w-full gap-2" 
+                    size="lg" 
+                    asChild 
+                    disabled={!phone}
+                    onClick={() => {
+                      if (id && phone) {
+                        trackContactClick(id, 'phone').catch(err => {
+                          console.warn('Failed to track phone click:', err);
+                        });
+                      }
+                    }}
+                  >
                     <a href={phone ? `tel:${phone}` : "#"}>
                       <Phone className="h-5 w-5" />
                       Call Now
@@ -708,6 +728,13 @@ export default function PropertyDetails() {
                     size="lg"
                     asChild
                     disabled={!whatsapp}
+                    onClick={() => {
+                      if (id && whatsapp) {
+                        trackContactClick(id, 'whatsapp').catch(err => {
+                          console.warn('Failed to track whatsapp click:', err);
+                        });
+                      }
+                    }}
                   >
                     <a
                       href={
