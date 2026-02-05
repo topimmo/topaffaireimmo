@@ -98,7 +98,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener('scroll', handleScroll);
 
-    // Time-based trigger (15-20 seconds, let's use 17 seconds)
+    // Time-based trigger (17 seconds - middle of 15-20s range for optimal engagement)
     const timeoutId = setTimeout(() => {
       setUserHasSpentTime(true);
       trackEvent('user_spent_time', { seconds: 17 });
@@ -110,7 +110,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('scroll', handleScroll);
       clearTimeout(timeoutId);
     };
-  }, []);
+  }, [userHasScrolled, isIOS]); // Added missing dependencies
 
   // Show prompt when user has scrolled OR spent time
   useEffect(() => {

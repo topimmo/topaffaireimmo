@@ -68,7 +68,7 @@ export function InstallPWAButton() {
               animate={{ rotate: [0, -10, 10, -10, 0] }}
               transition={{ 
                 duration: 0.5, 
-                repeat: Infinity, 
+                repeat: 5, // Limit to 5 repetitions to save resources
                 repeatDelay: 3,
                 ease: "easeInOut"
               }}

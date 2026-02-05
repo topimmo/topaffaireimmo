@@ -81,7 +81,7 @@ export function IOSInstallInstructions({ open, onClose }: IOSInstallInstructions
         </DialogHeader>
 
         <div className="space-y-3 py-4">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {steps.map((step, index) => (
               <motion.div
                 key={index}
