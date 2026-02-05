@@ -5,6 +5,7 @@ import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { PWAInstallProvider } from "./contexts/PWAInstallContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const basename = import.meta.env.BASE_URL;
@@ -29,9 +30,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <BrowserRouter basename={basename}>
         <LanguageProvider>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
+          <PWAInstallProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </PWAInstallProvider>
         </LanguageProvider>
       </BrowserRouter>
     </ErrorBoundary>
