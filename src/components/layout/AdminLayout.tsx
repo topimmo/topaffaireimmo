@@ -18,7 +18,8 @@ import {
   FolderTree,
   Menu,
   X,
-  ImageIcon
+  ImageIcon,
+  PackagePlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +85,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: '/admin/promo-banners',
       icon: ImageIcon,
       current: location.pathname === '/admin/promo-banners',
+    },
+    {
+      name: isRTL ? 'العقارات الوهمية' : 'Dummy Properties',
+      href: '/admin/dummy-properties',
+      icon: PackagePlus,
+      current: location.pathname === '/admin/dummy-properties',
     },
     {
       name: isRTL ? 'الإعدادات' : 'Settings',

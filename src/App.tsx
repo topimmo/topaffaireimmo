@@ -48,6 +48,7 @@ const AdminContentPages = lazy(() => import("./pages/admin/AdminContentPages"));
 const AdminContentPageEditor = lazy(() => import("./pages/admin/AdminContentPageEditor"));
 const AdminContentCategories = lazy(() => import("./pages/admin/AdminContentCategories"));
 const AdminPromoBanners = lazy(() => import("./pages/admin/AdminPromoBanners"));
+const AdminDummyProperties = lazy(() => import("./pages/admin/AdminDummyProperties"));
 
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -423,6 +424,14 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminPromoBanners />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dummy-properties"
+            element={
+              <AdminProtectedRoute>
+                <AdminDummyProperties />
               </AdminProtectedRoute>
             }
           />

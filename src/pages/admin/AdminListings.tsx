@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Eye, CheckCircle, XCircle, Loader2, Trash2, Download } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, Loader2, Trash2, Download, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -451,23 +451,69 @@ export default function AdminListings() {
 
       if (error) {
         console.error('Delete error:', error);
-        toast.error(isRTL ? `فشل حذف الإعلان: ${error.message}` : `Failed to delete: ${error.message}`);
+        toast.error(isRTL ? 'خطأ في حذف الإعلان' : 'Error deleting listing');
         return;
       }
 
-      // Log audit action
+      // Log admin action
       await logAdminAction({
         action: 'delete',
-        entity_type: 'property',
-        entity_id: property.id,
-        metadata: { title: property.title_fr },
+        resource_type: 'property',
+        resource_id: property.id,
+        details: { title_fr: property.title_fr },
       });
 
-      toast.success(isRTL ? 'تم حذف الإعلان' : 'Listing deleted');
-      await fetchProperties();
-    } catch (e: any) {
-      console.error(e);
-      toast.error(isRTL ? 'وقع خطأ غير متوقع فالحذف' : 'Unexpected delete error');
+      setProperties((prev) => prev.filter((p) => p.id !== property.id));
+      toast.success(isRTL ? 'تم حذف الإعلان بنجاح' : 'Listing deleted successfully');
+    } catch (err) {
+      console.error('Delete exception:', err);
+      toast.error(isRTL ? 'فشل حذف الإعلان' : 'Failed to delete listing');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Toggle featured status for a property
+  const handleFeaturedToggle = async (propertyId: string, currentFeatured: boolean) => {
+    setActionLoading(propertyId);
+
+    try {
+      const newFeatured = !currentFeatured;
+      
+      const { error } = await supabase
+        .from('properties')
+        .update({ featured: newFeatured })
+        .eq('id', propertyId);
+
+      if (error) {
+        console.error('Featured toggle error:', error);
+        toast.error(isRTL ? 'خطأ في تحديث الحالة المميزة' : 'Error updating featured status');
+        return;
+      }
+
+      // Log admin action
+      await logAdminAction({
+        action: newFeatured ? 'feature' : 'unfeature',
+        resource_type: 'property',
+        resource_id: propertyId,
+        details: { featured: newFeatured },
+      });
+
+      // Update local state
+      setProperties((prev) =>
+        prev.map((p) =>
+          p.id === propertyId ? { ...p, featured: newFeatured } : p
+        )
+      );
+
+      toast.success(
+        newFeatured
+          ? (isRTL ? 'تم تمييز الإعلان بنجاح' : 'Property marked as featured')
+          : (isRTL ? 'تم إلغاء تمييز الإعلان' : 'Property unmarked as featured')
+      );
+    } catch (err) {
+      console.error('Featured toggle exception:', err);
+      toast.error(isRTL ? 'فشل تحديث الحالة المميزة' : 'Failed to update featured status');
     } finally {
       setActionLoading(null);
     }
@@ -682,6 +728,7 @@ export default function AdminListings() {
                     <TableHead>{isRTL ? 'الحي' : 'Neighborhood'}</TableHead>
                     <TableHead>{isRTL ? 'السعر' : 'Price'}</TableHead>
                     <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
+                    <TableHead className="text-center">{isRTL ? 'مميز' : 'Featured'}</TableHead>
                     <TableHead>{isRTL ? 'التاريخ' : 'Date'}</TableHead>
                     <TableHead className="text-right">{isRTL ? 'الإجراءات' : 'Actions'}</TableHead>
                   </TableRow>
@@ -734,6 +781,27 @@ export default function AdminListings() {
                         <TableCell>{getNeighborhoodName(property.neighborhood)}</TableCell>
                         <TableCell>{formatPrice(property.price)} DH</TableCell>
                         <TableCell>{getStatusBadge(property.status)}</TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleFeaturedToggle(property.id, property.featured || false)}
+                            disabled={actionLoading === property.id}
+                            className={cn(
+                              "h-8 w-8 p-0",
+                              property.featured 
+                                ? "text-yellow-500 hover:text-yellow-600" 
+                                : "text-gray-300 hover:text-gray-400"
+                            )}
+                            title={property.featured ? (isRTL ? 'إلغاء التمييز' : 'Unmark Featured') : (isRTL ? 'تمييز' : 'Mark Featured')}
+                          >
+                            {actionLoading === property.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Star className={cn("h-4 w-4", property.featured && "fill-yellow-500")} />
+                            )}
+                          </Button>
+                        </TableCell>
                         <TableCell>{formatDate(property.created_at)}</TableCell>
 
                         <TableCell>

@@ -31,6 +31,8 @@ export interface PropertyWithRelations extends Property {
   title_fr?: string | null;
   title_ar?: string | null;
   address?: string | null;
+  status?: string;
+  isDummy?: boolean; // Flag to indicate if this is a dummy property (fallback)
 }
 
 export function useProperties(filters?: PropertyFilters) {
@@ -200,8 +202,124 @@ export function useProperty(id: string | undefined) {
 }
 
 export function useFeaturedProperties(limit = 6) {
-  // Only show published properties on public site
-  return useProperties({ featured: true, status: 'published' });
+  const [properties, setProperties] = useState<PropertyWithRelations[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isCancelled = false;
+    let hasCompleted = false;
+    
+    const loadingTimeout = setTimeout(() => {
+      if (!isCancelled && !hasCompleted) {
+        console.warn('[useFeaturedProperties] Loading timeout');
+        hasCompleted = true;
+        setLoading(false);
+      }
+    }, 10000);
+
+    const fetchFeaturedProperties = async () => {
+      try {
+        // First, fetch real featured properties ordered by rank
+        const { data: featuredData, error: featuredError } = await supabase
+          .from('properties')
+          .select(`
+            *,
+            city:cities(id, name_fr, name_ar),
+            neighborhood:neighborhoods(id, name_fr, name_ar),
+            owner:profiles!properties_owner_id_fkey(id, full_name, phone, agency_name, advertiser_type)
+          `)
+          .eq('featured', true)
+          .eq('status', 'published')
+          .order('featured_rank', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(limit);
+
+        if (isCancelled) return;
+
+        if (featuredError) {
+          console.error('Error loading featured properties:', featuredError);
+        }
+
+        const realFeatured = (featuredData as PropertyWithRelations[] || []).map(prop => ({
+          ...prop,
+          isDummy: false
+        }));
+
+        // If we have enough real featured properties, use them
+        if (realFeatured.length >= limit) {
+          setProperties(realFeatured.slice(0, limit));
+        } else {
+          // Otherwise, fetch dummy properties to fill the gap
+          const neededCount = limit - realFeatured.length;
+          
+          const { data: dummyData, error: dummyError } = await supabase
+            .from('dummy_properties')
+            .select(`
+              id,
+              transaction_type,
+              property_type,
+              city_id,
+              neighborhood_id,
+              title_fr,
+              title_ar,
+              description_fr,
+              description_ar,
+              price,
+              area,
+              bedrooms,
+              bathrooms,
+              images,
+              featured_rank,
+              city:cities(id, name_fr, name_ar),
+              neighborhood:neighborhoods(id, name_fr, name_ar)
+            `)
+            .eq('is_active', true)
+            .order('featured_rank', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(neededCount);
+
+          if (isCancelled) return;
+
+          if (dummyError) {
+            console.error('Error loading dummy properties:', dummyError);
+          }
+
+          // Map dummy properties to match PropertyWithRelations interface
+          const dummyProperties = (dummyData || []).map(dummy => ({
+            ...dummy,
+            featured: true, // Show featured badge since they're in the featured section
+            isDummy: true,
+            status: 'published',
+            owner_id: null,
+            created_at: dummy.created_at || new Date().toISOString(),
+            updated_at: dummy.updated_at || new Date().toISOString()
+          } as PropertyWithRelations));
+
+          // Combine real featured and dummy properties
+          setProperties([...realFeatured, ...dummyProperties]);
+        }
+      } catch (error) {
+        if (isCancelled) return;
+        console.error('Exception loading featured properties:', error);
+        setProperties([]);
+      } finally {
+        clearTimeout(loadingTimeout);
+        if (!isCancelled && !hasCompleted) {
+          hasCompleted = true;
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchFeaturedProperties();
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(loadingTimeout);
+    };
+  }, [limit]);
+
+  return { properties, loading };
 }
 
 export function useLatestProperties(limit = 12) {
