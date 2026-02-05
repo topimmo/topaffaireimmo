@@ -49,7 +49,7 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: null, // We'll handle registration manually to add bot detection
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
