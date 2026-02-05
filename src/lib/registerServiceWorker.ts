@@ -89,10 +89,13 @@ function isProductionEnvironment(): boolean {
       return true;
     }
     
+    // Get production domain from environment variable
+    const productionDomain = import.meta.env.VITE_PRODUCTION_DOMAIN || 'topaffaireimmo.com';
+    
     // Only allow production domain, not preview URLs
     const isProductionDomain = 
-      hostname === 'topaffaireimmo.com' ||
-      hostname === 'www.topaffaireimmo.com';
+      hostname === productionDomain ||
+      hostname === `www.${productionDomain}`;
     
     const isVercelPreviewDomain = hostname.includes('vercel.app');
     
@@ -163,7 +166,10 @@ export async function registerServiceWorker(): Promise<boolean> {
 
     console.log('[SW] Registering service worker...');
     
-    const registration = await navigator.serviceWorker.register('/sw.js', {
+    // Service worker file path (can be overridden via env var)
+    const swPath = import.meta.env.VITE_SW_PATH || '/sw.js';
+    
+    const registration = await navigator.serviceWorker.register(swPath, {
       scope: '/',
       updateViaCache: 'none', // Always check for updates
     });
