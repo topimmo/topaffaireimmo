@@ -203,6 +203,24 @@ const translations: Record<Language, Record<string, string>> = {
     'pwa.installLater': 'Plus tard',
     'pwa.iosInstructions': 'Sur iPhone: appuyez sur le bouton Partager puis "Ajouter à l\'écran d\'accueil"',
     'pwa.iosTitle': 'Comment installer sur iOS',
+    
+    // Push Notifications
+    'push.title': 'Notifications',
+    'push.enable': 'Activer les notifications',
+    'push.disable': 'Désactiver les notifications',
+    'push.enabled': 'Activé',
+    'push.disabled': 'Désactivé',
+    'push.notSupported': 'Notifications non supportées',
+    'push.permissionDenied': 'Permission refusée',
+    'push.description': 'Recevez des notifications pour les nouvelles propriétés et mises à jour',
+    'push.promptTitle': 'Activer les notifications push',
+    'push.promptMessage': 'Restez informé des nouvelles propriétés qui correspondent à vos critères de recherche',
+    'push.promptAllow': 'Autoriser',
+    'push.promptCancel': 'Pas maintenant',
+    'push.successEnabled': 'Notifications activées avec succès',
+    'push.successDisabled': 'Notifications désactivées',
+    'push.errorEnable': 'Erreur lors de l\'activation des notifications',
+    'push.errorDisable': 'Erreur lors de la désactivation des notifications',
   },
   ar: {
     // Navigation
@@ -395,6 +413,24 @@ const translations: Record<Language, Record<string, string>> = {
     'pwa.installLater': 'لاحقاً',
     'pwa.iosInstructions': 'في الآيفون: اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"',
     'pwa.iosTitle': 'كيفية التثبيت على iOS',
+    
+    // Push Notifications
+    'push.title': 'الإشعارات',
+    'push.enable': 'تفعيل الإشعارات',
+    'push.disable': 'إيقاف الإشعارات',
+    'push.enabled': 'مفعّل',
+    'push.disabled': 'معطّل',
+    'push.notSupported': 'الإشعارات غير مدعومة',
+    'push.permissionDenied': 'الإذن مرفوض',
+    'push.description': 'احصل على إشعارات للعقارات الجديدة والتحديثات',
+    'push.promptTitle': 'تفعيل إشعارات الدفع',
+    'push.promptMessage': 'ابق على اطلاع بالعقارات الجديدة التي تطابق معايير بحثك',
+    'push.promptAllow': 'السماح',
+    'push.promptCancel': 'ليس الآن',
+    'push.successEnabled': 'تم تفعيل الإشعارات بنجاح',
+    'push.successDisabled': 'تم إيقاف الإشعارات',
+    'push.errorEnable': 'خطأ في تفعيل الإشعارات',
+    'push.errorDisable': 'خطأ في إيقاف الإشعارات',
   },
 };
 
