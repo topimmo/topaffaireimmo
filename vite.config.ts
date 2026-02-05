@@ -130,8 +130,51 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          // Core vendor chunks
           vendor: ["react", "react-dom", "react-router-dom"],
           supabase: ["@supabase/supabase-js"],
+          
+          // UI library chunks
+          radix: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-toast",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-alert-dialog",
+            "@radix-ui/react-avatar",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-label",
+            "@radix-ui/react-radio-group",
+            "@radix-ui/react-separator",
+            "@radix-ui/react-slider",
+            "@radix-ui/react-switch",
+          ],
+          
+          // Form handling
+          forms: [
+            "react-hook-form",
+            "@hookform/resolvers",
+            "zod",
+          ],
+          
+          // Icons and animations
+          ui: [
+            "lucide-react",
+            "framer-motion",
+          ],
+          
+          // Charts (only loaded in admin/analytics)
+          charts: [
+            "recharts",
+          ],
+          
+          // Error monitoring (Sentry)
+          monitoring: [
+            "@sentry/react",
+          ],
         },
       },
     },
