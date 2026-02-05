@@ -134,6 +134,12 @@ TopAffaireImmo is a fully-featured Progressive Web App that can be installed on 
   - Auth endpoints and tokens are never cached
 - **Auto-Updates**: Service worker automatically updates when new version is deployed
 - **Standalone Display**: Runs fullscreen without browser UI
+- **Push Notifications**: 🔔 **NEW** - Opt-in web push notifications
+  - User-controlled toggle in Dashboard
+  - Respects privacy - only asks after user interaction
+  - Fully bilingual (FR + AR)
+  - Works on Android Chrome, Desktop Chrome, iOS 16.4+
+  - See [Push Notifications Quick Start](./PUSH_NOTIFICATIONS_QUICK_START.md)
 
 ### Install Prompt
 
