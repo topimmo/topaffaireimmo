@@ -350,7 +350,12 @@ export default function ResetPassword() {
     console.log('✅ Password updated successfully');
     
     // Sign out the recovery session for security
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (signOutError) {
+      console.warn('⚠️ Sign out after password reset failed:', signOutError);
+      // Continue anyway - user will be redirected to login
+    }
     
     setSuccess(true);
     toast.success(isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Mot de passe modifié avec succès');
