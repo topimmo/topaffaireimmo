@@ -11,7 +11,7 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 // Service Worker version - increment to force update
-const SW_VERSION = '1.1.0'; // Updated: Smart offline fallback logic
+const SW_VERSION = '1.2.0'; // Updated: Auth routes bypass SW, improved offline handling
 
 // Cache names
 const PRECACHE_NAME = 'workbox-precache-v2-' + self.location.origin;
@@ -59,10 +59,30 @@ const CRITICAL_ROUTES = [
 ];
 
 /**
+ * Auth routes that must ALWAYS bypass Service Worker caching
+ * These routes handle authentication tokens and must always hit the network
+ */
+const AUTH_ROUTES = [
+  '/auth/callback',
+  '/reset-password',
+  '/login',
+  '/register',
+];
+
+/**
  * Check if the request is for a critical route
  */
 function isCriticalRoute(pathname: string): boolean {
   return CRITICAL_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  );
+}
+
+/**
+ * Check if the request is for an auth route that must bypass caching
+ */
+function isAuthRoute(pathname: string): boolean {
+  return AUTH_ROUTES.some(route => 
     pathname === route || pathname.startsWith(route + '/')
   );
 }
@@ -91,16 +111,24 @@ function isApiRequest(url: URL): boolean {
  * Smart fetch handler that implements safe offline fallback
  * 
  * Rules:
- * 1. Always try network first
- * 2. For navigation requests that fail:
+ * 1. Auth routes (/auth/callback, /reset-password) ALWAYS bypass Service Worker
+ * 2. Always try network first
+ * 3. For navigation requests that fail:
  *    - If critical route (/add-listing, /dashboard, etc), return cached app shell
  *    - If navigator.onLine is false, return offline.html
  *    - Otherwise return cached page or app shell
- * 3. For API requests, never return offline.html - return error or let it fail
- * 4. Admin routes bypass service worker entirely
+ * 4. For API requests, never return offline.html - return error or let it fail
+ * 5. Admin routes bypass service worker entirely
  */
 self.addEventListener('fetch', (event: FetchEvent) => {
   const url = new URL(event.request.url);
+  
+  // Auth routes MUST bypass Service Worker entirely to prevent token/session issues
+  // This ensures auth tokens in URLs are always processed fresh by the app
+  if (isAuthRoute(url.pathname)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   
   // Admin routes bypass service worker entirely (always fresh from network)
   if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) {

@@ -61,6 +61,8 @@ export default function AuthCallback() {
       try {
         console.log('🔐 Auth callback triggered');
         console.log('  - Current URL:', window.location.href);
+        console.log('  - Online status:', navigator.onLine);
+        console.log('  - User agent:', navigator.userAgent);
 
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -100,6 +102,18 @@ export default function AuthCallback() {
               extra: { error, errorDescription, url: window.location.href }
             });
           }
+          
+          // Redirect to login after delay
+          setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+          return;
+        }
+
+        // Early network check: If offline and we have a code/token to exchange,
+        // show a helpful message instead of attempting the exchange
+        if (!navigator.onLine && (code || accessToken)) {
+          console.warn('⚠️ User is offline, cannot complete authentication');
+          setStatus('error');
+          setMessage('Pas de connexion Internet. Veuillez vous connecter pour continuer.');
           
           // Redirect to login after delay
           setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
