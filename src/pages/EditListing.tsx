@@ -959,7 +959,7 @@ export default function EditListing() {
                       disabled={isLocked}
                     />
                     <Label htmlFor="showPhonePublic" className="text-sm font-normal cursor-pointer">
-                      {isRTL ? 'إظهار الهاتف للعامة' : 'Afficher le téléphone publiquement'}
+                      {isRTL ? 'إظهار الهاتف' : 'Afficher le téléphone publiquement'}
                     </Label>
                   </div>
                 </div>
@@ -996,7 +996,7 @@ export default function EditListing() {
                         disabled={isLocked}
                       />
                       <Label htmlFor="showWhatsappPublic" className="text-sm font-normal cursor-pointer">
-                        {isRTL ? 'إظهار واتساب للعامة' : 'Afficher WhatsApp publiquement'}
+                        {isRTL ? 'إظهار واتساب' : 'Afficher WhatsApp publiquement'}
                       </Label>
                     </div>
                   </div>
@@ -1022,7 +1022,7 @@ export default function EditListing() {
                       disabled={isLocked}
                     />
                     <Label htmlFor="showEmailPublic" className="text-sm font-normal cursor-pointer">
-                      {isRTL ? 'إظهار البريد الإلكتروني للعامة' : 'Afficher email publiquement'}
+                      {isRTL ? 'إظهار البريد الإلكتروني' : 'Afficher email publiquement'}
                     </Label>
                   </div>
                 </div>

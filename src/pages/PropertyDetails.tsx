@@ -141,8 +141,10 @@ export default function PropertyDetails() {
       setLoadError(null);
 
       try {
+        // Use properties_public view for public/anonymous users to respect contact visibility
+        // Owners can see their own properties with full contact info from properties table
         const { data, error } = await supabase
-          .from("properties")
+          .from("properties_public")
           .select(
             `
             id,
@@ -170,15 +172,11 @@ export default function PropertyDetails() {
             show_email_public,
             owner_id,
             advertiser_type,
-            owner:profiles!properties_owner_id_fkey(company_name, agency_name, full_name, phone, email),
             city:cities(name_fr, name_ar),
             neighborhood:neighborhoods(name_fr, name_ar)
           `
           )
           .eq("id", id)
-          // Only show published properties on public property details page
-          .eq("status", "published")
-          .or('is_archived.is.null,is_archived.eq.false')
           .maybeSingle();
 
         if (!mounted) return;
@@ -712,7 +710,7 @@ export default function PropertyDetails() {
                     <p className="font-semibold">Annonceur</p>
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Building2 className="h-4 w-4" />
-                      {safeStr(property.owner?.company_name || property.owner?.agency_name || "TopAffaireImmo")}
+                      TopAffaireImmo
                     </div>
 
                     {property.advertiser_type && (
@@ -797,9 +795,16 @@ export default function PropertyDetails() {
                   )}
                   
                   {!shouldShowPhone && !shouldShowWhatsapp && !shouldShowEmail && (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Contact information hidden by advertiser
-                    </p>
+                    <div className="space-y-2">
+                      <Button className="w-full gap-2" size="lg" disabled>
+                        تواصل عبر المنصة
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {isOwner 
+                          ? "Activez au moins un moyen de contact dans vos paramètres"
+                          : "L'annonceur n'a pas partagé ses coordonnées"}
+                      </p>
+                    </div>
                   )}
                 </div>
 
