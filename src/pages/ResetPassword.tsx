@@ -493,6 +493,9 @@ export default function ResetPassword() {
                     minLength={8}
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isRTL ? 'الحد الأدنى 8 أحرف' : 'Minimum 8 caractères'}
+                </p>
               </div>
 
               <Button type="submit" className="w-full h-12" disabled={loading}>
