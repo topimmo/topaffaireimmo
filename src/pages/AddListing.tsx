@@ -1101,7 +1101,7 @@ export default function AddListing() {
                     id="phone" 
                     name="phone" 
                     type="tel" 
-                    placeholder="+212 6XX XX XX XX" 
+                    placeholder="+212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.phone} 
                     onChange={handleInputChange} 
                   />
@@ -1124,7 +1124,7 @@ export default function AddListing() {
                     id="whatsapp" 
                     name="whatsapp" 
                     type="tel" 
-                    placeholder="+212 6XX XX XX XX" 
+                    placeholder="+212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.whatsapp} 
                     onChange={handleInputChange}
                     disabled={formData.whatsappSameAsPhone}
