@@ -70,40 +70,38 @@ function isProductionEnvironment(): boolean {
     return false;
   }
 
+  // Must be in production mode (NODE_ENV === 'production')
+  if (!import.meta.env.PROD) {
+    return false;
+  }
+
   // Never register in Vercel preview deployments
   const vercelEnv = import.meta.env.VITE_VERCEL_ENV;
   if (vercelEnv === 'preview' || vercelEnv === 'development') {
     return false;
   }
 
-  // Check hostname - only allow actual production domain
+  // Check hostname - ONLY allow www.topaffaireimmo.com in production
   if (typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
-    
-    // Get the expected production domain
-    const productionDomain = import.meta.env.VITE_PRODUCTION_DOMAIN || 'topaffaireimmo.com';
     
     // Block all vercel.app domains (preview deployments)
     if (currentHost.includes('vercel.app')) {
       return false;
     }
     
-    // Only allow exact production domain match
-    const allowedHosts = [
-      productionDomain,
-      `www.${productionDomain}`,
-      'localhost', // For local production build testing
-      '127.0.0.1'
-    ];
+    // STRICT: Only allow www.topaffaireimmo.com in production
+    // For production builds, ONLY register on the actual production domain
+    const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
+    const isProductionDomain = currentHost === 'www.topaffaireimmo.com';
     
-    if (!allowedHosts.includes(currentHost)) {
-      console.log(`[SW] Skipped: hostname "${currentHost}" not in allowed list`);
+    if (!isProductionDomain && !isLocalhost) {
+      console.log(`[SW] Skipped: hostname "${currentHost}" not allowed (production requires www.topaffaireimmo.com)`);
       return false;
     }
   }
 
-  // Must be in production mode
-  return import.meta.env.PROD;
+  return true;
 }
 
 /**
@@ -187,6 +185,15 @@ export async function registerServiceWorker(): Promise<boolean> {
     // Silent error handling - log to console but don't throw
     // This prevents Sentry from capturing bot registration failures
     console.warn('[SW] Registration failed (this is normal for some environments):', error);
+    
+    // Attempt to unregister any existing service workers on failure
+    // This ensures a clean state if SW registration is failing
+    try {
+      await unregisterServiceWorker();
+    } catch (unregisterError) {
+      // Ignore unregistration errors - they're not critical
+      console.debug('[SW] Unregistration also failed (expected if no SW exists)');
+    }
     
     // Don't rethrow - we want this to fail silently
     return false;
