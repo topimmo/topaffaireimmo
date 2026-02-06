@@ -18,6 +18,14 @@ interface TestCase {
 }
 
 const testCases: TestCase[] = [
+  // Problem statement examples - specific numbers mentioned in requirements
+  { phone: '0664352280', shouldBeValid: true, description: 'Problem statement example: Moroccan local 06' },
+  { phone: '0764352280', shouldBeValid: true, description: 'Problem statement example: Moroccan local 07' },
+  { phone: '+212664352280', shouldBeValid: true, description: 'Problem statement example: Morocco international +2126' },
+  { phone: '+212764352280', shouldBeValid: true, description: 'Problem statement example: Morocco international +2127' },
+  { phone: '+33664352280', shouldBeValid: true, description: 'Problem statement example: French number' },
+  { phone: '+33 6 64 35 22 80', shouldBeValid: true, description: 'Problem statement example: French number with spaces' },
+  
   // Moroccan numbers (backward compatibility + local format support)
   { phone: '+212664228976', shouldBeValid: true, description: 'Moroccan mobile number (international)' },
   { phone: '+212 664 22 89 76', shouldBeValid: true, description: 'Moroccan mobile with spaces (international)' },

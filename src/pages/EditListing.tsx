@@ -334,8 +334,8 @@ export default function EditListing() {
       if (!validateE164Phone(normalizedPhone)) {
         const errorMsg = getPhoneValidationError(normalizedPhone, isRTL);
         toast.error(errorMsg || (isRTL 
-          ? 'رقم الهاتف غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... إلخ'
-          : 'Numéro de téléphone invalide. Utilisez le format international: +212..., +33..., +44..., etc.'));
+          ? 'رقم الهاتف غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... أو التنسيق المحلي: 06..., 07...'
+          : 'Numéro de téléphone invalide. Utilisez le format international (+212..., +33..., +44...) ou le format local marocain (06..., 07...)'));
         return;
       }
     }
@@ -346,8 +346,8 @@ export default function EditListing() {
       if (!validateE164Phone(normalizedWhatsapp)) {
         const errorMsg = getPhoneValidationError(normalizedWhatsapp, isRTL);
         toast.error(errorMsg || (isRTL 
-          ? 'رقم واتساب غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... إلخ'
-          : 'Numéro WhatsApp invalide. Utilisez le format international: +212..., +33..., +44..., etc.'));
+          ? 'رقم واتساب غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... أو التنسيق المحلي: 06..., 07...'
+          : 'Numéro WhatsApp invalide. Utilisez le format international (+212..., +33..., +44...) ou le format local marocain (06..., 07...)'));
         return;
       }
     }
@@ -934,8 +934,8 @@ export default function EditListing() {
               </h2>
               <p className="text-sm text-muted-foreground mb-4">
                 {isRTL 
-                  ? 'استخدم التنسيق الدولي: +212... (المغرب), +33... (فرنسا), +44... (بريطانيا)'
-                  : 'Utilisez le format international: +212... (Maroc), +33... (France), +44... (UK)'}
+                  ? 'التنسيق الدولي (+212..., +33..., +44...) أو التنسيق المحلي المغربي (06..., 07...)'
+                  : 'Format international (+212..., +33..., +44...) ou format local marocain (06..., 07...)'}
               </p>
               
               <div className="space-y-4">
@@ -946,7 +946,7 @@ export default function EditListing() {
                     id="phone" 
                     name="phone" 
                     type="tel" 
-                    placeholder="+212 6XX XX XX XX, +33 6XX XX XX XX" 
+                    placeholder="06XX XX XX XX, +212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.phone} 
                     onChange={handleInputChange}
                     disabled={isLocked}
@@ -971,7 +971,7 @@ export default function EditListing() {
                     id="whatsapp" 
                     name="whatsapp" 
                     type="tel" 
-                    placeholder="+212 6XX XX XX XX, +33 6XX XX XX XX" 
+                    placeholder="06XX XX XX XX, +212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.whatsapp} 
                     onChange={handleInputChange}
                     disabled={isLocked || formData.whatsappSameAsPhone}
