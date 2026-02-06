@@ -172,6 +172,40 @@ async function getAppliedMigrations(client: any): Promise<AppliedMigration[]> {
 }
 
 /**
+ * Check if a migration is deprecated or should use repair
+ */
+function isDeprecatedMigration(migration: Migration): boolean {
+  const content = migration.content || '';
+  
+  // Check for explicit deprecation markers
+  if (content.match(/DEPRECATED|NO-OP|no-op/i)) {
+    return true;
+  }
+  
+  // Check if file is empty (only whitespace or comments)
+  const nonCommentContent = content
+    .split('\n')
+    .filter(line => !line.trim().startsWith('--') && line.trim().length > 0)
+    .join('\n')
+    .trim();
+  
+  if (nonCommentContent.length === 0) {
+    return true;
+  }
+  
+  // Check for known deprecated migration filenames
+  const knownDeprecated = [
+    '022_sample_properties',
+    '023_sample_properties',
+    '024_sample_properties',
+    '024_sample_properties_data',
+    '032_final_cleanup'
+  ];
+  
+  return knownDeprecated.some(name => migration.name.includes(name));
+}
+
+/**
  * Analyze migration content to determine impact
  */
 function analyzeMigrationImpact(migration: Migration): string[] {
@@ -261,6 +295,11 @@ function analyzeMigrationImpact(migration: Migration): string[] {
     impacts.push(`Adds ${constraints?.length || 0} constraint(s)`);
   }
 
+  // Check for deprecated markers
+  if (content.match(/DEPRECATED|NO-OP|no-op/i)) {
+    impacts.push(`${colors.yellow}⚠ Marked as DEPRECATED or NO-OP${colors.reset}`);
+  }
+
   if (impacts.length === 0) {
     // Check if file is empty
     if (content.trim().length === 0) {
@@ -343,9 +382,36 @@ function printResults(result: DiagnosticResult) {
 
     // Recommendations
     printSection('Recommendations for Pending Migrations', '💡');
-    printInfo('To apply pending migrations, use Supabase CLI:');
-    console.log(`   ${colors.gray}supabase db push${colors.reset}`);
-    console.log(`\n   Or apply them manually via the Supabase dashboard SQL editor.`);
+    
+    // Check for deprecated migrations
+    const deprecatedPending = result.pending.filter(m => isDeprecatedMigration(m));
+    
+    if (deprecatedPending.length > 0) {
+      printWarning(`Found ${deprecatedPending.length} deprecated/empty migrations that are pending.`);
+      console.log(`\n${colors.bright}If these migrations are already applied in production:${colors.reset}`);
+      console.log(`Use ${colors.cyan}supabase migration repair${colors.reset} to mark them as applied locally:\n`);
+      deprecatedPending.forEach(m => {
+        console.log(`   ${colors.gray}supabase migration repair ${m.version} --status applied${colors.reset}`);
+      });
+      console.log(`\n${colors.bright}This will:${colors.reset}`);
+      console.log(`   ✓ Mark the migration as applied locally`);
+      console.log(`   ✓ NOT execute any SQL (safe operation)`);
+      console.log(`   ✓ Align local state with production database`);
+      console.log(`\n${colors.bright}See documentation:${colors.reset}`);
+      console.log(`   - Quick Reference: ${colors.cyan}/SUPABASE_MIGRATION_REPAIR_QUICK_REFERENCE.md${colors.reset}`);
+      console.log(`   - Comprehensive Guide: ${colors.cyan}/docs/SUPABASE_MIGRATION_REPAIR_GUIDE.md${colors.reset}`);
+    }
+    
+    const nonDeprecatedPending = result.pending.filter(m => !isDeprecatedMigration(m));
+    
+    if (nonDeprecatedPending.length > 0) {
+      if (deprecatedPending.length > 0) {
+        console.log(`\n${colors.bright}For non-deprecated migrations:${colors.reset}`);
+      }
+      printInfo('To apply pending migrations, use Supabase CLI:');
+      console.log(`   ${colors.gray}supabase db push${colors.reset}`);
+      console.log(`\n   Or apply them manually via the Supabase dashboard SQL editor.`);
+    }
     
     if (result.pending.some(m => m.content?.match(/DROP TABLE|DELETE FROM/gi))) {
       printWarning('Some pending migrations contain destructive operations (DROP, DELETE).');
