@@ -303,3 +303,39 @@ export function shouldAllowIndexing(): boolean {
   // Only allow indexing on production domain
   return currentUrl === domain;
 }
+
+/**
+ * Get optimized OG image for a specific page type
+ * Returns the appropriate Open Graph image based on page context
+ */
+export function getOGImage(options: {
+  page?: 'home' | 'search' | 'buy' | 'rent' | 'sahara' | 'city' | 'property';
+  city?: string;
+}): string {
+  const { page = 'home', city } = options;
+  const baseUrl = getProductionDomain();
+  
+  // City-specific OG images (currently only Casablanca, can be extended)
+  if (page === 'city' && city === 'casablanca') {
+    return `${baseUrl}/og-casablanca.jpg`;
+  }
+  
+  // Page-specific OG images
+  switch (page) {
+    case 'search':
+      return `${baseUrl}/og-search.jpg`;
+    case 'buy':
+      return `${baseUrl}/og-buy.jpg`;
+    case 'rent':
+      return `${baseUrl}/og-rent.jpg`;
+    case 'sahara':
+      return `${baseUrl}/og-sahara.jpg`;
+    case 'property':
+      // For property listings, fall back to default
+      // In the future, this could generate dynamic OG images
+      return `${baseUrl}/og-image.jpg`;
+    case 'home':
+    default:
+      return `${baseUrl}/og-image.jpg`;
+  }
+}
