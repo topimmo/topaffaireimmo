@@ -4,6 +4,7 @@ import { Routes, Route, useLocation, Outlet } from "react-router-dom";
 
 import MobileFAB from "./components/layout/MobileFAB";
 import { MobileInstallBar } from "./components/pwa/MobileInstallBar";
+import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
@@ -451,6 +452,7 @@ function App() {
       </Suspense>
 
       {/* ⚠️ دابا MobileFAB راه داخل PublicLayout، إلى بغيتيه هنا حيدو من PublicLayout */}
+      <ConnectionStatusBanner />
       <DebugMode />
       <Toaster />
     </>
