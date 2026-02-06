@@ -126,6 +126,7 @@ export function clearUrlHash(): void {
 
 /**
  * Normalize a phone number by removing spaces, dashes, parentheses, and other non-digit characters
+ * Converts Moroccan local format (06/07/05) to E.164 international format
  * Preserves the leading + sign for E.164 format
  * 
  * @param phone - The phone number to normalize
@@ -135,7 +136,14 @@ export function normalizePhoneNumber(phone: string): string {
   if (!phone) return '';
   
   // Remove all characters except digits and +
-  const normalized = phone.replace(/[^\d+]/g, '');
+  let normalized = phone.replace(/[^\d+]/g, '');
+  
+  // Handle Moroccan local format: 06/07/05 -> +2126/+2127/+2125
+  if (normalized && !normalized.startsWith('+') && /^0[567]\d{8}$/.test(normalized)) {
+    // Moroccan mobile numbers: 0[567]XXXXXXXX (10 digits total)
+    // Convert to international: +212[567]XXXXXXXX
+    return '+212' + normalized.substring(1);
+  }
   
   // Ensure it starts with + if it contains digits
   if (normalized && !normalized.startsWith('+')) {

@@ -18,9 +18,16 @@ interface TestCase {
 }
 
 const testCases: TestCase[] = [
-  // Moroccan numbers (backward compatibility)
-  { phone: '+212664228976', shouldBeValid: true, description: 'Moroccan mobile number' },
-  { phone: '+212 664 22 89 76', shouldBeValid: true, description: 'Moroccan mobile with spaces' },
+  // Moroccan numbers (backward compatibility + local format support)
+  { phone: '+212664228976', shouldBeValid: true, description: 'Moroccan mobile number (international)' },
+  { phone: '+212 664 22 89 76', shouldBeValid: true, description: 'Moroccan mobile with spaces (international)' },
+  { phone: '0664228976', shouldBeValid: true, description: 'Moroccan local format 06 (auto-converted to +2126...)' },
+  { phone: '0764228976', shouldBeValid: true, description: 'Moroccan local format 07 (auto-converted to +2127...)' },
+  { phone: '0564228976', shouldBeValid: true, description: 'Moroccan local format 05 (auto-converted to +2125...)' },
+  { phone: '06 64 22 89 76', shouldBeValid: true, description: 'Moroccan local with spaces (auto-converted)' },
+  { phone: '0464228976', shouldBeValid: false, description: 'Moroccan local format 04 (invalid - not mobile)' },
+  { phone: '0864228976', shouldBeValid: false, description: 'Moroccan local format 08 (invalid - not mobile)' },
+  { phone: '0964228976', shouldBeValid: false, description: 'Moroccan local format 09 (invalid - not mobile)' },
   { phone: '+212 5XX XX XX XX', shouldBeValid: false, description: 'Moroccan with placeholder X' },
   
   // French numbers
@@ -56,7 +63,6 @@ const testCases: TestCase[] = [
   // Note: These numbers will have + added, then checked for validity
   { phone: '212664228976', shouldBeValid: true, description: 'Morocco number without + (auto-added by normalization)' },
   { phone: '33612345678', shouldBeValid: true, description: 'France number without + (auto-added)' },
-  { phone: '0664228976', shouldBeValid: false, description: 'Local format with leading 0 (becomes +0... which is invalid)' },
   { phone: '+212-664-228-976', shouldBeValid: true, description: 'With dashes (should normalize)' },
   { phone: '+212 (664) 228 976', shouldBeValid: true, description: 'With parentheses (should normalize)' },
   { phone: '', shouldBeValid: true, description: 'Empty string (optional field)' },
