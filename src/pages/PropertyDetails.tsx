@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AdBanner from "@/components/home/AdBanner";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   Square,
   Phone,
   MessageCircle,
+  Mail,
   Heart,
   Share2,
   ChevronLeft,
@@ -27,7 +29,7 @@ import {
   User,
   Building2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatWhatsAppLink } from "@/lib/utils";
 import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/config/site";
@@ -67,8 +69,16 @@ type DbPropertyDetails = {
   contact_phone?: string | null;
   contact_whatsapp?: string | null;
   contact_email?: string | null;
+  
+  // Visibility flags
+  show_phone_public?: boolean | null;
+  show_whatsapp_public?: boolean | null;
+  show_email_public?: boolean | null;
 
   advertiser_type?: "owner" | "broker" | "agency" | string | null;
+  
+  // For checking ownership
+  owner_id?: string | null;
 
   // Owner profile data via join
   owner?: {
@@ -107,12 +117,19 @@ function getPublicImageUrl(pathOrUrl: string): string {
 
 export default function PropertyDetails() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [property, setProperty] = useState<DbPropertyDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [currentImage, setCurrentImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  
+  // Check if current user is the owner
+  const isOwner = useMemo(() => {
+    if (!user || !property) return false;
+    return user.id === property.owner_id;
+  }, [user, property]);
 
   useEffect(() => {
     let mounted = true;
@@ -148,6 +165,10 @@ export default function PropertyDetails() {
             contact_phone,
             contact_whatsapp,
             contact_email,
+            show_phone_public,
+            show_whatsapp_public,
+            show_email_public,
+            owner_id,
             advertiser_type,
             owner:profiles!properties_owner_id_fkey(company_name, agency_name, full_name, phone, email),
             city:cities(name_fr, name_ar),
@@ -402,9 +423,15 @@ export default function PropertyDetails() {
   const cityLabel = safeStr(property.city?.name_fr);
   const neighborhoodLabel = safeStr(property.neighborhood?.name_fr);
 
-  // ✅ Safe phone numbers with fallbacks
+  // ✅ Safe phone numbers with fallbacks and visibility checks
   const phone = safeStr(property.contact_phone);
   const whatsapp = safeStr(property.contact_whatsapp);
+  const email = safeStr(property.contact_email);
+  
+  // Determine if contact info should be shown (owner can always see)
+  const shouldShowPhone = isOwner || (property.show_phone_public && phone);
+  const shouldShowWhatsapp = isOwner || (property.show_whatsapp_public && whatsapp);
+  const shouldShowEmail = isOwner || (property.show_email_public && email);
 
   // ✅ SEO metadata - safely constructed
   const seoTitle = `${title} - ${
@@ -703,52 +730,77 @@ export default function PropertyDetails() {
                 </div>
 
                 <div className="space-y-3">
-                  <Button 
-                    className="w-full gap-2" 
-                    size="lg" 
-                    asChild 
-                    disabled={!phone}
-                    onClick={() => {
-                      if (id && phone) {
-                        trackContactClick(id, 'phone').catch(err => {
-                          console.warn('Failed to track phone click:', err);
-                        });
-                      }
-                    }}
-                  >
-                    <a href={phone ? `tel:${phone}` : "#"}>
-                      <Phone className="h-5 w-5" />
-                      Call Now
-                    </a>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2 text-green-600 border-green-600 hover:bg-green-50"
-                    size="lg"
-                    asChild
-                    disabled={!whatsapp}
-                    onClick={() => {
-                      if (id && whatsapp) {
-                        trackContactClick(id, 'whatsapp').catch(err => {
-                          console.warn('Failed to track whatsapp click:', err);
-                        });
-                      }
-                    }}
-                  >
-                    <a
-                      href={
-                        whatsapp
-                          ? `https://wa.me/${safeStr(whatsapp).replace(/[^\d]/g, "")}`
-                          : "#"
-                      }
-                      target="_blank"
-                      rel="noreferrer"
+                  {shouldShowPhone && phone && (
+                    <Button 
+                      className="w-full gap-2" 
+                      size="lg" 
+                      asChild 
+                      onClick={() => {
+                        if (id && phone) {
+                          trackContactClick(id, 'phone').catch(err => {
+                            console.warn('Failed to track phone click:', err);
+                          });
+                        }
+                      }}
                     >
-                      <MessageCircle className="h-5 w-5" />
-                      WhatsApp
-                    </a>
-                  </Button>
+                      <a href={`tel:${phone}`}>
+                        <Phone className="h-5 w-5" />
+                        Call Now
+                      </a>
+                    </Button>
+                  )}
+
+                  {shouldShowWhatsapp && whatsapp && (
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 text-green-600 border-green-600 hover:bg-green-50"
+                      size="lg"
+                      asChild
+                      onClick={() => {
+                        if (id && whatsapp) {
+                          trackContactClick(id, 'whatsapp').catch(err => {
+                            console.warn('Failed to track whatsapp click:', err);
+                          });
+                        }
+                      }}
+                    >
+                      <a
+                        href={formatWhatsAppLink(whatsapp)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <MessageCircle className="h-5 w-5" />
+                        WhatsApp
+                      </a>
+                    </Button>
+                  )}
+                  
+                  {shouldShowEmail && email && (
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      size="lg"
+                      asChild
+                      onClick={() => {
+                        if (id && email) {
+                          trackContactClick(id, 'email').catch(err => {
+                            console.warn('Failed to track email click:', err);
+                          });
+                        }
+                      }}
+                    >
+                      <a href={`mailto:${email}`}>
+                        <Mail className="h-5 w-5" />
+                        Email
+                      </a>
+                    </Button>
+                  )}
+                  
+                  {!shouldShowPhone && !shouldShowWhatsapp && !shouldShowEmail && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Contact information hidden by advertiser
+                    </p>
+                  )}
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center mt-4">

@@ -123,3 +123,105 @@ export function clearUrlHash(): void {
     window.history.replaceState(null, '', urlWithoutHash);
   }
 }
+
+/**
+ * Normalize a phone number by removing spaces, dashes, parentheses, and other non-digit characters
+ * Preserves the leading + sign for E.164 format
+ * 
+ * @param phone - The phone number to normalize
+ * @returns Normalized phone number (e.g., "+212664228976")
+ */
+export function normalizePhoneNumber(phone: string): string {
+  if (!phone) return '';
+  
+  // Remove all characters except digits and +
+  const normalized = phone.replace(/[^\d+]/g, '');
+  
+  // Ensure it starts with + if it contains digits
+  if (normalized && !normalized.startsWith('+')) {
+    return '+' + normalized;
+  }
+  
+  return normalized;
+}
+
+/**
+ * Validate a phone number in E.164 format
+ * E.164 format: +[country code][subscriber number]
+ * - Must start with +
+ * - Country code: 1-3 digits (e.g., +1, +44, +212)
+ * - Subscriber number: remaining digits
+ * - Total digits after '+': 8-15 (includes country code and subscriber number)
+ * - Valid examples: +212664228976 (12 digits), +33123456789 (11 digits), +14155552671 (11 digits)
+ * 
+ * @param phone - The phone number to validate
+ * @returns true if valid E.164 format, false otherwise
+ */
+export function validateE164Phone(phone: string): boolean {
+  if (!phone) return true; // Allow empty (optional field)
+  
+  // Normalize first to remove formatting
+  const normalized = normalizePhoneNumber(phone);
+  
+  // E.164 regex: + followed by 1-3 digit country code, then 4-14 more digits
+  // This gives us 8-15 total digits after the + (country code + subscriber number)
+  const e164Regex = /^\+[1-9]\d{7,14}$/;
+  
+  return e164Regex.test(normalized);
+}
+
+/**
+ * Format a phone number for WhatsApp wa.me link
+ * Converts E.164 format to wa.me format (removes the + sign)
+ * 
+ * @param phone - Phone number in E.164 format (e.g., "+212664228976")
+ * @returns WhatsApp URL (e.g., "https://wa.me/212664228976")
+ */
+export function formatWhatsAppLink(phone: string): string {
+  if (!phone) return '';
+  
+  // Remove all non-digit characters
+  const digitsOnly = phone.replace(/\D/g, '');
+  
+  if (!digitsOnly) return '';
+  
+  return `https://wa.me/${digitsOnly}`;
+}
+
+/**
+ * Get user-friendly error message for invalid phone number
+ * 
+ * @param phone - The invalid phone number
+ * @param isRTL - Whether to return RTL (Arabic) message
+ * @returns Error message
+ */
+export function getPhoneValidationError(phone: string, isRTL: boolean): string {
+  if (!phone || phone.trim() === '') {
+    return ''; // No error for empty field
+  }
+  
+  const normalized = normalizePhoneNumber(phone);
+  
+  if (!normalized.startsWith('+')) {
+    return isRTL
+      ? 'يجب أن يبدأ الرقم بـ + متبوعًا برمز البلد'
+      : 'Le numéro doit commencer par + suivi du code pays';
+  }
+  
+  // E.164 allows 8-15 digits after '+', so normalized length should be 9-16 (including '+')
+  if (normalized.length < 9) {
+    return isRTL
+      ? 'الرقم قصير جدًا'
+      : 'Le numéro est trop court';
+  }
+  
+  if (normalized.length > 16) {
+    return isRTL
+      ? 'الرقم طويل جدًا'
+      : 'Le numéro est trop long';
+  }
+  
+  return isRTL
+    ? 'تنسيق غير صالح. استخدم: +212..., +33..., +44... إلخ'
+    : 'Format invalide. Utilisez: +212..., +33..., +44..., etc.';
+}

@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Home,
   Building,
@@ -29,7 +31,7 @@ import {
   Loader2,
   LogIn,
 } from 'lucide-react';
-import { cn, mapTransactionType } from '@/lib/utils';
+import { cn, mapTransactionType, validateE164Phone, normalizePhoneNumber, getPhoneValidationError } from '@/lib/utils';
 
 interface City {
   id: number;
@@ -133,6 +135,12 @@ export default function AddListing() {
     descriptionFr: '',
     descriptionAr: '',
     phone: '',
+    whatsapp: '',
+    email: '',
+    showPhonePublic: false,
+    showWhatsappPublic: true,
+    showEmailPublic: true,
+    whatsappSameAsPhone: false,
   });
 
   useEffect(() => {
@@ -228,7 +236,22 @@ export default function AddListing() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Special handling for phone field when "WhatsApp same as phone" is checked
+    if (name === 'phone' && formData.whatsappSameAsPhone) {
+      setFormData((prev) => ({ ...prev, phone: value, whatsapp: value }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // Handle WhatsApp same as phone checkbox
+  const handleWhatsappSameAsPhone = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      whatsappSameAsPhone: checked,
+      whatsapp: checked ? prev.phone : prev.whatsapp,
+    }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -343,14 +366,26 @@ export default function AddListing() {
       return;
     }
 
+    // Validate phone number (E.164 format)
     if (formData.phone && formData.phone.trim()) {
-      const phoneRegex = /^(\+212|0)[5-7]\d{8}$/;
-      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-        alert(
-          isRTL
-            ? 'رقم الهاتف غير صالح. يجب أن يكون بالشكل: +212 6XX XX XX XX أو 06XX XX XX XX'
-            : 'Numéro de téléphone invalide. Format attendu: +212 6XX XX XX XX ou 06XX XX XX XX'
-        );
+      const normalizedPhone = normalizePhoneNumber(formData.phone);
+      if (!validateE164Phone(normalizedPhone)) {
+        const errorMsg = getPhoneValidationError(normalizedPhone, isRTL);
+        alert(errorMsg || (isRTL 
+          ? 'رقم الهاتف غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... إلخ'
+          : 'Numéro de téléphone invalide. Utilisez le format international: +212..., +33..., +44..., etc.'));
+        return;
+      }
+    }
+
+    // Validate WhatsApp number (E.164 format)
+    if (formData.whatsapp && formData.whatsapp.trim()) {
+      const normalizedWhatsapp = normalizePhoneNumber(formData.whatsapp);
+      if (!validateE164Phone(normalizedWhatsapp)) {
+        const errorMsg = getPhoneValidationError(normalizedWhatsapp, isRTL);
+        alert(errorMsg || (isRTL 
+          ? 'رقم واتساب غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... إلخ'
+          : 'Numéro WhatsApp invalide. Utilisez le format international: +212..., +33..., +44..., etc.'));
         return;
       }
     }
@@ -439,8 +474,14 @@ export default function AddListing() {
         description_fr: formData.descriptionFr || null,
         description_ar: formData.descriptionAr || null,
         images: [],
-        // Schema uses contact_phone not phone
-        contact_phone: formData.phone || null,
+        // Contact fields with E.164 normalization
+        contact_phone: formData.phone ? normalizePhoneNumber(formData.phone) : null,
+        contact_whatsapp: formData.whatsapp ? normalizePhoneNumber(formData.whatsapp) : null,
+        contact_email: formData.email ? formData.email.trim() : null,
+        // Visibility flags
+        show_phone_public: formData.showPhonePublic,
+        show_whatsapp_public: formData.showWhatsappPublic,
+        show_email_public: formData.showEmailPublic,
         // Set status based on submit action: 'draft' or 'pending'
         status: submitAction,
       };
@@ -1043,10 +1084,97 @@ export default function AddListing() {
             </div>
 
             <div className="bg-white rounded-xl border p-6">
-              <h2 className="font-display text-xl font-semibold mb-4">{t('addListing.phone')}</h2>
-              <div className="space-y-2">
-                <Label htmlFor="phone">{t('addListing.phone')}</Label>
-                <Input id="phone" name="phone" type="tel" placeholder="+212 6XX XX XX XX" value={formData.phone} onChange={handleInputChange} />
+              <h2 className="font-display text-xl font-semibold mb-4">
+                {isRTL ? 'معلومات الاتصال' : 'Informations de contact'}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                {isRTL 
+                  ? 'استخدم التنسيق الدولي: +212... (المغرب), +33... (فرنسا), +44... (بريطانيا)'
+                  : 'Utilisez le format international: +212... (Maroc), +33... (France), +44... (UK)'}
+              </p>
+              
+              <div className="space-y-4">
+                {/* Phone Number */}
+                <div className="space-y-2">
+                  <Label htmlFor="phone">{isRTL ? 'رقم الهاتف' : 'Numéro de téléphone'}</Label>
+                  <Input 
+                    id="phone" 
+                    name="phone" 
+                    type="tel" 
+                    placeholder="+212 6XX XX XX XX" 
+                    value={formData.phone} 
+                    onChange={handleInputChange} 
+                  />
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Switch 
+                      id="showPhonePublic"
+                      checked={formData.showPhonePublic}
+                      onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, showPhonePublic: checked }))}
+                    />
+                    <Label htmlFor="showPhonePublic" className="text-sm font-normal cursor-pointer">
+                      {isRTL ? 'إظهار الهاتف للعامة' : 'Afficher le téléphone publiquement'}
+                    </Label>
+                  </div>
+                </div>
+
+                {/* WhatsApp Number */}
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">{isRTL ? 'رقم واتساب' : 'Numéro WhatsApp'}</Label>
+                  <Input 
+                    id="whatsapp" 
+                    name="whatsapp" 
+                    type="tel" 
+                    placeholder="+212 6XX XX XX XX" 
+                    value={formData.whatsapp} 
+                    onChange={handleInputChange}
+                    disabled={formData.whatsappSameAsPhone}
+                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Checkbox 
+                        id="whatsappSameAsPhone"
+                        checked={formData.whatsappSameAsPhone}
+                        onCheckedChange={handleWhatsappSameAsPhone}
+                      />
+                      <Label htmlFor="whatsappSameAsPhone" className="text-sm font-normal cursor-pointer">
+                        {isRTL ? 'واتساب نفس رقم الهاتف' : 'WhatsApp identique au téléphone'}
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Switch 
+                        id="showWhatsappPublic"
+                        checked={formData.showWhatsappPublic}
+                        onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, showWhatsappPublic: checked }))}
+                      />
+                      <Label htmlFor="showWhatsappPublic" className="text-sm font-normal cursor-pointer">
+                        {isRTL ? 'إظهار واتساب للعامة' : 'Afficher WhatsApp publiquement'}
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">{isRTL ? 'البريد الإلكتروني' : 'Email'}</Label>
+                  <Input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    placeholder="contact@example.com" 
+                    value={formData.email} 
+                    onChange={handleInputChange} 
+                  />
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Switch 
+                      id="showEmailPublic"
+                      checked={formData.showEmailPublic}
+                      onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, showEmailPublic: checked }))}
+                    />
+                    <Label htmlFor="showEmailPublic" className="text-sm font-normal cursor-pointer">
+                      {isRTL ? 'إظهار البريد الإلكتروني للعامة' : 'Afficher email publiquement'}
+                    </Label>
+                  </div>
+                </div>
               </div>
             </div>
 
