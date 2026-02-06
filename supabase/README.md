@@ -28,7 +28,7 @@ supabase/
 
 ## Migrations
 
-We have 42 migration files tracking the evolution of the database schema.
+We have 80+ migration files tracking the evolution of the database schema.
 
 ### Key Migrations
 
@@ -39,9 +39,21 @@ We have 42 migration files tracking the evolution of the database schema.
 - **036-037**: Facebook integration
 - **038-042**: Comprehensive production fixes
 - **043-052**: Security fixes and admin system improvements
+- **053-082**: Admin system, CMS, featured properties, contact privacy, and more
 
 **Important:** Migrations contain ONLY schema changes (tables, columns, constraints, RLS, functions). 
 All demo/sample data has been moved to `supabase/seed/seed_demo_data.sql`.
+
+### Deprecated/No-Op Migrations
+
+Some migrations are empty or deprecated but kept for sequence continuity:
+- `022_sample_properties.sql` - Empty (data moved to seed)
+- `023_sample_properties.sql` - Empty (data moved to seed)
+- `024_sample_properties.sql` - Empty (data moved to seed)
+- `024_sample_properties_data.sql` - Deprecated (see comments in file)
+- `032_final_cleanup.sql` - Empty (cleanup completed)
+
+These are safe to apply (they're no-ops) and should not be deleted.
 
 ### Running Migrations
 
@@ -68,6 +80,29 @@ supabase db pull
 # Push local changes
 supabase db push
 ```
+
+#### Production: Migration Conflicts
+
+If you get "Found local migration files to be inserted before the last migration on remote database":
+
+```bash
+# DON'T use --include-all in production!
+# Instead, use migration repair for already-applied migrations:
+supabase migration repair <version> --status applied
+
+# Example for deprecated migrations:
+supabase migration repair 024_sample_properties_data --status applied
+```
+
+**📖 See detailed guides:**
+- **Quick Reference**: `/SUPABASE_MIGRATION_REPAIR_QUICK_REFERENCE.md`
+- **Comprehensive Guide**: `/docs/SUPABASE_MIGRATION_REPAIR_GUIDE.md`
+
+These guides explain:
+- Why this happens (deprecated/no-op migrations already applied)
+- How to safely resolve without `--include-all`
+- Best practices for production migrations
+- Step-by-step troubleshooting
 
 ## Database Schema
 
@@ -413,7 +448,22 @@ CREATE INDEX idx_properties_status
 
 ### Migration Conflicts
 
-If migrations conflict:
+If you see "Found local migration files to be inserted before the last migration":
+
+```bash
+# This means some migrations are already applied in production
+# Use migration repair to sync local state
+supabase migration repair <version> --status applied
+
+# Example:
+supabase migration repair 024_sample_properties_data --status applied
+```
+
+**See comprehensive guides:**
+- Quick fix: `/SUPABASE_MIGRATION_REPAIR_QUICK_REFERENCE.md`
+- Detailed explanation: `/docs/SUPABASE_MIGRATION_REPAIR_GUIDE.md`
+
+If migrations conflict for other reasons:
 
 ```bash
 # Pull remote state
@@ -464,7 +514,14 @@ Before going live:
 
 ## Resources
 
+### Official Documentation
 - [Supabase Documentation](https://supabase.com/docs)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Row Level Security Guide](https://supabase.com/docs/guides/auth/row-level-security)
 - [Storage Guide](https://supabase.com/docs/guides/storage)
+
+### Project-Specific Guides
+- **Migration Repair Quick Reference**: `/SUPABASE_MIGRATION_REPAIR_QUICK_REFERENCE.md`
+- **Migration Repair Comprehensive Guide**: `/docs/SUPABASE_MIGRATION_REPAIR_GUIDE.md`
+- **Migration Diagnostic Tool**: `/MIGRATION_DIAGNOSTIC_TOOL.md`
+- **Security Remediation Guide**: `/docs/SUPABASE_SECURITY_PERFORMANCE_REMEDIATION_GUIDE.md`
