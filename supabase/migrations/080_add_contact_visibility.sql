@@ -75,11 +75,11 @@ CREATE INDEX IF NOT EXISTS idx_properties_show_phone_public ON public.properties
 CREATE INDEX IF NOT EXISTS idx_properties_show_whatsapp_public ON public.properties(show_whatsapp_public) WHERE show_whatsapp_public = true;
 CREATE INDEX IF NOT EXISTS idx_properties_show_email_public ON public.properties(show_email_public) WHERE show_email_public = true;
 
--- 7. Update existing rows to have sensible defaults for visibility
--- Keep phone private by default, but show whatsapp/email if they exist
+-- 7. Set sensible defaults for existing rows
+-- Note: Since columns were created with NOT NULL DEFAULT, this UPDATE is for
+-- any edge cases where columns might be NULL, and to ensure consistent behavior
 UPDATE public.properties 
 SET 
-  show_phone_public = false,
-  show_whatsapp_public = CASE WHEN contact_whatsapp IS NOT NULL THEN true ELSE false END,
-  show_email_public = CASE WHEN contact_email IS NOT NULL THEN true ELSE false END
-WHERE show_phone_public IS NULL OR show_whatsapp_public IS NULL OR show_email_public IS NULL;
+  show_phone_public = COALESCE(show_phone_public, false),
+  show_whatsapp_public = COALESCE(show_whatsapp_public, CASE WHEN contact_whatsapp IS NOT NULL THEN true ELSE false END),
+  show_email_public = COALESCE(show_email_public, CASE WHEN contact_email IS NOT NULL THEN true ELSE false END);

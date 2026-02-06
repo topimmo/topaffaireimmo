@@ -149,9 +149,10 @@ export function normalizePhoneNumber(phone: string): string {
  * Validate a phone number in E.164 format
  * E.164 format: +[country code][subscriber number]
  * - Must start with +
- * - Country code: 1-3 digits
- * - Total length: 8-15 digits (after the +)
- * - Valid examples: +212664228976, +33123456789, +14155552671
+ * - Country code: 1-3 digits (e.g., +1, +44, +212)
+ * - Subscriber number: remaining digits
+ * - Total digits after '+': 8-15 (includes country code and subscriber number)
+ * - Valid examples: +212664228976 (12 digits), +33123456789 (11 digits), +14155552671 (11 digits)
  * 
  * @param phone - The phone number to validate
  * @returns true if valid E.164 format, false otherwise
@@ -162,7 +163,8 @@ export function validateE164Phone(phone: string): boolean {
   // Normalize first to remove formatting
   const normalized = normalizePhoneNumber(phone);
   
-  // E.164 regex: + followed by 1-3 digit country code, then 4-14 more digits (total 7-15 after +)
+  // E.164 regex: + followed by 1-3 digit country code, then 4-14 more digits
+  // This gives us 8-15 total digits after the + (country code + subscriber number)
   const e164Regex = /^\+[1-9]\d{7,14}$/;
   
   return e164Regex.test(normalized);

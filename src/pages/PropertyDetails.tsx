@@ -125,8 +125,8 @@ export default function PropertyDetails() {
   const [currentImage, setCurrentImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // Check if current user is the owner or admin
-  const isOwnerOrAdmin = useMemo(() => {
+  // Check if current user is the owner (admin check could be added here in future)
+  const isOwner = useMemo(() => {
     if (!user || !property) return false;
     return user.id === property.owner_id;
   }, [user, property]);
@@ -428,10 +428,10 @@ export default function PropertyDetails() {
   const whatsapp = safeStr(property.contact_whatsapp);
   const email = safeStr(property.contact_email);
   
-  // Determine if contact info should be shown (owner/admin can always see)
-  const shouldShowPhone = isOwnerOrAdmin || (property.show_phone_public && phone);
-  const shouldShowWhatsapp = isOwnerOrAdmin || (property.show_whatsapp_public && whatsapp);
-  const shouldShowEmail = isOwnerOrAdmin || (property.show_email_public && email);
+  // Determine if contact info should be shown (owner can always see)
+  const shouldShowPhone = isOwner || (property.show_phone_public && phone);
+  const shouldShowWhatsapp = isOwner || (property.show_whatsapp_public && whatsapp);
+  const shouldShowEmail = isOwner || (property.show_email_public && email);
 
   // ✅ SEO metadata - safely constructed
   const seoTitle = `${title} - ${
