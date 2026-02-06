@@ -41,11 +41,17 @@ The app will be available at `http://localhost:5173`
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment to Vercel
 
 ### Diagnostic & Maintenance Tools
-- **[Migration Diagnostic Tool](MIGRATION_DIAGNOSTIC_TOOL.md)** - 🔍 Check migration status (new)
+- **[Migration Diagnostic Tool](MIGRATION_DIAGNOSTIC_TOOL.md)** - 🔍 Check migration status
   - [Quick Reference](MIGRATION_DIAGNOSTIC_QUICK_REFERENCE.md) - Fast migration check guide
   - Detects pending, missing, and out-of-order migrations
   - Automatic SQL impact analysis
   - Usage: `npm run check:migrations`
+- **[Migration Repair Guide](docs/SUPABASE_MIGRATION_REPAIR_GUIDE.md)** - 🔧 Fix migration conflicts (new)
+  - [Quick Reference](SUPABASE_MIGRATION_REPAIR_QUICK_REFERENCE.md) - Fast fix for migration conflicts
+  - [Example Scenarios](docs/SUPABASE_MIGRATION_REPAIR_EXAMPLES.md) - Real-world examples
+  - Resolve "Found local migration files to be inserted before the last migration" errors
+  - Handle deprecated/no-op migrations safely
+  - Best practices for production migrations
 
 ### Feature Documentation
 - [Email Configuration](docs/setup/EMAIL_CONFIGURATION.md)
