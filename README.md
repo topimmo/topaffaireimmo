@@ -58,6 +58,11 @@ The app will be available at `http://localhost:5173`
 - [Facebook Auto-Publishing](docs/features/FACEBOOK_AUTO_PUBLISH_SETUP.md)
 - [Morocco SEO Implementation](docs/features/MOROCCO_SEO_IMPLEMENTATION.md)
 - [Sample Listings Seed Script](docs/SAMPLE_LISTINGS_SEED.md)
+- **[Auth & PWA Troubleshooting](docs/AUTH_PWA_TROUBLESHOOTING.md)** - 🔧 Fix auth links and PWA issues
+  - [Supabase Auth Redirect URLs](docs/SUPABASE_AUTH_REDIRECT_URLS.md) - Required configuration
+  - Resolve "Lien invalide / Expiré" errors
+  - Fix PWA "Internet not available" issues
+  - Password reset and magic link troubleshooting
 - **[VAPID Web Push Notifications Setup](VAPID_SETUP_GUIDE.md)** - 🔔 Step-by-step guide for non-experts
   - [Quick Start](PUSH_NOTIFICATIONS_QUICK_START.md) - Quick developer setup
   - [Full Implementation](PUSH_NOTIFICATIONS_IMPLEMENTATION.md) - Technical details
