@@ -946,7 +946,7 @@ export default function EditListing() {
                     id="phone" 
                     name="phone" 
                     type="tel" 
-                    placeholder="+212 6XX XX XX XX" 
+                    placeholder="+212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.phone} 
                     onChange={handleInputChange}
                     disabled={isLocked}
@@ -971,7 +971,7 @@ export default function EditListing() {
                     id="whatsapp" 
                     name="whatsapp" 
                     type="tel" 
-                    placeholder="+212 6XX XX XX XX" 
+                    placeholder="+212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.whatsapp} 
                     onChange={handleInputChange}
                     disabled={isLocked || formData.whatsappSameAsPhone}
