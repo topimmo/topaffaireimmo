@@ -125,7 +125,7 @@ export default function PropertyDetails() {
   const [currentImage, setCurrentImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // Check if current user is the owner (admin check could be added here in future)
+  // Check if current user is the owner
   const isOwner = useMemo(() => {
     if (!user || !property) return false;
     return user.id === property.owner_id;

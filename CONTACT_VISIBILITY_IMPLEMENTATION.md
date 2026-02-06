@@ -83,9 +83,9 @@ getPhoneValidationError(phone: string, isRTL: boolean): string
 ### 5. PropertyDetails Page (Public View)
 **File**: `src/pages/PropertyDetails.tsx`
 
-#### Owner/Admin Access:
+#### Owner Access:
 ```typescript
-const isOwnerOrAdmin = useMemo(() => {
+const isOwner = useMemo(() => {
   if (!user || !property) return false;
   return user.id === property.owner_id;
 }, [user, property]);
@@ -93,9 +93,9 @@ const isOwnerOrAdmin = useMemo(() => {
 
 #### Conditional Contact Display:
 ```typescript
-const shouldShowPhone = isOwnerOrAdmin || (property.show_phone_public && phone);
-const shouldShowWhatsapp = isOwnerOrAdmin || (property.show_whatsapp_public && whatsapp);
-const shouldShowEmail = isOwnerOrAdmin || (property.show_email_public && email);
+const shouldShowPhone = isOwner || (property.show_phone_public && phone);
+const shouldShowWhatsapp = isOwner || (property.show_whatsapp_public && whatsapp);
+const shouldShowEmail = isOwner || (property.show_email_public && email);
 ```
 
 #### Contact Buttons:
