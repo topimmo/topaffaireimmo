@@ -146,16 +146,14 @@ export function normalizePhoneNumber(phone: string): string {
 }
 
 /**
- * Validate a phone number in E.164 format
- * E.164 format: +[country code][subscriber number]
+ * Validate a phone number in international format
+ * International format: +[country code][subscriber number]
  * - Must start with +
- * - Country code: 1-3 digits (e.g., +1, +44, +212)
- * - Subscriber number: remaining digits
- * - Total digits after '+': 8-15 (includes country code and subscriber number)
- * - Valid examples: +212664228976 (12 digits), +33123456789 (11 digits), +14155552671 (11 digits)
+ * - Total digits after '+': 7-15 (includes country code and subscriber number)
+ * - Valid examples: +212664228976, +33123456789, +14155552671, +356123456
  * 
  * @param phone - The phone number to validate
- * @returns true if valid E.164 format, false otherwise
+ * @returns true if valid international format, false otherwise
  */
 export function validateE164Phone(phone: string): boolean {
   if (!phone) return true; // Allow empty (optional field)
@@ -163,11 +161,11 @@ export function validateE164Phone(phone: string): boolean {
   // Normalize first to remove formatting
   const normalized = normalizePhoneNumber(phone);
   
-  // E.164 regex: + followed by 1-3 digit country code, then 4-14 more digits
-  // This gives us 8-15 total digits after the + (country code + subscriber number)
-  const e164Regex = /^\+[1-9]\d{7,14}$/;
+  // International phone regex: + followed by 7-15 digits
+  // Accepts any international phone number format
+  const internationalPhoneRegex = /^\+\d{7,15}$/;
   
-  return e164Regex.test(normalized);
+  return internationalPhoneRegex.test(normalized);
 }
 
 /**
@@ -208,8 +206,8 @@ export function getPhoneValidationError(phone: string, isRTL: boolean): string {
       : 'Le numéro doit commencer par + suivi du code pays';
   }
   
-  // E.164 allows 8-15 digits after '+', so normalized length should be 9-16 (including '+')
-  if (normalized.length < 9) {
+  // International format allows 7-15 digits after '+', so normalized length should be 8-16 (including '+')
+  if (normalized.length < 8) {
     return isRTL
       ? 'الرقم قصير جدًا'
       : 'Le numéro est trop court';
@@ -222,6 +220,6 @@ export function getPhoneValidationError(phone: string, isRTL: boolean): string {
   }
   
   return isRTL
-    ? 'تنسيق غير صالح. استخدم: +212..., +33..., +44... إلخ'
-    : 'Format invalide. Utilisez: +212..., +33..., +44..., etc.';
+    ? 'تنسيق غير صالح. استخدم التنسيق الدولي (مثال: +212...)'
+    : 'Format invalide. Veuillez entrer un numéro de téléphone au format international (ex: +212...)';
 }
