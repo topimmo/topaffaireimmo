@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +26,19 @@ export default function Register() {
   // Track last signup attempt to prevent duplicate requests
   const lastSignupAttempt = useRef<number>(0);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timers on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      if (cooldownInterval.current) {
+        clearInterval(cooldownInterval.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -72,9 +85,11 @@ export default function Register() {
       clearTimeout(debounceTimer.current);
     }
     
+    // Set loading immediately for better UX feedback
+    setLoading(true);
+    
     // Debounce: Wait 600ms before making the actual request
     debounceTimer.current = setTimeout(async () => {
-      setLoading(true);
       setError('');
 
       // Validation: Check passwords match
@@ -97,17 +112,28 @@ export default function Register() {
         if (signUpError) {
           // Check if it's a 429 rate limit error
           const errorMessage = signUpError.message.toLowerCase();
-          const is429Error = errorMessage.includes('429') || 
+          const errorStatus = (signUpError as any).status;
+          const is429Error = errorStatus === 429 || 
+                            errorStatus === '429' ||
+                            errorMessage.includes('429') || 
                             errorMessage.includes('rate') || 
                             errorMessage.includes('too many');
           
           if (is429Error) {
+            // Clear any existing cooldown interval
+            if (cooldownInterval.current) {
+              clearInterval(cooldownInterval.current);
+            }
+            
             // Start 60-second cooldown for rate limit errors
             setCooldownSeconds(60);
-            const countdown = setInterval(() => {
+            cooldownInterval.current = setInterval(() => {
               setCooldownSeconds(prev => {
                 if (prev <= 1) {
-                  clearInterval(countdown);
+                  if (cooldownInterval.current) {
+                    clearInterval(cooldownInterval.current);
+                    cooldownInterval.current = null;
+                  }
                   return 0;
                 }
                 return prev - 1;
