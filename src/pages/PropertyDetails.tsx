@@ -795,9 +795,16 @@ export default function PropertyDetails() {
                   )}
                   
                   {!shouldShowPhone && !shouldShowWhatsapp && !shouldShowEmail && (
-                    <Button className="w-full gap-2" size="lg">
-                      تواصل عبر المنصة
-                    </Button>
+                    <div className="space-y-2">
+                      <Button className="w-full gap-2" size="lg" disabled>
+                        تواصل عبر المنصة
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {isOwner 
+                          ? "Activez au moins un moyen de contact dans vos paramètres"
+                          : "L'annonceur n'a pas partagé ses coordonnées"}
+                      </p>
+                    </div>
                   )}
                 </div>
 
