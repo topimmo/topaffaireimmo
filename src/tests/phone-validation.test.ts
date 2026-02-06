@@ -38,15 +38,22 @@ const testCases: TestCase[] = [
   // UK numbers
   { phone: '+447911123456', shouldBeValid: true, description: 'UK mobile number' },
   
-  // Edge cases - valid
-  { phone: '+1234567', shouldBeValid: true, description: 'Minimum length (7 digits)' },
-  { phone: '+123456789012345', shouldBeValid: true, description: 'Maximum length (15 digits)' },
+  // Edge cases - valid (testing regex boundaries, not real-world phone validity)
+  // Note: These test the regex validation (7-15 digits), not whether the number is 
+  // a real, dialable phone number in any specific country
+  { phone: '+1234567', shouldBeValid: true, description: 'Minimum length (7 digits) - tests regex boundary' },
+  { phone: '+123456789012345', shouldBeValid: true, description: 'Maximum length (15 digits) - tests regex boundary' },
   
   // Edge cases - invalid
   { phone: '+123456', shouldBeValid: false, description: 'Too short (6 digits)' },
   { phone: '+1234567890123456', shouldBeValid: false, description: 'Too long (16 digits)' },
-  { phone: '212664228976', shouldBeValid: true, description: 'Missing + prefix (auto-added by normalization)' },
-  { phone: '0664228976', shouldBeValid: true, description: 'Local format (auto-adds +)' },
+  { phone: '+0123456789', shouldBeValid: false, description: 'Leading zero after + (invalid per E.164)' },
+  { phone: '+012345678', shouldBeValid: false, description: 'Country code starts with 0 (invalid)' },
+  // Testing auto-normalization (adds + if missing)
+  // Note: These numbers will have + added, then checked for validity
+  { phone: '212664228976', shouldBeValid: true, description: 'Morocco number without + (auto-added by normalization)' },
+  { phone: '33612345678', shouldBeValid: true, description: 'France number without + (auto-added)' },
+  { phone: '0664228976', shouldBeValid: false, description: 'Local format with leading 0 (becomes +0... which is invalid)' },
   { phone: '+212-664-228-976', shouldBeValid: true, description: 'With dashes (should normalize)' },
   { phone: '+212 (664) 228 976', shouldBeValid: true, description: 'With parentheses (should normalize)' },
   { phone: '', shouldBeValid: true, description: 'Empty string (optional field)' },
@@ -129,6 +136,7 @@ function testErrorMessages() {
   console.log('═══════════════════════════════════════════════════\n');
   
   const errorTests = [
+    { phone: '+0123456789', isRTL: false, shouldContain: 'code pays ne peut pas commencer par 0' },
     { phone: '+123', isRTL: false, shouldContain: 'trop court' },
     { phone: '+12345678901234567', isRTL: false, shouldContain: 'trop long' },
     { phone: '+212abc', isRTL: false, shouldContain: 'trop court' }, // becomes "+212" after normalization, which is too short
@@ -164,7 +172,7 @@ function testErrorMessages() {
 function runTests() {
   console.log('═══════════════════════════════════════════════════');
   console.log('📞 International Phone Validation Test Suite');
-  console.log('Testing: Regex /^\\+\\d{7,15}$/ and helper functions');
+  console.log('Testing: Regex /^\\+[1-9]\\d{6,14}$/ and helper functions');
   console.log('═══════════════════════════════════════════════════');
   
   const validationResults = testPhoneValidation();

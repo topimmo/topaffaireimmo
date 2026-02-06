@@ -148,8 +148,9 @@ export function normalizePhoneNumber(phone: string): string {
 /**
  * Validate a phone number in international format
  * International format: +[country code][subscriber number]
- * - Must start with +
+ * - Must start with + followed by non-zero digit (E.164 standard)
  * - Total digits after '+': 7-15 (includes country code and subscriber number)
+ * - Country codes cannot start with 0 per E.164 standard
  * - Valid examples: +212664228976, +33123456789, +14155552671, +356123456
  * 
  * @param phone - The phone number to validate
@@ -161,9 +162,9 @@ export function validateE164Phone(phone: string): boolean {
   // Normalize first to remove formatting
   const normalized = normalizePhoneNumber(phone);
   
-  // International phone regex: + followed by 7-15 digits
-  // Accepts any international phone number format
-  const internationalPhoneRegex = /^\+\d{7,15}$/;
+  // International phone regex: + followed by non-zero digit, then 6-14 more digits
+  // This gives us 7-15 total digits while enforcing E.164 standard (no leading 0)
+  const internationalPhoneRegex = /^\+[1-9]\d{6,14}$/;
   
   return internationalPhoneRegex.test(normalized);
 }
@@ -204,6 +205,13 @@ export function getPhoneValidationError(phone: string, isRTL: boolean): string {
     return isRTL
       ? 'يجب أن يبدأ الرقم بـ + متبوعًا برمز البلد'
       : 'Le numéro doit commencer par + suivi du code pays';
+  }
+  
+  // Check if first digit after + is 0 (invalid per E.164)
+  if (normalized.length > 1 && normalized[1] === '0') {
+    return isRTL
+      ? 'رمز البلد لا يمكن أن يبدأ بـ 0'
+      : 'Le code pays ne peut pas commencer par 0';
   }
   
   // International format allows 7-15 digits after '+', so normalized length should be 8-16 (including '+')
