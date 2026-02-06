@@ -26,6 +26,8 @@ const testCases: TestCase[] = [
   { phone: '0564228976', shouldBeValid: true, description: 'Moroccan local format 05 (auto-converted to +2125...)' },
   { phone: '06 64 22 89 76', shouldBeValid: true, description: 'Moroccan local with spaces (auto-converted)' },
   { phone: '0464228976', shouldBeValid: false, description: 'Moroccan local format 04 (invalid - not mobile)' },
+  { phone: '0864228976', shouldBeValid: false, description: 'Moroccan local format 08 (invalid - not mobile)' },
+  { phone: '0964228976', shouldBeValid: false, description: 'Moroccan local format 09 (invalid - not mobile)' },
   { phone: '+212 5XX XX XX XX', shouldBeValid: false, description: 'Moroccan with placeholder X' },
   
   // French numbers
