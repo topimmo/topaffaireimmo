@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,9 @@ export default function Register() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
   
+  // Constants
+  const RATE_LIMIT_COOLDOWN_SECONDS = 60;
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,6 +24,24 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [rateLimitCooldownSeconds, setRateLimitCooldownSeconds] = useState(0);
+  
+  // Track last signup attempt to prevent duplicate requests
+  const lastSignupAttempt = useRef<number>(0);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timers on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      if (cooldownInterval.current) {
+        clearInterval(cooldownInterval.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -32,39 +53,116 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Guard: Early return if already loading (prevents double submit)
+    if (loading) {
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ Signup already in progress, ignoring duplicate submission');
+      }
+      return;
+    }
+    
+    // Guard: Check cooldown period
+    if (rateLimitCooldownSeconds > 0) {
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ Cooldown active, please wait before retrying');
+      }
+      return;
+    }
+    
+    // Dev warning: Detect multiple requests within 2 seconds
+    if (import.meta.env.DEV) {
+      const now = Date.now();
+      const timeSinceLastAttempt = now - lastSignupAttempt.current;
+      if (timeSinceLastAttempt < 2000 && lastSignupAttempt.current > 0) {
+        console.warn('⚠️ Multiple signup requests within 2 seconds detected!', {
+          timeSinceLastAttempt: `${timeSinceLastAttempt}ms`,
+          timestamp: new Date().toISOString()
+        });
+      }
+      lastSignupAttempt.current = now;
+    }
+    
+    // Clear any existing debounce timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    // Set loading immediately for better UX feedback
     setLoading(true);
-    setError('');
+    
+    // Debounce: Wait 600ms before making the actual request
+    debounceTimer.current = setTimeout(async () => {
+      setError('');
 
-    // Validation: Check passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError(isRTL ? 'كلمات المرور غير متطابقة' : 'Les mots de passe ne correspondent pas');
-      setLoading(false);
-      return;
-    }
-
-    // Validation: Check password length
-    if (formData.password.length < 6) {
-      setError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 6 caractères');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { error: signUpError } = await signUp(formData.email, formData.password);
-
-      if (signUpError) {
-        const translatedError = translateAuthError(signUpError, isRTL);
-        setError(translatedError);
+      // Validation: Check passwords match
+      if (formData.password !== formData.confirmPassword) {
+        setError(isRTL ? 'كلمات المرور غير متطابقة' : 'Les mots de passe ne correspondent pas');
         setLoading(false);
         return;
       }
 
-      setSuccess(true);
-      setLoading(false);
-    } catch (err) {
-      setError(translateAuthError(err as Error, isRTL));
-      setLoading(false);
-    }
+      // Validation: Check password length
+      if (formData.password.length < 6) {
+        setError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 6 caractères');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { error: signUpError } = await signUp(formData.email, formData.password);
+
+        if (signUpError) {
+          // Check if it's a 429 rate limit error
+          const errorMessage = signUpError.message.toLowerCase();
+          const errorStatus = (signUpError as any).status;
+          // More specific detection: check status code first, then specific error patterns
+          const is429Error = Number(errorStatus) === 429 ||
+                            errorMessage.includes('429') || 
+                            errorMessage.includes('rate limit exceeded') ||
+                            errorMessage.includes('too many requests');
+          
+          if (is429Error) {
+            // Clear any existing cooldown interval
+            if (cooldownInterval.current) {
+              clearInterval(cooldownInterval.current);
+            }
+            
+            // Start cooldown for rate limit errors
+            setRateLimitCooldownSeconds(RATE_LIMIT_COOLDOWN_SECONDS);
+            cooldownInterval.current = setInterval(() => {
+              setRateLimitCooldownSeconds(prev => {
+                if (prev <= 1) {
+                  if (cooldownInterval.current) {
+                    clearInterval(cooldownInterval.current);
+                    cooldownInterval.current = null;
+                  }
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+            
+            setError(
+              isRTL 
+                ? `طلبات كثيرة جداً. يرجى الانتظار ${RATE_LIMIT_COOLDOWN_SECONDS} ثانية قبل المحاولة مرة أخرى.`
+                : `Trop de demandes. Veuillez patienter ${RATE_LIMIT_COOLDOWN_SECONDS} secondes avant de réessayer.`
+            );
+          } else {
+            const translatedError = translateAuthError(signUpError, isRTL);
+            setError(translatedError);
+          }
+          setLoading(false);
+          return;
+        }
+
+        setSuccess(true);
+        setLoading(false);
+      } catch (err) {
+        setError(translateAuthError(err as Error, isRTL));
+        setLoading(false);
+      }
+    }, 600); // 600ms debounce
   };
 
   return (
@@ -114,6 +212,13 @@ export default function Register() {
                     aria-live="polite"
                   >
                     {error}
+                    {rateLimitCooldownSeconds > 0 && (
+                      <div className="mt-2 font-semibold" role="status" aria-live="polite">
+                        {isRTL 
+                          ? `الانتظار: ${rateLimitCooldownSeconds} ثانية`
+                          : `Veuillez attendre: ${rateLimitCooldownSeconds}s`}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -134,6 +239,7 @@ export default function Register() {
                       className={`${isRTL ? 'pr-10' : 'pl-10'} h-11 sm:h-12`}
                       placeholder="email@example.com"
                       required
+                      disabled={loading || rateLimitCooldownSeconds > 0}
                     />
                   </div>
                 </div>
@@ -151,6 +257,7 @@ export default function Register() {
                       className={`${isRTL ? 'pr-10' : 'pl-10'} h-11 sm:h-12`}
                       placeholder="••••••••"
                       required
+                      disabled={loading || rateLimitCooldownSeconds > 0}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -171,13 +278,16 @@ export default function Register() {
                       className={`${isRTL ? 'pr-10' : 'pl-10'} h-11 sm:h-12`}
                       placeholder="••••••••"
                       required
+                      disabled={loading || rateLimitCooldownSeconds > 0}
                     />
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full h-11 sm:h-12 mt-6" disabled={loading}>
+                <Button type="submit" className="w-full h-11 sm:h-12 mt-6" disabled={loading || rateLimitCooldownSeconds > 0}>
                   {loading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : rateLimitCooldownSeconds > 0 ? (
+                    `${isRTL ? 'انتظر' : 'Attendre'} ${rateLimitCooldownSeconds}s`
                   ) : (
                     t('auth.registerButton')
                   )}
