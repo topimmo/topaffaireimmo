@@ -41,7 +41,7 @@ export default function CityPage() {
     `Découvrez les meilleures annonces immobilières à ${cityName} : vente et location d'appartements, maisons et terrains.`;
 
   // Enhanced structured data for the city with BreadcrumbList and CollectionPage
-  const structuredData = [
+  const structuredData: any[] = [
     {
       '@context': 'https://schema.org',
       '@type': 'Place',
