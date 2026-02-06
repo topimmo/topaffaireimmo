@@ -208,7 +208,8 @@ export function getPhoneValidationError(phone: string, isRTL: boolean): string {
       : 'Le numéro doit commencer par + suivi du code pays';
   }
   
-  if (normalized.length < 8) {
+  // E.164 allows 8-15 digits after '+', so normalized length should be 9-16 (including '+')
+  if (normalized.length < 9) {
     return isRTL
       ? 'الرقم قصير جدًا'
       : 'Le numéro est trop court';
