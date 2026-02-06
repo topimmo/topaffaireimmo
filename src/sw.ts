@@ -13,6 +13,13 @@ declare const self: ServiceWorkerGlobalScope & {
 // Service Worker version - increment to force update
 const SW_VERSION = '1.1.0'; // Updated: Smart offline fallback logic
 
+// Cache names
+const PRECACHE_NAME = 'workbox-precache-v2-' + self.location.origin;
+
+// Minimal loading page for critical routes when network fails
+// This prevents showing the offline page and lets the app handle the error
+const MINIMAL_LOADING_HTML = '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="3"></head><body>Loading...</body></html>';
+
 // Take control of all clients immediately
 clientsClaim();
 
@@ -23,7 +30,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 // This ensures it's always available when truly offline
 self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(
-    caches.open('workbox-precache-v2-' + self.location.origin).then(cache => {
+    caches.open(PRECACHE_NAME).then(cache => {
       return cache.addAll([
         '/offline.html',
         '/index.html',
@@ -120,7 +127,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
             console.log('[SW] Critical route failed, returning cached shell instead of offline page');
             
             // Try to get cached app shell (index.html)
-            const cache = await caches.open('workbox-precache-v2-' + self.location.origin);
+            const cache = await caches.open(PRECACHE_NAME);
             const cachedShell = await cache.match('/index.html') || 
                                 await cache.match('/');
             
@@ -131,7 +138,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
             // If no cached shell, return a minimal error response
             // The app will show the connection banner
             return new Response(
-              '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="3"></head><body>Loading...</body></html>',
+              MINIMAL_LOADING_HTML,
               { 
                 headers: { 'Content-Type': 'text/html' },
                 status: 200 
@@ -144,7 +151,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
           // - Otherwise, return cached page or shell (network might be unstable)
           if (isOffline) {
             console.log('[SW] User is offline, returning offline page');
-            const cache = await caches.open('workbox-precache-v2-' + self.location.origin);
+            const cache = await caches.open(PRECACHE_NAME);
             const offlinePage = await cache.match('/offline.html');
             
             if (offlinePage) {
@@ -155,7 +162,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
           // Network is unstable but user is technically online
           // Try to return cached version of the page or app shell
           console.log('[SW] Network unstable, trying cached page or shell');
-          const cache = await caches.open('workbox-precache-v2-' + self.location.origin);
+          const cache = await caches.open(PRECACHE_NAME);
           
           // Try cached version of the exact page
           const cachedPage = await cache.match(event.request);

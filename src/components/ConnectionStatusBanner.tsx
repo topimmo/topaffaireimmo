@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { WifiOff, Wifi } from 'lucide-react';
 
+// Duration (in ms) to show the success banner before auto-dismissing
+const SUCCESS_BANNER_DURATION_MS = 3000;
+
 /**
  * Connection Status Banner
  * 
@@ -22,11 +25,11 @@ export function ConnectionStatusBanner() {
       // User came back online - show success banner briefly
       setShowBanner(true);
       
-      // Auto-hide success banner after 3 seconds
+      // Auto-hide success banner after configured duration
       const timer = setTimeout(() => {
         setShowBanner(false);
         setWasOffline(false);
-      }, 3000);
+      }, SUCCESS_BANNER_DURATION_MS);
       
       return () => clearTimeout(timer);
     }
