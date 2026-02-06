@@ -58,13 +58,9 @@ SELECT
   -- ✅ Always expose visibility flags so UI can decide what to show
   p.show_phone_public,
   p.show_whatsapp_public,
-  p.show_email_public,
-  
-  -- Relations (will be joined in application layer)
-  p.city_id as city,
-  p.neighborhood_id as neighborhood
+  p.show_email_public
 FROM public.properties p
-WHERE p.status = 'published'; -- Only show published properties to public
+WHERE p.status = 'published' AND (p.is_archived = FALSE OR p.is_archived IS NULL); -- Only show published, non-archived properties to public
 
 -- 5. Grant permissions on the public view
 GRANT SELECT ON public.properties_public TO anon;
