@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 /**
  * PASSWORD RESET PAGE - SUPABASE CONFIGURATION REQUIREMENTS
@@ -111,6 +112,16 @@ export default function ResetPassword() {
           console.error('  - Error Code:', errorCode);
           console.error('  - Description:', errorDescription);
           console.error('  - Full URL:', window.location.href);
+          
+          // Check network connectivity first
+          if (!navigator.onLine) {
+            const offlineMsg = isRTL 
+              ? 'لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك.'
+              : 'Pas de connexion Internet. Veuillez vérifier votre connexion.';
+            setError(offlineMsg);
+            setCheckingSession(false);
+            return;
+          }
           
           // Provide specific error messages based on error type
           let userMessage = errorDescription || errorParam;
@@ -301,8 +312,8 @@ export default function ResetPassword() {
       return;
     }
 
-    if (password.length < 6) {
-      setError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 6 caractères');
+    if (password.length < 8) {
+      setError(isRTL ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -337,11 +348,21 @@ export default function ResetPassword() {
     }
 
     console.log('✅ Password updated successfully');
-    setSuccess(true);
     
-    // Redirect to home page after success
+    // Sign out the recovery session for security
+    try {
+      await supabase.auth.signOut();
+    } catch (signOutError) {
+      console.warn('⚠️ Sign out after password reset failed:', signOutError);
+      // Continue anyway - user will be redirected to login
+    }
+    
+    setSuccess(true);
+    toast.success(isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Mot de passe modifié avec succès');
+    
+    // Redirect to login page after success
     setTimeout(() => {
-      navigate('/');
+      navigate('/login');
     }, SUCCESS_REDIRECT_DELAY_MS);
   };
 
@@ -368,11 +389,18 @@ export default function ResetPassword() {
                 ? 'هذا الرابط غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
                 : 'Ce lien est invalide ou a expiré. Veuillez demander un nouveau lien.'}
             </p>
-            <Button asChild>
-              <Link to="/login">
-                {isRTL ? 'العودة لتسجيل الدخول' : 'Retour à la connexion'}
-              </Link>
-            </Button>
+            <div className="space-y-3">
+              <Button asChild className="w-full">
+                <Link to="/login">
+                  {isRTL ? 'طلب رابط جديد' : 'Demander un nouveau lien'}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/login">
+                  {isRTL ? 'العودة لتسجيل الدخول' : 'Retour à la connexion'}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
     );
@@ -440,9 +468,12 @@ export default function ResetPassword() {
                     className={`${isRTL ? 'pr-10' : 'pl-10'} h-12`}
                     placeholder="••••••••"
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isRTL ? 'الحد الأدنى 8 أحرف' : 'Minimum 8 caractères'}
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -459,9 +490,12 @@ export default function ResetPassword() {
                     className={`${isRTL ? 'pr-10' : 'pl-10'} h-12`}
                     placeholder="••••••••"
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isRTL ? 'الحد الأدنى 8 أحرف' : 'Minimum 8 caractères'}
+                </p>
               </div>
 
               <Button type="submit" className="w-full h-12" disabled={loading}>
