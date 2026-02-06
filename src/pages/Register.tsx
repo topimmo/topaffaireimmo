@@ -13,6 +13,9 @@ export default function Register() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
   
+  // Constants
+  const RATE_LIMIT_COOLDOWN_SECONDS = 60;
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,7 +24,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [rateLimitCooldownSeconds, setRateLimitCooldownSeconds] = useState(0);
   
   // Track last signup attempt to prevent duplicate requests
   const lastSignupAttempt = useRef<number>(0);
@@ -60,7 +63,7 @@ export default function Register() {
     }
     
     // Guard: Check cooldown period
-    if (cooldownSeconds > 0) {
+    if (rateLimitCooldownSeconds > 0) {
       if (import.meta.env.DEV) {
         console.warn('⚠️ Cooldown active, please wait before retrying');
       }
@@ -113,11 +116,12 @@ export default function Register() {
           // Check if it's a 429 rate limit error
           const errorMessage = signUpError.message.toLowerCase();
           const errorStatus = (signUpError as any).status;
+          // More specific detection: check status code first, then specific error patterns
           const is429Error = errorStatus === 429 || 
                             errorStatus === '429' ||
                             errorMessage.includes('429') || 
-                            errorMessage.includes('rate') || 
-                            errorMessage.includes('too many');
+                            errorMessage.includes('rate limit exceeded') ||
+                            errorMessage.includes('too many requests');
           
           if (is429Error) {
             // Clear any existing cooldown interval
@@ -125,10 +129,10 @@ export default function Register() {
               clearInterval(cooldownInterval.current);
             }
             
-            // Start 60-second cooldown for rate limit errors
-            setCooldownSeconds(60);
+            // Start cooldown for rate limit errors
+            setRateLimitCooldownSeconds(RATE_LIMIT_COOLDOWN_SECONDS);
             cooldownInterval.current = setInterval(() => {
-              setCooldownSeconds(prev => {
+              setRateLimitCooldownSeconds(prev => {
                 if (prev <= 1) {
                   if (cooldownInterval.current) {
                     clearInterval(cooldownInterval.current);
@@ -142,8 +146,8 @@ export default function Register() {
             
             setError(
               isRTL 
-                ? 'طلبات كثيرة جداً. يرجى الانتظار 60 ثانية قبل المحاولة مرة أخرى.'
-                : 'Trop de demandes. Veuillez patienter 60 secondes avant de réessayer.'
+                ? `طلبات كثيرة جداً. يرجى الانتظار ${RATE_LIMIT_COOLDOWN_SECONDS} ثانية قبل المحاولة مرة أخرى.`
+                : `Trop de demandes. Veuillez patienter ${RATE_LIMIT_COOLDOWN_SECONDS} secondes avant de réessayer.`
             );
           } else {
             const translatedError = translateAuthError(signUpError, isRTL);
@@ -209,11 +213,11 @@ export default function Register() {
                     aria-live="polite"
                   >
                     {error}
-                    {cooldownSeconds > 0 && (
-                      <div className="mt-2 font-semibold">
+                    {rateLimitCooldownSeconds > 0 && (
+                      <div className="mt-2 font-semibold" role="status" aria-live="polite">
                         {isRTL 
-                          ? `الانتظار: ${cooldownSeconds} ثانية`
-                          : `Veuillez attendre: ${cooldownSeconds}s`}
+                          ? `الانتظار: ${rateLimitCooldownSeconds} ثانية`
+                          : `Veuillez attendre: ${rateLimitCooldownSeconds}s`}
                       </div>
                     )}
                   </div>
@@ -236,7 +240,7 @@ export default function Register() {
                       className={`${isRTL ? 'pr-10' : 'pl-10'} h-11 sm:h-12`}
                       placeholder="email@example.com"
                       required
-                      disabled={loading || cooldownSeconds > 0}
+                      disabled={loading || rateLimitCooldownSeconds > 0}
                     />
                   </div>
                 </div>
@@ -254,7 +258,7 @@ export default function Register() {
                       className={`${isRTL ? 'pr-10' : 'pl-10'} h-11 sm:h-12`}
                       placeholder="••••••••"
                       required
-                      disabled={loading || cooldownSeconds > 0}
+                      disabled={loading || rateLimitCooldownSeconds > 0}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -275,16 +279,16 @@ export default function Register() {
                       className={`${isRTL ? 'pr-10' : 'pl-10'} h-11 sm:h-12`}
                       placeholder="••••••••"
                       required
-                      disabled={loading || cooldownSeconds > 0}
+                      disabled={loading || rateLimitCooldownSeconds > 0}
                     />
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full h-11 sm:h-12 mt-6" disabled={loading || cooldownSeconds > 0}>
+                <Button type="submit" className="w-full h-11 sm:h-12 mt-6" disabled={loading || rateLimitCooldownSeconds > 0}>
                   {loading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : cooldownSeconds > 0 ? (
-                    `${isRTL ? 'انتظر' : 'Attendre'} ${cooldownSeconds}s`
+                  ) : rateLimitCooldownSeconds > 0 ? (
+                    `${isRTL ? 'انتظر' : 'Attendre'} ${rateLimitCooldownSeconds}s`
                   ) : (
                     t('auth.registerButton')
                   )}
