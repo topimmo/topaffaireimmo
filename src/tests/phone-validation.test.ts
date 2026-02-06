@@ -38,11 +38,14 @@ const testCases: TestCase[] = [
   // UK numbers
   { phone: '+447911123456', shouldBeValid: true, description: 'UK mobile number' },
   
+  // Real-world short international numbers
+  { phone: '+3562123456', shouldBeValid: true, description: 'Malta landline (11 digits total)' },
+  
   // Edge cases - valid (testing regex boundaries, not real-world phone validity)
   // Note: These test the regex validation (7-15 digits), not whether the number is 
   // a real, dialable phone number in any specific country
-  { phone: '+1234567', shouldBeValid: true, description: 'Minimum length (7 digits) - tests regex boundary' },
-  { phone: '+123456789012345', shouldBeValid: true, description: 'Maximum length (15 digits) - tests regex boundary' },
+  { phone: '+1234567', shouldBeValid: true, description: 'Minimum length (7 digits) - regex boundary test' },
+  { phone: '+123456789012345', shouldBeValid: true, description: 'Maximum length (15 digits) - regex boundary test' },
   
   // Edge cases - invalid
   { phone: '+123456', shouldBeValid: false, description: 'Too short (6 digits)' },
