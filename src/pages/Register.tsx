@@ -117,8 +117,7 @@ export default function Register() {
           const errorMessage = signUpError.message.toLowerCase();
           const errorStatus = (signUpError as any).status;
           // More specific detection: check status code first, then specific error patterns
-          const is429Error = errorStatus === 429 || 
-                            errorStatus === '429' ||
+          const is429Error = Number(errorStatus) === 429 ||
                             errorMessage.includes('429') || 
                             errorMessage.includes('rate limit exceeded') ||
                             errorMessage.includes('too many requests');
