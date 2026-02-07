@@ -28,7 +28,10 @@ export default function Login() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resetEmail) return;
+    if (!resetEmail || !resetEmail.trim()) {
+      setError(isRTL ? 'أدخل بريدك الإلكتروني' : 'Veuillez entrer votre email');
+      return;
+    }
     
     setLoading(true);
     setError('');

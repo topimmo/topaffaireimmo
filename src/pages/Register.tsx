@@ -102,9 +102,9 @@ export default function Register() {
         return;
       }
 
-      // Validation: Check password length
-      if (formData.password.length < 6) {
-        setError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 6 caractères');
+      // Validation: Check password length (minimum 8 characters for security)
+      if (formData.password.length < 8) {
+        setError(isRTL ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' : 'Le mot de passe doit contenir au moins 8 caractères');
         setLoading(false);
         return;
       }
