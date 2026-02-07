@@ -5,6 +5,8 @@ This document explains how to configure redirect URLs in Supabase for the topaff
 
 ## Required Configuration in Supabase Dashboard
 
+⚠️ **CRITICAL**: Without proper redirect URL configuration, users will see "Lien invalide / Expiré" errors immediately after clicking auth links, especially in PWA context. This is the #1 cause of auth link failures.
+
 ### Step 1: Navigate to Auth Settings
 1. Go to [Supabase Dashboard](https://app.supabase.com/)
 2. Select your project
@@ -111,6 +113,24 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
 
 ## Troubleshooting
 
+### PWA-Specific Issues
+
+**Error: "Internet not available" in PWA**
+- **Cause**: Service Worker was caching auth routes (fixed in v1.2.0)
+- **Solution**: 
+  1. Uninstall PWA
+  2. Clear Service Worker and cache
+  3. Reinstall PWA
+  4. Service Worker v1.2.0+ now bypasses all auth routes
+
+**Error: Blank page when clicking auth link in PWA**
+- **Cause**: Service Worker returning cached shell instead of fresh auth page
+- **Solution**: Same as above - upgrade to Service Worker v1.2.0+
+
+**Links work in browser but not in PWA**
+- **Cause**: Link opening in external browser instead of PWA
+- **Solution**: See `docs/AUTH_PWA_TROUBLESHOOTING.md` for detailed guide
+
 ### Error: "Invalid redirect URL"
 - Check that the URL is in the Supabase redirect URLs list
 - Verify wildcards are correct (e.g., `/**` not just `*`)
@@ -143,6 +163,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
 - [Supabase Auth Documentation](https://supabase.com/docs/guides/auth)
 - [URL Configuration Guide](https://supabase.com/docs/guides/auth/redirect-urls)
 - [PKCE Flow](https://supabase.com/docs/guides/auth/server-side/pkce-flow)
+- [`docs/AUTH_PWA_TROUBLESHOOTING.md`](./AUTH_PWA_TROUBLESHOOTING.md) - Comprehensive PWA and auth troubleshooting guide
 
 ## Support
 

@@ -83,6 +83,8 @@ export default function ResetPassword() {
       try {
         console.log('🔐 Reset password page loaded');
         console.log('  - Current URL:', window.location.href);
+        console.log('  - Online status:', navigator.onLine);
+        console.log('  - User agent:', navigator.userAgent);
 
         // Check for PKCE code in query params
         const queryParams = new URLSearchParams(window.location.search);
@@ -137,6 +139,18 @@ export default function ResetPassword() {
           }
           
           setError(userMessage);
+          setCheckingSession(false);
+          return;
+        }
+
+        // Early network check: If offline and we have a code/token to exchange,
+        // show a helpful message instead of attempting the exchange
+        if (!navigator.onLine && (code || (accessToken && refreshToken))) {
+          console.warn('⚠️ User is offline, cannot verify reset link');
+          const offlineMsg = isRTL 
+            ? 'لا يوجد اتصال بالإنترنت. يرجى الاتصال بالإنترنت للمتابعة.'
+            : 'Pas de connexion Internet. Veuillez vous connecter pour continuer.';
+          setError(offlineMsg);
           setCheckingSession(false);
           return;
         }

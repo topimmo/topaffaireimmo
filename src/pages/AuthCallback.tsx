@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 // Timeout constants for consistency
@@ -53,6 +54,7 @@ async function getRedirectPath(userId: string): Promise<string> {
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const { isRTL } = useLanguage();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
@@ -61,6 +63,8 @@ export default function AuthCallback() {
       try {
         console.log('🔐 Auth callback triggered');
         console.log('  - Current URL:', window.location.href);
+        console.log('  - Online status:', navigator.onLine);
+        console.log('  - User agent:', navigator.userAgent);
 
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -106,6 +110,21 @@ export default function AuthCallback() {
           return;
         }
 
+        // Early network check: If offline and we have a code/token to exchange,
+        // show a helpful message instead of attempting the exchange
+        if (!navigator.onLine && (code || accessToken)) {
+          console.warn('⚠️ User is offline, cannot complete authentication');
+          setStatus('error');
+          const offlineMsg = isRTL
+            ? 'لا يوجد اتصال بالإنترنت. يرجى الاتصال بالإنترنت للمتابعة.'
+            : 'Pas de connexion Internet. Veuillez vous connecter pour continuer.';
+          setMessage(offlineMsg);
+          
+          // Redirect to login after delay
+          setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+          return;
+        }
+
         // PKCE flow: Exchange code for session
         if (code) {
           console.log('🔑 PKCE flow detected - exchanging code for session');
@@ -115,7 +134,10 @@ export default function AuthCallback() {
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
             setStatus('error');
-            setMessage('Failed to confirm email. Please try again or contact support.');
+            const failMsg = isRTL
+              ? 'فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى أو الاتصال بالدعم.'
+              : 'Failed to confirm email. Please try again or contact support.';
+            setMessage(failMsg);
             
             // Log for debugging
             if (typeof window !== 'undefined' && (window as any).Sentry) {
@@ -134,7 +156,10 @@ export default function AuthCallback() {
             console.log('  - User Email:', data.session.user.email);
             
             setStatus('success');
-            setMessage('Email confirmed successfully! Redirecting...');
+            const successMsg = isRTL
+              ? 'تم تأكيد البريد الإلكتروني بنجاح! جاري إعادة التوجيه...'
+              : 'Email confirmed successfully! Redirecting...';
+            setMessage(successMsg);
 
             // Get redirect path based on admin status
             const redirectPath = await getRedirectPath(data.session.user.id);
@@ -146,7 +171,10 @@ export default function AuthCallback() {
           } else {
             console.warn('⚠️ No session returned after code exchange');
             setStatus('error');
-            setMessage('Could not create session. Please log in.');
+            const noSessionMsg = isRTL
+              ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
+              : 'Could not create session. Please log in.';
+            setMessage(noSessionMsg);
             setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
           }
           return;
@@ -165,7 +193,10 @@ export default function AuthCallback() {
           if (sessionError) {
             console.error('❌ Error getting session:', sessionError);
             setStatus('error');
-            setMessage('Failed to confirm email. Please try again.');
+            const failMsg = isRTL
+              ? 'فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى.'
+              : 'Failed to confirm email. Please try again.';
+            setMessage(failMsg);
             
             if (typeof window !== 'undefined' && (window as any).Sentry) {
               (window as any).Sentry.captureException(sessionError);
@@ -181,7 +212,10 @@ export default function AuthCallback() {
             console.log('  - User Email:', session.user.email);
             
             setStatus('success');
-            setMessage('Email confirmed successfully! Redirecting...');
+            const successMsg = isRTL
+              ? 'تم تأكيد البريد الإلكتروني بنجاح! جاري إعادة التوجيه...'
+              : 'Email confirmed successfully! Redirecting...';
+            setMessage(successMsg);
 
             // Get redirect path based on admin status
             const redirectPath = await getRedirectPath(session.user.id);
@@ -193,7 +227,10 @@ export default function AuthCallback() {
           } else {
             console.warn('⚠️ No session found after confirmation');
             setStatus('error');
-            setMessage('Could not create session. Please log in.');
+            const noSessionMsg = isRTL
+              ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
+              : 'Could not create session. Please log in.';
+            setMessage(noSessionMsg);
             setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
           }
         } else if (accessToken && refreshToken) {
@@ -209,13 +246,19 @@ export default function AuthCallback() {
           if (sessionError || !session) {
             console.error('❌ Error getting session:', sessionError);
             setStatus('error');
-            setMessage('Could not create session. Please log in.');
+            const noSessionMsg = isRTL
+              ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
+              : 'Could not create session. Please log in.';
+            setMessage(noSessionMsg);
             setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
             return;
           }
           
           setStatus('success');
-          setMessage('Authentication successful! Redirecting...');
+          const successMsg = isRTL
+            ? 'تم التوثيق بنجاح! جاري إعادة التوجيه...'
+            : 'Authentication successful! Redirecting...';
+          setMessage(successMsg);
           
           console.log('  - User ID:', session.user.id);
           console.log('  - User Email:', session.user.email);
@@ -231,13 +274,19 @@ export default function AuthCallback() {
           // No tokens found - might be a direct navigation to this page
           console.log('ℹ️ No auth tokens in URL, redirecting to login');
           setStatus('error');
-          setMessage('No authentication data found.');
+          const noDataMsg = isRTL
+            ? 'لم يتم العثور على بيانات المصادقة.'
+            : 'No authentication data found.';
+          setMessage(noDataMsg);
           setTimeout(() => navigate('/login'), REDIRECT_DELAY_SHORT_MS);
         }
       } catch (err) {
         console.error('❌ Exception in auth callback:', err);
         setStatus('error');
-        setMessage('An unexpected error occurred. Please try logging in.');
+        const errorMsg = isRTL
+          ? 'حدث خطأ غير متوقع. يرجى تسجيل الدخول.'
+          : 'An unexpected error occurred. Please try logging in.';
+        setMessage(errorMsg);
         
         // Log exception for debugging
         if (typeof window !== 'undefined' && (window as any).Sentry) {
