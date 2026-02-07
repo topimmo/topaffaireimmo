@@ -506,7 +506,8 @@ export default function PropertyDetails() {
           <div className="relative h-[50vh] md:h-[70vh] overflow-hidden">
             <img
               src={safeImages[currentImage]}
-              alt={title}
+              alt={`${title} - Image ${currentImage + 1} de ${safeImages.length}`}
+              loading="eager"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -542,7 +543,8 @@ export default function PropertyDetails() {
                 >
                   <img
                     src={safeImages[index]}
-                    alt={`Thumbnail ${index + 1}`}
+                    alt={`${title} - Miniature ${index + 1}`}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 </button>

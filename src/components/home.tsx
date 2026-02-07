@@ -39,6 +39,7 @@ function Home() {
       {/* Property Categories */}
       <PropertyCategories />
     </main>
+    </>
   );
 }
 

@@ -1,6 +1,8 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { Building2, Users, Award, Globe } from "lucide-react";
+import SEO from "@/components/SEO";
+import { SITE_URL } from "@/config/site";
 
 const content = {
   fr: {
@@ -71,11 +73,43 @@ export default function About() {
   const { language, isRTL } = useLanguage();
   const c = content[language];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "À propos de TopAffaireImmo",
+    "description": "TopAffaireImmo - plateforme immobilière leader au Maroc depuis 2014",
+    "url": `${SITE_URL}/about`,
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": SITE_URL
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "À propos",
+          "item": `${SITE_URL}/about`
+        }
+      ]
+    }
+  };
+
   return (
-    <div className={`bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="pt-24 pb-16">
-        <CMSPageWrapper 
-          slug="about" 
+    <>
+      <SEO
+        title="À propos de TopAffaireImmo | Plateforme Immobilière au Maroc"
+        description="TopAffaireImmo, plateforme immobilière leader au Maroc depuis 2014. Plus de 5000 annonces, 10000 clients satisfaits. Transparence et innovation."
+        canonical="/about"
+        structuredData={structuredData}
+      />
+      <div className={`bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+        <div className="pt-24 pb-16">
+          <CMSPageWrapper 
+            slug="about" 
           defaultTitle={{ fr: c.title, ar: c.title }}
         >
         {/* Hero */}
@@ -171,5 +205,6 @@ export default function About() {
         </CMSPageWrapper>
       </div>
     </div>
+    </>
   );
 }

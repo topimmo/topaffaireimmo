@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/contexts/LanguageContext";
 import SortSelect, { SortOption } from "@/components/SortSelect";
+import SEO from "@/components/SEO";
+import { SITE_URL } from "@/config/site";
 
 // ✅ Supabase -> PropertyCard mapping
 type DbProperty = {
@@ -269,9 +271,49 @@ export default function SearchResults() {
     priceRange[0] > 0 ||
     priceRange[1] < DEFAULT_PRICE_RANGE[1];
 
+  // Generate dynamic SEO metadata based on filters
+  const cityName = selectedCity !== "all-cities" ? CITY_OPTIONS.find(c => c.value === selectedCity)?.label : "Maroc";
+  const propertyTypeName = selectedType !== "all-types" ? selectedType : "propriétés";
+  
+  const seoTitle = `${propertyTypeName} à ${cityName} | TopAffaireImmo`;
+  const seoDescription = `Découvrez ${properties.length} ${propertyTypeName} à ${cityName}. Annonces immobilières vérifiées avec photos et prix. Trouvez votre bien idéal.`;
+  
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SearchResultsPage",
+    "name": `Résultats de recherche - ${cityName}`,
+    "description": seoDescription,
+    "url": `${SITE_URL}/search`,
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": SITE_URL
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Recherche",
+          "item": `${SITE_URL}/search`
+        }
+      ]
+    }
+  };
+
   return (
-    <div className="pt-24 pb-16">
-      <div className="container">
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        canonical="/search"
+        ogImage={`${SITE_URL}/og-search.jpg`}
+        structuredData={structuredData}
+      />
+      <div className="pt-24 pb-16">
+        <div className="container">
         {/* Promo Banner at top of listing page - Before page header */}
         <div className="py-6">
           <PromoBanner position="listing-top" />
@@ -428,5 +470,6 @@ export default function SearchResults() {
         <AdBanner page="search" position="after_results" className="mt-12" />
       </div>
     </div>
+    </>
   );
 }
