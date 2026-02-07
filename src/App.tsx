@@ -3,7 +3,6 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { Routes, Route, useLocation, Outlet } from "react-router-dom";
 
 import MobileFAB from "./components/layout/MobileFAB";
-import { MobileInstallBar } from "./components/pwa/MobileInstallBar";
 import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
@@ -91,7 +90,6 @@ function PublicLayout() {
       <Footer />
 
       <MobileFAB />
-      <MobileInstallBar />
     </div>
   );
 }
