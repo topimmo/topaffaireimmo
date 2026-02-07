@@ -75,7 +75,8 @@ export default function PropertyCard({
       >
         <img
           src={property.image}
-          alt={property.title}
+          alt={`${property.title} - ${property.city}${property.neighborhood ? ', ' + property.neighborhood : ''}`}
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Gradient overlay */}
