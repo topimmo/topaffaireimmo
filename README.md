@@ -63,9 +63,6 @@ The app will be available at `http://localhost:5173`
   - Resolve "Lien invalide / Expiré" errors
   - Password reset and magic link troubleshooting
 - **[Deployment Guide](VERCEL_DEPLOYMENT_FIX.md)** - 📦 Vercel deployment setup and troubleshooting
-  - [Quick Start](PUSH_NOTIFICATIONS_QUICK_START.md) - Quick developer setup
-  - [Full Implementation](PUSH_NOTIFICATIONS_IMPLEMENTATION.md) - Technical details
-  - [UI Guide](PUSH_NOTIFICATIONS_UI_GUIDE.md) - User interface guide
 
 ## 🏗️ Tech Stack
 
