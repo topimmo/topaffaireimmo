@@ -146,11 +146,15 @@ self.addEventListener('fetch', (event: FetchEvent) => {
           setTimeout(() => reject(new Error('Network timeout')), 10000)
         )
       ])
-        .then(response => {
+        .then(async response => {
           // Network request succeeded - cache it and return it
           if (response.ok) {
-            const cache = caches.open(PRECACHE_NAME);
-            cache.then(c => c.put(event.request, response.clone()));
+            try {
+              const cache = await caches.open(PRECACHE_NAME);
+              await cache.put(event.request, response.clone());
+            } catch (cacheError) {
+              console.warn('[SW] Failed to cache navigation response:', cacheError);
+            }
           }
           return response;
         })
@@ -160,12 +164,14 @@ self.addEventListener('fetch', (event: FetchEvent) => {
           // Check if user is truly offline
           const isOffline = !self.navigator.onLine;
           
+          // Open cache once for all operations below
+          const cache = await caches.open(PRECACHE_NAME);
+          
           // Critical routes should NEVER show offline page - return cached shell
           if (isCriticalRoute(url.pathname)) {
             console.log('[SW] Critical route failed, returning cached shell instead of offline page');
             
             // Try to get cached app shell (index.html)
-            const cache = await caches.open(PRECACHE_NAME);
             const cachedShell = await cache.match('/index.html') || 
                                 await cache.match('/');
             
@@ -188,7 +194,6 @@ self.addEventListener('fetch', (event: FetchEvent) => {
           // First try to return cached version of the page or app shell
           // Only show offline page if user is truly offline AND no cache exists
           console.log('[SW] Trying cached page or shell first');
-          const cache = await caches.open(PRECACHE_NAME);
           
           // Try cached version of the exact page first
           const cachedPage = await cache.match(event.request);
