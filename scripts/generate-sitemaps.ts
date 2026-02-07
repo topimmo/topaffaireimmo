@@ -315,7 +315,7 @@ async function generateListingsSitemap(): Promise<string> {
       .select('id, updated_at, created_at')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
-      .limit(5000); // Sitemap limit is 50,000 URLs
+      .limit(5000); // Reasonable limit for build-time generation (sitemap protocol allows up to 50,000 URLs per file)
     
     if (error) {
       console.warn('⚠️  Error fetching listings from Supabase:', error.message);
