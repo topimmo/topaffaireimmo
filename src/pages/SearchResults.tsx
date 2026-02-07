@@ -31,8 +31,8 @@ type DbProperty = {
   status: string | null;
   created_at: string;
   images: string[] | null;
-  city?: { name_fr: string | null; name_ar: string | null } | null;
-  neighborhood?: { name_fr: string | null; name_ar: string | null } | null;
+  city?: { name_fr: string; name_ar: string }[] | { name_fr: string; name_ar: string } | null;
+  neighborhood?: { name_fr: string; name_ar: string }[] | { name_fr: string; name_ar: string } | null;
   address?: string | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
@@ -183,8 +183,9 @@ export default function SearchResults() {
     // City filter (UI slug vs DB name)
     if (selectedCity !== "all-cities") {
       rows = rows.filter((r) => {
-        const dbCity =
-          (language === "ar" ? r.city?.name_ar : r.city?.name_fr) || "";
+        const dbCity = language === "ar"
+          ? (Array.isArray(r.city) ? r.city[0]?.name_ar : r.city?.name_ar) || ""
+          : (Array.isArray(r.city) ? r.city[0]?.name_fr : r.city?.name_fr) || "";
         return normalize(dbCity) === normalize(selectedCity);
       });
     }
@@ -234,8 +235,9 @@ export default function SearchResults() {
           ? r.title_ar || r.title_fr || "Annonce"
           : r.title_fr || r.title_ar || "Annonce";
 
-      const cityName =
-        (language === "ar" ? r.city?.name_ar : r.city?.name_fr) || "";
+      const cityName = language === "ar" 
+        ? (Array.isArray(r.city) ? r.city[0]?.name_ar : r.city?.name_ar) || ""
+        : (Array.isArray(r.city) ? r.city[0]?.name_fr : r.city?.name_fr) || "";
 
       const firstImg = r.images?.[0] || "";
       const image = firstImg
@@ -249,7 +251,7 @@ export default function SearchResults() {
         priceType: (r.transaction_type as any) || "sale",
         type: r.property_type || "Property",
         city: cityName || "—",
-        address: r.address || (r.neighborhood?.name_fr ?? ""),
+        address: r.address || (Array.isArray(r.neighborhood) ? r.neighborhood[0]?.name_fr : r.neighborhood?.name_fr) || "",
         bedrooms: r.bedrooms ?? undefined,
         bathrooms: r.bathrooms ?? undefined,
         area: r.area ?? undefined,

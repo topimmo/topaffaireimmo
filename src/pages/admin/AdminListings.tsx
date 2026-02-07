@@ -458,9 +458,9 @@ export default function AdminListings() {
       // Log admin action
       await logAdminAction({
         action: 'delete',
-        resource_type: 'property',
-        resource_id: property.id,
-        details: { title_fr: property.title_fr },
+        entity_type: 'property',
+        entity_id: property.id,
+        metadata: { title_fr: property.title_fr },
       });
 
       setProperties((prev) => prev.filter((p) => p.id !== property.id));
@@ -494,9 +494,9 @@ export default function AdminListings() {
       // Log admin action
       await logAdminAction({
         action: newFeatured ? 'feature' : 'unfeature',
-        resource_type: 'property',
-        resource_id: propertyId,
-        details: { featured: newFeatured },
+        entity_type: 'property',
+        entity_id: propertyId,
+        metadata: { featured: newFeatured },
       });
 
       // Update local state

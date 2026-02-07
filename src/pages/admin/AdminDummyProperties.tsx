@@ -225,9 +225,9 @@ export default function AdminDummyProperties() {
 
         await logAdminAction({
           action: 'update',
-          resource_type: 'dummy_property',
-          resource_id: editingProperty.id,
-          details: { title_fr: formData.title_fr },
+          entity_type: 'dummy_property',
+          entity_id: editingProperty.id,
+          metadata: { title_fr: formData.title_fr },
         });
 
         toast.success(isRTL ? 'تم تحديث الإعلان الوهمي بنجاح' : 'Dummy property updated successfully');
@@ -243,9 +243,9 @@ export default function AdminDummyProperties() {
 
         await logAdminAction({
           action: 'create',
-          resource_type: 'dummy_property',
-          resource_id: newProperty.id, // Safe to use without optional chaining since error would have been thrown
-          details: { title_fr: formData.title_fr },
+          entity_type: 'dummy_property',
+          entity_id: newProperty.id, // Safe to use without optional chaining since error would have been thrown
+          metadata: { title_fr: formData.title_fr },
         });
 
         toast.success(isRTL ? 'تم إنشاء الإعلان الوهمي بنجاح' : 'Dummy property created successfully');
@@ -278,8 +278,8 @@ export default function AdminDummyProperties() {
 
       await logAdminAction({
         action: 'delete',
-        resource_type: 'dummy_property',
-        resource_id: id,
+        entity_type: 'dummy_property',
+        entity_id: id,
       });
 
       setDummyProperties((prev) => prev.filter((p) => p.id !== id));
@@ -305,8 +305,8 @@ export default function AdminDummyProperties() {
 
       await logAdminAction({
         action: currentActive ? 'deactivate' : 'activate',
-        resource_type: 'dummy_property',
-        resource_id: id,
+        entity_type: 'dummy_property',
+        entity_id: id,
       });
 
       setDummyProperties((prev) =>
