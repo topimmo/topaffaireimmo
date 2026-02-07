@@ -452,23 +452,39 @@ export default function AddListing() {
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       
+      // Format error messages for toast
+      const errorMessages = Object.values(errors).map(msg => msg.trim());
+      const formattedErrors = errorMessages.join(' • '); // Use bullet separator
+      
       // Show toast notification
       toast.error(
         isRTL 
           ? 'يرجى تصحيح الأخطاء المميزة في النموذج'
           : 'Veuillez corriger les erreurs surlignées dans le formulaire',
         {
-          description: Object.values(errors).join('. '),
+          description: formattedErrors,
           duration: 5000,
         }
       );
       
-      // Scroll to first error
+      // Scroll to first error field - map error keys to actual input IDs
+      const fieldIdMap: Record<string, string> = {
+        phone: 'phone',
+        whatsapp: 'whatsapp',
+        propertyType: 'propertyType',
+        city: 'cityId',
+        price: 'price',
+        area: 'area',
+      };
+      
       const firstErrorField = Object.keys(errors)[0];
-      const errorElement = document.getElementById(firstErrorField);
+      const inputId = fieldIdMap[firstErrorField];
+      const errorElement = inputId ? document.getElementById(inputId) : null;
+      
       if (errorElement) {
         errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        errorElement.focus();
+        // Small delay before focusing to ensure scroll completes
+        setTimeout(() => errorElement.focus(), 300);
       }
       
       return;

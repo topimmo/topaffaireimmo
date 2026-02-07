@@ -5,7 +5,13 @@ import { parsePhoneNumber, isValidPhoneNumber, CountryCode } from 'libphonenumbe
  * 
  * @param phone - The phone number to normalize (can include spaces, dashes, etc.)
  * @param defaultCountry - Default country code (defaults to 'MA' for Morocco)
- * @returns Normalized phone number in E.164 format (e.g., +212664352280) or null if invalid
+ * @returns Normalized phone number in E.164 format (e.g., +212664352280) if valid, null if invalid or empty
+ * 
+ * @example
+ * normalizePhone('0664352280') // Returns: '+212664352280'
+ * normalizePhone('+33 6 64 35 22 80') // Returns: '+33664352280'
+ * normalizePhone('invalid') // Returns: null
+ * normalizePhone('') // Returns: null
  */
 export function normalizePhone(phone: string, defaultCountry: CountryCode = 'MA'): string | null {
   if (!phone || phone.trim() === '') {
