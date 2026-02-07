@@ -4,6 +4,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { uploadPropertyImages, validateFiles, BUCKET_CONFIG } from '@/lib/storage';
+import { normalizePhone, isValidPhone, getPhoneError } from '@/lib/phoneValidation';
+import { toast } from 'sonner';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -30,8 +32,9 @@ import {
   CheckCircle,
   Loader2,
   LogIn,
+  AlertCircle,
 } from 'lucide-react';
-import { cn, mapTransactionType, validateE164Phone, normalizePhoneNumber, getPhoneValidationError } from '@/lib/utils';
+import { cn, mapTransactionType } from '@/lib/utils';
 
 interface City {
   id: number;
@@ -117,6 +120,16 @@ export default function AddListing() {
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showCustomNeighborhood, setShowCustomNeighborhood] = useState(false);
   const [submitAction, setSubmitAction] = useState<'draft' | 'pending'>('draft');
+  
+  // Field-level error states for inline validation
+  const [fieldErrors, setFieldErrors] = useState<{
+    phone?: string;
+    whatsapp?: string;
+    propertyType?: string;
+    city?: string;
+    price?: string;
+    area?: string;
+  }>({});
 
   const [formData, setFormData] = useState({
     transactionType: 'sale',
@@ -237,11 +250,40 @@ export default function AddListing() {
   ) => {
     const { name, value } = e.target;
     
+    // Clear error for this field when user starts typing
+    if (fieldErrors[name as keyof typeof fieldErrors]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+    
     // Special handling for phone field when "WhatsApp same as phone" is checked
     if (name === 'phone' && formData.whatsappSameAsPhone) {
       setFormData((prev) => ({ ...prev, phone: value, whatsapp: value }));
+      // Also clear WhatsApp error if phone changes
+      if (fieldErrors.whatsapp) {
+        setFieldErrors((prev) => ({ ...prev, whatsapp: undefined }));
+      }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // Validate phone field on blur
+  const handlePhoneBlur = () => {
+    if (formData.phone && formData.phone.trim()) {
+      if (!isValidPhone(formData.phone)) {
+        const error = getPhoneError(formData.phone, isRTL);
+        setFieldErrors((prev) => ({ ...prev, phone: error }));
+      }
+    }
+  };
+
+  // Validate WhatsApp field on blur
+  const handleWhatsAppBlur = () => {
+    if (formData.whatsapp && formData.whatsapp.trim()) {
+      if (!isValidPhone(formData.whatsapp)) {
+        const error = getPhoneError(formData.whatsapp, isRTL);
+        setFieldErrors((prev) => ({ ...prev, whatsapp: error }));
+      }
     }
   };
 
@@ -252,6 +294,10 @@ export default function AddListing() {
       whatsappSameAsPhone: checked,
       whatsapp: checked ? prev.phone : prev.whatsapp,
     }));
+    // Clear WhatsApp error when syncing with phone
+    if (checked && fieldErrors.whatsapp) {
+      setFieldErrors((prev) => ({ ...prev, whatsapp: undefined }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -349,9 +395,12 @@ export default function AddListing() {
       });
     }
 
+    // Reset field errors
+    const errors: typeof fieldErrors = {};
+
+    // Validate property type
     if (!formData.propertyType) {
-      alert(isRTL ? 'يرجى اختيار نوع العقار' : 'Veuillez sélectionner un type de bien');
-      return;
+      errors.propertyType = isRTL ? 'يرجى اختيار نوع العقار' : 'Veuillez sélectionner un type de bien';
     }
 
     // Strict validation for cityId - ensure it's not empty and is a valid integer
@@ -362,42 +411,82 @@ export default function AddListing() {
           parsedCityId: parseInt(formData.cityId)
         });
       }
-      alert(isRTL ? 'يرجى اختيار المدينة' : 'Veuillez sélectionner une ville');
-      return;
+      errors.city = isRTL ? 'يرجى اختيار المدينة' : 'Veuillez sélectionner une ville';
     }
 
-    // Validate phone number (E.164 format)
+    // Validate phone number with improved validation
     if (formData.phone && formData.phone.trim()) {
-      const normalizedPhone = normalizePhoneNumber(formData.phone);
-      if (!validateE164Phone(normalizedPhone)) {
-        const errorMsg = getPhoneValidationError(normalizedPhone, isRTL);
-        alert(errorMsg || (isRTL 
-          ? 'رقم الهاتف غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... أو التنسيق المحلي: 06..., 07...'
-          : 'Numéro de téléphone invalide. Utilisez le format international (+212..., +33..., +44...) ou le format local marocain (06..., 07...)'));
-        return;
+      if (!isValidPhone(formData.phone)) {
+        errors.phone = getPhoneError(formData.phone, isRTL);
+        if (!errors.phone) {
+          errors.phone = isRTL 
+            ? 'رقم الهاتف غير صالح. استخدم التنسيق: +212..., 06..., 07..., أو التنسيق الدولي'
+            : 'Numéro invalide. Utilisez le format: +212..., 06..., 07..., ou format international';
+        }
       }
     }
 
-    // Validate WhatsApp number (E.164 format)
+    // Validate WhatsApp number with improved validation
     if (formData.whatsapp && formData.whatsapp.trim()) {
-      const normalizedWhatsapp = normalizePhoneNumber(formData.whatsapp);
-      if (!validateE164Phone(normalizedWhatsapp)) {
-        const errorMsg = getPhoneValidationError(normalizedWhatsapp, isRTL);
-        alert(errorMsg || (isRTL 
-          ? 'رقم واتساب غير صالح. استخدم التنسيق الدولي: +212..., +33..., +44... أو التنسيق المحلي: 06..., 07...'
-          : 'Numéro WhatsApp invalide. Utilisez le format international (+212..., +33..., +44...) ou le format local marocain (06..., 07...)'));
-        return;
+      if (!isValidPhone(formData.whatsapp)) {
+        errors.whatsapp = getPhoneError(formData.whatsapp, isRTL);
+        if (!errors.whatsapp) {
+          errors.whatsapp = isRTL 
+            ? 'رقم واتساب غير صالح. استخدم التنسيق: +212..., 06..., 07..., أو التنسيق الدولي'
+            : 'Numéro WhatsApp invalide. Utilisez le format: +212..., 06..., 07..., ou format international';
+        }
       }
     }
 
     // Price validation: must be provided and > 0 (price is NOT NULL in DB)
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      alert(isRTL ? 'السعر مطلوب ويجب أن يكون أكبر من الصفر' : 'Le prix est requis et doit être supérieur à zéro');
-      return;
+      errors.price = isRTL ? 'السعر مطلوب ويجب أن يكون أكبر من الصفر' : 'Le prix est requis et doit être supérieur à zéro';
     }
 
+    // Area validation
     if (formData.area && parseFloat(formData.area) <= 0) {
-      alert(isRTL ? 'المساحة يجب أن تكون أكبر من الصفر' : 'La surface doit être supérieure à zéro');
+      errors.area = isRTL ? 'المساحة يجب أن تكون أكبر من الصفر' : 'La surface doit être supérieure à zéro';
+    }
+
+    // If there are any validation errors, show them and stop submission
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      
+      // Format error messages for toast
+      const errorMessages = Object.values(errors).map(msg => msg.trim());
+      const formattedErrors = errorMessages.join(' • '); // Use bullet separator
+      
+      // Show toast notification
+      toast.error(
+        isRTL 
+          ? 'يرجى تصحيح الأخطاء المميزة في النموذج'
+          : 'Veuillez corriger les erreurs surlignées dans le formulaire',
+        {
+          description: formattedErrors,
+          duration: 5000,
+        }
+      );
+      
+      // Scroll to first error field - map error keys to actual input IDs
+      const fieldIdMap: Record<string, string> = {
+        phone: 'phone',
+        whatsapp: 'whatsapp',
+        propertyType: 'propertyType',
+        city: 'cityId',
+        price: 'price',
+        area: 'area',
+      };
+      
+      const firstErrorField = Object.keys(errors)[0];
+      const inputId = fieldIdMap[firstErrorField];
+      const errorElement = inputId ? document.getElementById(inputId) : null;
+      
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Small delay before focusing to ensure scroll completes
+        setTimeout(() => errorElement.focus(), 300);
+      }
+      
       return;
     }
 
@@ -474,9 +563,9 @@ export default function AddListing() {
         description_fr: formData.descriptionFr || null,
         description_ar: formData.descriptionAr || null,
         images: [],
-        // Contact fields with E.164 normalization
-        contact_phone: formData.phone ? normalizePhoneNumber(formData.phone) : null,
-        contact_whatsapp: formData.whatsapp ? normalizePhoneNumber(formData.whatsapp) : null,
+        // Contact fields with E.164 normalization using libphonenumber-js
+        contact_phone: formData.phone ? normalizePhone(formData.phone) : null,
+        contact_whatsapp: formData.whatsapp ? normalizePhone(formData.whatsapp) : null,
         contact_email: formData.email ? formData.email.trim() : null,
         // Visibility flags
         show_phone_public: formData.showPhonePublic,
@@ -695,6 +784,18 @@ export default function AddListing() {
       });
 
       setIsSuccess(true);
+      
+      // Show success toast
+      toast.success(
+        isRTL ? 'تم إنشاء الإعلان بنجاح!' : 'Annonce créée avec succès!',
+        {
+          description: isRTL 
+            ? 'سيتم إعادة توجيهك إلى لوحة التحكم...'
+            : 'Vous allez être redirigé vers le tableau de bord...',
+          duration: 3000,
+        }
+      );
+      
       setTimeout(() => {
         navigate('/dashboard');
       }, 3000);
@@ -706,7 +807,16 @@ export default function AddListing() {
           : isRTL
             ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'
             : "Une erreur inattendue s'est produite. Veuillez réessayer.";
-      alert(message);
+      
+      // Show error toast instead of alert
+      toast.error(
+        isRTL ? 'فشل في إنشاء الإعلان' : 'Échec de la création de l\'annonce',
+        {
+          description: message,
+          duration: 7000,
+        }
+      );
+      
       setIsSubmitting(false);
       setUploadProgress('');
     }
@@ -1103,8 +1213,16 @@ export default function AddListing() {
                     type="tel" 
                     placeholder="06XX XX XX XX, +212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.phone} 
-                    onChange={handleInputChange} 
+                    onChange={handleInputChange}
+                    onBlur={handlePhoneBlur}
+                    className={cn(fieldErrors.phone && "border-red-500 focus-visible:ring-red-500")}
                   />
+                  {fieldErrors.phone && (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{fieldErrors.phone}</span>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Switch 
                       id="showPhonePublic"
@@ -1127,8 +1245,16 @@ export default function AddListing() {
                     placeholder="06XX XX XX XX, +212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.whatsapp} 
                     onChange={handleInputChange}
+                    onBlur={handleWhatsAppBlur}
                     disabled={formData.whatsappSameAsPhone}
+                    className={cn(fieldErrors.whatsapp && "border-red-500 focus-visible:ring-red-500")}
                   />
+                  {fieldErrors.whatsapp && (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{fieldErrors.whatsapp}</span>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Checkbox 
