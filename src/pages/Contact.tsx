@@ -114,12 +114,13 @@ export default function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Track lead generation event
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // Track lead generation event only after successful submission
     trackEvent('generate_lead', {
       source: 'contact_page'
     });
     
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSubmitting(false);
     setIsSuccess(true);
   };

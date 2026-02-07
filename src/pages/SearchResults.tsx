@@ -202,7 +202,8 @@ export default function SearchResults() {
       // Track the search event
       trackEvent('view_search_results', params);
     }
-  }, [selectedCity, selectedType, priceRange, loading, dbRows.length]);
+    // Only track when filter values change, not dbRows.length
+  }, [selectedCity, selectedType, priceRange[0], priceRange[1], loading]);
 
   // ✅ frontend filters (city + exact type + price)
   const filteredRows = useMemo(() => {
