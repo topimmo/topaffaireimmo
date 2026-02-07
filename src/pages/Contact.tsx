@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock, CheckCircle } from "lucide-react";
 import { useSEO } from "@/components/SEO";
+import { SITE_URL } from "@/config/site";
 
 const content = {
   fr: {
@@ -77,10 +78,35 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Set SEO metadata
+  // Set SEO metadata with structured data
   useSEO({
     title: c.title,
     description: c.metaDescription,
+    canonical: "/contact",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      "name": "Contact TopAffaireImmo",
+      "description": c.metaDescription,
+      "url": `${SITE_URL}/contact`,
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Accueil",
+            "item": SITE_URL
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Contact",
+            "item": `${SITE_URL}/contact`
+          }
+        ]
+      }
+    }
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

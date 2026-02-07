@@ -1,6 +1,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { useSEO } from "@/components/SEO";
+import { SITE_URL } from "@/config/site";
 
 type Lang = "fr" | "ar";
 
@@ -32,8 +33,33 @@ export default function Privacy() {
 
   // Set SEO metadata
   useSEO({
-    title: t.title,
+    title: `${t.title} | TopAffaireImmo`,
     description: t.metaDescription,
+    canonical: "/privacy",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": t.title,
+      "description": t.metaDescription,
+      "url": `${SITE_URL}/privacy`,
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Accueil",
+            "item": SITE_URL
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": t.title,
+            "item": `${SITE_URL}/privacy`
+          }
+        ]
+      }
+    }
   });
 
   return (
