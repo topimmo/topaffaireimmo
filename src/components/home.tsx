@@ -5,6 +5,7 @@ import PropertyCategories from "@/components/home/PropertyCategories";
 import AdBanner from "@/components/home/AdBanner";
 import PromoBanner from "@/components/PromoBanner";
 import SEO from "@/components/SEO";
+import { FAQ, generalFAQ } from "@/components/FAQ";
 import { SITE_URL } from "@/config/site";
 
 function Home() {
@@ -68,6 +69,9 @@ function Home() {
 
         {/* Property Categories */}
         <PropertyCategories />
+
+        {/* FAQ Section with FAQPage Schema */}
+        <FAQ items={generalFAQ} className="bg-muted/30 mt-16" />
       </main>
     </>
   );

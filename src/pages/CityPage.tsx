@@ -1,6 +1,7 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import SEO from '../components/SEO';
+import { FAQ, getCityFAQ } from '../components/FAQ';
 import { MOROCCO_CITIES } from '../lib/seo';
 import { getCityContent } from '../data/cityContent';
 
@@ -274,6 +275,16 @@ export default function CityPage() {
                           : `${cityName} هي واحدة من المدن الرئيسية في المغرب، وتوفر سوق عقارات ديناميكي مع فرص متنوعة لشراء وتأجير العقارات.`}
                       </p>
                     </div>
+                    
+                    {/* FAQ Section for cities without custom content */}
+                    {language === 'fr' && (
+                      <div className="mt-12">
+                        <FAQ 
+                          items={getCityFAQ(cityName)} 
+                          title={`Questions sur l'immobilier à ${cityName}`}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
