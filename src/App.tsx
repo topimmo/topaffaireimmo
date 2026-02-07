@@ -9,6 +9,7 @@ import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
 import { runStartupValidation } from "./lib/startup-validation";
 import { Toaster } from "@/components/ui/sonner";
+import { trackPageView } from "@/lib/analytics/ga4";
 
 // ✅ Layout imports
 import Header from "@/components/layout/Header";
@@ -73,7 +74,13 @@ function LoadingSpinner() {
 
 function ScrollToTop() {
   const location = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [location.pathname]);
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    // Track page view on route change
+    trackPageView();
+  }, [location.pathname, location.search]);
+  
   return null;
 }
 

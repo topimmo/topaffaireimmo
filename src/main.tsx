@@ -7,6 +7,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import * as Sentry from "@sentry/react";
+import { initGA } from "./lib/analytics/ga4";
 
 // Initialize Sentry for error monitoring (production only)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
@@ -51,6 +52,9 @@ try {
   console.error('Error reading deployment metadata:', err);
 }
 console.groupEnd();
+
+// Initialize Google Analytics 4
+initGA();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
