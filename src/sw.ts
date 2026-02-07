@@ -11,7 +11,7 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 // Service Worker version - increment to force update
-const SW_VERSION = '1.2.0'; // Updated: Auth routes bypass SW, improved offline handling
+const SW_VERSION = '1.3.0'; // Updated: Fixed navigation fallback, improved network timeout handling
 
 // Cache names
 const PRECACHE_NAME = 'workbox-precache-v2-' + self.location.origin;
@@ -112,11 +112,11 @@ function isApiRequest(url: URL): boolean {
  * 
  * Rules:
  * 1. Auth routes (/auth/callback, /reset-password) ALWAYS bypass Service Worker
- * 2. Always try network first
+ * 2. Always try network first with timeout
  * 3. For navigation requests that fail:
  *    - If critical route (/add-listing, /dashboard, etc), return cached app shell
- *    - If navigator.onLine is false, return offline.html
- *    - Otherwise return cached page or app shell
+ *    - If navigator.onLine is false AND request failed, return offline.html
+ *    - Otherwise return cached page or app shell (slow network)
  * 4. For API requests, never return offline.html - return error or let it fail
  * 5. Admin routes bypass service worker entirely
  */
@@ -136,12 +136,26 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     return;
   }
 
-  // For navigation requests, implement smart fallback
+  // For navigation requests, implement smart fallback with timeout
   if (isNavigationRequest(event.request)) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Network request succeeded - return it
+      // Try network with reasonable timeout
+      Promise.race([
+        fetch(event.request),
+        new Promise<Response>((_, reject) => 
+          setTimeout(() => reject(new Error('Network timeout')), 10000)
+        )
+      ])
+        .then(async response => {
+          // Network request succeeded - cache it and return it
+          if (response.ok) {
+            try {
+              const cache = await caches.open(PRECACHE_NAME);
+              await cache.put(event.request, response.clone());
+            } catch (cacheError) {
+              console.warn('[SW] Failed to cache navigation response:', cacheError);
+            }
+          }
           return response;
         })
         .catch(async (error) => {
@@ -150,12 +164,14 @@ self.addEventListener('fetch', (event: FetchEvent) => {
           // Check if user is truly offline
           const isOffline = !self.navigator.onLine;
           
+          // Open cache once for all operations below
+          const cache = await caches.open(PRECACHE_NAME);
+          
           // Critical routes should NEVER show offline page - return cached shell
           if (isCriticalRoute(url.pathname)) {
             console.log('[SW] Critical route failed, returning cached shell instead of offline page');
             
             // Try to get cached app shell (index.html)
-            const cache = await caches.open(PRECACHE_NAME);
             const cachedShell = await cache.match('/index.html') || 
                                 await cache.match('/');
             
@@ -175,11 +191,28 @@ self.addEventListener('fetch', (event: FetchEvent) => {
           }
           
           // For other navigation requests:
-          // - If truly offline (navigator.onLine === false), show offline page
-          // - Otherwise, return cached page or shell (network might be unstable)
+          // First try to return cached version of the page or app shell
+          // Only show offline page if user is truly offline AND no cache exists
+          console.log('[SW] Trying cached page or shell first');
+          
+          // Try cached version of the exact page first
+          const cachedPage = await cache.match(event.request);
+          if (cachedPage) {
+            console.log('[SW] Returning cached page');
+            return cachedPage;
+          }
+          
+          // Fall back to app shell (index.html)
+          const cachedShell = await cache.match('/index.html') || 
+                              await cache.match('/');
+          if (cachedShell) {
+            console.log('[SW] Returning cached app shell');
+            return cachedShell;
+          }
+          
+          // No cache available - check if truly offline
           if (isOffline) {
-            console.log('[SW] User is offline, returning offline page');
-            const cache = await caches.open(PRECACHE_NAME);
+            console.log('[SW] User is offline and no cache, returning offline page');
             const offlinePage = await cache.match('/offline.html');
             
             if (offlinePage) {
@@ -187,31 +220,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
             }
           }
           
-          // Network is unstable but user is technically online
-          // Try to return cached version of the page or app shell
-          console.log('[SW] Network unstable, trying cached page or shell');
-          const cache = await caches.open(PRECACHE_NAME);
-          
-          // Try cached version of the exact page
-          const cachedPage = await cache.match(event.request);
-          if (cachedPage) {
-            return cachedPage;
-          }
-          
-          // Fall back to app shell
-          const cachedShell = await cache.match('/index.html') || 
-                              await cache.match('/');
-          if (cachedShell) {
-            return cachedShell;
-          }
-          
-          // Last resort: show offline page
-          const offlinePage = await cache.match('/offline.html');
-          if (offlinePage) {
-            return offlinePage;
-          }
-          
-          // No cache available at all - return basic error
+          // Last resort: return basic error (shouldn't reach here)
           return new Response('Network error', { status: 503 });
         })
     );
