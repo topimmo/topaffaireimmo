@@ -1,0 +1,86 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]: ⚠️ Configuration warnings detected. Check browser console for details.
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link "TopAffaireImmo" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - generic [ref=e12]: TopAffaireImmo
+        - navigation [ref=e13]:
+          - link "Acheter" [ref=e14] [cursor=pointer]:
+            - /url: /buy
+          - link "Louer" [ref=e15] [cursor=pointer]:
+            - /url: /rent
+          - link "Agences" [ref=e16] [cursor=pointer]:
+            - /url: /agencies
+          - link "Annoncer avec nous" [ref=e17] [cursor=pointer]:
+            - /url: /advertise
+        - generic [ref=e18]:
+          - button "🇫🇷" [ref=e19] [cursor=pointer]:
+            - img
+            - generic [ref=e20]: 🇫🇷
+          - link "Connexion" [ref=e21] [cursor=pointer]:
+            - /url: /login
+          - link "Publier gratuitement" [ref=e22] [cursor=pointer]:
+            - /url: /register
+            - img
+            - text: Publier gratuitement
+    - main [ref=e23]:
+      - img [ref=e25]
+    - contentinfo [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - link "TopAffaireImmo" [ref=e31] [cursor=pointer]:
+              - /url: /
+              - img [ref=e32]
+              - generic [ref=e36]: TopAffaireImmo
+            - paragraph [ref=e37]: Votre partenaire de confiance pour trouver la propriété parfaite.
+          - generic [ref=e38]:
+            - heading "Liens rapides" [level=4] [ref=e39]
+            - list [ref=e40]:
+              - listitem [ref=e41]:
+                - link "Acheter" [ref=e42] [cursor=pointer]:
+                  - /url: /buy
+              - listitem [ref=e43]:
+                - link "Louer" [ref=e44] [cursor=pointer]:
+                  - /url: /rent
+              - listitem [ref=e45]:
+                - link "Ajouter une annonce" [ref=e46] [cursor=pointer]:
+                  - /url: /add-listing
+              - listitem [ref=e47]:
+                - link "Agences" [ref=e48] [cursor=pointer]:
+                  - /url: /agencies
+          - generic [ref=e49]:
+            - heading "Juridique" [level=4] [ref=e50]
+            - list [ref=e51]:
+              - listitem [ref=e52]:
+                - link "À propos" [ref=e53] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e54]:
+                - link "Confidentialité" [ref=e55] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=e56]:
+                - link "Conditions" [ref=e57] [cursor=pointer]:
+                  - /url: /terms
+              - listitem [ref=e58]:
+                - link "Contact" [ref=e59] [cursor=pointer]:
+                  - /url: /contact
+          - generic [ref=e60]:
+            - heading "Contact" [level=4] [ref=e61]
+            - list [ref=e62]:
+              - listitem [ref=e63]:
+                - img [ref=e64]
+                - generic [ref=e67]: Casablanca, Maroc
+              - listitem [ref=e68]:
+                - img [ref=e69]
+                - generic [ref=e72]: contact@topaffaireimmo.com
+        - generic [ref=e73]:
+          - paragraph [ref=e74]: © 2026 TopAffaireImmo. Tous droits réservés.
+          - paragraph [ref=e75]: Fait avec soin
+  - region "Notifications alt+T"
+```
