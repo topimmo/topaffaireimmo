@@ -80,7 +80,7 @@ export default function Contact() {
 
   // Set SEO metadata with structured data
   useSEO({
-    title: c.title,
+    title: `${c.title} | TopAffaireImmo`,
     description: c.metaDescription,
     canonical: "/contact",
     structuredData: {
