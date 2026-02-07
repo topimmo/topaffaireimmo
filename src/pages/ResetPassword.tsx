@@ -69,6 +69,15 @@ export default function ResetPassword() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   
+  // Log component mount for debugging (development only)
+  if (import.meta.env.DEV) {
+    console.log('🔐 [ResetPassword] Component mounted');
+    console.log('  - Current URL:', window.location.href);
+    console.log('  - Pathname:', window.location.pathname);
+    console.log('  - Search params:', window.location.search);
+    console.log('  - Hash:', window.location.hash);
+  }
+  
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);

@@ -57,3 +57,8 @@ dist/manifest.webmanifest
 
 # Test files
 test-*.html
+
+# Playwright test results
+test-results/
+playwright-report/
+playwright/.cache/

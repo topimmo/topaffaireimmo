@@ -14,6 +14,18 @@ export default function ProtectedRoute({
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  // CRITICAL: Never block /reset-password or /auth/callback routes
+  // These routes need to establish session FROM url tokens before auth check
+  const publicAuthRoutes = ['/reset-password', '/auth/callback'];
+  if (publicAuthRoutes.includes(location.pathname)) {
+    console.warn(
+      `[ProtectedRoute] WARNING: ${location.pathname} should NOT be wrapped in ProtectedRoute. ` +
+      `This route must be public to allow session establishment from URL tokens.`
+    );
+    // Allow access anyway to prevent breaking the flow
+    return <>{children}</>;
+  }
+
   // Wait for auth to finish loading
   if (loading) {
     return (
