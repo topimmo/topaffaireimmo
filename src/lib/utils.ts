@@ -138,6 +138,11 @@ export function normalizePhoneNumber(phone: string): string {
   // Remove all characters except digits and +
   let normalized = phone.replace(/[^\d+]/g, '');
   
+  // Handle international format starting with 00 (e.g., 00212... -> +212...)
+  if (normalized.startsWith('00')) {
+    normalized = '+' + normalized.substring(2);
+  }
+  
   // Handle Moroccan local format: 06/07/05 -> +2126/+2127/+2125
   if (normalized && !normalized.startsWith('+') && /^0[567]\d{8}$/.test(normalized)) {
     // Moroccan mobile numbers: 0[567]XXXXXXXX (10 digits total)

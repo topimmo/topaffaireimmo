@@ -93,6 +93,58 @@ const testCases: TestCase[] = [
     expectedNormalized: '+212764228976'
   },
   
+  // 00-prefix formats (requirement: convert 00... to +...)
+  { 
+    phone: '00212664352280', 
+    shouldBeValid: true, 
+    description: '00212 prefix -> +212 (Morocco)',
+    expectedNormalized: '+212664352280'
+  },
+  { 
+    phone: '0033664352280', 
+    shouldBeValid: true, 
+    description: '0033 prefix -> +33 (France)',
+    expectedNormalized: '+33664352280'
+  },
+  { 
+    phone: '00212 664 35 22 80', 
+    shouldBeValid: true, 
+    description: '00212 with spaces',
+    expectedNormalized: '+212664352280'
+  },
+  { 
+    phone: '0033 6 64 35 22 80', 
+    shouldBeValid: true, 
+    description: '0033 with spaces',
+    expectedNormalized: '+33664352280'
+  },
+  { 
+    phone: '0044 791 112 3456', 
+    shouldBeValid: true, 
+    description: '0044 prefix -> +44 (UK)',
+    expectedNormalized: '+447911123456'
+  },
+  
+  // Numbers with dashes and parentheses (requirement: strip them)
+  { 
+    phone: '+212-664-352-280', 
+    shouldBeValid: true, 
+    description: 'Morocco number with dashes',
+    expectedNormalized: '+212664352280'
+  },
+  { 
+    phone: '+33 (6) 64-35-22-80', 
+    shouldBeValid: true, 
+    description: 'France number with parentheses and dashes',
+    expectedNormalized: '+33664352280'
+  },
+  { 
+    phone: '06-64-35-22-80', 
+    shouldBeValid: true, 
+    description: 'Morocco local with dashes',
+    expectedNormalized: '+212664352280'
+  },
+  
   // French numbers
   { 
     phone: '+33123456789', 
