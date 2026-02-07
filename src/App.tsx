@@ -182,6 +182,14 @@ function App() {
             <Route path="/advertise" element={<Advertise />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            {/* 
+              CRITICAL: /reset-password MUST remain public (not wrapped in ProtectedRoute)
+              This route needs to be accessible WITHOUT authentication because:
+              1. Users don't have a session yet (they're resetting their password)
+              2. The session is created FROM the reset token in the URL
+              3. Wrapping this in ProtectedRoute would cause immediate redirect to /login
+              See: docs/PASSWORD_RESET_TESTING_GUIDE.md for details
+            */}
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 

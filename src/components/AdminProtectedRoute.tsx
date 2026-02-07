@@ -20,6 +20,18 @@ export default function AdminProtectedRoute({
   const { isAdmin, loading: adminLoading, error } = useAdmin();
   const location = useLocation();
 
+  // CRITICAL: Never block /reset-password or /auth/callback routes
+  // These routes need to establish session FROM url tokens before auth check
+  const publicAuthRoutes = ['/reset-password', '/auth/callback'];
+  if (publicAuthRoutes.includes(location.pathname)) {
+    console.error(
+      `[AdminProtectedRoute] ERROR: ${location.pathname} should NEVER be wrapped in AdminProtectedRoute! ` +
+      `This route must be public to allow session establishment from URL tokens.`
+    );
+    // Allow access anyway to prevent breaking the flow
+    return <>{children}</>;
+  }
+
   // Debug logging for admin access
   useEffect(() => {
     console.log('[AdminProtectedRoute] Auth state:', {
