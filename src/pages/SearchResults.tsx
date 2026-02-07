@@ -19,6 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import SortSelect, { SortOption } from "@/components/SortSelect";
 import SEO from "@/components/SEO";
 import { SITE_URL } from "@/config/site";
+import { trackEvent } from "@/lib/analytics/ga4";
 
 // ✅ Supabase -> PropertyCard mapping
 type DbProperty = {
@@ -175,6 +176,33 @@ export default function SearchResults() {
 
     fetchData();
   }, [selectedType, urlOwnerId]);
+  
+  // Track search results view when filters change
+  useEffect(() => {
+    if (dbRows.length > 0 && !loading) {
+      // Build tracking params
+      const params: Record<string, any> = {};
+      
+      if (selectedCity !== 'all-cities') {
+        params.city = selectedCity;
+      }
+      
+      if (selectedType !== 'all-types') {
+        params.type = selectedType;
+      }
+      
+      if (priceRange[0] > 0) {
+        params.price_min = priceRange[0];
+      }
+      
+      if (priceRange[1] < DEFAULT_PRICE_RANGE[1]) {
+        params.price_max = priceRange[1];
+      }
+      
+      // Track the search event
+      trackEvent('view_search_results', params);
+    }
+  }, [selectedCity, selectedType, priceRange, loading, dbRows.length]);
 
   // ✅ frontend filters (city + exact type + price)
   const filteredRows = useMemo(() => {

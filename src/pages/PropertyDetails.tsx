@@ -34,6 +34,7 @@ import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/config/site";
 import { trackPropertyView, trackContactClick } from "@/lib/lead-tracking";
+import { trackEvent } from "@/lib/analytics/ga4";
 
 // ✅ Helper functions to safely handle null/undefined values
 const safeLower = (v?: string | null): string => (v ?? "").toLowerCase();
@@ -199,6 +200,11 @@ export default function PropertyDetails() {
           if (id) {
             trackPropertyView(id).catch(err => {
               console.warn('Failed to track property view:', err);
+            });
+            
+            // Track property view in GA4
+            trackEvent('property_view', {
+              property_id: id
             });
           }
         } else {
@@ -740,6 +746,12 @@ export default function PropertyDetails() {
                           trackContactClick(id, 'phone').catch(err => {
                             console.warn('Failed to track phone click:', err);
                           });
+                          
+                          // Track in GA4
+                          trackEvent('phone_click', {
+                            page: 'property_details',
+                            property_id: id
+                          });
                         }
                       }}
                     >
@@ -760,6 +772,12 @@ export default function PropertyDetails() {
                         if (id && whatsapp) {
                           trackContactClick(id, 'whatsapp').catch(err => {
                             console.warn('Failed to track whatsapp click:', err);
+                          });
+                          
+                          // Track in GA4
+                          trackEvent('whatsapp_click', {
+                            page: 'property_details',
+                            property_id: id
                           });
                         }
                       }}
@@ -785,6 +803,12 @@ export default function PropertyDetails() {
                         if (id && email) {
                           trackContactClick(id, 'email').catch(err => {
                             console.warn('Failed to track email click:', err);
+                          });
+                          
+                          // Track in GA4
+                          trackEvent('email_click', {
+                            page: 'property_details',
+                            property_id: id
                           });
                         }
                       }}
