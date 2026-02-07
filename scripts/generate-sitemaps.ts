@@ -301,7 +301,7 @@ async function generateListingsSitemap(): Promise<string> {
   
   if (!supabaseUrl || !supabaseKey) {
     console.warn('⚠️  Skipping listings sitemap: Supabase credentials not found');
-    console.warn('   Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to include listings');
+    console.warn('   Set VITE_SUPABASE_URL and either SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_ANON_KEY');
     xml += '\n</urlset>';
     return xml;
   }
