@@ -226,7 +226,7 @@ export default function EditListing() {
     // Special handling for phone field when "WhatsApp same as phone" is checked
     if (name === 'phone' && formData.whatsappSameAsPhone) {
       setFormData((prev) => ({ ...prev, phone: value, whatsapp: value }));
-      // Also clear WhatsApp error if phone changes
+      // Clear WhatsApp error when phone changes
       if (fieldErrors.whatsapp) {
         setFieldErrors((prev) => ({ ...prev, whatsapp: undefined }));
       }

@@ -21,12 +21,10 @@ export function normalizePhone(phone: string, defaultCountry: CountryCode = 'MA'
   try {
     // Pre-process: Convert 00-prefix to + (e.g., 00212... -> +212...)
     let processedPhone = phone.trim();
-    if (processedPhone.replace(/[^\d]/g, '').startsWith('00')) {
-      // Remove all non-digit chars, then replace leading 00 with +
-      const digitsOnly = processedPhone.replace(/[^\d]/g, '');
-      if (digitsOnly.startsWith('00')) {
-        processedPhone = '+' + digitsOnly.substring(2);
-      }
+    const digitsOnly = processedPhone.replace(/[^\d]/g, '');
+    if (digitsOnly.startsWith('00')) {
+      // Replace leading 00 with + for international format
+      processedPhone = '+' + digitsOnly.substring(2);
     }
     
     // Parse the phone number with country context
