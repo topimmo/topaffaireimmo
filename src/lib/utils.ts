@@ -168,11 +168,8 @@ export function detectInAppBrowser(): {
   
   // Gmail in-app browser detection (Android)
   // Gmail app uses Chrome Custom Tabs which may strip hash fragments
-  if (uaLower.includes('gsa/') || (uaLower.includes('android') && uaLower.includes('chrome') && uaLower.includes('mobile'))) {
-    // Additional check: Gmail's in-app browser often has specific patterns
-    if (uaLower.includes('gsa/')) {
-      return { isInApp: true, browserName: 'Gmail', userAgent: ua };
-    }
+  if (uaLower.includes('gsa/')) {
+    return { isInApp: true, browserName: 'Gmail', userAgent: ua };
   }
   
   // iOS webview detection
