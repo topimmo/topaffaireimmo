@@ -288,29 +288,47 @@ export function getOpenInBrowserInstructions(isRTL: boolean): {
  * @returns Promise that resolves to true if successful
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
-  if (typeof window === 'undefined' || !navigator.clipboard) {
-    // Fallback for older browsers
+  if (typeof window === 'undefined') {
+    console.error('Copy to clipboard: Not available in server-side context');
+    return false;
+  }
+
+  // Try modern Clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
+      await navigator.clipboard.writeText(text);
+      console.log('✅ Text copied to clipboard using Clipboard API');
       return true;
     } catch (err) {
-      console.error('Failed to copy text:', err);
-      return false;
+      console.error('❌ Clipboard API failed:', err);
+      // Fall through to fallback method
     }
   }
 
+  // Fallback for older browsers or when Clipboard API is not available
+  console.warn('⚠️ Using fallback copy method (deprecated execCommand)');
   try {
-    await navigator.clipboard.writeText(text);
-    return true;
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    if (successful) {
+      console.log('✅ Text copied to clipboard using fallback method');
+      return true;
+    } else {
+      console.error('❌ Fallback copy method failed');
+      return false;
+    }
   } catch (err) {
-    console.error('Failed to copy text:', err);
+    console.error('❌ Failed to copy text (all methods failed):', err);
     return false;
   }
 }

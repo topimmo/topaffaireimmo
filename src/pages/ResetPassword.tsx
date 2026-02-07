@@ -621,6 +621,11 @@ export default function ResetPassword() {
                     minLength={8}
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isRTL 
+                    ? 'يجب أن تتطابق كلمة المرور أعلاه' 
+                    : 'Doit correspondre au mot de passe ci-dessus'}
+                </p>
               </div>
 
               <Button type="submit" className="w-full h-12" disabled={loading}>
