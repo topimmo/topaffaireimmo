@@ -26,6 +26,13 @@ const testCases: TestCase[] = [
   { phone: '+33664352280', shouldBeValid: true, description: 'Problem statement example: French number' },
   { phone: '+33 6 64 35 22 80', shouldBeValid: true, description: 'Problem statement example: French number with spaces' },
   
+  // 00-prefix formats (requirement: convert 00... to +...)
+  { phone: '00212664352280', shouldBeValid: true, description: '00212 prefix -> +212 (Morocco)' },
+  { phone: '0033664352280', shouldBeValid: true, description: '0033 prefix -> +33 (France)' },
+  { phone: '00212 664 35 22 80', shouldBeValid: true, description: '00212 with spaces' },
+  { phone: '0033 6 64 35 22 80', shouldBeValid: true, description: '0033 with spaces' },
+  { phone: '0044 791 112 3456', shouldBeValid: true, description: '0044 prefix -> +44 (UK)' },
+  
   // Moroccan numbers (backward compatibility + local format support)
   { phone: '+212664228976', shouldBeValid: true, description: 'Moroccan mobile number (international)' },
   { phone: '+212 664 22 89 76', shouldBeValid: true, description: 'Moroccan mobile with spaces (international)' },

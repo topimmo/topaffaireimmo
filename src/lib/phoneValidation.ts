@@ -19,8 +19,18 @@ export function normalizePhone(phone: string, defaultCountry: CountryCode = 'MA'
   }
 
   try {
+    // Pre-process: Convert 00-prefix to + (e.g., 00212... -> +212...)
+    let processedPhone = phone.trim();
+    if (processedPhone.replace(/[^\d]/g, '').startsWith('00')) {
+      // Remove all non-digit chars, then replace leading 00 with +
+      const digitsOnly = processedPhone.replace(/[^\d]/g, '');
+      if (digitsOnly.startsWith('00')) {
+        processedPhone = '+' + digitsOnly.substring(2);
+      }
+    }
+    
     // Parse the phone number with country context
-    const phoneNumber = parsePhoneNumber(phone, defaultCountry);
+    const phoneNumber = parsePhoneNumber(processedPhone, defaultCountry);
     
     // Return E.164 format if valid
     if (phoneNumber && phoneNumber.isValid()) {
