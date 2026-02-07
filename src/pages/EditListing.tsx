@@ -32,6 +32,7 @@ import {
   Loader2,
   ArrowLeft,
   Lock,
+  AlertCircle,
 } from 'lucide-react';
 import { cn, mapTransactionType, validateE164Phone, normalizePhoneNumber, getPhoneValidationError } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -102,6 +103,11 @@ export default function EditListing() {
     showEmailPublic: true,
     whatsappSameAsPhone: false,
   });
+
+  const [fieldErrors, setFieldErrors] = useState<{
+    phone?: string;
+    whatsapp?: string;
+  }>({});
 
   useEffect(() => {
     fetchCities();
@@ -220,8 +226,41 @@ export default function EditListing() {
     // Special handling for phone field when "WhatsApp same as phone" is checked
     if (name === 'phone' && formData.whatsappSameAsPhone) {
       setFormData((prev) => ({ ...prev, phone: value, whatsapp: value }));
+      // Also clear WhatsApp error if phone changes
+      if (fieldErrors.whatsapp) {
+        setFieldErrors((prev) => ({ ...prev, whatsapp: undefined }));
+      }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // Validate phone field on blur
+  const handlePhoneBlur = () => {
+    if (formData.phone && formData.phone.trim()) {
+      const normalizedPhone = normalizePhoneNumber(formData.phone);
+      if (!validateE164Phone(normalizedPhone)) {
+        const error = getPhoneValidationError(normalizedPhone, isRTL);
+        setFieldErrors((prev) => ({ ...prev, phone: error }));
+      } else {
+        setFieldErrors((prev) => ({ ...prev, phone: undefined }));
+      }
+    } else {
+      setFieldErrors((prev) => ({ ...prev, phone: undefined }));
+    }
+  };
+
+  const handleWhatsAppBlur = () => {
+    if (formData.whatsapp && formData.whatsapp.trim()) {
+      const normalizedWhatsapp = normalizePhoneNumber(formData.whatsapp);
+      if (!validateE164Phone(normalizedWhatsapp)) {
+        const error = getPhoneValidationError(normalizedWhatsapp, isRTL);
+        setFieldErrors((prev) => ({ ...prev, whatsapp: error }));
+      } else {
+        setFieldErrors((prev) => ({ ...prev, whatsapp: undefined }));
+      }
+    } else {
+      setFieldErrors((prev) => ({ ...prev, whatsapp: undefined }));
     }
   };
 
@@ -232,6 +271,10 @@ export default function EditListing() {
       whatsappSameAsPhone: checked,
       whatsapp: checked ? prev.phone : prev.whatsapp,
     }));
+    // Clear WhatsApp error when syncing with phone
+    if (checked && fieldErrors.whatsapp) {
+      setFieldErrors((prev) => ({ ...prev, whatsapp: undefined }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -949,8 +992,16 @@ export default function EditListing() {
                     placeholder="06XX XX XX XX, +212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.phone} 
                     onChange={handleInputChange}
+                    onBlur={handlePhoneBlur}
                     disabled={isLocked}
+                    className={cn(fieldErrors.phone && "border-red-500 focus-visible:ring-red-500")}
                   />
+                  {fieldErrors.phone && (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{fieldErrors.phone}</span>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Switch 
                       id="showPhonePublic"
@@ -974,8 +1025,16 @@ export default function EditListing() {
                     placeholder="06XX XX XX XX, +212 6XX XX XX XX, +33 6XX XX XX XX" 
                     value={formData.whatsapp} 
                     onChange={handleInputChange}
+                    onBlur={handleWhatsAppBlur}
                     disabled={isLocked || formData.whatsappSameAsPhone}
+                    className={cn(fieldErrors.whatsapp && "border-red-500 focus-visible:ring-red-500")}
                   />
+                  {fieldErrors.whatsapp && (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{fieldErrors.whatsapp}</span>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Checkbox 
