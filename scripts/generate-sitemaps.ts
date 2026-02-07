@@ -6,6 +6,11 @@
 
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Use production domain from environment variable, fallback to www.topaffaireimmo.com
 const DOMAIN = process.env.VITE_PRODUCTION_DOMAIN || 
@@ -287,7 +292,66 @@ function generateStaticPagesSitemap(): string {
   return xml;
 }
 
-function generateSitemapIndex(): string {
+async function generateListingsSitemap(): Promise<string> {
+  let xml = generateXmlHeader();
+  
+  // Try to connect to Supabase to fetch published listings
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('⚠️  Skipping listings sitemap: Supabase credentials not found');
+    console.warn('   Set VITE_SUPABASE_URL and either SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_ANON_KEY');
+    xml += '\n</urlset>';
+    return xml;
+  }
+  
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Fetch only published properties (exclude draft, pending, rejected, archived, sold, rented, inactive)
+    const { data: properties, error } = await supabase
+      .from('properties')
+      .select('id, updated_at, created_at')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(5000); // Reasonable limit for build-time generation (sitemap protocol allows up to 50,000 URLs per file)
+    
+    if (error) {
+      console.warn('⚠️  Error fetching listings from Supabase:', error.message);
+      xml += '\n</urlset>';
+      return xml;
+    }
+    
+    if (!properties || properties.length === 0) {
+      console.warn('⚠️  No published properties found in database');
+      xml += '\n</urlset>';
+      return xml;
+    }
+    
+    // Add each published property to the sitemap
+    properties.forEach(property => {
+      const lastmod = property.updated_at || property.created_at;
+      const date = lastmod ? new Date(lastmod).toISOString().split('T')[0] : undefined;
+      
+      xml += generateUrlEntry({
+        loc: `${DOMAIN}/property/${property.id}`,
+        changefreq: 'weekly',
+        priority: '0.7',
+        lastmod: date,
+      });
+    });
+    
+    console.log(`✅ Added ${properties.length} published properties to listings sitemap`);
+  } catch (err) {
+    console.warn('⚠️  Error generating listings sitemap:', err instanceof Error ? err.message : String(err));
+  }
+  
+  xml += '\n</urlset>';
+  return xml;
+}
+
+function generateSitemapIndex(includeListings: boolean = true): string {
   let xml = generateSitemapIndexHeader();
   const now = new Date().toISOString().split('T')[0];
   
@@ -295,9 +359,12 @@ function generateSitemapIndex(): string {
     { url: '/sitemaps/static.xml', lastmod: now },
     { url: '/sitemaps/cities.xml', lastmod: now },
     { url: '/sitemaps/neighborhoods.xml', lastmod: now },
-    // Note: listings.xml would be generated dynamically from database
-    // { url: '/sitemaps/listings.xml', lastmod: now },
   ];
+  
+  // Include listings sitemap if it was generated successfully
+  if (includeListings) {
+    sitemaps.push({ url: '/sitemaps/listings.xml', lastmod: now });
+  }
   
   sitemaps.forEach(sitemap => {
     xml += `
@@ -312,7 +379,7 @@ function generateSitemapIndex(): string {
 }
 
 // Generate all sitemaps
-function generateAll() {
+async function generateAll() {
   const publicDir = join(process.cwd(), 'public');
   const sitemapsDir = join(publicDir, 'sitemaps');
   
@@ -325,10 +392,13 @@ function generateAll() {
     console.error('Error creating sitemaps directory:', err);
   }
   
+  console.log('🗺️  Generating sitemaps for TopAffaireImmo...\n');
+  
   // Generate individual sitemaps
   const staticSitemap = generateStaticPagesSitemap();
   const citiesSitemap = generateCitiesSitemap();
   const neighborhoodsSitemap = generateNeighborhoodsSitemap();
+  const listingsSitemap = await generateListingsSitemap();
   
   // Write to files
   writeFileSync(join(sitemapsDir, 'static.xml'), staticSitemap);
@@ -340,8 +410,15 @@ function generateAll() {
   writeFileSync(join(sitemapsDir, 'neighborhoods.xml'), neighborhoodsSitemap);
   console.log('✅ Generated sitemaps/neighborhoods.xml');
   
+  // Only write listings sitemap if it has content beyond the XML wrapper
+  const hasListings = listingsSitemap.includes('<url>');
+  if (hasListings) {
+    writeFileSync(join(sitemapsDir, 'listings.xml'), listingsSitemap);
+    console.log('✅ Generated sitemaps/listings.xml');
+  }
+  
   // Generate sitemap index
-  const sitemapIndex = generateSitemapIndex();
+  const sitemapIndex = generateSitemapIndex(hasListings);
   writeFileSync(join(publicDir, 'sitemap.xml'), sitemapIndex);
   console.log('✅ Generated sitemap.xml (index)');
   
@@ -350,9 +427,14 @@ function generateAll() {
   console.log(`   - Static pages: ${staticSitemap.match(/<url>/g)?.length || 0} URLs`);
   console.log(`   - City pages: ${citiesSitemap.match(/<url>/g)?.length || 0} URLs`);
   console.log(`   - Neighborhood pages: ${neighborhoodsSitemap.match(/<url>/g)?.length || 0} URLs`);
+  console.log(`   - Property listings: ${listingsSitemap.match(/<url>/g)?.length || 0} URLs`);
+  console.log(`   - Total: ${(staticSitemap.match(/<url>/g)?.length || 0) + (citiesSitemap.match(/<url>/g)?.length || 0) + (neighborhoodsSitemap.match(/<url>/g)?.length || 0) + (listingsSitemap.match(/<url>/g)?.length || 0)} URLs\n`);
 }
 
 // Run if called directly
-generateAll();
+generateAll().catch(err => {
+  console.error('❌ Error generating sitemaps:', err);
+  process.exit(1);
+});
 
-export { generateAll, generateCitiesSitemap, generateNeighborhoodsSitemap, generateStaticPagesSitemap, generateSitemapIndex };
+export { generateAll, generateCitiesSitemap, generateNeighborhoodsSitemap, generateStaticPagesSitemap, generateSitemapIndex, generateListingsSitemap };

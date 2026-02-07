@@ -240,12 +240,13 @@ Used on individual property listings with:
 The platform generates comprehensive XML sitemaps for search engines:
 
 #### Sitemap Index (`/sitemap.xml`)
-Points to 3 sub-sitemaps:
+Points to 4 sub-sitemaps:
 
 ```xml
 /sitemaps/static.xml
 /sitemaps/cities.xml
 /sitemaps/neighborhoods.xml
+/sitemaps/listings.xml
 ```
 
 #### Static Sitemap (`/sitemaps/static.xml`)
@@ -271,10 +272,19 @@ Points to 3 sub-sitemaps:
 - And more...
 - Total: ~496 URLs
 
+#### Listings Sitemap (`/sitemaps/listings.xml`) **NEW**
+- Individual property listings (dynamically generated)
+- Only includes published properties (excludes drafts, pending, rejected, archived, sold, rented, inactive)
+- Fetches from Supabase database at build time
+- Includes `lastmod` date for each listing
+- Priority: 0.7, Change frequency: weekly
+- Total: Varies based on published listings count
+
 ### Sitemap Statistics
 
-- **Total URLs**: 801+
+- **Total URLs**: 801+ (static/cities/neighborhoods) + N listings
 - **Update Frequency**: 
+  - Property listings: Weekly (with lastmod dates)
   - City landing pages: Weekly
   - Transaction/Property pages: Daily
   - Static pages: Monthly to Weekly
@@ -284,6 +294,7 @@ Points to 3 sub-sitemaps:
   - City transaction pages: 0.85
   - City landing pages: 0.8
   - Property type pages: 0.8
+  - Property listings: 0.7
   - About/Contact: 0.6
 
 ### Generating Sitemaps
@@ -297,6 +308,50 @@ npm run build
 ```
 
 Script location: `scripts/generate-sitemaps.ts`
+
+### Sitemap Generation Method
+
+The sitemap generation process is fully automated and runs at build time:
+
+1. **Build Trigger**: When running `npm run build`, the build script automatically calls `npm run generate:sitemaps`
+
+2. **Static Sitemaps**: 
+   - Generated from predefined data (cities, neighborhoods, property types)
+   - Always included in every build
+   - Located in `/public/sitemaps/`
+
+3. **Dynamic Listings Sitemap**:
+   - Connects to Supabase database during build
+   - Queries for properties with `status = 'published'`
+   - Excludes all non-public statuses: draft, pending, rejected, archived, sold, rented, inactive
+   - Uses either `SUPABASE_SERVICE_ROLE_KEY` or `VITE_SUPABASE_ANON_KEY` for authentication
+   - Gracefully handles missing credentials (skips listings sitemap if unavailable)
+   - Generates `/sitemaps/listings.xml` with up to 5,000 listings
+   - Includes `lastmod` date based on property `updated_at` or `created_at`
+
+4. **Sitemap Index**:
+   - Automatically references all generated sitemaps
+   - Only includes `listings.xml` if it was successfully generated
+   - Located at `/public/sitemap.xml`
+
+5. **Robots.txt Integration**:
+   - References all sitemap files
+   - Located at `/public/robots.txt`
+
+**Environment Variables Required** (for listings sitemap):
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+# OR
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+**Important Notes**:
+- Listings sitemap is **build-time static**, not runtime dynamic
+- To update listings in sitemap, rebuild and redeploy the application
+- For frequently changing listings, consider setting up automated rebuilds (e.g., via webhook or cron job)
+- Compatible with Vite + React SPA architecture
+- No backend breaking changes - works with existing Supabase setup
 
 ---
 
