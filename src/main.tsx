@@ -5,10 +5,8 @@ import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { PWAInstallProvider } from "./contexts/PWAInstallContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import * as Sentry from "@sentry/react";
-import { registerServiceWorker } from "./lib/registerServiceWorker";
 
 // Initialize Sentry for error monitoring (production only)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
@@ -59,17 +57,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <BrowserRouter basename={basename}>
         <LanguageProvider>
-          <PWAInstallProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </PWAInstallProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>,
 );
-
-// Register service worker with bot detection and environment checks
-// This is called after render to avoid blocking initial paint
-registerServiceWorker();

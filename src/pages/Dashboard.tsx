@@ -1,4 +1,3 @@
-import { PushNotificationToggle } from '@/components/pwa/PushNotificationToggle';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -217,11 +216,6 @@ export default function Dashboard() {
                 {t('dashboard.addNew')}
               </Link>
             </Button>
-          </div>
-
-          {/* Push Notification Settings */}
-          <div className="mb-8">
-            <PushNotificationToggle />
           </div>
 
           {/* Listings */}
