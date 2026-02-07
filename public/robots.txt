@@ -46,6 +46,7 @@ Sitemap: https://www.topaffaireimmo.com/sitemap.xml
 Sitemap: https://www.topaffaireimmo.com/sitemaps/static.xml
 Sitemap: https://www.topaffaireimmo.com/sitemaps/cities.xml
 Sitemap: https://www.topaffaireimmo.com/sitemaps/neighborhoods.xml
+Sitemap: https://www.topaffaireimmo.com/sitemaps/listings.xml
 
 # Crawl rate (be nice to the server)
 Crawl-delay: 1
