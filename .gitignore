@@ -54,3 +54,6 @@ dev-dist
 dist/sw.js
 dist/workbox-*.js
 dist/manifest.webmanifest
+
+# Test files
+test-*.html

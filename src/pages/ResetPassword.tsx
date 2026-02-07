@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
-import { parseHashParams, clearUrlHash } from '@/lib/utils';
+import { parseHashParams, clearUrlHash, detectInAppBrowser, getOpenInBrowserInstructions, copyToClipboard } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Building2, Lock, Loader2, CheckCircle, AlertCircle, ExternalLink, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
@@ -76,15 +76,23 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [validSession, setValidSession] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [inAppBrowserWarning, setInAppBrowserWarning] = useState<{
+    show: boolean;
+    browserName: string;
+  }>({ show: false, browserName: '' });
 
   useEffect(() => {
     // Handle password reset session establishment
     const establishSession = async () => {
       try {
+        // Detect in-app browser early for logging and potential warnings
+        const browserDetection = detectInAppBrowser();
+        
         console.log('🔐 Reset password page loaded');
         console.log('  - Current URL:', window.location.href);
         console.log('  - Online status:', navigator.onLine);
         console.log('  - User agent:', navigator.userAgent);
+        console.log('  - In-app browser:', browserDetection.isInApp ? browserDetection.browserName : 'No');
 
         // Check for PKCE code in query params
         const queryParams = new URLSearchParams(window.location.search);
@@ -114,6 +122,7 @@ export default function ResetPassword() {
           console.error('  - Error Code:', errorCode);
           console.error('  - Description:', errorDescription);
           console.error('  - Full URL:', window.location.href);
+          console.error('  - In-app browser:', browserDetection.browserName);
           
           // Check network connectivity first
           if (!navigator.onLine) {
@@ -139,6 +148,23 @@ export default function ResetPassword() {
           }
           
           setError(userMessage);
+          setCheckingSession(false);
+          return;
+        }
+
+        // Check if we're in an in-app browser and missing tokens
+        // This is a common scenario with Gmail in-app browser which may drop hash fragments
+        if (browserDetection.isInApp && !code && !accessToken && !refreshToken) {
+          console.warn('⚠️ In-app browser detected with no auth tokens');
+          console.warn('  - Browser:', browserDetection.browserName);
+          console.warn('  - This may indicate hash fragment was stripped from URL');
+          console.warn('  - User should open link in system browser');
+          
+          // Show warning to user to open in external browser
+          setInAppBrowserWarning({
+            show: true,
+            browserName: browserDetection.browserName
+          });
           setCheckingSession(false);
           return;
         }
@@ -331,6 +357,17 @@ export default function ResetPassword() {
       return;
     }
 
+    // Additional password strength validation
+    const hasNumber = /\d/.test(password);
+    const hasLetter = /[a-zA-Z]/.test(password);
+    
+    if (!hasNumber || !hasLetter) {
+      setError(isRTL 
+        ? 'كلمة المرور يجب أن تحتوي على أحرف وأرقام' 
+        : 'Le mot de passe doit contenir des lettres et des chiffres');
+      return;
+    }
+
     setLoading(true);
 
     console.log('🔐 Updating user password');
@@ -389,6 +426,81 @@ export default function ResetPassword() {
   }
 
   if (!validSession) {
+    // Show in-app browser warning if detected
+    if (inAppBrowserWarning.show) {
+      const instructions = getOpenInBrowserInstructions(isRTL);
+      
+      const handleCopyLink = async () => {
+        const success = await copyToClipboard(window.location.href);
+        if (success) {
+          toast.success(isRTL ? 'تم نسخ الرابط' : 'Lien copié');
+        } else {
+          toast.error(isRTL ? 'فشل نسخ الرابط' : 'Échec de la copie');
+        }
+      };
+
+      return (
+        <div className={`flex items-center justify-center py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="w-full max-w-md">
+            <div className="bg-white rounded-2xl border p-8 shadow-sm">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-6">
+                  <ExternalLink className="h-10 w-10 text-amber-600" />
+                </div>
+                <h1 className="font-display text-2xl font-semibold text-foreground mb-4">
+                  {instructions.title}
+                </h1>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-amber-900 mb-2 font-medium">
+                    {isRTL 
+                      ? `تم اكتشاف ${inAppBrowserWarning.browserName}`
+                      : `Détecté dans ${inAppBrowserWarning.browserName}`}
+                  </p>
+                  <p className="text-sm text-amber-800">
+                    {isRTL 
+                      ? 'قد لا تعمل روابط إعادة تعيين كلمة المرور بشكل صحيح في هذا المتصفح. افتح الرابط في متصفحك الافتراضي.'
+                      : 'Les liens de réinitialisation peuvent ne pas fonctionner correctement dans ce navigateur. Ouvrez le lien dans votre navigateur par défaut.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`space-y-4 mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+                <h2 className="font-semibold text-foreground mb-3">
+                  {isRTL ? 'الخطوات:' : 'Étapes:'}
+                </h2>
+                <ol className={`list-decimal ${isRTL ? 'list-inside pr-4' : 'list-inside pl-4'} space-y-2 text-sm text-muted-foreground`}>
+                  {instructions.instructions.map((instruction, index) => (
+                    <li key={index} className="leading-relaxed">{instruction}</li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="space-y-3">
+                <Button onClick={handleCopyLink} className="w-full" size="lg">
+                  <Copy className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {instructions.actionText}
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/login">
+                    {isRTL ? 'العودة لتسجيل الدخول' : 'Retour à la connexion'}
+                  </Link>
+                </Button>
+              </div>
+
+              <div className="mt-6 p-3 bg-muted rounded-lg">
+                <p className="text-xs text-muted-foreground text-center">
+                  {isRTL 
+                    ? 'بعد فتح الرابط في متصفحك، ستتمكن من إعادة تعيين كلمة المرور.'
+                    : 'Après avoir ouvert le lien dans votre navigateur, vous pourrez réinitialiser votre mot de passe.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Standard invalid link error
     return (
       <div className={`flex items-center justify-center py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="w-full max-w-md text-center">
@@ -399,9 +511,9 @@ export default function ResetPassword() {
               {isRTL ? 'رابط غير صالح' : 'Lien invalide'}
             </h1>
             <p className="text-muted-foreground mb-6">
-              {isRTL 
+              {error || (isRTL 
                 ? 'هذا الرابط غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
-                : 'Ce lien est invalide ou a expiré. Veuillez demander un nouveau lien.'}
+                : 'Ce lien est invalide ou a expiré. Veuillez demander un nouveau lien.')}
             </p>
             <div className="space-y-3">
               <Button asChild className="w-full">
@@ -486,7 +598,9 @@ export default function ResetPassword() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {isRTL ? 'الحد الأدنى 8 أحرف' : 'Minimum 8 caractères'}
+                  {isRTL 
+                    ? 'الحد الأدنى 8 أحرف (يجب أن تحتوي على أحرف وأرقام)' 
+                    : 'Minimum 8 caractères (doit contenir lettres et chiffres)'}
                 </p>
               </div>
 
@@ -508,7 +622,9 @@ export default function ResetPassword() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {isRTL ? 'الحد الأدنى 8 أحرف' : 'Minimum 8 caractères'}
+                  {isRTL 
+                    ? 'يجب أن تتطابق كلمة المرور أعلاه' 
+                    : 'Doit correspondre au mot de passe ci-dessus'}
                 </p>
               </div>
 

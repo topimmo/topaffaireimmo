@@ -125,6 +125,215 @@ export function clearUrlHash(): void {
 }
 
 /**
+ * Detects if the user is viewing the page in an in-app browser (webview)
+ * In-app browsers like Gmail, Facebook, WhatsApp, etc. can have issues with:
+ * - Hash fragments being stripped from URLs
+ * - Auth flows not working properly
+ * - Session storage limitations
+ * 
+ * @returns Object with detection results
+ */
+export function detectInAppBrowser(): {
+  isInApp: boolean;
+  browserName: string;
+  userAgent: string;
+} {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return { isInApp: false, browserName: 'unknown', userAgent: '' };
+  }
+
+  const ua = navigator.userAgent || '';
+  const uaLower = ua.toLowerCase();
+
+  // Detect specific in-app browsers
+  if (uaLower.includes('instagram')) {
+    return { isInApp: true, browserName: 'Instagram', userAgent: ua };
+  }
+  
+  if (uaLower.includes('fban') || uaLower.includes('fbav') || uaLower.includes('facebook')) {
+    return { isInApp: true, browserName: 'Facebook', userAgent: ua };
+  }
+  
+  if (uaLower.includes('whatsapp')) {
+    return { isInApp: true, browserName: 'WhatsApp', userAgent: ua };
+  }
+  
+  if (uaLower.includes('linkedin')) {
+    return { isInApp: true, browserName: 'LinkedIn', userAgent: ua };
+  }
+  
+  if (uaLower.includes('twitter')) {
+    return { isInApp: true, browserName: 'Twitter', userAgent: ua };
+  }
+  
+  // Gmail in-app browser detection (Android)
+  // Gmail app uses Chrome Custom Tabs which may strip hash fragments
+  if (uaLower.includes('gsa/')) {
+    return { isInApp: true, browserName: 'Gmail', userAgent: ua };
+  }
+  
+  // iOS webview detection
+  // iOS in-app browsers don't include Safari in the user agent
+  const isIOS = /iphone|ipod|ipad/i.test(uaLower);
+  const isSafari = /safari/i.test(ua);
+  const isWebKit = /webkit/i.test(uaLower);
+  
+  if (isIOS && isWebKit && !isSafari) {
+    return { isInApp: true, browserName: 'iOS WebView', userAgent: ua };
+  }
+  
+  // Generic webview detection
+  if (uaLower.includes('webview') || uaLower.includes('wv')) {
+    return { isInApp: true, browserName: 'WebView', userAgent: ua };
+  }
+
+  return { isInApp: false, browserName: 'Browser', userAgent: ua };
+}
+
+/**
+ * Generates instructions for opening the current page in an external browser
+ * @param isRTL - Whether to use RTL (Arabic) language
+ * @returns Object with instructions and action button text
+ */
+export function getOpenInBrowserInstructions(isRTL: boolean): {
+  title: string;
+  instructions: string[];
+  actionText: string;
+} {
+  const detection = detectInAppBrowser();
+  
+  if (!detection.isInApp) {
+    return {
+      title: '',
+      instructions: [],
+      actionText: ''
+    };
+  }
+
+  // Platform-specific instructions
+  const isIOS = /iphone|ipod|ipad/i.test(navigator.userAgent.toLowerCase());
+  const isAndroid = /android/i.test(navigator.userAgent.toLowerCase());
+
+  if (isRTL) {
+    if (isIOS) {
+      return {
+        title: 'افتح في المتصفح',
+        instructions: [
+          'اضغط على زر المشاركة (↗️) في الأسفل',
+          'اختر "فتح في Safari"',
+          'أو انسخ الرابط والصقه في Safari'
+        ],
+        actionText: 'نسخ الرابط'
+      };
+    } else if (isAndroid) {
+      return {
+        title: 'افتح في المتصفح',
+        instructions: [
+          'اضغط على القائمة (⋮) في الأعلى',
+          'اختر "فتح في المتصفح" أو "فتح في Chrome"',
+          'أو انسخ الرابط والصقه في Chrome'
+        ],
+        actionText: 'نسخ الرابط'
+      };
+    }
+    
+    return {
+      title: 'افتح في المتصفح',
+      instructions: [
+        'انسخ هذا الرابط',
+        'افتح متصفحك (Chrome أو Safari)',
+        'الصق الرابط في شريط العناوين'
+      ],
+      actionText: 'نسخ الرابط'
+    };
+  }
+  
+  // French/LTR instructions
+  if (isIOS) {
+    return {
+      title: 'Ouvrir dans le navigateur',
+      instructions: [
+        'Appuyez sur le bouton de partage (↗️) en bas',
+        'Sélectionnez "Ouvrir dans Safari"',
+        'Ou copiez le lien et collez-le dans Safari'
+      ],
+      actionText: 'Copier le lien'
+    };
+  } else if (isAndroid) {
+    return {
+      title: 'Ouvrir dans le navigateur',
+      instructions: [
+        'Appuyez sur le menu (⋮) en haut',
+        'Sélectionnez "Ouvrir dans le navigateur" ou "Ouvrir dans Chrome"',
+        'Ou copiez le lien et collez-le dans Chrome'
+      ],
+      actionText: 'Copier le lien'
+    };
+  }
+  
+  return {
+    title: 'Ouvrir dans le navigateur',
+    instructions: [
+      'Copiez ce lien',
+      'Ouvrez votre navigateur (Chrome ou Safari)',
+      'Collez le lien dans la barre d\'adresse'
+    ],
+    actionText: 'Copier le lien'
+  };
+}
+
+/**
+ * Copy text to clipboard
+ * @param text - Text to copy
+ * @returns Promise that resolves to true if successful
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof window === 'undefined') {
+    console.error('Copy to clipboard: Not available in server-side context');
+    return false;
+  }
+
+  // Try modern Clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log('✅ Text copied to clipboard using Clipboard API');
+      return true;
+    } catch (err) {
+      console.error('❌ Clipboard API failed:', err);
+      // Fall through to fallback method
+    }
+  }
+
+  // Fallback for older browsers or when Clipboard API is not available
+  console.warn('⚠️ Using fallback copy method (deprecated execCommand)');
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    if (successful) {
+      console.log('✅ Text copied to clipboard using fallback method');
+      return true;
+    } else {
+      console.error('❌ Fallback copy method failed');
+      return false;
+    }
+  } catch (err) {
+    console.error('❌ Failed to copy text (all methods failed):', err);
+    return false;
+  }
+}
+
+/**
  * Normalize a phone number by removing spaces, dashes, parentheses, and other non-digit characters
  * Converts Moroccan local format (06/07/05) to E.164 international format
  * Preserves the leading + sign for E.164 format
