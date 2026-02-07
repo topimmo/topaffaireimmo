@@ -518,10 +518,9 @@ export default function EditListing() {
           area: formData.area ? parseFloat(formData.area) : null,
           bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
           bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-          title_en: formData.titleFr,
+          // Bilingual content (no English fields in database)
           title_fr: formData.titleFr,
           title_ar: formData.titleAr,
-          description_en: formData.descriptionFr,
           description_fr: formData.descriptionFr,
           description_ar: formData.descriptionAr,
           images: finalImageUrls,

@@ -17,7 +17,7 @@ export interface PropertyFilters {
   owner_id?: string;
 }
 
-export interface PropertyWithRelations extends Property {
+export interface PropertyWithRelations extends Omit<Property, 'title_fr' | 'title_ar' | 'status'> {
   city?: City;
   neighborhood?: Neighborhood;
   owner?: {
@@ -290,10 +290,15 @@ export function useFeaturedProperties(limit = 6) {
             featured: true, // Show featured badge since they're in the featured section
             isDummy: true,
             status: 'published',
-            owner_id: null,
-            created_at: dummy.created_at || new Date().toISOString(),
-            updated_at: dummy.updated_at || new Date().toISOString()
-          } as PropertyWithRelations));
+            owner_id: null as any,
+            created_by: null as any,
+            advertiser_type: 'agency' as any,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            // Fix city/neighborhood array types
+            city: Array.isArray(dummy.city) && dummy.city.length > 0 ? dummy.city[0] : dummy.city,
+            neighborhood: Array.isArray(dummy.neighborhood) && dummy.neighborhood.length > 0 ? dummy.neighborhood[0] : dummy.neighborhood,
+          } as unknown as PropertyWithRelations));
 
           // Combine real featured and dummy properties
           setProperties([...realFeatured, ...dummyProperties]);

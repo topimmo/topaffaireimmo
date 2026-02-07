@@ -13,14 +13,25 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
-import { useProperties } from '../hooks/useProperties';
-import PropertyCard from '../components/home/PropertyCard';
+import { useProperties, PropertyFilters } from '../hooks/useProperties';
+import PropertyCard, { Property as PropertyCardType } from '../components/home/PropertyCard';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { SITE_URL } from "@/config/site";
+import { supabase } from '@/lib/supabase';
 
 const ITEMS_PER_PAGE = 20;
+
+// Helper to check if string is a URL
+const isUrl = (s: string) => /^https?:\/\//i.test(s);
+
+// Get public URL from storage path
+const getPublicImageUrl = (pathOrUrl: string) => {
+  if (isUrl(pathOrUrl)) return pathOrUrl;
+  const { data } = supabase.storage.from('property-images').getPublicUrl(pathOrUrl);
+  return data.publicUrl;
+};
 
 /**
  * Property Type & Transaction Neighborhood Page
@@ -66,8 +77,11 @@ export default function PropertyTypeNeighborhoodPage() {
   const transactionTypeData = TRANSACTION_TYPES.find(tt => tt.slug === transactionType?.toLowerCase());
 
   // Build filters for useProperties hook
-  const filters: any = {
-    neighborhood_id: neighborhoodData.id,
+  // NOTE: Filtering by city only since SEO neighborhood data uses string IDs
+  // while database uses numeric IDs. This will show all properties in the city.
+  // TODO: Look up database neighborhood ID from slug for more precise filtering
+  const filters: PropertyFilters = {
+    // neighborhood_id: neighborhoodData.id, // SEO data has string ID, need numeric
     // Only show published properties on public city/neighborhood pages
     status: 'published',
   };
@@ -81,11 +95,44 @@ export default function PropertyTypeNeighborhoodPage() {
   }
 
   // Fetch properties with pagination
-  const { properties, loading, count } = useProperties({
-    filters,
-    limit: ITEMS_PER_PAGE,
-    offset: (currentPage - 1) * ITEMS_PER_PAGE,
-  });
+  const { properties: rawProperties, loading, count } = useProperties(filters);
+
+  // Map PropertyWithRelations to PropertyCard Property type
+  const properties: PropertyCardType[] = useMemo(() => {
+    return rawProperties.map((prop) => {
+      const title = language === 'ar'
+        ? prop.title_ar || prop.title_fr || 'Annonce'
+        : prop.title_fr || prop.title_ar || 'Annonce';
+
+      const cityName = language === 'ar'
+        ? prop.city?.name_ar || cityData.name_ar
+        : prop.city?.name_fr || cityData.name_fr;
+
+      const neighborhoodName = language === 'ar'
+        ? prop.neighborhood?.name_ar || neighborhoodData.name_ar
+        : prop.neighborhood?.name_fr || neighborhoodData.name_fr;
+
+      const firstImg = Array.isArray(prop.images) ? prop.images[0] : null;
+      const image = firstImg
+        ? getPublicImageUrl(firstImg)
+        : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80';
+
+      return {
+        id: prop.id,
+        title,
+        price: prop.price ?? 0,
+        priceType: (prop.transaction_type as any) || 'sale',
+        type: prop.property_type || 'Property',
+        city: cityName || '—',
+        address: prop.address || neighborhoodName || '',
+        bedrooms: prop.bedrooms ?? undefined,
+        bathrooms: prop.bathrooms ?? undefined,
+        area: prop.area ?? undefined,
+        image,
+        featured: !!prop.featured,
+      };
+    });
+  }, [rawProperties, language, cityData, neighborhoodData]);
 
   const totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
   const hasListings = (count || 0) > 0;

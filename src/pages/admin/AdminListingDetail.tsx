@@ -74,6 +74,7 @@ interface PropertyDetail {
   approved_at: string | null;
   approved_by: string | null;
   published_at: string | null;
+  is_archived: boolean | null;
   city: { name_fr: string; name_ar: string } | null;
   neighborhood: { name_fr: string; name_ar: string } | null;
   owner: { 
