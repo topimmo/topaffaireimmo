@@ -80,6 +80,32 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.forgotPassword': 'Mot de passe oublié ?',
     'auth.orContinue': 'Ou continuer avec',
     
+    // Auth Tabs
+    'auth.phoneTab': 'Téléphone (SMS)',
+    'auth.emailTab': 'Email',
+    
+    // Phone OTP
+    'auth.phoneNumber': 'Numéro de téléphone',
+    'auth.phonePlaceholder': '+212 6XX XXX XXX ou 06XX XXX XXX',
+    'auth.phoneHint': 'Format: +212XXXXXXXXX, 06XXXXXXXX ou 07XXXXXXXX',
+    'auth.sendCode': 'Envoyer le code',
+    'auth.verifyCode': 'Vérifier',
+    'auth.otpCode': 'Code de vérification',
+    'auth.otpPlaceholder': '123456',
+    'auth.otpHint': 'Code à 6 chiffres',
+    'auth.codeSent': 'Code envoyé. Vérifiez vos SMS.',
+    'auth.invalidCode': 'Code invalide. Réessayez.',
+    'auth.resendCode': 'Renvoyer le code',
+    'auth.backToPhone': 'Retour',
+    'auth.sendingCode': 'Envoi en cours...',
+    'auth.verifying': 'Vérification...',
+    
+    // Email Auth
+    'auth.createAccount': 'Créer un compte',
+    'auth.confirmationEmailSent': 'Un email de confirmation a été envoyé.',
+    'auth.checkEmail': 'Vérifiez votre email pour le lien de confirmation',
+    'auth.accountCreated': 'Compte créé avec succès!',
+    
     // Dashboard
     'dashboard.title': 'Tableau de bord',
     'dashboard.myListings': 'Mes annonces',
@@ -336,6 +362,32 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.haveAccount': 'لديك حساب بالفعل؟',
     'auth.forgotPassword': 'نسيت كلمة المرور؟',
     'auth.orContinue': 'أو المتابعة مع',
+    
+    // Auth Tabs
+    'auth.phoneTab': 'الهاتف (SMS)',
+    'auth.emailTab': 'البريد الإلكتروني',
+    
+    // Phone OTP
+    'auth.phoneNumber': 'رقم الهاتف',
+    'auth.phonePlaceholder': '+212 6XX XXX XXX أو 06XX XXX XXX',
+    'auth.phoneHint': 'التنسيق: +212XXXXXXXXX، 06XXXXXXXX أو 07XXXXXXXX',
+    'auth.sendCode': 'إرسال الرمز',
+    'auth.verifyCode': 'تحقق',
+    'auth.otpCode': 'رمز التحقق',
+    'auth.otpPlaceholder': '123456',
+    'auth.otpHint': 'رمز مكون من 6 أرقام',
+    'auth.codeSent': 'تم إرسال الرمز. تحقق من رسائلك النصية.',
+    'auth.invalidCode': 'رمز غير صالح. حاول مرة أخرى.',
+    'auth.resendCode': 'إعادة إرسال الرمز',
+    'auth.backToPhone': 'رجوع',
+    'auth.sendingCode': 'جاري الإرسال...',
+    'auth.verifying': 'جاري التحقق...',
+    
+    // Email Auth
+    'auth.createAccount': 'إنشاء حساب',
+    'auth.confirmationEmailSent': 'تم إرسال بريد إلكتروني للتأكيد.',
+    'auth.checkEmail': 'تحقق من بريدك الإلكتروني للحصول على رابط التأكيد',
+    'auth.accountCreated': 'تم إنشاء الحساب بنجاح!',
     
     // Dashboard
     'dashboard.title': 'لوحة التحكم',
