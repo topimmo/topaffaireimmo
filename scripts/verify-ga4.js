@@ -38,7 +38,7 @@ const checks = [
   },
   {
     name: 'Correct Measurement ID',
-    test: () => indexContent.includes('G-TMY9XWWH6G'),
+    test: () => indexContent.includes('G-TMY9XWHH6G'),
     fix: 'Update measurement ID in index.html and src/lib/analytics/ga4.ts'
   },
   {
@@ -105,7 +105,7 @@ console.log('3. Open browser console and look for:');
 console.log('   [GA4] Initialization started from index.html');
 console.log('   [GA4] ✅ Page view tracked');
 console.log('4. Check Network tab for:');
-console.log('   - gtag/js?id=G-TMY9XWWH6G (Status: 200)');
+console.log('   - gtag/js?id=G-TMY9XWHH6G (Status: 200)');
 console.log('   - g/collect requests (Status: 200)');
 console.log('5. Verify in Google Analytics:');
 console.log('   Reports → Realtime → should show active users\n');

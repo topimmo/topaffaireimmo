@@ -76,7 +76,7 @@
     <!-- Google Analytics 4 (GA4) - Production Only -->
     <!-- 
       This script loads GA4 for production domains only.
-      Measurement ID: G-TMY9XWWH6G
+      Measurement ID: G-TMY9XWHH6G
       
       Verification:
       1. Deploy to topaffaireimmo.com or www.topaffaireimmo.com
@@ -85,7 +85,7 @@
          - "[GA4] Script loaded and configured from index.html"
          - "[GA4] ✅ Page view tracked: ..."
       3. Open DevTools → Network tab → Filter "google" or "collect"
-         - Should see: gtag/js?id=G-TMY9XWWH6G (Status 200)
+         - Should see: gtag/js?id=G-TMY9XWHH6G (Status 200)
          - Should see: g/collect?v=2... requests on each page view
       4. Check Google Analytics → Realtime
          - Should show active users and page views
@@ -108,11 +108,11 @@
           // Load GA4 script
           var script = document.createElement('script');
           script.async = true;
-          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TMY9XWWH6G';
+          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TMY9XWHH6G';
           
           // Configure GA4 AFTER script loads - disable automatic page_view (SPA will track manually)
           script.onload = function() {
-            gtag('config', 'G-TMY9XWWH6G', {
+            gtag('config', 'G-TMY9XWHH6G', {
               'send_page_view': false,
               'cookie_flags': 'SameSite=None;Secure'
             });
