@@ -36,7 +36,7 @@ export function signJwt(payload: object): string {
     expiresIn: '15m',
   };
 
-  return jwt.sign(payload, JWT_SECRET, options);
+  return jwt.sign(payload, JWT_SECRET!, options);
 }
 
 /**
@@ -56,7 +56,7 @@ export function signToken(phone: string, expiresIn: string | number = '7d'): str
     expiresIn: expiresIn as SignOptions['expiresIn'],
   };
 
-  return jwt.sign(payload, JWT_SECRET, options);
+  return jwt.sign(payload, JWT_SECRET!, options);
 }
 
 /**
@@ -67,7 +67,7 @@ export function signToken(phone: string, expiresIn: string | number = '7d'): str
  */
 export function verifyToken(token: string): OTPTokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, JWT_SECRET!, {
       algorithms: ['HS256'],
     }) as OTPTokenPayload;
 
