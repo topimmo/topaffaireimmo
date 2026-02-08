@@ -57,6 +57,37 @@ export function OTPLogin({ onSuccess, onError }: OTPLoginProps) {
     }
   };
 
+  const handleResendOTP = async () => {
+    setError('');
+    setMessage('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/otp/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send OTP');
+      }
+
+      setMessage(data.message || 'New code sent successfully');
+      setOtp(''); // Clear the OTP input
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to resend OTP';
+      setError(errorMsg);
+      onError?.(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -181,10 +212,7 @@ export function OTPLogin({ onSuccess, onError }: OTPLoginProps) {
           <Button
             type="button"
             variant="link"
-            onClick={() => {
-              setStep('phone');
-              setOtp('');
-            }}
+            onClick={handleResendOTP}
             disabled={loading}
             className="w-full text-sm"
           >

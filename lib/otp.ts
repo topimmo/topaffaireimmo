@@ -5,15 +5,16 @@
  */
 
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 
 /**
- * Generate a random 6-digit OTP code
+ * Generate a cryptographically secure random 6-digit OTP code
  * 
  * @returns 6-digit OTP as string (e.g., "123456")
  */
 export function generateOTP(): string {
-  // Generate random 6-digit number (100000 to 999999)
-  const otp = Math.floor(100000 + Math.random() * 900000);
+  // Generate cryptographically secure random 6-digit number (100000 to 999999)
+  const otp = randomInt(100000, 1000000);
   return otp.toString();
 }
 
