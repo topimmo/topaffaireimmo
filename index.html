@@ -73,9 +73,51 @@
     <!-- Format Detection -->
     <meta name="format-detection" content="telephone=no" />
     
+    <!-- Google Analytics 4 (GA4) - Production Only -->
+    <!-- This script is only active on topaffaireimmo.com and www.topaffaireimmo.com -->
+    <script>
+      // Only load GA4 on production domains
+      (function() {
+        var hostname = window.location.hostname.toLowerCase();
+        var isProd = hostname === 'topaffaireimmo.com' || hostname === 'www.topaffaireimmo.com';
+        
+        if (isProd) {
+          // Initialize dataLayer
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          window.gtag = gtag;
+          gtag('js', new Date());
+          
+          // Configure GA4 - disable automatic page_view (SPA will track manually)
+          gtag('config', 'G-TMY9XWWH6G', {
+            'send_page_view': false,
+            'cookie_flags': 'SameSite=None;Secure'
+          });
+          
+          // Load GA4 script
+          var script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TMY9XWWH6G';
+          script.onerror = function() {
+            console.warn('[GA4] Failed to load - may be blocked by ad blocker or CSP');
+          };
+          document.head.appendChild(script);
+          
+          console.log('[GA4] Initialization started from index.html');
+        } else {
+          console.log('[GA4] Not on production domain, skipping initialization');
+        }
+      })();
+    </script>
+    
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Preconnect to Google Analytics for faster loading -->
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     
     <!-- DNS Prefetch -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
