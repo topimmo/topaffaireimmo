@@ -19,7 +19,6 @@ interface FAQProps {
 
 export function FAQ({ items, title, className = "" }: FAQProps) {
   const { t } = useLanguage();
-  const { t } = useLanguage();
   const faqTitle = title || t('faq.title');
 
   // Generate FAQ Schema
