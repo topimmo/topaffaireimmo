@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FAQItem {
   question: string;
@@ -16,7 +17,10 @@ interface FAQProps {
   className?: string;
 }
 
-export function FAQ({ items, title = "Questions Fréquentes", className = "" }: FAQProps) {
+export function FAQ({ items, title, className = "" }: FAQProps) {
+  const { t } = useLanguage();
+  const faqTitle = title || t('faq.title');
+
   // Generate FAQ Schema
   const faqSchema = {
     "@context": "https://schema.org",
@@ -40,7 +44,7 @@ export function FAQ({ items, title = "Questions Fréquentes", className = "" }: 
       />
       
       <div className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-8 text-center">{title}</h2>
+        <h2 className="text-3xl font-bold mb-8 text-center">{faqTitle}</h2>
         
         <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
           {items.map((item, index) => (
@@ -59,7 +63,101 @@ export function FAQ({ items, title = "Questions Fréquentes", className = "" }: 
   );
 }
 
-// Predefined FAQ sets for different pages
+// Predefined FAQ sets for different pages - now use translation keys
+export function getGeneralFAQ(t: (key: string) => string): FAQItem[] {
+  return [
+    {
+      question: t('faq.general.q1'),
+      answer: t('faq.general.a1')
+    },
+    {
+      question: t('faq.general.q2'),
+      answer: t('faq.general.a2')
+    },
+    {
+      question: t('faq.general.q3'),
+      answer: t('faq.general.a3')
+    },
+    {
+      question: t('faq.general.q4'),
+      answer: t('faq.general.a4')
+    },
+    {
+      question: t('faq.general.q5'),
+      answer: t('faq.general.a5')
+    },
+    {
+      question: t('faq.general.q6'),
+      answer: t('faq.general.a6')
+    }
+  ];
+}
+
+export function getBuyingFAQ(t: (key: string) => string): FAQItem[] {
+  return [
+    {
+      question: t('faq.buying.q1'),
+      answer: t('faq.buying.a1')
+    },
+    {
+      question: t('faq.buying.q2'),
+      answer: t('faq.buying.a2')
+    },
+    {
+      question: t('faq.buying.q3'),
+      answer: t('faq.buying.a3')
+    },
+    {
+      question: t('faq.buying.q4'),
+      answer: t('faq.buying.a4')
+    }
+  ];
+}
+
+export function getRentingFAQ(t: (key: string) => string): FAQItem[] {
+  return [
+    {
+      question: t('faq.renting.q1'),
+      answer: t('faq.renting.a1')
+    },
+    {
+      question: t('faq.renting.q2'),
+      answer: t('faq.renting.a2')
+    },
+    {
+      question: t('faq.renting.q3'),
+      answer: t('faq.renting.a3')
+    },
+    {
+      question: t('faq.renting.q4'),
+      answer: t('faq.renting.a4')
+    }
+  ];
+}
+
+export function getCityFAQ(t: (key: string) => string, cityName: string): FAQItem[] {
+  return [
+    {
+      question: t('faq.city.q1').replace('{city}', cityName),
+      answer: t('faq.city.a1').replace(/{city}/g, cityName)
+    },
+    {
+      question: t('faq.city.q2').replace('{city}', cityName),
+      answer: t('faq.city.a2').replace(/{city}/g, cityName)
+    },
+    {
+      question: t('faq.city.q3').replace('{city}', cityName),
+      answer: t('faq.city.a3').replace(/{city}/g, cityName)
+    },
+    {
+      question: t('faq.city.q4').replace('{city}', cityName),
+      answer: t('faq.city.a4').replace(/{city}/g, cityName)
+    }
+  ];
+}
+
+// Legacy exports for backward compatibility - these will use French by default
+// Components should migrate to using the functions above with the t function
 export const generalFAQ: FAQItem[] = [
   {
     question: "Comment fonctionne TopAffaireImmo ?",
@@ -125,23 +223,3 @@ export const rentingFAQ: FAQItem[] = [
   }
 ];
 
-export function getCityFAQ(cityName: string): FAQItem[] {
-  return [
-    {
-      question: `Quel est le prix moyen d'un appartement à ${cityName} ?`,
-      answer: `Les prix varient selon les quartiers et la taille. À ${cityName}, comptez en moyenne entre 8 000 et 15 000 MAD/m² pour un appartement. Les quartiers résidentiels premium peuvent dépasser 20 000 MAD/m².`
-    },
-    {
-      question: `Quels sont les meilleurs quartiers pour vivre à ${cityName} ?`,
-      answer: `Les quartiers les plus prisés à ${cityName} offrent un bon équilibre entre qualité de vie, commodités et accessibilité. Consultez nos guides de quartiers pour découvrir les spécificités de chaque zone.`
-    },
-    {
-      question: `Comment trouver une villa à vendre à ${cityName} ?`,
-      answer: `Utilisez nos filtres de recherche pour sélectionner "${cityName}", type "Villa" et "À vendre". Vous pouvez aussi affiner par budget, nombre de chambres et quartier pour trouver la villa idéale.`
-    },
-    {
-      question: `Y a-t-il des agences immobilières partenaires à ${cityName} ?`,
-      answer: `Oui, TopAffaireImmo travaille avec plus de 200 agences immobilières à travers le Maroc, dont plusieurs basées à ${cityName}. Nos partenaires sont vérifiés et professionnels.`
-    }
-  ];
-}
