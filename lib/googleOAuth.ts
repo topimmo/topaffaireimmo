@@ -35,7 +35,7 @@ const stateStore = new Map<string, OAuthState>();
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
- * Clean up expired states periodically
+ * Clean up expired states (lazy cleanup - called during retrieval)
  */
 function cleanupExpiredStates() {
   const now = Date.now();
@@ -45,9 +45,6 @@ function cleanupExpiredStates() {
     }
   }
 }
-
-// Run cleanup every minute
-setInterval(cleanupExpiredStates, 60 * 1000);
 
 /**
  * Generate random state parameter for CSRF protection
@@ -88,6 +85,9 @@ export function storeOAuthState(state: string, codeVerifier: string): void {
  * Retrieve and delete OAuth state from memory
  */
 export function getAndDeleteOAuthState(state: string): OAuthState | null {
+  // Lazy cleanup of expired states
+  cleanupExpiredStates();
+  
   const data = stateStore.get(state);
   if (data) {
     stateStore.delete(state);

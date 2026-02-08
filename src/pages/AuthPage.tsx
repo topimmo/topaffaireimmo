@@ -56,9 +56,15 @@ export default function AuthPage() {
           
           // Redirect to original destination
           if (refreshSession) {
-            refreshSession().then(() => {
-              navigate(from, { replace: true });
-            });
+            refreshSession()
+              .then(() => {
+                navigate(from, { replace: true });
+              })
+              .catch((err) => {
+                console.error('Session refresh failed:', err);
+                // Still redirect even if session refresh fails
+                navigate(from, { replace: true });
+              });
           } else {
             navigate(from, { replace: true });
           }

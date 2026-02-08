@@ -37,6 +37,7 @@ function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const requests = rateLimitMap.get(ip) || [];
   
+  // Remove old requests outside the window (lazy cleanup)
   const recentRequests = requests.filter(time => now - time < RATE_LIMIT_WINDOW_MS);
   
   if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
@@ -48,19 +49,6 @@ function checkRateLimit(ip: string): boolean {
   
   return true;
 }
-
-// Clean up rate limit entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, requests] of rateLimitMap.entries()) {
-    const recentRequests = requests.filter(time => now - time < RATE_LIMIT_WINDOW_MS);
-    if (recentRequests.length === 0) {
-      rateLimitMap.delete(ip);
-    } else {
-      rateLimitMap.set(ip, recentRequests);
-    }
-  }
-}, 60 * 1000);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow GET requests
