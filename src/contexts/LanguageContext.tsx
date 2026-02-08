@@ -99,6 +99,13 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.backToPhone': 'Retour',
     'auth.sendingCode': 'Envoi en cours...',
     'auth.verifying': 'Vérification...',
+    'auth.continue': 'Continuer',
+    'auth.changePhone': 'Changer de numéro',
+    'auth.enterPhoneTitle': 'Entrez votre numéro',
+    'auth.verifyPhoneTitle': 'Vérifiez votre téléphone',
+    'auth.sentTo': 'Code envoyé au',
+    'auth.resendIn': 'Renvoyer dans',
+    'auth.seconds': 'secondes',
     
     // Email Auth
     'auth.createAccount': 'Créer un compte',
@@ -382,6 +389,13 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.backToPhone': 'رجوع',
     'auth.sendingCode': 'جاري الإرسال...',
     'auth.verifying': 'جاري التحقق...',
+    'auth.continue': 'متابعة',
+    'auth.changePhone': 'تغيير الرقم',
+    'auth.enterPhoneTitle': 'أدخل رقمك',
+    'auth.verifyPhoneTitle': 'تحقق من هاتفك',
+    'auth.sentTo': 'تم إرسال الرمز إلى',
+    'auth.resendIn': 'إعادة الإرسال خلال',
+    'auth.seconds': 'ثانية',
     
     // Email Auth
     'auth.createAccount': 'إنشاء حساب',

@@ -1,11 +1,12 @@
 /**
  * Login Page
  * 
- * Routes to the unified AuthPage component in login mode
+ * Routes to the unified AuthPage component
+ * The new design automatically handles login/signup
  */
 
 import AuthPage from './AuthPage';
 
 export default function Login() {
-  return <AuthPage mode="login" />;
+  return <AuthPage />;
 }
