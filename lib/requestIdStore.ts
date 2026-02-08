@@ -86,7 +86,9 @@ function cleanupExpired(): void {
 }
 
 /**
- * Get store statistics (for debugging)
+ * Get store statistics (for debugging and monitoring)
+ * This function is used for operational monitoring and debugging.
+ * It can be exposed via an admin endpoint to check system health.
  */
 export function getStoreStats(): {
   totalEntries: number;

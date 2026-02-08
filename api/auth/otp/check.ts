@@ -32,8 +32,8 @@ enum VerifyStatus {
   INVALID_REQUEST_ID = '6',
   VERIFICATION_EXPIRED = '17',
   SDK_REVISION_UNSUPPORTED = '9',
+  // Status '16' can mean both invalid code format or wrong code value
   INVALID_CODE = '16',
-  WRONG_CODE = '16',
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -152,7 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } else if (checkResult.status === VerifyStatus.INVALID_REQUEST_ID) {
           errorMessage = 'Invalid or expired verification request. Please start again.';
           deleteRequestId(requestId);
-        } else if (checkResult.status === VerifyStatus.INVALID_CODE || checkResult.status === VerifyStatus.WRONG_CODE) {
+        } else if (checkResult.status === VerifyStatus.INVALID_CODE) {
           // Increment failed attempts
           const currentAttempts = otpAttempt?.attempts || 0;
           const newAttempts = currentAttempts + 1;
