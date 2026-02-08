@@ -151,13 +151,15 @@ export async function exchangeCodeForTokens(
     body: params.toString(),
   });
 
+  const tokenJson = await response.json();
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[googleOAuth] Token exchange failed:', response.status, errorText);
-    throw new Error('Failed to exchange code for tokens');
+    const errorDescription = (tokenJson as any)?.error_description || (tokenJson as any)?.error || 'Google token error';
+    console.error('[googleOAuth] Token exchange failed:', response.status, errorDescription);
+    throw new Error(errorDescription);
   }
 
-  return response.json();
+  return tokenJson as GoogleTokenResponse;
 }
 
 /**
@@ -184,13 +186,15 @@ export async function getUserInfo(accessToken: string): Promise<GoogleUserInfo> 
     },
   });
 
+  const userJson = await response.json();
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[googleOAuth] Failed to get user info:', response.status, errorText);
-    throw new Error('Failed to get user info from Google');
+    const errorMessage = (userJson as any)?.error?.message || 'Google userinfo error';
+    console.error('[googleOAuth] Failed to get user info:', response.status, errorMessage);
+    throw new Error(errorMessage);
   }
 
-  return response.json();
+  return userJson as GoogleUserInfo;
 }
 
 /**
