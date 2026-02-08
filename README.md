@@ -55,6 +55,10 @@ The app will be available at `http://localhost:5173`
 
 ### Feature Documentation
 - [Email Configuration](docs/setup/EMAIL_CONFIGURATION.md)
+- **[Supabase Email Auth Setup](docs/SUPABASE_EMAIL_AUTH_SETUP.md)** - 📧 Complete guide for email confirmation & password reset
+  - [Auth Testing Guide](docs/AUTH_TESTING_GUIDE.md) - Step-by-step testing procedures
+  - Fixes "Email link is invalid or has expired" errors
+  - PKCE flow support for both signup and password reset
 - [Facebook Auto-Publishing](docs/features/FACEBOOK_AUTO_PUBLISH_SETUP.md)
 - [Morocco SEO Implementation](docs/features/MOROCCO_SEO_IMPLEMENTATION.md)
 - [Sample Listings Seed Script](docs/SAMPLE_LISTINGS_SEED.md)
