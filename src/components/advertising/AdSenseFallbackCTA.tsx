@@ -24,8 +24,21 @@ interface AdSenseFallbackCTAProps {
  * - Styling: Adjust colors and spacing via Tailwind classes
  */
 export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProps) {
-  // WhatsApp number from environment variable - check early to avoid unnecessary side effects
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // WhatsApp number from environment variable
   const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
+
+  // Prevent hydration issues
+  if (!isMounted) {
+    return null;
+  }
+
+  // Return null if WhatsApp number is not configured
   if (!WHATSAPP_NUMBER) {
     if (import.meta.env.DEV) {
       console.warn('AdSenseFallbackCTA: VITE_WHATSAPP_NUMBER environment variable not configured');
@@ -33,19 +46,8 @@ export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProp
     return null;
   }
 
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const WHATSAPP_MESSAGE = encodeURIComponent('Hello, I would like to know more about TopAffaireImmo');
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
-
-  // Prevent hydration issues
-  if (!isMounted) {
-    return null;
-  }
 
   return (
     <div 
