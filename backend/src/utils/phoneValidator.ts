@@ -39,7 +39,7 @@ export function generateOTP(length: number = 6): string {
   let otp = '';
   
   // Use crypto for secure random generation
-  const crypto = await import('crypto');
+  const crypto = require('crypto');
   const randomBytes = crypto.randomBytes(length);
   
   for (let i = 0; i < length; i++) {

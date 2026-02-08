@@ -32,9 +32,10 @@ class VonageSMSService {
           messageId: response.messages[0]['message-id'],
         };
       } else {
+        const errorMessage = response.messages?.[0] as any;
         return {
           success: false,
-          error: response.messages?.[0]['error-text'] || 'Failed to send SMS',
+          error: errorMessage?.errorText || errorMessage?.['error-text'] || 'Failed to send SMS',
         };
       }
     } catch (error: any) {
