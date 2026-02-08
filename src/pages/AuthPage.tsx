@@ -1,8 +1,9 @@
 /**
- * Unified Authentication Page - Avito-style Phone Auth
+ * Unified Authentication Page - Phone OTP + Google OAuth
  * 
  * Features:
- * - 2-step flow: Phone input → OTP verification
+ * - 2-step phone flow: Phone input → OTP verification
+ * - Google OAuth login
  * - No login/signup tabs - automatic detection
  * - Bilingual support (FR/AR) with RTL layout
  * - Responsive design with mobile-first approach
@@ -36,6 +37,64 @@ export default function AuthPage() {
   const location = useLocation();
 
   const from = (location.state as { from?: string })?.from || '/';
+
+  // Handle Google OAuth callback with token in URL hash
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleAuthSuccess = urlParams.get('google_auth_success');
+    
+    if (googleAuthSuccess === 'true') {
+      // Extract token from hash
+      const hash = window.location.hash;
+      if (hash.startsWith('#token=')) {
+        const token = decodeURIComponent(hash.substring(7));
+        if (token) {
+          localStorage.setItem('auth_token', token);
+          
+          // Clear URL params and hash
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Redirect to original destination
+          if (refreshSession) {
+            refreshSession()
+              .then(() => {
+                navigate(from, { replace: true });
+              })
+              .catch((err) => {
+                console.error('Session refresh failed:', err);
+                // Still redirect even if session refresh fails
+                navigate(from, { replace: true });
+              });
+          } else {
+            navigate(from, { replace: true });
+          }
+        }
+      }
+    }
+    
+    // Handle Google OAuth errors
+    const authError = urlParams.get('auth_error');
+    if (authError) {
+      const errorMessages: Record<string, string> = {
+        google_oauth_failed: isRTL ? 'فشلت عملية تسجيل الدخول عبر Google' : 'La connexion Google a échoué',
+        missing_code: isRTL ? 'رمز التحقق مفقود' : 'Code de vérification manquant',
+        missing_state: isRTL ? 'معلمة الحالة مفقودة' : 'Paramètre d\'état manquant',
+        invalid_state: isRTL ? 'حالة غير صالحة أو منتهية الصلاحية' : 'État invalide ou expiré',
+        token_exchange_failed: isRTL ? 'فشل تبادل الرمز' : 'Échec de l\'échange de code',
+        userinfo_failed: isRTL ? 'فشل الحصول على معلومات المستخدم' : 'Échec de récupération des infos utilisateur',
+        email_not_verified: isRTL ? 'البريد الإلكتروني غير محقق' : 'Email non vérifié',
+        database_error: isRTL ? 'خطأ في قاعدة البيانات' : 'Erreur de base de données',
+        user_creation_failed: isRTL ? 'فشل إنشاء المستخدم' : 'Échec de création d\'utilisateur',
+        profile_creation_failed: isRTL ? 'فشل إنشاء الملف الشخصي' : 'Échec de création du profil',
+        unexpected_error: isRTL ? 'حدث خطأ غير متوقع' : 'Erreur inattendue',
+      };
+      
+      setError(errorMessages[authError] || errorMessages.unexpected_error);
+      
+      // Clear the error from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [from, navigate, refreshSession, isRTL]);
 
   // State machine: 'phone' | 'verify'
   const [step, setStep] = useState<'phone' | 'verify'>('phone');
@@ -271,6 +330,14 @@ export default function AuthPage() {
     clearStoredData();
   };
 
+  /**
+   * Handle Google OAuth login
+   */
+  const handleGoogleLogin = () => {
+    // Navigate to Google OAuth start endpoint
+    window.location.href = '/api/auth/google/start';
+  };
+
   return (
     <div className={`flex items-center justify-center min-h-screen py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="w-full max-w-[420px]">
@@ -340,6 +407,45 @@ export default function AuthPage() {
                 ) : (
                   t('auth.continue')
                 )}
+              </Button>
+
+              {/* Separator */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white text-muted-foreground">{t('auth.or')}</span>
+                </div>
+              </div>
+
+              {/* Google Login Button */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full h-14 text-lg border-2"
+              >
+                <svg className={`h-5 w-5 ${isRTL ? 'ml-3' : 'mr-3'}`} viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
+                </svg>
+                {t('auth.googleLogin')}
               </Button>
             </form>
           )}
