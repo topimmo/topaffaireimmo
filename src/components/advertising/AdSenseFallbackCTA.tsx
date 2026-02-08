@@ -20,7 +20,7 @@ interface AdSenseFallbackCTAProps {
  * Customization:
  * - Text content: Update the heading, description, and emoji lines
  * - Buttons: Modify button text and URLs
- * - WhatsApp number: Update WHATSAPP_NUMBER constant
+ * - WhatsApp number: Set VITE_WHATSAPP_NUMBER environment variable
  * - Styling: Adjust colors and spacing via Tailwind classes
  */
 export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProps) {
@@ -30,17 +30,24 @@ export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProp
     setIsMounted(true);
   }, []);
 
-  // Customizable WhatsApp number
-  // TODO: Move this to environment variable (VITE_WHATSAPP_NUMBER) or site config
-  // Update with your actual business WhatsApp number before deployment
-  const WHATSAPP_NUMBER = '212600000000'; // Format: country code + number (no + or -)
-  const WHATSAPP_MESSAGE = encodeURIComponent('Hello, I would like to know more about TopAffaireImmo');
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+  // WhatsApp number from environment variable
+  const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
 
   // Prevent hydration issues
   if (!isMounted) {
     return null;
   }
+
+  // Return null if WhatsApp number is not configured
+  if (!WHATSAPP_NUMBER) {
+    if (import.meta.env.DEV) {
+      console.warn('AdSenseFallbackCTA: VITE_WHATSAPP_NUMBER environment variable not configured');
+    }
+    return null;
+  }
+
+  const WHATSAPP_MESSAGE = encodeURIComponent('Hello, I would like to know more about TopAffaireImmo');
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
 
   return (
     <div 
