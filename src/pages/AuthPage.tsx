@@ -48,12 +48,13 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
   const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpStep, setOtpStep] = useState<'phone' | 'verify'>('phone');
+  const [requestId, setRequestId] = useState(''); // Store Vonage Verify requestId
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [phoneMessage, setPhoneMessage] = useState('');
 
   // Email state
-  const [emailMode, setEmailMode] = useState<'login' | 'signup'>(mode);
+  const [emailMode, setEmailMode] = useState<'login' | 'signup'>(mode === 'register' ? 'signup' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -91,7 +92,7 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
     setPhoneLoading(true);
 
     try {
-      const response = await fetch('/api/otp/request', {
+      const response = await fetch('/api/auth/otp/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,6 +106,8 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
         throw new Error(data.error || 'Failed to send OTP');
       }
 
+      // Store the requestId from Vonage Verify
+      setRequestId(data.requestId);
       setPhoneMessage(t('auth.codeSent'));
       setOtpStep('verify');
       setPhone(normalizedPhone); // Store normalized phone
@@ -133,12 +136,12 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
     setPhoneLoading(true);
 
     try {
-      const response = await fetch('/api/otp/verify', {
+      const response = await fetch('/api/auth/otp/check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phone, code: otpCode }),
+        body: JSON.stringify({ requestId, code: otpCode }),
       });
 
       const data = await response.json();
@@ -180,7 +183,7 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
     setPhoneLoading(true);
 
     try {
-      const response = await fetch('/api/otp/request', {
+      const response = await fetch('/api/auth/otp/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -194,6 +197,8 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
         throw new Error(data.error || 'Failed to resend OTP');
       }
 
+      // Update the requestId
+      setRequestId(data.requestId);
       setPhoneMessage(t('auth.codeSent'));
       setOtpCode(''); // Clear the OTP input
     } catch (err) {
@@ -207,6 +212,7 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
   const handleBackToPhone = () => {
     setOtpStep('phone');
     setOtpCode('');
+    setRequestId('');
     setPhoneError('');
     setPhoneMessage('');
   };
