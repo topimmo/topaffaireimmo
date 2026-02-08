@@ -59,6 +59,10 @@ The app will be available at `http://localhost:5173`
   - [Auth Testing Guide](docs/AUTH_TESTING_GUIDE.md) - Step-by-step testing procedures
   - Fixes "Email link is invalid or has expired" errors
   - PKCE flow support for both signup and password reset
+- **[SMS OTP Authentication](docs/SMS_OTP_AUTHENTICATION.md)** - 📱 Phone-based login via SMS OTP
+  - Vonage SMS integration for Morocco (+212)
+  - Rate limiting and security features
+  - Vercel serverless API routes
 - [Facebook Auto-Publishing](docs/features/FACEBOOK_AUTO_PUBLISH_SETUP.md)
 - [Morocco SEO Implementation](docs/features/MOROCCO_SEO_IMPLEMENTATION.md)
 - [Sample Listings Seed Script](docs/SAMPLE_LISTINGS_SEED.md)
