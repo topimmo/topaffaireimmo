@@ -9,7 +9,7 @@ import jwt from 'jsonwebtoken';
 import type { SignOptions } from 'jsonwebtoken';
 
 // Validate JWT_SECRET is present
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET: string | undefined = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
   throw new Error('Missing JWT_SECRET environment variable');
@@ -30,7 +30,7 @@ export interface OTPTokenPayload {
  * @param payload - Data to sign in the token
  * @returns Signed JWT token
  */
-export function signJwt(payload: object): string {
+export function signJwt(payload: Record<string, unknown>): string {
   const options: SignOptions = {
     algorithm: 'HS256',
     expiresIn: '15m',
