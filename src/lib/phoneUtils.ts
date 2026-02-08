@@ -5,6 +5,9 @@
 
 import { parsePhoneNumber, isValidPhoneNumber, CountryCode } from 'libphonenumber-js';
 
+// Regex pattern to clean phone numbers (remove whitespace and common separators)
+const PHONE_CLEANUP_REGEX = /[\s\-().]/g;
+
 /**
  * Normalize a phone number to E.164 format
  * Supports Morocco (default) and international formats
@@ -25,7 +28,7 @@ export function normalizePhone(input: string, defaultCountry: CountryCode = 'MA'
   }
 
   // Remove all whitespace and common separators
-  const cleaned = input.replace(/[\s\-().]/g, '');
+  const cleaned = input.replace(PHONE_CLEANUP_REGEX, '');
 
   try {
     // If it starts with +, parse as international
@@ -104,7 +107,7 @@ export function formatPhoneForDisplay(input: string, defaultCountry: CountryCode
   if (!input) return input;
 
   try {
-    const cleaned = input.replace(/[\s\-().]/g, '');
+    const cleaned = input.replace(PHONE_CLEANUP_REGEX, '');
     
     if (cleaned.startsWith('+')) {
       const phoneNumber = parsePhoneNumber(cleaned);

@@ -30,6 +30,9 @@ interface AuthPageProps {
   mode?: 'login' | 'register';
 }
 
+// Constants
+const PASSWORD_MIN_LENGTH = 8;
+
 export default function AuthPage({ mode = 'login' }: AuthPageProps) {
   const { t, isRTL } = useLanguage();
   const { signIn, signUp } = useAuth();
@@ -154,14 +157,9 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
         throw new Error('Failed to establish session');
       }
 
-      if (!session) {
-        // If no session exists, create one using the phone number
-        // This is a fallback - ideally the backend should handle this
-        console.warn('No session after OTP verification, attempting to create one');
-        
-        // Try to sign in with magic link or create a session
-        // For now, just redirect to home and let AuthContext handle it
-      }
+      // Note: If no session exists after OTP verification, the backend may be using
+      // a different auth strategy (e.g., custom JWT tokens). In that case, the redirect
+      // will proceed and the AuthContext will handle authentication state.
 
       console.log('✅ OTP verification successful, redirecting to:', from);
       
@@ -229,11 +227,11 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
         }
 
         // Validate password length
-        if (password.length < 8) {
+        if (password.length < PASSWORD_MIN_LENGTH) {
           setEmailError(
             isRTL
-              ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'
-              : 'Le mot de passe doit contenir au moins 8 caractères'
+              ? `كلمة المرور يجب أن تكون ${PASSWORD_MIN_LENGTH} أحرف على الأقل`
+              : `Le mot de passe doit contenir au moins ${PASSWORD_MIN_LENGTH} caractères`
           );
           setEmailLoading(false);
           return;
@@ -493,7 +491,7 @@ export default function AuthPage({ mode = 'login' }: AuthPageProps) {
                     </div>
                     {emailMode === 'signup' && (
                       <p className="text-xs text-muted-foreground">
-                        {isRTL ? '8 أحرف على الأقل' : 'Au moins 8 caractères'}
+                        {isRTL ? `${PASSWORD_MIN_LENGTH} أحرف على الأقل` : `Au moins ${PASSWORD_MIN_LENGTH} caractères`}
                       </p>
                     )}
                   </div>
