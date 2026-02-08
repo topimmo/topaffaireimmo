@@ -161,13 +161,21 @@ export function maskPhoneNumber(phone: string): string {
       return phone;
     }
 
-    // Show first 2 and last 2 digits, mask the middle
-    const first = digits.substring(0, 2);
+    // Show first 1 and last 2 digits, mask the middle
+    const first = digits.substring(0, 1);
     const last = digits.substring(digits.length - 2);
-    const middleLength = digits.length - 4;
-    const middle = '*'.repeat(Math.min(middleLength, 7)); // Max 7 asterisks for readability
+    const middleLength = digits.length - 3;
+    
+    // Create masked middle section with appropriate length
+    let maskedMiddle = '';
+    if (middleLength <= 3) {
+      maskedMiddle = '*'.repeat(middleLength);
+    } else {
+      // For longer numbers, use grouped asterisks for readability
+      maskedMiddle = '** *** **';
+    }
 
-    return `+${countryCode} ${first}${middle.substring(0, 2)} ${middle.substring(2, 5)} ${middle.substring(5)}${last}`;
+    return `+${countryCode} ${first}${maskedMiddle}${last}`;
   } catch (error) {
     console.error('Phone masking error:', error);
     return phone;

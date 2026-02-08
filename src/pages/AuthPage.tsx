@@ -194,7 +194,8 @@ export default function AuthPage() {
       // Clear OTP session data
       clearStoredData();
 
-      // Refresh Supabase session
+      // Refresh Supabase session to sync authentication state
+      // Intentionally not checking result - session may not exist if using custom JWT auth
       await supabase.auth.getSession();
       
       // Optionally refresh the auth context
@@ -202,7 +203,9 @@ export default function AuthPage() {
         await refreshSession();
       }
 
-      console.log('✅ OTP verification successful, redirecting to:', from);
+      if (import.meta.env.DEV) {
+        console.log('✅ OTP verification successful, redirecting to:', from);
+      }
       
       // Scroll to top and redirect
       window.scrollTo(0, 0);
