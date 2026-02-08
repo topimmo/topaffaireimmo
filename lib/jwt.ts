@@ -6,8 +6,10 @@
  */
 
 import jwt from 'jsonwebtoken';
+import type { SignOptions } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || '';
+// Validate JWT_SECRET is present
+const JWT_SECRET: string | undefined = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
   throw new Error('Missing JWT_SECRET environment variable');
@@ -23,21 +25,38 @@ export interface OTPTokenPayload {
 }
 
 /**
+ * Sign a JWT token with HS256 algorithm and 15-minute expiration
+ * 
+ * @param payload - Data to sign in the token
+ * @returns Signed JWT token
+ */
+export function signJwt(payload: Record<string, unknown>): string {
+  const options: SignOptions = {
+    algorithm: 'HS256',
+    expiresIn: '15m',
+  };
+
+  return jwt.sign(payload, JWT_SECRET!, options);
+}
+
+/**
  * Sign a JWT token for authenticated phone number
  * 
  * @param phone - Normalized phone number in E.164 format
  * @param expiresIn - Token expiration (default: '7d' for 7 days)
  * @returns Signed JWT token
  */
-export function signToken(phone: string, expiresIn: string = '7d'): string {
+export function signToken(phone: string, expiresIn: string | number = '7d'): string {
   const payload: OTPTokenPayload = {
     phone,
   };
 
-  return jwt.sign(payload, JWT_SECRET, {
+  const options: SignOptions = {
     algorithm: 'HS256',
-    expiresIn,
-  });
+    expiresIn: expiresIn as SignOptions['expiresIn'],
+  };
+
+  return jwt.sign(payload, JWT_SECRET!, options);
 }
 
 /**
@@ -48,7 +67,7 @@ export function signToken(phone: string, expiresIn: string = '7d'): string {
  */
 export function verifyToken(token: string): OTPTokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, JWT_SECRET!, {
       algorithms: ['HS256'],
     }) as OTPTokenPayload;
 
