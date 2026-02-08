@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Timeout constants for consistency
 const SESSION_WAIT_MS = 1000;
@@ -331,12 +332,21 @@ export default function AuthCallback() {
           <div className="text-center">
             <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Erreur
+              {isRTL ? 'خطأ' : 'Erreur'}
             </h2>
-            <p className="text-gray-600">{message}</p>
-            <p className="text-sm text-gray-500 mt-4">
-              Redirection vers la page de connexion...
-            </p>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <div className="space-y-3">
+              <Button asChild className="w-full">
+                <Link to="/login">
+                  {isRTL ? 'طلب رابط تأكيد جديد' : 'Demander un nouveau lien de confirmation'}
+                </Link>
+              </Button>
+              <p className="text-sm text-gray-500">
+                {isRTL 
+                  ? 'أو جاري إعادة التوجيه إلى صفحة تسجيل الدخول...'
+                  : 'Ou redirection vers la page de connexion...'}
+              </p>
+            </div>
           </div>
         )}
       </div>

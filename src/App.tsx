@@ -204,6 +204,8 @@ function App() {
               See: docs/PASSWORD_RESET_TESTING_GUIDE.md for details
             */}
             <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Alias route for password reset (supports both /reset-password and /auth/reset) */}
+            <Route path="/auth/reset" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* Moroccan Sahara dedicated page */}
