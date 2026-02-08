@@ -277,14 +277,15 @@ export default function CityPage() {
                     </div>
                     
                     {/* FAQ Section for cities without custom content */}
-                    {language === 'fr' && (
-                      <div className="mt-12">
-                        <FAQ 
-                          items={getCityFAQ(cityName)} 
-                          title={`Questions sur l'immobilier à ${cityName}`}
-                        />
-                      </div>
-                    )}
+                    <div className="mt-12">
+                      <FAQ 
+                        items={getCityFAQ(t, cityName)} 
+                        title={language === 'fr' 
+                          ? `Questions sur l'immobilier à ${cityName}`
+                          : `أسئلة حول العقارات في ${cityName}`
+                        }
+                      />
+                    </div>
                   </div>
                 )}
 

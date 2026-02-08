@@ -221,6 +221,53 @@ const translations: Record<Language, Record<string, string>> = {
     'push.successDisabled': 'Notifications désactivées',
     'push.errorEnable': 'Erreur lors de l\'activation des notifications',
     'push.errorDisable': 'Erreur lors de la désactivation des notifications',
+    
+    // FAQ
+    'faq.title': 'Questions Fréquentes',
+    
+    // General FAQ
+    'faq.general.q1': 'Comment fonctionne TopAffaireImmo ?',
+    'faq.general.a1': 'TopAffaireImmo est une plateforme immobilière qui connecte acheteurs, vendeurs et locataires au Maroc. Vous pouvez rechercher des propriétés par ville, quartier, type et budget. Les annonceurs publient leurs biens et vous pouvez les contacter directement.',
+    'faq.general.q2': 'Est-ce que TopAffaireImmo est gratuit ?',
+    'faq.general.a2': 'La consultation des annonces est entièrement gratuite pour les visiteurs. Les annonceurs peuvent publier des propriétés avec différentes options tarifaires selon leurs besoins de visibilité.',
+    'faq.general.q3': 'Dans quelles villes puis-je trouver des propriétés ?',
+    'faq.general.a3': 'TopAffaireImmo couvre toutes les grandes villes du Maroc : Casablanca, Rabat, Marrakech, Tanger, Agadir, Fès, Meknès, Oujda et plus de 50 autres villes à travers le royaume.',
+    'faq.general.q4': 'Comment contacter un vendeur ou propriétaire ?',
+    'faq.general.a4': 'Sur chaque annonce, vous trouverez un bouton \'Contacter\' qui vous permet d\'envoyer un message directement à l\'annonceur ou de voir son numéro de téléphone pour le contacter.',
+    'faq.general.q5': 'Puis-je publier ma propre annonce immobilière ?',
+    'faq.general.a5': 'Oui ! Créez un compte gratuit, puis accédez à votre tableau de bord pour publier une nouvelle annonce. Ajoutez des photos, une description détaillée, le prix et les caractéristiques de votre bien.',
+    'faq.general.q6': 'Les annonces sont-elles vérifiées ?',
+    'faq.general.a6': 'Toutes les annonces sont modérées par notre équipe avant publication pour assurer la qualité et éviter les fraudes. Nous vérifions également les informations des annonceurs.',
+    
+    // Buying FAQ
+    'faq.buying.q1': 'Quels types de propriétés puis-je acheter au Maroc ?',
+    'faq.buying.a1': 'Vous pouvez acheter des appartements, maisons, villas, riads, terrains, locaux commerciaux et propriétés de luxe dans toutes les régions du Maroc.',
+    'faq.buying.q2': 'Quel est le processus d\'achat immobilier au Maroc ?',
+    'faq.buying.a2': 'Le processus inclut : recherche du bien, négociation du prix, signature d\'un compromis de vente, vérification des documents juridiques, paiement chez le notaire et signature de l\'acte définitif.',
+    'faq.buying.q3': 'Un étranger peut-il acheter une propriété au Maroc ?',
+    'faq.buying.a3': 'Oui, les étrangers peuvent acheter librement des biens immobiliers au Maroc, sauf dans certaines zones agricoles. Les mêmes droits et procédures s\'appliquent que pour les citoyens marocains.',
+    'faq.buying.q4': 'Quels sont les frais d\'achat immobilier ?',
+    'faq.buying.a4': 'Les frais incluent les droits d\'enregistrement (2,5% à 5%), les honoraires du notaire (environ 1%), les frais d\'agence (2% à 3%), et les taxes selon le type de bien.',
+    
+    // Renting FAQ
+    'faq.renting.q1': 'Comment louer une propriété au Maroc ?',
+    'faq.renting.a1': 'Recherchez une propriété à louer, contactez le propriétaire ou l\'agence, visitez le bien, négociez les conditions, signez un contrat de bail et versez le dépôt de garantie et le premier loyer.',
+    'faq.renting.q2': 'Quel est le montant du dépôt de garantie ?',
+    'faq.renting.a2': 'Le dépôt de garantie est généralement équivalent à 1 ou 2 mois de loyer. Il est restitué à la fin du bail si le logement est rendu en bon état.',
+    'faq.renting.q3': 'Quelle est la durée minimale d\'un bail au Maroc ?',
+    'faq.renting.a3': 'Pour les locations à usage d\'habitation principale, la durée minimale est d\'un an renouvelable. Pour les locations meublées ou saisonnières, elle peut être plus courte.',
+    'faq.renting.q4': 'Quels documents sont nécessaires pour louer ?',
+    'faq.renting.a4': 'Vous devez fournir : pièce d\'identité, justificatif de revenus (bulletins de salaire ou attestation d\'emploi), et parfois un garant ou caution bancaire.',
+    
+    // City FAQ
+    'faq.city.q1': 'Quel est le prix moyen d\'un appartement à {city} ?',
+    'faq.city.a1': 'Les prix varient selon les quartiers et la taille. À {city}, comptez en moyenne entre 8 000 et 15 000 MAD/m² pour un appartement. Les quartiers résidentiels premium peuvent dépasser 20 000 MAD/m².',
+    'faq.city.q2': 'Quels sont les meilleurs quartiers pour vivre à {city} ?',
+    'faq.city.a2': 'Les quartiers les plus prisés à {city} offrent un bon équilibre entre qualité de vie, commodités et accessibilité. Consultez nos guides de quartiers pour découvrir les spécificités de chaque zone.',
+    'faq.city.q3': 'Comment trouver une villa à vendre à {city} ?',
+    'faq.city.a3': 'Utilisez nos filtres de recherche pour sélectionner "{city}", type "Villa" et "À vendre". Vous pouvez aussi affiner par budget, nombre de chambres et quartier pour trouver la villa idéale.',
+    'faq.city.q4': 'Y a-t-il des agences immobilières partenaires à {city} ?',
+    'faq.city.a4': 'Oui, TopAffaireImmo travaille avec plus de 200 agences immobilières à travers le Maroc, dont plusieurs basées à {city}. Nos partenaires sont vérifiés et professionnels.',
   },
   ar: {
     // Navigation
@@ -431,6 +478,53 @@ const translations: Record<Language, Record<string, string>> = {
     'push.successDisabled': 'تم إيقاف الإشعارات',
     'push.errorEnable': 'خطأ في تفعيل الإشعارات',
     'push.errorDisable': 'خطأ في إيقاف الإشعارات',
+    
+    // FAQ
+    'faq.title': 'الأسئلة الشائعة',
+    
+    // General FAQ
+    'faq.general.q1': 'كيف يعمل TopAffaireImmo؟',
+    'faq.general.a1': 'TopAffaireImmo هو منصة عقارية تربط المشترين والبائعين والمستأجرين في المغرب. يمكنك البحث عن العقارات حسب المدينة والحي والنوع والميزانية. ينشر المعلنون عقاراتهم ويمكنك الاتصال بهم مباشرة.',
+    'faq.general.q2': 'هل TopAffaireImmo مجاني؟',
+    'faq.general.a2': 'تصفح الإعلانات مجاني تماماً للزوار. يمكن للمعلنين نشر العقارات بخيارات تسعير مختلفة حسب احتياجاتهم للظهور.',
+    'faq.general.q3': 'في أي مدن يمكنني العثور على عقارات؟',
+    'faq.general.a3': 'يغطي TopAffaireImmo جميع المدن الكبرى في المغرب: الدار البيضاء، الرباط، مراكش، طنجة، أكادير، فاس، مكناس، وجدة وأكثر من 50 مدينة أخرى في جميع أنحاء المملكة.',
+    'faq.general.q4': 'كيف أتواصل مع بائع أو مالك؟',
+    'faq.general.a4': 'في كل إعلان، ستجد زر "اتصال" يسمح لك بإرسال رسالة مباشرة إلى المعلن أو رؤية رقم هاتفه للاتصال به.',
+    'faq.general.q5': 'هل يمكنني نشر إعلاني العقاري الخاص؟',
+    'faq.general.a5': 'نعم! أنشئ حساباً مجانياً، ثم انتقل إلى لوحة التحكم لنشر إعلان جديد. أضف الصور ووصفاً تفصيلياً والسعر ومواصفات عقارك.',
+    'faq.general.q6': 'هل يتم التحقق من الإعلانات؟',
+    'faq.general.a6': 'يتم مراجعة جميع الإعلانات من قبل فريقنا قبل النشر لضمان الجودة وتجنب الاحتيال. كما نتحقق من معلومات المعلنين.',
+    
+    // Buying FAQ
+    'faq.buying.q1': 'ما أنواع العقارات التي يمكنني شراؤها في المغرب؟',
+    'faq.buying.a1': 'يمكنك شراء شقق ومنازل وفيلات ورياضات وأراضي ومحلات تجارية وعقارات فاخرة في جميع مناطق المغرب.',
+    'faq.buying.q2': 'ما هي عملية شراء العقارات في المغرب؟',
+    'faq.buying.a2': 'تشمل العملية: البحث عن العقار، التفاوض على السعر، توقيع وعد البيع، التحقق من المستندات القانونية، الدفع عند الموثق وتوقيع العقد النهائي.',
+    'faq.buying.q3': 'هل يمكن للأجانب شراء عقار في المغرب؟',
+    'faq.buying.a3': 'نعم، يمكن للأجانب شراء العقارات بحرية في المغرب، باستثناء بعض المناطق الزراعية. تنطبق نفس الحقوق والإجراءات كما هو الحال بالنسبة للمواطنين المغاربة.',
+    'faq.buying.q4': 'ما هي رسوم شراء العقارات؟',
+    'faq.buying.a4': 'تشمل الرسوم: رسوم التسجيل (2.5٪ إلى 5٪)، أتعاب الموثق (حوالي 1٪)، رسوم الوكالة (2٪ إلى 3٪)، والضرائب حسب نوع العقار.',
+    
+    // Renting FAQ
+    'faq.renting.q1': 'كيف أستأجر عقاراً في المغرب؟',
+    'faq.renting.a1': 'ابحث عن عقار للإيجار، اتصل بالمالك أو الوكالة، قم بزيارة العقار، تفاوض على الشروط، وقع عقد الإيجار وادفع الوديعة والإيجار الأول.',
+    'faq.renting.q2': 'ما هو مبلغ الوديعة؟',
+    'faq.renting.a2': 'تعادل الوديعة عادةً شهراً أو شهرين من الإيجار. يتم إرجاعها في نهاية الإيجار إذا تم إعادة المسكن بحالة جيدة.',
+    'faq.renting.q3': 'ما هي المدة الدنيا للإيجار في المغرب؟',
+    'faq.renting.a3': 'بالنسبة للإيجار للسكن الرئيسي، الحد الأدنى للمدة هو سنة واحدة قابلة للتجديد. للإيجارات المفروشة أو الموسمية، يمكن أن تكون أقصر.',
+    'faq.renting.q4': 'ما هي المستندات اللازمة للإيجار؟',
+    'faq.renting.a4': 'يجب تقديم: بطاقة الهوية، إثبات الدخل (قسائم الراتب أو شهادة عمل)، وأحياناً ضامن أو ضمان بنكي.',
+    
+    // City FAQ
+    'faq.city.q1': 'ما هو متوسط سعر الشقة في {city}؟',
+    'faq.city.a1': 'تختلف الأسعار حسب الأحياء والمساحة. في {city}، احسب في المتوسط بين 8,000 و 15,000 درهم/م² للشقة. يمكن أن تتجاوز الأحياء السكنية الراقية 20,000 درهم/م².',
+    'faq.city.q2': 'ما هي أفضل الأحياء للعيش في {city}؟',
+    'faq.city.a2': 'تقدم الأحياء الأكثر شعبية في {city} توازناً جيداً بين جودة الحياة والمرافق وسهولة الوصول. راجع أدلة الأحياء لدينا لاكتشاف خصوصيات كل منطقة.',
+    'faq.city.q3': 'كيف أجد فيلا للبيع في {city}؟',
+    'faq.city.a3': 'استخدم مرشحات البحث لدينا لتحديد "{city}"، النوع "فيلا" و "للبيع". يمكنك أيضاً التحسين حسب الميزانية وعدد الغرف والحي للعثور على الفيلا المثالية.',
+    'faq.city.q4': 'هل هناك وكالات عقارية شريكة في {city}؟',
+    'faq.city.a4': 'نعم، يعمل TopAffaireImmo مع أكثر من 200 وكالة عقارية في جميع أنحاء المغرب، بما في ذلك العديد منها في {city}. شركاؤنا محققون ومحترفون.',
   },
 };
 

@@ -5,10 +5,12 @@ import PropertyCategories from "@/components/home/PropertyCategories";
 import AdBanner from "@/components/home/AdBanner";
 import PromoBanner from "@/components/PromoBanner";
 import SEO from "@/components/SEO";
-import { FAQ, generalFAQ } from "@/components/FAQ";
+import { FAQ, getGeneralFAQ } from "@/components/FAQ";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { SITE_URL } from "@/config/site";
 
 function Home() {
+  const { t } = useLanguage();
   // Structured data for home page
   const structuredData = {
     "@context": "https://schema.org",
@@ -71,7 +73,7 @@ function Home() {
         <PropertyCategories />
 
         {/* FAQ Section with FAQPage Schema */}
-        <FAQ items={generalFAQ} className="bg-muted/30 mt-16" />
+        <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 mt-16" />
       </main>
     </>
   );
