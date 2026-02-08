@@ -59,13 +59,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Validate Google OAuth configuration
-    if (!validateConfig()) {
-      console.error('[auth/google/start] Missing Google OAuth configuration');
-      return res.status(500).json({
-        error: 'Google authentication is not configured. Please contact support.',
-      });
+    // Debug log all required ENV variables
+    console.error('[auth/google/start] Validating ENV variables...');
+    
+    // Check Supabase ENV variables
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+    
+    console.error('[auth/google/start] Supabase ENV Variables:');
+    console.error(`  SUPABASE_URL: ${supabaseUrl ? 'SET (' + supabaseUrl + ')' : 'MISSING'}`);
+    console.error(`  SUPABASE_ANON_KEY: ${supabaseAnonKey ? 'SET (length: ' + supabaseAnonKey.length + ')' : 'MISSING'}`);
+    
+    const missingEnvVars: string[] = [];
+    if (!supabaseUrl) missingEnvVars.push('SUPABASE_URL (or VITE_SUPABASE_URL)');
+    if (!supabaseAnonKey) missingEnvVars.push('SUPABASE_ANON_KEY (or VITE_SUPABASE_ANON_KEY)');
+    
+    if (missingEnvVars.length > 0) {
+      const errorMsg = `Missing required ENV variables: ${missingEnvVars.join(', ')}`;
+      console.error(`[auth/google/start] ${errorMsg}`);
+      throw new Error(errorMsg);
     }
+    
+    // Validate Google OAuth configuration (this will log and throw if missing)
+    validateConfig();
 
     // Check rate limit
     const clientIp = getClientIp(req);
@@ -92,6 +108,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Redirect to Google authorization page
     return res.redirect(307, authUrl);
   } catch (error) {
+    // Log the actual error details
+    console.error('[auth/google/start] Error occurred:', error);
+    
+    // If it's an ENV validation error, return more specific message
+    if (error instanceof Error && error.message.includes('Missing required ENV variables')) {
+      console.error('[auth/google/start] ENV validation failed:', error.message);
+      return res.status(500).json({ 
+        error: 'Server configuration error: ' + error.message 
+      });
+    }
+    
+    // Generic error fallback
     console.error('[auth/google/start] Unexpected error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

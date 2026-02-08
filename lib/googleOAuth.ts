@@ -199,7 +199,26 @@ export async function getUserInfo(accessToken: string): Promise<GoogleUserInfo> 
 
 /**
  * Validate environment configuration
+ * Logs each missing variable and throws a clear error
  */
 export function validateConfig(): boolean {
-  return !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REDIRECT_URI);
+  const missing: string[] = [];
+  
+  // Debug log all Google OAuth ENV variables
+  console.error('[googleOAuth] ENV Variables Check:');
+  console.error(`  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET (length: ' + GOOGLE_CLIENT_ID.length + ')' : 'MISSING'}`);
+  console.error(`  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET (length: ' + GOOGLE_CLIENT_SECRET.length + ')' : 'MISSING'}`);
+  console.error(`  GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI ? 'SET (' + GOOGLE_REDIRECT_URI + ')' : 'MISSING'}`);
+  
+  if (!GOOGLE_CLIENT_ID) missing.push('GOOGLE_CLIENT_ID');
+  if (!GOOGLE_CLIENT_SECRET) missing.push('GOOGLE_CLIENT_SECRET');
+  if (!GOOGLE_REDIRECT_URI) missing.push('GOOGLE_REDIRECT_URI');
+  
+  if (missing.length > 0) {
+    const errorMsg = `Missing required ENV variables: ${missing.join(', ')}`;
+    console.error(`[googleOAuth] ${errorMsg}`);
+    throw new Error(errorMsg);
+  }
+  
+  return true;
 }
