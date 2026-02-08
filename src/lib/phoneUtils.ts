@@ -126,3 +126,59 @@ export function formatPhoneForDisplay(input: string, defaultCountry: CountryCode
     return input;
   }
 }
+
+/**
+ * Mask a phone number for privacy display
+ * Shows country code and first/last few digits, hides middle
+ * 
+ * Examples:
+ * - "+212612345678" -> "+212 6** *** **78"
+ * - "+33612345678" -> "+33 6** *** **78"
+ * 
+ * @param phone - Phone number in E.164 format
+ * @returns Masked phone number for display
+ */
+export function maskPhoneNumber(phone: string): string {
+  if (!phone || typeof phone !== 'string') {
+    return phone;
+  }
+
+  try {
+    const phoneNumber = parsePhoneNumber(phone);
+    if (!phoneNumber || !phoneNumber.isValid()) {
+      return phone;
+    }
+
+    // Get country code and national number
+    const countryCode = phoneNumber.countryCallingCode;
+    const nationalNumber = phoneNumber.nationalNumber;
+
+    // Convert to string for masking
+    const digits = nationalNumber.toString();
+    
+    if (digits.length < 6) {
+      // Too short to mask meaningfully
+      return phone;
+    }
+
+    // Show first 1 and last 2 digits, mask the middle
+    const first = digits.substring(0, 1);
+    const last = digits.substring(digits.length - 2);
+    const middleLength = digits.length - 3;
+    
+    // Create masked middle section with appropriate length
+    let maskedMiddle = '';
+    if (middleLength <= 3) {
+      maskedMiddle = '*'.repeat(middleLength);
+    } else {
+      // For longer numbers, use grouped asterisks for readability
+      maskedMiddle = '** *** **';
+    }
+
+    return `+${countryCode} ${first}${maskedMiddle}${last}`;
+  } catch (error) {
+    console.error('Phone masking error:', error);
+    return phone;
+  }
+}
+
