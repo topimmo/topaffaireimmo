@@ -74,7 +74,24 @@
     <meta name="format-detection" content="telephone=no" />
     
     <!-- Google Analytics 4 (GA4) - Production Only -->
-    <!-- This script is only active on topaffaireimmo.com and www.topaffaireimmo.com -->
+    <!-- 
+      This script loads GA4 for production domains only.
+      Measurement ID: G-TMY9XWWH6G
+      
+      Verification:
+      1. Deploy to topaffaireimmo.com or www.topaffaireimmo.com
+      2. Open browser console and check for:
+         - "[GA4] Initialization started from index.html"
+         - "[GA4] Script loaded and configured from index.html"
+         - "[GA4] ✅ Page view tracked: ..."
+      3. Open DevTools → Network tab → Filter "google" or "collect"
+         - Should see: gtag/js?id=G-TMY9XWWH6G (Status 200)
+         - Should see: g/collect?v=2... requests on each page view
+      4. Check Google Analytics → Realtime
+         - Should show active users and page views
+      
+      For detailed verification, see: VERIFICATION_GUIDE.md
+    -->
     <script>
       // Only load GA4 on production domains
       (function() {
