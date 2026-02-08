@@ -72,11 +72,17 @@ export function deleteRequestId(requestId: string): void {
  */
 function cleanupExpired(): void {
   const now = Date.now();
-  for (const [requestId, data] of store.entries()) {
+  const keysToDelete: string[] = [];
+  
+  // Collect expired keys
+  store.forEach((data, requestId) => {
     if (now > data.expiresAt) {
-      store.delete(requestId);
+      keysToDelete.push(requestId);
     }
-  }
+  });
+  
+  // Delete expired entries
+  keysToDelete.forEach(key => store.delete(key));
 }
 
 /**
@@ -89,11 +95,11 @@ export function getStoreStats(): {
   const now = Date.now();
   let expiredCount = 0;
   
-  for (const data of store.values()) {
+  store.forEach((data) => {
     if (now > data.expiresAt) {
       expiredCount++;
     }
-  }
+  });
 
   return {
     totalEntries: store.size,
