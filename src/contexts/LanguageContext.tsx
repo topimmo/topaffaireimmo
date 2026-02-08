@@ -107,6 +107,10 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.resendIn': 'Renvoyer dans',
     'auth.seconds': 'secondes',
     
+    // Google OAuth
+    'auth.googleLogin': 'Se connecter avec Google',
+    'auth.or': 'ou',
+    
     // Email Auth
     'auth.createAccount': 'Créer un compte',
     'auth.confirmationEmailSent': 'Un email de confirmation a été envoyé.',
@@ -396,6 +400,10 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.sentTo': 'تم إرسال الرمز إلى',
     'auth.resendIn': 'إعادة الإرسال خلال',
     'auth.seconds': 'ثانية',
+    
+    // Google OAuth
+    'auth.googleLogin': 'الدخول عبر Google',
+    'auth.or': 'أو',
     
     // Email Auth
     'auth.createAccount': 'إنشاء حساب',
