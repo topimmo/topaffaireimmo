@@ -2,6 +2,28 @@
 
 A modern, bilingual (French/Arabic) real estate platform for Morocco, built with React, TypeScript, and Supabase.
 
+## 🆕 NEW: Phone OTP Authentication
+
+TopAffaireImmo now includes a complete **Phone OTP Authentication** system using SMS.
+
+**Quick Start:** [PHONE_OTP_QUICK_START.md](PHONE_OTP_QUICK_START.md) (5 minutes)
+
+**Features:**
+- ✅ SMS OTP via Vonage
+- ✅ Morocco phone validation (+212)
+- ✅ JWT session management
+- ✅ Rate limiting & security
+- ✅ React UI component
+
+**Documentation:**
+- [Quick Start Guide](PHONE_OTP_QUICK_START.md) - Get started in 5 minutes
+- [Complete Overview](PHONE_OTP_OVERVIEW.md) - Full documentation
+- [Implementation Summary](PHONE_OTP_IMPLEMENTATION_SUMMARY.md) - Technical details
+- [Backend API Docs](backend/README.md) - API reference
+- [Frontend Example](frontend-example/README.md) - React integration
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
