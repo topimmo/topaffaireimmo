@@ -88,21 +88,25 @@
           window.gtag = gtag;
           gtag('js', new Date());
           
-          // Configure GA4 - disable automatic page_view (SPA will track manually)
-          gtag('config', 'G-TMY9XWWH6G', {
-            'send_page_view': false,
-            'cookie_flags': 'SameSite=None;Secure'
-          });
-          
           // Load GA4 script
           var script = document.createElement('script');
           script.async = true;
           script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TMY9XWWH6G';
+          
+          // Configure GA4 AFTER script loads - disable automatic page_view (SPA will track manually)
+          script.onload = function() {
+            gtag('config', 'G-TMY9XWWH6G', {
+              'send_page_view': false,
+              'cookie_flags': 'SameSite=None;Secure'
+            });
+            console.log('[GA4] Script loaded and configured from index.html');
+          };
+          
           script.onerror = function() {
             console.warn('[GA4] Failed to load - may be blocked by ad blocker or CSP');
           };
-          document.head.appendChild(script);
           
+          document.head.appendChild(script);
           console.log('[GA4] Initialization started from index.html');
         } else {
           console.log('[GA4] Not on production domain, skipping initialization');
