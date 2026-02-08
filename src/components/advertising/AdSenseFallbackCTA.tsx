@@ -32,7 +32,12 @@ export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProp
 
   // WhatsApp number from environment variable
   const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
-  if (!WHATSAPP_NUMBER) return null;
+  if (!WHATSAPP_NUMBER) {
+    if (import.meta.env.DEV) {
+      console.warn('AdSenseFallbackCTA: VITE_WHATSAPP_NUMBER environment variable not configured');
+    }
+    return null;
+  }
 
   const WHATSAPP_MESSAGE = encodeURIComponent('Hello, I would like to know more about TopAffaireImmo');
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
