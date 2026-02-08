@@ -67,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
     
     console.error('[auth/google/start] Supabase ENV Variables:');
-    console.error(`  SUPABASE_URL: ${supabaseUrl ? 'SET (' + supabaseUrl + ')' : 'MISSING'}`);
+    console.error(`  SUPABASE_URL: ${supabaseUrl ? 'SET (length: ' + supabaseUrl.length + ')' : 'MISSING'}`);
     console.error(`  SUPABASE_ANON_KEY: ${supabaseAnonKey ? 'SET (length: ' + supabaseAnonKey.length + ')' : 'MISSING'}`);
     
     const missingEnvVars: string[] = [];
@@ -115,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (error instanceof Error && error.message.includes('Missing required ENV variables')) {
       console.error('[auth/google/start] ENV validation failed:', error.message);
       return res.status(500).json({ 
-        error: 'Server configuration error: ' + error.message 
+        error: 'Server configuration error. Please contact support.' 
       });
     }
     

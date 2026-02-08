@@ -14,7 +14,7 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Debug log for ENV variables
 console.error('[supabaseAdmin] ENV Variables Check:');
-console.error(`  SUPABASE_URL: ${supabaseUrl ? 'SET (' + supabaseUrl + ')' : 'MISSING'}`);
+console.error(`  SUPABASE_URL: ${supabaseUrl ? 'SET (length: ' + supabaseUrl.length + ')' : 'MISSING'}`);
 console.error(`  SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceRoleKey ? 'SET (length: ' + supabaseServiceRoleKey.length + ')' : 'MISSING'}`);
 
 if (!supabaseUrl) {

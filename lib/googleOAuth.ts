@@ -208,7 +208,7 @@ export function validateConfig(): boolean {
   console.error('[googleOAuth] ENV Variables Check:');
   console.error(`  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET (length: ' + GOOGLE_CLIENT_ID.length + ')' : 'MISSING'}`);
   console.error(`  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET (length: ' + GOOGLE_CLIENT_SECRET.length + ')' : 'MISSING'}`);
-  console.error(`  GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI ? 'SET (' + GOOGLE_REDIRECT_URI + ')' : 'MISSING'}`);
+  console.error(`  GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI ? 'SET (length: ' + GOOGLE_REDIRECT_URI.length + ')' : 'MISSING'}`);
   
   if (!GOOGLE_CLIENT_ID) missing.push('GOOGLE_CLIENT_ID');
   if (!GOOGLE_CLIENT_SECRET) missing.push('GOOGLE_CLIENT_SECRET');
