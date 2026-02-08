@@ -30,7 +30,9 @@ export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProp
     setIsMounted(true);
   }, []);
 
-  // Customizable WhatsApp number (update this with your actual number)
+  // Customizable WhatsApp number
+  // TODO: Move this to environment variable (VITE_WHATSAPP_NUMBER) or site config
+  // Update with your actual business WhatsApp number before deployment
   const WHATSAPP_NUMBER = '212600000000'; // Format: country code + number (no + or -)
   const WHATSAPP_MESSAGE = encodeURIComponent('Hello, I would like to know more about TopAffaireImmo');
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;

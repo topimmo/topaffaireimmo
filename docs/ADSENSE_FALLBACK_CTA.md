@@ -61,12 +61,12 @@ The detection is handled in `AdSenseBanner.tsx` by checking for the `window.adsb
 Edit the component file at `/src/components/advertising/AdSenseFallbackCTA.tsx`:
 
 ```tsx
-// Main heading (line ~52)
+// Main heading - search for "Buy – Sell – Rent"
 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground leading-tight">
   🏡 Buy – Sell – Rent real estate in Morocco
 </h2>
 
-// Subheading/promotional text (line ~56)
+// Subheading/promotional text - search for "300 free lifetime"
 <p className="text-base sm:text-lg font-semibold text-primary">
   ✨ 300 free lifetime accounts (limited time)
 </p>
@@ -76,14 +76,14 @@ Edit the component file at `/src/components/advertising/AdSenseFallbackCTA.tsx`:
 
 **Primary Button** (Create Account):
 ```tsx
-// Line ~66
+// Search for "to="/register""
 <Link to="/register"
 ```
 Change `/register` to your desired signup route.
 
 **Secondary Button** (WhatsApp):
 ```tsx
-// Line ~33 - Update the WhatsApp number
+// Near the top of the component - search for "WHATSAPP_NUMBER"
 const WHATSAPP_NUMBER = '212600000000'; // Format: country code + number
 const WHATSAPP_MESSAGE = encodeURIComponent('Your custom message');
 ```
@@ -94,13 +94,13 @@ Replace with your actual WhatsApp business number.
 
 **Primary Button**:
 ```tsx
-// Line ~88
+// Search for "Create Free Account"
 Create Free Account
 ```
 
 **Secondary Button**:
 ```tsx
-// Line ~139
+// Search for "Contact via WhatsApp"
 Contact via WhatsApp
 ```
 
@@ -110,22 +110,22 @@ The component uses Tailwind CSS classes. Common customizations:
 
 **Background Gradient**:
 ```tsx
-// Line ~45
+// Search for "bg-gradient-to-br"
 "bg-gradient-to-br from-primary/10 via-background to-primary/5"
 ```
 
 **Border**:
 ```tsx
-// Line ~46
+// Search for "border-2 border-primary"
 "border-2 border-primary/20"
 ```
 
 **Button Colors**:
 ```tsx
-// Primary button (line ~73)
+// Primary button - search for "bg-primary text-primary-foreground"
 "bg-primary text-primary-foreground"
 
-// Secondary button (line ~99)
+// Secondary button - search for "bg-background text-foreground"
 "bg-background text-foreground border-2 border-primary/30"
 ```
 

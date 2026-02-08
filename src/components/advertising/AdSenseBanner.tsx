@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import AdSenseFallbackCTA from './AdSenseFallbackCTA';
 
+// Extend Window interface for AdSense
+declare global {
+  interface Window {
+    adsbygoogle?: unknown;
+  }
+}
+
 interface AdSenseBannerProps {
   slot: string;
   format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle';
   className?: string;
 }
+
+// Delay before checking AdSense availability (allows script to load)
+const ADSENSE_CHECK_DELAY_MS = 100;
 
 export default function AdSenseBanner({ 
   slot, 
@@ -19,7 +29,6 @@ export default function AdSenseBanner({
     // Check if Google AdSense script is loaded and active
     // This checks for the presence of adsbygoogle array/object
     const checkAdSense = () => {
-      // @ts-ignore - window.adsbygoogle may not exist in type definitions
       const hasAdSense = typeof window !== 'undefined' && window.adsbygoogle;
       
       if (hasAdSense) {
@@ -30,7 +39,7 @@ export default function AdSenseBanner({
     };
 
     // Small delay to allow AdSense script to load
-    const timer = setTimeout(checkAdSense, 100);
+    const timer = setTimeout(checkAdSense, ADSENSE_CHECK_DELAY_MS);
 
     return () => clearTimeout(timer);
   }, []);
