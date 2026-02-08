@@ -22,7 +22,8 @@
     "generate:moroccan-listings": "npx tsx scripts/generate-moroccan-listings.ts",
     "debug:listings": "npx tsx scripts/debug-listings.ts",
     "fix:listings": "npx tsx scripts/quick-fix-listings.ts",
-    "check:migrations": "npx tsx scripts/check-migrations.ts"
+    "check:migrations": "npx tsx scripts/check-migrations.ts",
+    "verify:ga4": "node scripts/verify-ga4.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
