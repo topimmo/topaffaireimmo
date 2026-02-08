@@ -90,8 +90,6 @@ export default function AuthPage() {
     }
   }, [from, navigate, refreshSession, isRTL]);
 
-  const from = (location.state as { from?: string })?.from || '/';
-
   // State machine: 'phone' | 'verify'
   const [step, setStep] = useState<'phone' | 'verify'>('phone');
   
