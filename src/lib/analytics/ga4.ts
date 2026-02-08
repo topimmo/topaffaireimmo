@@ -9,7 +9,7 @@
  */
 
 // GA4 Measurement ID
-const GA_MEASUREMENT_ID = 'G-TMY9XWWH6G';
+const GA_MEASUREMENT_ID = 'G-TMY9XWHH6G';
 
 // Track if GA has been initialized to prevent duplicate script injection
 let gaInitialized = false;
