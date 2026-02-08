@@ -9,12 +9,12 @@ import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-// Brand colors from tailwind config
-const BRAND_COLOR = '#3b82f6'; // Blue
-const BRAND_SECONDARY = '#2563eb'; // Darker blue
+// Brand colors from tailwind config (matching current website UI)
+const BRAND_COLOR = '#C86A4A'; // Terracotta (primary)
+const BRAND_SECONDARY = '#2C5F4F'; // Forest Green (secondary)
 const WHITE = '#ffffff';
-const BACKGROUND = '#FAF8F5'; // Cream
-const TEXT_DARK = '#1f2937'; // Gray-800
+const BACKGROUND = '#FAF8F5'; // Warm Cream
+const TEXT_DARK = '#1A1A1A'; // Deep Charcoal
 
 // OG Image dimensions (Facebook/LinkedIn/Twitter standard)
 const OG_WIDTH = 1200;
