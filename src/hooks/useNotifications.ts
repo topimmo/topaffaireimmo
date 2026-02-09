@@ -11,6 +11,7 @@ import {
   countUnreadNotifications,
   type AdminNotification,
 } from '@/lib/notifications';
+import { isValidUuid } from '@/lib/utils';
 
 export function useNotifications() {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !isValidUuid(user.id)) {
       setNotifications([]);
       setUnreadCount(0);
       setLoading(false);

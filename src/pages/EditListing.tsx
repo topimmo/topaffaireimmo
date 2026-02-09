@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { uploadPropertyImages, validateFiles, BUCKET_CONFIG, deleteFiles } from '@/lib/storage';
 import { canUploadPropertyImages, getPermissionDeniedMessage } from '@/lib/permissions';
+import { isValidUuid } from '@/lib/utils';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -147,11 +148,23 @@ export default function EditListing() {
   };
 
   const fetchProperty = async () => {
+    if (!id || !isValidUuid(id)) {
+      toast.error('Invalid property ID');
+      navigate('/dashboard');
+      return;
+    }
+
+    if (!user?.id || !isValidUuid(user.id)) {
+      toast.error('User not authenticated');
+      navigate('/login');
+      return;
+    }
+
     const { data, error } = await supabase
       .from('properties')
       .select('*')
       .eq('id', id)
-      .or(`created_by.eq.${user!.id},owner_id.eq.${user!.id}`)
+      .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
       .maybeSingle();
 
     if (error) {

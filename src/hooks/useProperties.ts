@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { isValidUuid } from '@/lib/utils';
 import type { Property, City, Neighborhood, PropertyType } from '@/types/supabase';
 
 export interface PropertyFilters {
@@ -101,7 +102,7 @@ export function useProperties(filters?: PropertyFilters) {
         query = query.eq('featured', filters.featured);
       }
       // ✅ FIX: Only apply owner_id filter if it's a valid UUID string (not null/undefined)
-      if (filters?.owner_id && typeof filters.owner_id === 'string' && filters.owner_id.trim() !== '') {
+      if (filters?.owner_id && isValidUuid(filters.owner_id)) {
         console.log(`🔍 [useProperties] Filtering by owner_id: ${filters.owner_id}`);
         query = query.eq('owner_id', filters.owner_id);
       }
@@ -156,8 +157,11 @@ export function useProperty(id: string | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) {
+    if (!id || !isValidUuid(id)) {
       setLoading(false);
+      if (id && !isValidUuid(id)) {
+        setError('Invalid property ID');
+      }
       return;
     }
 
@@ -390,7 +394,7 @@ export function useMyProperties() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        if (!user?.id) {
+        if (!user?.id || !isValidUuid(user.id)) {
           console.log('ℹ️ [useMyProperties] No user session - skipping fetch');
           if (!isCancelled && !hasCompleted) {
             hasCompleted = true;

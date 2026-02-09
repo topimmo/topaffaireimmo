@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { isValidUuid } from '@/lib/utils';
 
 // Timeout constants for consistency
 const SESSION_WAIT_MS = 1000;
@@ -17,6 +18,11 @@ const REDIRECT_DELAY_LONG_MS = 3000;
  * Regular users → /
  */
 async function getRedirectPath(userId: string): Promise<string> {
+  if (!isValidUuid(userId)) {
+    console.warn('Invalid user ID provided for redirect check');
+    return '/';
+  }
+
   try {
     console.log('🔍 Checking admin status for user:', userId);
     
