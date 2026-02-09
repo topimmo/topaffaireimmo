@@ -102,6 +102,9 @@ function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
   return message;
 }
 
+// Toast duration for important error messages (in milliseconds)
+const TOAST_ERROR_DURATION = 5000;
+
 export default function AddListing() {
   const { t, language, isRTL } = useLanguage();
   const { user, loading: authLoading } = useAuth();
@@ -393,7 +396,7 @@ export default function AddListing() {
         isRTL 
           ? 'يجب تسجيل الدخول لإنشاء إعلان. يرجى تسجيل الدخول والمحاولة مرة أخرى.'
           : 'Vous devez être connecté pour créer une annonce. Veuillez vous connecter et réessayer.',
-        { duration: 5000 }
+        { duration: TOAST_ERROR_DURATION }
       );
       // Redirect to login page
       navigate('/login');

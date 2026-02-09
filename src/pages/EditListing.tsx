@@ -55,9 +55,11 @@ const propertyTypes = [
   { value: 'apartment', icon: Building },
   { value: 'house', icon: Home },
   { value: 'villa', icon: Landmark },
-  { value: 'commercial', icon: Store },
   { value: 'land', icon: Trees },
 ];
+
+// Toast duration for important error messages (in milliseconds)
+const TOAST_ERROR_DURATION = 5000;
 
 export default function EditListing() {
   const { id } = useParams<{ id: string }>();
@@ -379,7 +381,7 @@ export default function EditListing() {
           isRTL 
             ? 'يجب تسجيل الدخول لتحديث الإعلان. يرجى تسجيل الدخول والمحاولة مرة أخرى.'
             : 'Vous devez être connecté pour modifier une annonce. Veuillez vous connecter et réessayer.',
-          { duration: 5000 }
+          { duration: TOAST_ERROR_DURATION }
         );
         navigate('/login');
       }
