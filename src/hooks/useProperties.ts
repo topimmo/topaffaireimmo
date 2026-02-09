@@ -104,9 +104,6 @@ export function useProperties(filters?: PropertyFilters) {
       if (filters?.owner_id && typeof filters.owner_id === 'string' && filters.owner_id.trim() !== '') {
         console.log(`🔍 [useProperties] Filtering by owner_id: ${filters.owner_id}`);
         query = query.eq('owner_id', filters.owner_id);
-      } else if (filters?.owner_id !== undefined && !filters.owner_id) {
-        // Log warning if owner_id was explicitly passed but is null/empty
-        console.warn('⚠️ [useProperties] owner_id filter skipped - received null/empty value:', filters.owner_id);
       }
 
       // Default: only published properties for public viewing
