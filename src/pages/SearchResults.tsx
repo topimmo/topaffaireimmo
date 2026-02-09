@@ -133,10 +133,13 @@ export default function SearchResults() {
 
         console.log('📋 [SearchResults] Fetching properties with filter: status=published, is_archived IS DISTINCT FROM true');
 
-        // Filter by owner (agency) if specified in URL
-        if (urlOwnerId) {
-          q = q.eq("owner_id", urlOwnerId);
+        // ✅ FIX: Filter by owner (agency) only if urlOwnerId is a valid UUID string
+        if (urlOwnerId && typeof urlOwnerId === 'string' && urlOwnerId.trim() !== '') {
           console.log(`🏢 [SearchResults] Filtering by owner_id: ${urlOwnerId}`);
+          q = q.eq("owner_id", urlOwnerId);
+        } else if (urlOwnerId !== null && urlOwnerId !== undefined) {
+          // Log warning if owner was in URL but invalid
+          console.warn('⚠️ [SearchResults] owner_id filter skipped - received invalid value:', urlOwnerId);
         }
 
         // ✅ Type filter (SQL) - نخففو فالfrontend filter final
