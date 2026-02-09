@@ -128,7 +128,7 @@ export default function AuthCallback() {
         if (code) {
           console.log('🔑 PKCE flow detected - exchanging code for session');
           
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
@@ -142,10 +142,43 @@ export default function AuthCallback() {
             return;
           }
           
-          if (data.session) {
+          // Debug log: verify session after exchange
+          const {
+            data: { session: sessionFromCheck },
+            error: sessionCheckError
+          } = await supabase.auth.getSession();
+
+          if (sessionCheckError) {
+            console.error('❌ Error fetching session after exchange:', sessionCheckError);
+          }
+
+          const finalSession = sessionFromCheck ?? exchangeData?.session;
+
+          console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
+
+          if (!finalSession) {
+            setStatus('error');
+            const noSessionMsg = isRTL
+              ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
+              : 'Could not create session. Please log in.';
+            setMessage(noSessionMsg);
+            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+            return;
+          }
+
+          if (sessionFromCheck) {
+            console.log('  - Session confirmed via getSession()');
+          } else if (exchangeData?.session) {
+            const fallbackReason = sessionCheckError
+              ? 'because getSession() failed'
+              : 'because getSession() returned null';
+            console.log(`  - Using session returned from exchange response ${fallbackReason}`);
+          }
+          
+          if (finalSession) {
             console.log('✅ Session created via PKCE code exchange');
-            console.log('  - User ID:', data.session.user.id);
-            console.log('  - User Email:', data.session.user.email);
+            console.log('  - User ID:', finalSession.user.id);
+            console.log('  - User Email:', finalSession.user.email);
             
             setStatus('success');
             const successMsg = isRTL
@@ -154,7 +187,7 @@ export default function AuthCallback() {
             setMessage(successMsg);
 
             // Get redirect path based on admin status
-            const redirectPath = await getRedirectPath(data.session.user.id);
+            const redirectPath = await getRedirectPath(finalSession.user.id);
             console.log('  - Redirect destination:', redirectPath);
             
             setTimeout(() => {
