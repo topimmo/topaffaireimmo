@@ -167,15 +167,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userId: session?.user?.id 
       });
       
-      setSession(session)
-      setUser(session?.user ?? null)
+      setSession(session);
+      setUser(session?.user ?? null);
       
       // Ensure profile exists when user signs in (especially for Google OAuth)
-      if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
-        await ensureProfileExists(session.user, log);
+      // Only check on SIGNED_IN to avoid unnecessary checks on token refresh
+      if (session?.user && event === 'SIGNED_IN') {
+        try {
+          await ensureProfileExists(session.user, log);
+        } catch (error) {
+          log.error('Exception in ensureProfileExists during auth state change', error);
+        }
       }
       
-      setLoading(false)
+      setLoading(false);
     })
 
     return () => {

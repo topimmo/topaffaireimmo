@@ -405,6 +405,8 @@ export default function AddListing() {
 
     // CRITICAL: Verify profile exists before allowing property creation
     // This prevents "user_id = null" errors in database queries
+    // This is a defensive check in case AuthContext profile creation failed silently
+    // or the user was created before this fix was deployed
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('id, user_role, advertiser_type')
