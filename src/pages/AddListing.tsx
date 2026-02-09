@@ -409,12 +409,22 @@ export default function AddListing() {
     // or the user was created before this fix was deployed
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, user_role, advertiser_type')
+      .select('id, user_role, advertiser_type, email, full_name')
       .eq('id', currentUser.id)
       .maybeSingle();
 
     if (profileError) {
+      const isRlsBlocked = profileError.code === '42501' || [401, 403].includes(profileError.status ?? 0) || profileError.message?.toLowerCase().includes('permission');
       console.error('[AddListing] Error fetching user profile:', profileError);
+      if (isRlsBlocked) {
+        toast.error(
+          isRTL
+            ? 'سياسة الأمان منعت الوصول إلى ملفك الشخصي (RLS). يرجى الاتصال بالدعم.'
+            : 'RLS/policy blocked profiles. Please contact support.',
+          { duration: TOAST_ERROR_DURATION }
+        );
+        return;
+      }
       toast.error(
         isRTL
           ? 'خطأ في تحميل ملفك الشخصي. يرجى المحاولة مرة أخرى.'
@@ -424,26 +434,48 @@ export default function AddListing() {
       return;
     }
 
-    if (!userProfile) {
-      console.error('[AddListing] ❌ CRITICAL: User authenticated but profile missing!', {
+    let profileRecord = userProfile;
+
+    if (!profileRecord) {
+      console.warn('[AddListing] ❌ CRITICAL: User authenticated but profile missing, attempting auto-create...', {
         userId: currentUser.id,
         email: currentUser.email,
         provider: currentUser.app_metadata?.provider,
       });
       
-      toast.error(
-        isRTL
-          ? 'ملفك الشخصي غير موجود. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى.'
-          : 'Votre profil n\'existe pas. Veuillez vous déconnecter et vous reconnecter.',
-        { duration: TOAST_ERROR_DURATION }
-      );
-      return;
+      const { data: createdProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          id: currentUser.id,
+          email: currentUser.email || '',
+          full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '',
+          user_role: 'real_estate_advertiser',
+          advertiser_type: 'owner',
+          google_id: currentUser.user_metadata?.google_id || null,
+        })
+        .select('id, user_role, advertiser_type')
+        .single();
+
+      if (createError) {
+        const isRlsBlocked = createError.code === '42501' || [401, 403].includes(createError.status ?? 0) || createError.message?.toLowerCase().includes('permission');
+        console.error('[AddListing] Failed to auto-create profile', createError);
+        toast.error(
+          isRlsBlocked
+            ? (isRTL ? 'سياسة الأمان منعت إنشاء ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles. Please contact support.')
+            : (isRTL ? 'تعذر إنشاء ملفك الشخصي تلقائياً. يرجى إعادة المحاولة.' : 'Unable to auto-create your profile. Please try again.'),
+          { duration: TOAST_ERROR_DURATION }
+        );
+        return;
+      }
+
+      profileRecord = createdProfile;
+      console.info('[AddListing] Auto-created missing profile', { userId: currentUser.id });
     }
 
     console.log('[AddListing] ✅ User and profile verified:', {
       userId: currentUser.id,
-      userRole: userProfile.user_role,
-      advertiserType: userProfile.advertiser_type,
+      userRole: profileRecord.user_role,
+      advertiserType: profileRecord.advertiser_type,
     });
 
     // Log the entire form state for debugging

@@ -1,7 +1,7 @@
 // src/components/ProtectedRoute.tsx
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, AUTH_HYDRATION_TIMEOUT_MS } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,8 +11,25 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({
   children,
 }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, session, loading } = useAuth();
   const location = useLocation();
+  const [hydrationTimedOut, setHydrationTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!loading) {
+      setHydrationTimedOut(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setHydrationTimedOut(true);
+      console.warn('[ProtectedRoute] Auth loading exceeded 4s timeout', {
+        path: location.pathname,
+      });
+    }, AUTH_HYDRATION_TIMEOUT_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [loading, location.pathname]);
 
   // CRITICAL: Never block /reset-password or /auth/callback routes
   // These routes need to establish session FROM url tokens before auth check
@@ -27,18 +44,29 @@ export default function ProtectedRoute({
   }
 
   // Wait for auth to finish loading
+  if (loading && hydrationTimedOut) {
+    const nextParam = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?next=${nextParam}`} replace />;
+  }
+
   if (loading) {
     return (
       <div style={{ padding: "2rem", textAlign: "center" }}>
         Loading...
+        {hydrationTimedOut && (
+          <div style={{ marginTop: '1rem', color: '#9f1239' }}>
+            Still loading... Redirecting you to login.
+          </div>
+        )}
       </div>
     );
   }
 
   // Redirect to login if no user
-  if (!user) {
+  if (!user || !session) {
     // Save the current location to redirect back after login
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    const nextParam = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?next=${nextParam}`} replace />;
   }
 
   // No role checking - all authenticated users allowed
