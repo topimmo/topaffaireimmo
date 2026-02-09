@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/lib/supabase";
+import { isValidUuid } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, MapPin, Phone, Home, Loader2, Users } from "lucide-react";
@@ -91,7 +92,13 @@ export default function Agencies() {
       }
 
       // 2) جيب جميع الإعلانات published ديال هاد الوكالات (query وحدة)
-      const agencyIds = baseAgencies.map((a) => a.id);
+      const agencyIds = baseAgencies.map((a) => a.id).filter((id) => isValidUuid(id));
+
+      if (agencyIds.length === 0) {
+        setAgencies(baseAgencies);
+        setLoading(false);
+        return;
+      }
 
       const { data: props, error: propsErr } = await supabase
         .from("properties")

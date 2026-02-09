@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
+import { isValidUuid } from '@/lib/utils';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -92,20 +93,23 @@ export default function AdminAgencies() {
       }
 
       // Fetch listing counts for each agency
-      const agencyIds = agenciesData.map((a) => a.id);
-      const { data: listingsData } = await supabase
-        .from('properties')
-        .select('owner_id')
-        .in('owner_id', agencyIds);
+      const agencyIds = agenciesData.map((a) => a.id).filter((id) => isValidUuid(id));
+      let listingCounts: Record<string, number> = {};
 
-      // Count listings per agency
-      const listingCounts: Record<string, number> = {};
-      if (listingsData) {
-        listingsData.forEach((listing) => {
-          if (listing.owner_id) {
-            listingCounts[listing.owner_id] = (listingCounts[listing.owner_id] || 0) + 1;
-          }
-        });
+      if (agencyIds.length > 0) {
+        const { data: listingsData } = await supabase
+          .from('properties')
+          .select('owner_id')
+          .in('owner_id', agencyIds);
+
+        // Count listings per agency
+        if (listingsData) {
+          listingsData.forEach((listing) => {
+            if (listing.owner_id) {
+              listingCounts[listing.owner_id] = (listingCounts[listing.owner_id] || 0) + 1;
+            }
+          });
+        }
       }
 
       // Merge data
