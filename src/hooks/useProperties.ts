@@ -100,7 +100,9 @@ export function useProperties(filters?: PropertyFilters) {
       if (filters?.featured !== undefined) {
         query = query.eq('featured', filters.featured);
       }
-      if (filters?.owner_id) {
+      // ✅ FIX: Only apply owner_id filter if it's a valid UUID string (not null/undefined)
+      if (filters?.owner_id && typeof filters.owner_id === 'string' && filters.owner_id.trim() !== '') {
+        console.log(`🔍 [useProperties] Filtering by owner_id: ${filters.owner_id}`);
         query = query.eq('owner_id', filters.owner_id);
       }
 
@@ -388,7 +390,8 @@ export function useMyProperties() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        if (!user) {
+        if (!user?.id) {
+          console.log('ℹ️ [useMyProperties] No user session - skipping fetch');
           if (!isCancelled && !hasCompleted) {
             hasCompleted = true;
             setLoading(false);
@@ -396,6 +399,8 @@ export function useMyProperties() {
           return;
         }
 
+        console.log(`🔍 [useMyProperties] Fetching properties for user: ${user.id}`);
+        
         // Filter by created_by OR owner_id to show all user's listings
         const { data, error } = await supabase
           .from('properties')
@@ -409,14 +414,15 @@ export function useMyProperties() {
         if (isCancelled) return;
 
         if (error) {
-          console.error('Error loading user properties:', error);
+          console.error('❌ [useMyProperties] Error loading user properties:', error);
           setProperties([]);
         } else {
+          console.log(`✅ [useMyProperties] Fetched ${data?.length || 0} properties`);
           setProperties(data as PropertyWithRelations[] || []);
         }
       } catch (error) {
         if (isCancelled) return;
-        console.error('Exception loading user properties:', error);
+        console.error('❌ [useMyProperties] Exception loading user properties:', error);
         setProperties([]);
       } finally {
         clearTimeout(loadingTimeout);
