@@ -153,7 +153,9 @@ export default function AuthCallback() {
         if (code) {
           console.log('🔑 PKCE flow detected - exchanging code for session');
           
-          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const fullUrl = window.location.href;
+          console.log('  - Exchanging code using full URL');
+          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(fullUrl);
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
