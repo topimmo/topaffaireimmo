@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -103,8 +104,37 @@ export default function Advertising() {
           .eq('id', user.id)
           .single();
         
-        if (!error && data) {
+        if (error) {
+          const isRlsBlocked = error.code === '42501' || [401, 403].includes(error.status ?? 0) || error.message?.toLowerCase().includes('permission');
+          console.error('Error fetching profile:', error);
+          if (isRlsBlocked) {
+            toast.error(isRTL ? 'سياسة الأمان منعت تحميل ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles.');
+          }
+        } else if (data) {
           setProfile(data);
+        } else {
+          const { data: created, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+              user_role: 'merchant',
+              advertiser_type: 'owner',
+              google_id: user.user_metadata?.google_id || null,
+            })
+            .select('*')
+            .single();
+
+          if (createError) {
+            console.error('Error auto-creating profile:', createError);
+            const isRlsBlocked = createError.code === '42501' || [401, 403].includes(createError.status ?? 0);
+            if (isRlsBlocked) {
+              toast.error(isRTL ? 'سياسة الأمان منعت إنشاء ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles.');
+            }
+          } else if (created) {
+            setProfile(created);
+          }
         }
       } catch (error) {
         console.error('Error fetching profile:', error);

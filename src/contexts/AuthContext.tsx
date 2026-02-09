@@ -1,8 +1,11 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js'
 import { logger, createCorrelatedLogger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/utils'
+
+export const AUTH_HYDRATION_TIMEOUT_MS = 4000;
 
 interface AuthContextType {
   user: User | null
@@ -20,6 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const lastPathRef = useRef(location.pathname)
+
+  useEffect(() => {
+    lastPathRef.current = location.pathname
+  }, [location.pathname])
 
   /**
    * Check if error is a network error
@@ -111,6 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
+
+      log.info('getSession() result', { hasSession: !!session, error: error?.message });
+
+      const { data: userResult, error: getUserError } = await supabase.auth.getUser();
+      log.info('getUser() result', { hasUser: !!userResult?.user, error: getUserError?.message });
       
       if (error) {
         log.error('Failed to get session', error);
@@ -166,7 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       log.info(`Auth state changed: ${event}`, { 
         hasSession: !!session,
-        userId: session?.user?.id 
+        userId: session?.user?.id,
+        path: lastPathRef.current
       });
       
       if (event === 'TOKEN_REFRESHED' && session) {
@@ -196,6 +212,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     }
   }, [initializeAuth])
+
+  useEffect(() => {
+    const log = createCorrelatedLogger('AuthContext:route');
+    log.info('Route change observed', { path: location.pathname, search: location.search });
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!loading) return;
+
+    const timeoutId = setTimeout(async () => {
+      if (!loading) return;
+
+      const log = createCorrelatedLogger('AuthContext:hydration-timeout');
+      log.warn('Auth loading exceeded timeout - forcing session recheck', {
+        path: location.pathname,
+      });
+
+      const { data: sessionResult, error: sessionError } = await supabase.auth.getSession();
+      log.info('Timeout getSession() result', { hasSession: !!sessionResult?.session, error: sessionError?.message });
+
+      if (sessionResult?.session) {
+        setSession(sessionResult.session);
+        setUser(sessionResult.session.user);
+        setLoading(false);
+        return;
+      }
+
+      const { data: userResult, error: userError } = await supabase.auth.getUser();
+      log.info('Timeout getUser() result', { hasUser: !!userResult?.user, error: userError?.message });
+
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+
+      const publicRoutes = ['/login', '/register', '/auth/callback', '/reset-password'];
+      if (!publicRoutes.includes(location.pathname)) {
+        const next = encodeURIComponent(location.pathname + location.search);
+        navigate(`/login?next=${next}`, { replace: false });
+      }
+    }, AUTH_HYDRATION_TIMEOUT_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [loading, location.pathname, location.search, navigate]);
 
   const signUp = async (
     email: string,
