@@ -132,7 +132,7 @@ export default function AuthCallback() {
           let exchangeData = firstAttempt.data;
           let exchangeError = firstAttempt.error;
 
-          if (exchangeError && code) {
+          if (exchangeError) {
             console.warn('⚠️ Exchange via URL failed, retrying with raw code');
             const retryAttempt = await supabase.auth.exchangeCodeForSession(code);
             exchangeData = retryAttempt.data;
@@ -157,7 +157,7 @@ export default function AuthCallback() {
             error: sessionCheckError
           } = await supabase.auth.getSession();
 
-          const resolvedSession = sessionFromCheck ?? exchangeData.session;
+          const resolvedSession = sessionFromCheck ?? exchangeData?.session;
 
           if (sessionCheckError) {
             console.error('❌ Error fetching session after exchange:', sessionCheckError);

@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClientOptions, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -14,7 +14,7 @@ console.log('  - Is Configured:', isSupabaseConfigured)
 console.log('  - Session Storage:', isSupabaseConfigured ? 'localStorage (cross-domain compatible)' : 'disabled')
 console.log('  - Current Domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side')
 
-const supabaseAuthOptions = {
+const supabaseAuthOptions: SupabaseClientOptions<'public'> = {
   auth: {
     // Store session in localStorage instead of cookies
     // This prevents session loss when domain changes (e.g., from vercel.app to custom domain)
@@ -26,7 +26,7 @@ const supabaseAuthOptions = {
     // Detect session from URL hash or query params (email confirmations, password resets)
     detectSessionInUrl: true,
     // Flow type for better security on modern browsers
-    flowType: 'pkce' as const
+    flowType: 'pkce'
   }
 }
 
