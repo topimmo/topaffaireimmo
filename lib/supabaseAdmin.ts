@@ -12,12 +12,21 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
+// Debug log for ENV variables
+console.error('[supabaseAdmin] ENV Variables Check:');
+console.error(`  SUPABASE_URL: ${supabaseUrl ? 'SET (length: ' + supabaseUrl.length + ')' : 'MISSING'}`);
+console.error(`  SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceRoleKey ? 'SET (length: ' + supabaseServiceRoleKey.length + ')' : 'MISSING'}`);
+
 if (!supabaseUrl) {
-  throw new Error('Missing SUPABASE_URL or VITE_SUPABASE_URL environment variable');
+  const errorMsg = 'Missing SUPABASE_URL or VITE_SUPABASE_URL environment variable';
+  console.error(`[supabaseAdmin] ${errorMsg}`);
+  throw new Error(errorMsg);
 }
 
 if (!supabaseServiceRoleKey) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+  const errorMsg = 'Missing SUPABASE_SERVICE_ROLE_KEY environment variable';
+  console.error(`[supabaseAdmin] ${errorMsg}`);
+  throw new Error(errorMsg);
 }
 
 /**
