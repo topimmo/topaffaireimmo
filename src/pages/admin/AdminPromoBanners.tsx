@@ -78,17 +78,10 @@ export default function AdminPromoBanners() {
   }, []);
 
   const loadBanners = async () => {
-    try {
-      // Note: promo_banners table does not exist in the current schema
-      // This page is kept for backward compatibility but the table is not available
-      // Skip the query and set empty data
-      setBanners([]);
-    } catch (error: any) {
-      console.warn('Unexpected error:', error);
-      setBanners([]);
-    } finally {
-      setLoading(false);
-    }
+    // Note: promo_banners table does not exist in the current schema
+    // This page is kept for backward compatibility but the table is not available
+    setBanners([]);
+    setLoading(false);
   };
 
   const openCreateDialog = () => {

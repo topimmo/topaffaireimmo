@@ -105,21 +105,12 @@ export default function AdminDummyProperties() {
   const fetchData = async () => {
     setLoading(true);
 
-    try {
-      // Note: dummy_properties table does not exist in the current schema
-      // This page is kept for backward compatibility but the table is not available
-      // Skip the query and set empty data
-      setDummyProperties([]);
-      setCities([]);
-      setNeighborhoods([]);
-    } catch (error: any) {
-      console.warn('Unexpected error:', error);
-      setDummyProperties([]);
-      setCities([]);
-      setNeighborhoods([]);
-    } finally {
-      setLoading(false);
-    }
+    // Note: dummy_properties table does not exist in the current schema
+    // This page is kept for backward compatibility but the table is not available
+    setDummyProperties([]);
+    setCities([]);
+    setNeighborhoods([]);
+    setLoading(false);
   };
 
   const handleOpenDialog = (property?: DummyProperty) => {
