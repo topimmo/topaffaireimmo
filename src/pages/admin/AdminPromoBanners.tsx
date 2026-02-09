@@ -78,20 +78,10 @@ export default function AdminPromoBanners() {
   }, []);
 
   const loadBanners = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('promo_banners')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setBanners(data || []);
-    } catch (error) {
-      console.error('Error loading banners:', error);
-      toast.error('Failed to load promotional banners');
-    } finally {
-      setLoading(false);
-    }
+    // Note: promo_banners table does not exist in the current schema
+    // This page is kept for backward compatibility but the table is not available
+    setBanners([]);
+    setLoading(false);
   };
 
   const openCreateDialog = () => {
@@ -123,6 +113,10 @@ export default function AdminPromoBanners() {
   };
 
   const handleSave = async () => {
+    // Feature disabled - promo_banners table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     if (!formData.title || !formData.image_url || !formData.position) {
       toast.error('Please fill in required fields');
       return;
@@ -189,6 +183,10 @@ export default function AdminPromoBanners() {
   };
 
   const toggleActive = async (banner: PromoBanner) => {
+    // Feature disabled - promo_banners table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     try {
       const { error } = await supabase
         .from('promo_banners')
@@ -217,6 +215,10 @@ export default function AdminPromoBanners() {
   };
 
   const deleteBanner = async (banner: PromoBanner) => {
+    // Feature disabled - promo_banners table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     if (!confirm(`Are you sure you want to delete "${banner.title}"?`)) {
       return;
     }
@@ -274,7 +276,7 @@ export default function AdminPromoBanners() {
                 : 'Manage free promotional banners (1-2 banners)'}
             </p>
           </div>
-          <Button onClick={openCreateDialog}>
+          <Button onClick={openCreateDialog} disabled>
             <Plus className="h-4 w-4 mr-2" />
             {isRTL ? 'إضافة لافتة' : 'Add Banner'}
           </Button>
@@ -285,9 +287,14 @@ export default function AdminPromoBanners() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : banners.length === 0 ? (
-          <div className="text-center py-12 bg-muted/50 rounded-lg">
-            <p className="text-muted-foreground">
-              {isRTL ? 'لا توجد لافتات ترويجية بعد' : 'No promotional banners yet'}
+          <div className="text-center py-12 bg-muted/50 rounded-lg border-2 border-dashed">
+            <p className="text-muted-foreground font-medium mb-2">
+              {isRTL ? 'جدول اللافتات الترويجية غير متاح' : 'Promotional Banners table not available'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isRTL 
+                ? 'هذه الميزة معطلة حاليًا. استخدم نظام الإعلانات بدلاً من ذلك.'
+                : 'This feature is currently disabled. Use the advertising system instead.'}
             </p>
           </div>
         ) : (

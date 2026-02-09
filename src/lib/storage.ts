@@ -18,6 +18,45 @@ interface UploadResult {
   mimeType?: string;
 }
 
+// Cache for bucket existence checks to avoid repeated API calls
+const bucketExistenceCache: Map<string, boolean> = new Map();
+
+/**
+ * Check if a storage bucket exists
+ */
+async function checkBucketExists(bucketName: string): Promise<boolean> {
+  // Check cache first
+  if (bucketExistenceCache.has(bucketName)) {
+    return bucketExistenceCache.get(bucketName)!;
+  }
+
+  try {
+    const { data, error } = await supabase.storage.listBuckets();
+    
+    if (error) {
+      console.warn(`[Storage] Unable to verify bucket existence for '${bucketName}':`, error.message);
+      // Assume bucket exists to avoid blocking uploads
+      return true;
+    }
+
+    const exists = data?.some(bucket => bucket.id === bucketName || bucket.name === bucketName) || false;
+    
+    // Cache the result
+    bucketExistenceCache.set(bucketName, exists);
+    
+    if (!exists) {
+      console.warn(`[Storage] Bucket '${bucketName}' not found in Supabase Storage. Expected buckets: property-images, banner-images, payment-receipts, agency-logos`);
+      console.warn(`[Storage] Please ensure the bucket is created in Supabase Storage or run the storage bucket migrations.`);
+    }
+    
+    return exists;
+  } catch (err) {
+    console.warn(`[Storage] Error checking bucket '${bucketName}':`, err);
+    // Assume bucket exists to avoid blocking uploads
+    return true;
+  }
+}
+
 /**
  * Upload a file to Supabase Storage with retry logic
  * Files are organized by user ID for proper RLS enforcement
@@ -25,6 +64,12 @@ interface UploadResult {
 export async function uploadFile({ bucket, file, userId, folder }: UploadOptions): Promise<UploadResult> {
   const maxRetries = 2;
   let lastError: Error | null = null;
+
+  // Check if bucket exists (with caching to avoid repeated checks)
+  const bucketExists = await checkBucketExists(bucket);
+  if (!bucketExists) {
+    console.warn(`[Storage] Proceeding with upload to '${bucket}' despite bucket not being found. If upload fails, ensure bucket is created.`);
+  }
 
   // Log upload attempt
   console.log(`[Storage] Uploading file to bucket '${bucket}':`, {
@@ -61,6 +106,14 @@ export async function uploadFile({ bucket, file, userId, folder }: UploadOptions
 
       if (uploadError) {
         console.error(`[Storage] Upload error (attempt ${attempt + 1}):`, uploadError);
+        
+        // Check if error is due to missing bucket
+        if (uploadError.message?.toLowerCase().includes('bucket') && 
+            uploadError.message?.toLowerCase().includes('not found')) {
+          console.error(`[Storage] Bucket '${bucket}' does not exist.`);
+          console.error('[Storage] Please create the bucket in Supabase Storage Dashboard or run migrations:');
+          console.error(`  supabase/migrations/065_verify_storage_buckets.sql`);
+        }
         
         // Add helpful context for common errors
         if (uploadError.message?.toLowerCase().includes('permission') || 

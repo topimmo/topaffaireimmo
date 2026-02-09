@@ -100,7 +100,9 @@ export function useProperties(filters?: PropertyFilters) {
       if (filters?.featured !== undefined) {
         query = query.eq('featured', filters.featured);
       }
-      if (filters?.owner_id) {
+      // ✅ FIX: Only apply owner_id filter if it's a valid UUID string (not null/undefined)
+      if (filters?.owner_id && typeof filters.owner_id === 'string' && filters.owner_id.trim() !== '') {
+        console.log(`🔍 [useProperties] Filtering by owner_id: ${filters.owner_id}`);
         query = query.eq('owner_id', filters.owner_id);
       }
 
@@ -245,63 +247,39 @@ export function useFeaturedProperties(limit = 6) {
           isDummy: false
         }));
 
-        // If we have enough real featured properties, use them
-        if (realFeatured.length >= limit) {
-          setProperties(realFeatured.slice(0, limit));
-        } else {
-          // Otherwise, fetch dummy properties to fill the gap
+        // If we don't have enough featured properties, fill with latest published properties
+        if (realFeatured.length < limit) {
           const neededCount = limit - realFeatured.length;
+          const excludeIds = realFeatured.map(p => p.id);
           
-          const { data: dummyData, error: dummyError } = await supabase
-            .from('dummy_properties')
+          const { data: latestData, error: latestError } = await supabase
+            .from('properties')
             .select(`
-              id,
-              transaction_type,
-              property_type,
-              city_id,
-              neighborhood_id,
-              title_fr,
-              title_ar,
-              description_fr,
-              description_ar,
-              price,
-              area,
-              bedrooms,
-              bathrooms,
-              images,
-              featured_rank,
+              *,
               city:cities(id, name_fr, name_ar),
-              neighborhood:neighborhoods(id, name_fr, name_ar)
+              neighborhood:neighborhoods(id, name_fr, name_ar),
+              owner:profiles!properties_owner_id_fkey(id, full_name, phone, agency_name, advertiser_type)
             `)
-            .eq('is_active', true)
-            .order('featured_rank', { ascending: false })
+            .eq('status', 'published')
+            .not('id', 'in', `(${excludeIds.length > 0 ? excludeIds.join(',') : 'null'})`)
             .order('created_at', { ascending: false })
             .limit(neededCount);
 
           if (isCancelled) return;
 
-          if (dummyError) {
-            console.error('Error loading dummy properties:', dummyError);
+          if (latestError) {
+            console.error('Error loading latest properties:', latestError);
           }
 
-          // Map dummy properties to match PropertyWithRelations interface
-          const dummyProperties = (dummyData || []).map(dummy => ({
-            ...dummy,
-            featured: true, // Show featured badge since they're in the featured section
-            isDummy: true,
-            status: 'published',
-            owner_id: null as any,
-            created_by: null as any,
-            advertiser_type: 'agency' as any,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            // Fix city/neighborhood array types
-            city: Array.isArray(dummy.city) && dummy.city.length > 0 ? dummy.city[0] : dummy.city,
-            neighborhood: Array.isArray(dummy.neighborhood) && dummy.neighborhood.length > 0 ? dummy.neighborhood[0] : dummy.neighborhood,
-          } as unknown as PropertyWithRelations));
+          const latestProperties = (latestData as PropertyWithRelations[] || []).map(prop => ({
+            ...prop,
+            isDummy: false
+          }));
 
-          // Combine real featured and dummy properties
-          setProperties([...realFeatured, ...dummyProperties]);
+          // Combine featured and latest properties
+          setProperties([...realFeatured, ...latestProperties]);
+        } else {
+          setProperties(realFeatured.slice(0, limit));
         }
       } catch (error) {
         if (isCancelled) return;
@@ -412,7 +390,8 @@ export function useMyProperties() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        if (!user) {
+        if (!user?.id) {
+          console.log('ℹ️ [useMyProperties] No user session - skipping fetch');
           if (!isCancelled && !hasCompleted) {
             hasCompleted = true;
             setLoading(false);
@@ -420,6 +399,8 @@ export function useMyProperties() {
           return;
         }
 
+        console.log(`🔍 [useMyProperties] Fetching properties for user: ${user.id}`);
+        
         // Filter by created_by OR owner_id to show all user's listings
         const { data, error } = await supabase
           .from('properties')
@@ -433,14 +414,15 @@ export function useMyProperties() {
         if (isCancelled) return;
 
         if (error) {
-          console.error('Error loading user properties:', error);
+          console.error('❌ [useMyProperties] Error loading user properties:', error);
           setProperties([]);
         } else {
+          console.log(`✅ [useMyProperties] Fetched ${data?.length || 0} properties`);
           setProperties(data as PropertyWithRelations[] || []);
         }
       } catch (error) {
         if (isCancelled) return;
-        console.error('Exception loading user properties:', error);
+        console.error('❌ [useMyProperties] Exception loading user properties:', error);
         setProperties([]);
       } finally {
         clearTimeout(loadingTimeout);

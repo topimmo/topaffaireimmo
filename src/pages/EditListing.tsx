@@ -59,6 +59,9 @@ const propertyTypes = [
   { value: 'land', icon: Trees },
 ];
 
+// Toast duration for important error messages (in milliseconds)
+const TOAST_ERROR_DURATION = 5000;
+
 export default function EditListing() {
   const { id } = useParams<{ id: string }>();
   const { t, language, isRTL } = useLanguage();
@@ -369,7 +372,22 @@ export default function EditListing() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !id) return;
+
+    // CRITICAL: Verify user authentication before allowing property update
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser || !id) {
+      if (!currentUser) {
+        toast.error(
+          isRTL 
+            ? 'يجب تسجيل الدخول لتحديث الإعلان. يرجى تسجيل الدخول والمحاولة مرة أخرى.'
+            : 'Vous devez être connecté pour modifier une annonce. Veuillez vous connecter et réessayer.',
+          { duration: TOAST_ERROR_DURATION }
+        );
+        navigate('/login');
+      }
+      return;
+    }
 
     // Validate phone number (E.164 format)
     if (formData.phone && formData.phone.trim()) {

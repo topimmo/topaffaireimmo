@@ -102,6 +102,9 @@ function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
   return message;
 }
 
+// Toast duration for important error messages (in milliseconds)
+const TOAST_ERROR_DURATION = 5000;
+
 export default function AddListing() {
   const { t, language, isRTL } = useLanguage();
   const { user, loading: authLoading } = useAuth();
@@ -383,7 +386,65 @@ export default function AddListing() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+
+    // CRITICAL: Verify user authentication before allowing property creation
+    // This prevents "user logged out" state during property creation
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
+      toast.error(
+        isRTL 
+          ? 'يجب تسجيل الدخول لإنشاء إعلان. يرجى تسجيل الدخول والمحاولة مرة أخرى.'
+          : 'Vous devez être connecté pour créer une annonce. Veuillez vous connecter et réessayer.',
+        { duration: TOAST_ERROR_DURATION }
+      );
+      // Redirect to login page
+      navigate('/login');
+      return;
+    }
+
+    // CRITICAL: Verify profile exists before allowing property creation
+    // This prevents "user_id = null" errors in database queries
+    // This is a defensive check in case AuthContext profile creation failed silently
+    // or the user was created before this fix was deployed
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, user_role, advertiser_type')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('[AddListing] Error fetching user profile:', profileError);
+      toast.error(
+        isRTL
+          ? 'خطأ في تحميل ملفك الشخصي. يرجى المحاولة مرة أخرى.'
+          : 'Erreur lors du chargement de votre profil. Veuillez réessayer.',
+        { duration: TOAST_ERROR_DURATION }
+      );
+      return;
+    }
+
+    if (!userProfile) {
+      console.error('[AddListing] ❌ CRITICAL: User authenticated but profile missing!', {
+        userId: currentUser.id,
+        email: currentUser.email,
+        provider: currentUser.app_metadata?.provider,
+      });
+      
+      toast.error(
+        isRTL
+          ? 'ملفك الشخصي غير موجود. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى.'
+          : 'Votre profil n\'existe pas. Veuillez vous déconnecter et vous reconnecter.',
+        { duration: TOAST_ERROR_DURATION }
+      );
+      return;
+    }
+
+    console.log('[AddListing] ✅ User and profile verified:', {
+      userId: currentUser.id,
+      userRole: userProfile.user_role,
+      advertiserType: userProfile.advertiser_type,
+    });
 
     // Log the entire form state for debugging
     if (import.meta.env.DEV) {
@@ -392,6 +453,7 @@ export default function AddListing() {
           ...formData,
           phone: formData.phone ? '[REDACTED]' : null
         }
+        // User ID intentionally omitted for privacy
       });
     }
 
@@ -544,8 +606,8 @@ export default function AddListing() {
       }
 
       const insertData: Record<string, unknown> = {
-        owner_id: user.id,
-        created_by: user.id, // Track original creator
+        owner_id: currentUser.id,
+        created_by: currentUser.id, // Track original creator
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         advertiser_type: mapAnnouncerType(formData.announcerType),
@@ -689,7 +751,7 @@ export default function AddListing() {
             listingId: insertedProperty.id,
           });
 
-          const result = await uploadPropertyImages([file], user.id, insertedProperty.id);
+          const result = await uploadPropertyImages([file], currentUser.id, insertedProperty.id);
           uploadResults.push(result[0]);
 
           if (result[0].error) {

@@ -89,6 +89,14 @@ export default function Dashboard() {
   }, [user]);
 
   const fetchProperties = async () => {
+    // ✅ FIX: Early return if user is not loaded
+    if (!user?.id) {
+      console.warn('⚠️ [Dashboard] Cannot fetch properties - user not loaded');
+      setLoading(false);
+      return;
+    }
+
+    console.log(`🔍 [Dashboard] Fetching properties for user: ${user.id}`);
     setLoading(true);
     const { data, error } = await supabase
       .from('properties')
@@ -105,11 +113,14 @@ export default function Dashboard() {
         city:cities(name_fr, name_ar)
       `)
       // Filter by created_by OR owner_id to show all user's listings
-      .or(`created_by.eq.${user!.id},owner_id.eq.${user!.id}`)
+      .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
       .order('created_at', { ascending: false });
 
     if (!error && data) {
+      console.log(`✅ [Dashboard] Fetched ${data.length} properties for user`);
       setProperties(data as unknown as Property[]);
+    } else if (error) {
+      console.error('❌ [Dashboard] Error fetching properties:', error);
     }
     setLoading(false);
   };
