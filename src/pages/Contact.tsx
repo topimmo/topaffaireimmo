@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock, CheckCircle } from "lucide-react";
 import { useSEO } from "@/components/SEO";
 import { SITE_URL } from "@/config/site";
-import { trackEvent } from "@/lib/analytics/ga4";
 
 const content = {
   fr: {
@@ -115,11 +114,6 @@ export default function Contact() {
     setIsSubmitting(true);
     
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Track lead generation event only after successful submission
-    trackEvent('generate_lead', {
-      source: 'contact_page'
-    });
     
     setIsSubmitting(false);
     setIsSuccess(true);
