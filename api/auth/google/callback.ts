@@ -212,9 +212,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.log('[auth/google/callback] Authentication successful, redirecting to app...');
 
-      // Store token in localStorage via a redirect with token in URL hash
+      // Store both custom JWT token and Google id_token in localStorage via redirect with tokens in URL hash
       // This is safer than query params as hash is not sent to server
-      const redirectUrl = `/?google_auth_success=true#token=${encodeURIComponent(token)}`;
+      // The id_token will be used to create a Supabase session on the client side
+      const hashParams = new URLSearchParams();
+      hashParams.set('token', token);
+      if (tokenResponse.id_token) {
+        hashParams.set('id_token', tokenResponse.id_token);
+      }
+      
+      const redirectUrl = `/?google_auth_success=true#${hashParams.toString()}`;
       return res.redirect(302, redirectUrl);
 
     } catch (error) {
