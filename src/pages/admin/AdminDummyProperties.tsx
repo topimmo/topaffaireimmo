@@ -107,40 +107,20 @@ export default function AdminDummyProperties() {
 
     try {
       // Fetch dummy properties
-      const { data: dummyData, error: dummyError } = await supabase
-        .from('dummy_properties')
-        .select(`
-          *,
-          city:cities(id, name_fr, name_ar),
-          neighborhood:neighborhoods(id, name_fr, name_ar)
-        `)
-        .order('featured_rank', { ascending: false })
-        .order('created_at', { ascending: false });
-
+      // Note: dummy_properties table does not exist in the current schema
+      // This page is kept for backward compatibility
+      const dummyError = new Error('Table dummy_properties does not exist');
       if (dummyError) throw dummyError;
 
-      // Fetch cities
-      const { data: citiesData, error: citiesError } = await supabase
-        .from('cities')
-        .select('*')
-        .order('name_fr');
-
-      if (citiesError) throw citiesError;
-
-      // Fetch neighborhoods
-      const { data: neighborhoodsData, error: neighborhoodsError } = await supabase
-        .from('neighborhoods')
-        .select('*')
-        .order('name_fr');
-
-      if (neighborhoodsError) throw neighborhoodsError;
-
-      setDummyProperties(dummyData || []);
-      setCities(citiesData || []);
-      setNeighborhoods(neighborhoodsData || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error(isRTL ? 'خطأ في تحميل البيانات' : 'Error loading data');
+      setDummyProperties([]);
+      setCities([]);
+      setNeighborhoods([]);
+    } catch (error: any) {
+      console.warn('Dummy properties table not available:', error);
+      // Silently handle the error - this is expected
+      setDummyProperties([]);
+      setCities([]);
+      setNeighborhoods([]);
     } finally {
       setLoading(false);
     }
@@ -366,9 +346,14 @@ export default function AdminDummyProperties() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : dummyProperties.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">
-              {isRTL ? 'لا توجد عقارات وهمية' : 'No dummy properties found'}
+          <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/50">
+            <p className="text-muted-foreground font-medium mb-2">
+              {isRTL ? 'جدول العقارات الوهمية غير متاح' : 'Dummy Properties table not available'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isRTL 
+                ? 'هذه الميزة معطلة حاليًا. استخدم العقارات المميزة بدلاً من ذلك.'
+                : 'This feature is currently disabled. Use featured properties instead.'}
             </p>
           </div>
         ) : (

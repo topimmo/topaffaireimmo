@@ -245,64 +245,8 @@ export function useFeaturedProperties(limit = 6) {
           isDummy: false
         }));
 
-        // If we have enough real featured properties, use them
-        if (realFeatured.length >= limit) {
-          setProperties(realFeatured.slice(0, limit));
-        } else {
-          // Otherwise, fetch dummy properties to fill the gap
-          const neededCount = limit - realFeatured.length;
-          
-          const { data: dummyData, error: dummyError } = await supabase
-            .from('dummy_properties')
-            .select(`
-              id,
-              transaction_type,
-              property_type,
-              city_id,
-              neighborhood_id,
-              title_fr,
-              title_ar,
-              description_fr,
-              description_ar,
-              price,
-              area,
-              bedrooms,
-              bathrooms,
-              images,
-              featured_rank,
-              city:cities(id, name_fr, name_ar),
-              neighborhood:neighborhoods(id, name_fr, name_ar)
-            `)
-            .eq('is_active', true)
-            .order('featured_rank', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(neededCount);
-
-          if (isCancelled) return;
-
-          if (dummyError) {
-            console.error('Error loading dummy properties:', dummyError);
-          }
-
-          // Map dummy properties to match PropertyWithRelations interface
-          const dummyProperties = (dummyData || []).map(dummy => ({
-            ...dummy,
-            featured: true, // Show featured badge since they're in the featured section
-            isDummy: true,
-            status: 'published',
-            owner_id: null as any,
-            created_by: null as any,
-            advertiser_type: 'agency' as any,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            // Fix city/neighborhood array types
-            city: Array.isArray(dummy.city) && dummy.city.length > 0 ? dummy.city[0] : dummy.city,
-            neighborhood: Array.isArray(dummy.neighborhood) && dummy.neighborhood.length > 0 ? dummy.neighborhood[0] : dummy.neighborhood,
-          } as unknown as PropertyWithRelations));
-
-          // Combine real featured and dummy properties
-          setProperties([...realFeatured, ...dummyProperties]);
-        }
+        // Use only real featured properties (no dummy properties fallback)
+        setProperties(realFeatured.slice(0, limit));
       } catch (error) {
         if (isCancelled) return;
         console.error('Exception loading featured properties:', error);

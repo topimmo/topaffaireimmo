@@ -29,38 +29,9 @@ export default function PromoBanner({ position, className }: PromoBannerProps) {
 
   const loadBanner = async () => {
     try {
-      const now = new Date().toISOString();
-
-      // Build the query with proper date range filtering
-      let query = supabase
-        .from('promo_banners')
-        .select('*')
-        .eq('position', position)
-        .eq('is_active', true);
-
-      // The RLS policy already handles date filtering, but we can add it here too for clarity
-      // Filter: (starts_at IS NULL OR starts_at <= now) AND (ends_at IS NULL OR ends_at >= now)
-      // Note: Supabase RLS handles this, so we rely on that for date filtering
-
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid error when no rows
-
-      if (error) {
-        // If table doesn't exist (PGRST204 schema cache, PGRST205 relation, or PostgreSQL error 42P01), gracefully skip
-        if (error.code === 'PGRST204' || error.code === 'PGRST205' || error.code === '42P01') {
-          // Silently skip - table doesn't exist, which is acceptable
-          setBanner(null);
-          return;
-        }
-        // Log other errors but don't block the page - promo banners are optional
-        console.warn(`[PromoBanner] Failed to load banner for position "${position}":`, error.message);
-        setBanner(null);
-        return;
-      }
-
-      setBanner(data || null);
+      // Note: promo_banners table does not exist in the current schema
+      // This component is kept for backward compatibility but returns null
+      setBanner(null);
     } catch (error) {
       // Catch any unexpected errors and continue gracefully
       console.warn('[PromoBanner] Unexpected error loading promo banner:', error);

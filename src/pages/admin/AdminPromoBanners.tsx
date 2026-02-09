@@ -79,16 +79,16 @@ export default function AdminPromoBanners() {
 
   const loadBanners = async () => {
     try {
-      const { data, error } = await supabase
-        .from('promo_banners')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      // Note: promo_banners table does not exist in the current schema
+      // This page is kept for backward compatibility
+      const error = new Error('Table promo_banners does not exist');
       if (error) throw error;
-      setBanners(data || []);
-    } catch (error) {
-      console.error('Error loading banners:', error);
-      toast.error('Failed to load promotional banners');
+
+      setBanners([]);
+    } catch (error: any) {
+      console.warn('Promo banners table not available:', error);
+      // Silently handle the error - this is expected
+      setBanners([]);
     } finally {
       setLoading(false);
     }
@@ -285,9 +285,14 @@ export default function AdminPromoBanners() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : banners.length === 0 ? (
-          <div className="text-center py-12 bg-muted/50 rounded-lg">
-            <p className="text-muted-foreground">
-              {isRTL ? 'لا توجد لافتات ترويجية بعد' : 'No promotional banners yet'}
+          <div className="text-center py-12 bg-muted/50 rounded-lg border-2 border-dashed">
+            <p className="text-muted-foreground font-medium mb-2">
+              {isRTL ? 'جدول اللافتات الترويجية غير متاح' : 'Promotional Banners table not available'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isRTL 
+                ? 'هذه الميزة معطلة حاليًا. استخدم نظام الإعلانات بدلاً من ذلك.'
+                : 'This feature is currently disabled. Use the advertising system instead.'}
             </p>
           </div>
         ) : (
