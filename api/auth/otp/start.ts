@@ -7,9 +7,9 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Vonage } from '@vonage/server-sdk';
-import { supabaseAdmin } from '../../../lib/supabaseAdmin';
-import { validateAndNormalizeMoroccanPhone } from '../../../lib/phone';
-import { storeRequestId } from '../../../lib/requestIdStore';
+import { supabaseAdmin } from '../../../lib/supabaseAdmin.js';
+import { validateAndNormalizeMoroccanPhone } from '../../../lib/phone.js';
+import { storeRequestId } from '../../../lib/requestIdStore.js';
 
 // Initialize Vonage client
 const vonage = new Vonage({

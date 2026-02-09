@@ -10,9 +10,9 @@ import {
   getAndDeleteOAuthState,
   exchangeCodeForTokens,
   getUserInfo,
-} from '../../../lib/googleOAuth';
-import { signToken } from '../../../lib/jwt';
-import { supabaseAdmin } from '../../../lib/supabaseAdmin';
+} from '../../../lib/googleOAuth.js';
+import { signToken } from '../../../lib/jwt.js';
+import { supabaseAdmin } from '../../../lib/supabaseAdmin.js';
 
 // Rate limiting for callback endpoint
 const rateLimitMap = new Map<string, number[]>();
