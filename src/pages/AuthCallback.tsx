@@ -134,7 +134,7 @@ export default function AuthCallback() {
           let exchangeError = firstAttempt.error;
 
           if (exchangeError) {
-            console.warn('⚠️ Exchange via URL failed, retrying with raw code');
+            console.warn('⚠️ Exchange via URL failed, retrying with raw code', exchangeError);
             const retryAttempt = await supabase.auth.exchangeCodeForSession(code);
             exchangeData = retryAttempt.data;
             exchangeError = retryAttempt.error;
@@ -158,27 +158,28 @@ export default function AuthCallback() {
             error: sessionCheckError
           } = await supabase.auth.getSession();
 
-          const resolvedSession = sessionFromCheck ?? exchangeData?.session;
-          const usedExchangeSession = !sessionFromCheck && !!exchangeData?.session;
-
           if (sessionCheckError) {
             console.error('❌ Error fetching session after exchange:', sessionCheckError);
+          }
 
-            if (!resolvedSession) {
-              setStatus('error');
-              const noSessionMsg = isRTL
-                ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
-                : 'Could not create session. Please log in.';
-              setMessage(noSessionMsg);
-              setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
-              return;
-            }
+          const resolvedSession = sessionFromCheck ?? exchangeData?.session;
 
-            if (usedExchangeSession) {
+          if (!resolvedSession) {
+            setStatus('error');
+            const noSessionMsg = isRTL
+              ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
+              : 'Could not create session. Please log in.';
+            setMessage(noSessionMsg);
+            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+            return;
+          }
+
+          if (!sessionFromCheck && exchangeData?.session) {
+            if (sessionCheckError) {
               console.log('  - Using session returned from exchange response because getSession() failed');
+            } else {
+              console.log('  - Using session returned from exchange response (getSession() returned null)');
             }
-          } else if (usedExchangeSession) {
-            console.log('  - Using session returned from exchange response (getSession() returned null)');
           }
 
           console.log('  - Session after exchange check:', resolvedSession ? 'present' : 'missing');
