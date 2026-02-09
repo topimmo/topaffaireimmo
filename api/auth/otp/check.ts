@@ -7,10 +7,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Vonage } from '@vonage/server-sdk';
-import { supabaseAdmin } from '../../../lib/supabaseAdmin';
-import { getPhoneForRequestId, deleteRequestId } from '../../../lib/requestIdStore';
-import { signToken } from '../../../lib/jwt';
-import { isValidOTPFormat } from '../../../lib/otp';
+import { supabaseAdmin } from '../../../lib/supabaseAdmin.js';
+import { getPhoneForRequestId, deleteRequestId } from '../../../lib/requestIdStore.js';
+import { signToken } from '../../../lib/jwt.js';
+import { isValidOTPFormat } from '../../../lib/otp.js';
 
 // Initialize Vonage client
 const vonage = new Vonage({

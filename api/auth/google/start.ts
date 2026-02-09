@@ -13,7 +13,7 @@ import {
   generateCodeChallenge,
   storeOAuthState,
   validateConfig,
-} from '../../../lib/googleOAuth';
+} from '../../../lib/googleOAuth.js';
 
 // Rate limiting: simple in-memory tracking
 const rateLimitMap = new Map<string, number[]>();
