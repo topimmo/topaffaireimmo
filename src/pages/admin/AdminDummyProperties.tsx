@@ -155,6 +155,10 @@ export default function AdminDummyProperties() {
   };
 
   const handleSave = async () => {
+    // Feature disabled - dummy_properties table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     // Validation
     if (!formData.title_fr || !formData.title_ar || !formData.price || !formData.city_id) {
       toast.error(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
@@ -229,6 +233,10 @@ export default function AdminDummyProperties() {
   };
 
   const handleDelete = async (id: string) => {
+    // Feature disabled - dummy_properties table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     if (!window.confirm(isRTL ? 'هل أنت متأكد من حذف هذا الإعلان الوهمي؟' : 'Are you sure you want to delete this dummy property?')) {
       return;
     }
@@ -260,6 +268,10 @@ export default function AdminDummyProperties() {
   };
 
   const handleToggleActive = async (id: string, currentActive: boolean) => {
+    // Feature disabled - dummy_properties table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     setActionLoading(id);
 
     try {
@@ -322,7 +334,7 @@ export default function AdminDummyProperties() {
                 : 'Fallback properties displayed when not enough featured properties exist'}
             </p>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
+          <Button onClick={() => handleOpenDialog()} disabled>
             <Plus className="h-4 w-4 mr-2" />
             {isRTL ? 'إضافة عقار وهمي' : 'Add Dummy Property'}
           </Button>

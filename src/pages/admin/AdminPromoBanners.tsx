@@ -113,6 +113,10 @@ export default function AdminPromoBanners() {
   };
 
   const handleSave = async () => {
+    // Feature disabled - promo_banners table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     if (!formData.title || !formData.image_url || !formData.position) {
       toast.error('Please fill in required fields');
       return;
@@ -179,6 +183,10 @@ export default function AdminPromoBanners() {
   };
 
   const toggleActive = async (banner: PromoBanner) => {
+    // Feature disabled - promo_banners table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     try {
       const { error } = await supabase
         .from('promo_banners')
@@ -207,6 +215,10 @@ export default function AdminPromoBanners() {
   };
 
   const deleteBanner = async (banner: PromoBanner) => {
+    // Feature disabled - promo_banners table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     if (!confirm(`Are you sure you want to delete "${banner.title}"?`)) {
       return;
     }
@@ -264,7 +276,7 @@ export default function AdminPromoBanners() {
                 : 'Manage free promotional banners (1-2 banners)'}
             </p>
           </div>
-          <Button onClick={openCreateDialog}>
+          <Button onClick={openCreateDialog} disabled>
             <Plus className="h-4 w-4 mr-2" />
             {isRTL ? 'إضافة لافتة' : 'Add Banner'}
           </Button>
