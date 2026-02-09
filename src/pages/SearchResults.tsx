@@ -76,8 +76,8 @@ export default function SearchResults() {
   const urlCity = useMemo(() => normalize(searchParams.get("city") || ""), [searchParams]);
   const urlOwnerId = useMemo(() => searchParams.get("owner"), [searchParams]);
   const ownerIdFilter = useMemo(() => {
-    const raw = urlOwnerId ?? '';
-    const trimmed = raw.trim();
+    const rawOwnerId = urlOwnerId ?? '';
+    const trimmed = rawOwnerId.trim();
     return isValidUuid(trimmed) ? trimmed : null;
   }, [urlOwnerId]);
 
