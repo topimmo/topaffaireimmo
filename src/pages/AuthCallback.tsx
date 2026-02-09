@@ -153,111 +153,42 @@ export default function AuthCallback() {
         if (code) {
           console.log('🔑 PKCE flow detected - exchanging code for session');
           
-          const fullUrl = window.location.href;
-          console.log('  - Exchanging code using full URL');
-          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(fullUrl);
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
-            setStatus('error');
-            const failMsg = isRTL
-              ? 'فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى أو الاتصال بالدعم.'
-              : 'Failed to confirm email. Please try again or contact support.';
-            setMessage(failMsg);
-            
-            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+            navigate('/login?err=oauth', { replace: true });
             return;
           }
-          
-          // Debug log: verify session after exchange
-          const {
-            data: { session: sessionFromCheck },
-            error: sessionCheckError
-          } = await supabase.auth.getSession();
 
-          if (sessionCheckError) {
-            console.error('❌ Error fetching session after exchange:', sessionCheckError);
-          }
-
-          let finalSession = sessionFromCheck ?? exchangeData?.session;
-
-          console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
-          if (finalSession) {
-            console.log('  - Session user:', {
-              id: finalSession.user.id,
-              email: finalSession.user.email,
-            });
-          }
-
-          // If Supabase hasn't persisted the session yet, force-set it using the returned tokens
-          if (!sessionFromCheck && exchangeData?.session) {
-            const tokens = {
-              access_token: exchangeData.session.access_token,
-              refresh_token: exchangeData.session.refresh_token,
-            };
-
-            const { data: persisted, error: persistError } = await supabase.auth.setSession(tokens);
-
-            if (persistError) {
-              console.error('❌ Failed to persist session after code exchange:', persistError);
-            } else if (persisted.session) {
-              finalSession = persisted.session;
-              console.log('  - Session persisted via setSession()');
+          let finalSession = null;
+          for (let attempt = 0; attempt < 10; attempt++) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              finalSession = session;
+              break;
             }
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
 
           if (!finalSession) {
-            setStatus('error');
-            const noSessionMsg = isRTL
-              ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
-              : 'Could not create session. Please log in.';
-            setMessage(noSessionMsg);
-            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+            console.error('❌ Session not available after exchange');
+            navigate('/login?err=oauth', { replace: true });
             return;
           }
 
-          if (sessionFromCheck) {
-            console.log('  - Session confirmed via getSession()');
-          } else if (exchangeData?.session) {
-            const fallbackReason = sessionCheckError
-              ? 'because getSession() failed'
-              : 'because getSession() returned null';
-            console.log(`  - Using session returned from exchange response ${fallbackReason}`);
-          }
-          
-          if (finalSession) {
-            console.log('✅ Session created via PKCE code exchange');
-            console.log('  - User ID:', finalSession.user.id);
-            console.log('  - User Email:', finalSession.user.email);
-            // Debug: explicitly confirm getUser() resolves after session exchange
-            const { data: confirmedUser, error: confirmedUserError } = await supabase.auth.getUser();
-            console.log('  - getUser() result after exchange:', {
-              hasUser: !!confirmedUser?.user,
-              error: confirmedUserError?.message,
-            });
-            setStatus('success');
-            const successMsg = isRTL
-              ? 'تم تأكيد البريد الإلكتروني بنجاح! جاري إعادة التوجيه...'
-              : 'Email confirmed successfully! Redirecting...';
-            setMessage(successMsg);
+          setStatus('success');
+          const successMsg = isRTL
+            ? 'تم التوثيق بنجاح! جاري إعادة التوجيه...'
+            : 'Authentication successful! Redirecting...';
+          setMessage(successMsg);
 
-            // Prefer stored redirect (from login page) before admin-based fallback
-            const storedRedirect = consumePostAuthRedirect();
-            const redirectPath = storedRedirect || (await getRedirectPath(finalSession.user.id));
-            console.log('  - Redirect destination:', redirectPath);
-            
-            setTimeout(() => {
-              navigate(redirectPath);
-            }, REDIRECT_DELAY_SHORT_MS);
-          } else {
-            console.warn('⚠️ No session returned after code exchange');
-            setStatus('error');
-            const noSessionMsg = isRTL
-              ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
-              : 'Could not create session. Please log in.';
-            setMessage(noSessionMsg);
-            setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
-          }
+          const storedRedirect = consumePostAuthRedirect();
+          const redirectPath = storedRedirect || '/dashboard';
+          
+          setTimeout(() => {
+            navigate(redirectPath, { replace: true });
+          }, REDIRECT_DELAY_SHORT_MS);
           return;
         }
 

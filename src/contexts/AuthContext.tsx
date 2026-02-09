@@ -69,6 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileError) {
         log.error('Error checking profile existence', profileError);
+        if (profileError.code === '42501' || profileError.message?.toLowerCase().includes('permission')) {
+          setLoading(false);
+        }
         return;
       }
 
@@ -89,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (insertError) {
           log.error('Failed to create missing profile', insertError);
+          if (insertError.code === '42501' || insertError.message?.toLowerCase().includes('permission')) {
+            setLoading(false);
+          }
         } else {
           log.info('Successfully created missing profile', { userId: user.id });
         }
@@ -103,63 +109,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Initialize auth session with retry logic
    */
-  const initializeAuth = useCallback(async (retryCount = 0): Promise<void> => {
-    const maxRetries = 3;
+  const initializeAuth = useCallback(async (): Promise<void> => {
     const log = createCorrelatedLogger('AuthContext:init');
-    const syncAuthState = async (nextSession: Session | null, event?: AuthChangeEvent) => {
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-
-      if (nextSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-        await ensureProfileExists(nextSession.user, log);
-      }
-
-      setLoading(false);
-    };
-    
-    log.info('Initializing authentication', { retryCount, maxRetries });
+    log.info('Initializing authentication');
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
 
       log.info('getSession() result', { hasSession: !!session, error: error?.message });
 
-      const { data: userResult, error: getUserError } = await supabase.auth.getUser();
-      log.info('getUser() result', { hasUser: !!userResult?.user, error: getUserError?.message });
-      
-      if (error) {
-        log.error('Failed to get session', error);
-        
-        // Retry on network errors
-        if (retryCount < maxRetries && isNetworkError(error)) {
-          // Exponential backoff with jitter to prevent thundering herd
-          const baseDelay = Math.pow(2, retryCount) * 1000;
-          const jitter = Math.random() * 1000;
-          const delay = baseDelay + jitter;
-          
-          log.info(`Retrying in ${Math.round(delay)}ms`, { retryCount });
-          
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return initializeAuth(retryCount + 1);
-        }
-        
-        // Give up after max retries
+      if (session?.user) {
+        setSession(session);
+        setUser(session.user);
+        ensureProfileExists(session.user, log).catch((err) => {
+          log.error('ensureProfileExists failed during init', err);
+        });
+      } else {
         setSession(null);
         setUser(null);
-        setLoading(false);
-        return;
       }
-      
-      await syncAuthState(session, 'INITIAL_SESSION');
-      
-      log.info('Auth initialized successfully', { 
-        hasSession: !!session,
-        userId: session?.user?.id 
-      });
+
+      if (error && !isNetworkError(error)) {
+        log.error('Failed to get session', error);
+      }
     } catch (exception) {
       log.error('Exception during auth initialization', exception);
       setSession(null);
       setUser(null);
+    } finally {
       setLoading(false);
     }
   }, []);
@@ -172,44 +149,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     
-    // Initialize with retry logic
+    const timeoutId = window.setTimeout(() => {
+      logger.warn('AuthContext', 'Hard timeout hit - forcing loading=false');
+      setLoading(false);
+    }, AUTH_HYDRATION_TIMEOUT_MS);
+
     initializeAuth();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       const log = createCorrelatedLogger('AuthContext:onAuthStateChange');
-      
+
       log.info(`Auth state changed: ${event}`, { 
         hasSession: !!session,
         userId: session?.user?.id,
         path: lastPathRef.current
       });
-      
-      if (event === 'TOKEN_REFRESHED' && session) {
-        log.info('Token refreshed - updating session state', {
-          userId: session.user.id,
-          expiresAt: session.expires_at,
-        });
-      }
 
       setSession(session);
       setUser(session?.user ?? null);
-      
-      // Ensure profile exists when user signs in or when a stored session is restored
-      if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-        try {
-          await ensureProfileExists(session.user, log);
-        } catch (error) {
+
+      if (session?.user) {
+        ensureProfileExists(session.user, log).catch((error) => {
           log.error('Exception in ensureProfileExists during auth state change', error);
-        }
+        });
       }
-      
+
       setLoading(false);
-    })
+    });
 
     return () => {
       logger.debug('AuthContext', 'Unsubscribing from auth state changes');
       subscription.unsubscribe();
+      window.clearTimeout(timeoutId);
     }
   }, [initializeAuth])
 
@@ -221,40 +192,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loading) return;
 
-    const timeoutId = setTimeout(async () => {
-      if (!loading) return;
-
+    // Additional guard to ensure loading is cleared even if no auth events fire
+    const timeoutId = window.setTimeout(() => {
       const log = createCorrelatedLogger('AuthContext:hydration-timeout');
-      log.warn('Auth loading exceeded timeout - forcing session recheck', {
+      log.warn('Auth loading exceeded timeout - clearing state', {
         path: location.pathname,
       });
-
-      const { data: sessionResult, error: sessionError } = await supabase.auth.getSession();
-      log.info('Timeout getSession() result', { hasSession: !!sessionResult?.session, error: sessionError?.message });
-
-      if (sessionResult?.session) {
-        setSession(sessionResult.session);
-        setUser(sessionResult.session.user);
-        setLoading(false);
-        return;
-      }
-
-      const { data: userResult, error: userError } = await supabase.auth.getUser();
-      log.info('Timeout getUser() result', { hasUser: !!userResult?.user, error: userError?.message });
-
-      setSession(null);
-      setUser(null);
       setLoading(false);
-
-      const publicRoutes = ['/login', '/register', '/auth/callback', '/reset-password'];
-      if (!publicRoutes.includes(location.pathname)) {
-        const next = encodeURIComponent(location.pathname + location.search);
-        navigate(`/login?next=${next}`, { replace: false });
-      }
     }, AUTH_HYDRATION_TIMEOUT_MS);
 
-    return () => clearTimeout(timeoutId);
-  }, [loading, location.pathname, location.search, navigate]);
+    return () => window.clearTimeout(timeoutId);
+  }, [location.pathname, location.search]);
 
   const signUp = async (
     email: string,

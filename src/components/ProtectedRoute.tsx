@@ -16,16 +16,13 @@ export default function ProtectedRoute({
   const [hydrationTimedOut, setHydrationTimedOut] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      setHydrationTimedOut(false);
-      return;
-    }
-
     const timeoutId = setTimeout(() => {
-      setHydrationTimedOut(true);
-      console.warn('[ProtectedRoute] Auth loading exceeded 4s timeout', {
-        path: location.pathname,
-      });
+      if (loading) {
+        setHydrationTimedOut(true);
+        console.warn('[ProtectedRoute] Auth loading exceeded 4s timeout', {
+          path: location.pathname,
+        });
+      }
     }, AUTH_HYDRATION_TIMEOUT_MS);
 
     return () => clearTimeout(timeoutId);
@@ -43,30 +40,20 @@ export default function ProtectedRoute({
     return <>{children}</>;
   }
 
-  // Wait for auth to finish loading
   if (loading && hydrationTimedOut) {
-    const nextParam = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/login?next=${nextParam}`} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (loading) {
     return (
       <div style={{ padding: "2rem", textAlign: "center" }}>
         Loading...
-        {hydrationTimedOut && (
-          <div style={{ marginTop: '1rem', color: '#9f1239' }}>
-            Still loading... Redirecting you to login.
-          </div>
-        )}
       </div>
     );
   }
 
-  // Redirect to login if no user
   if (!user || !session) {
-    // Save the current location to redirect back after login
-    const nextParam = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/login?next=${nextParam}`} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // No role checking - all authenticated users allowed
