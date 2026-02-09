@@ -164,7 +164,8 @@ export default function AuthCallback() {
 
           const finalSession = sessionFromCheck ?? exchangeData?.session;
           const usedExchangeSession = !sessionFromCheck && !!exchangeData?.session;
-          const getSessionReturnedNull = !sessionFromCheck && !sessionCheckError;
+
+          console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
 
           if (!finalSession) {
             setStatus('error');
@@ -184,8 +185,6 @@ export default function AuthCallback() {
               : 'because getSession() returned null';
             console.log(`  - Using session returned from exchange response ${fallbackReason}`);
           }
-
-          console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
           
           if (finalSession) {
             console.log('✅ Session created via PKCE code exchange');
