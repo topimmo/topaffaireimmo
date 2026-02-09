@@ -128,17 +128,7 @@ export default function AuthCallback() {
         if (code) {
           console.log('🔑 PKCE flow detected - exchanging code for session');
           
-          const callbackUrl = window.location.href;
-          const firstAttempt = await supabase.auth.exchangeCodeForSession(code);
-          let exchangeData = firstAttempt.data;
-          let exchangeError = firstAttempt.error;
-
-          if (exchangeError) {
-            console.warn('⚠️ Exchange via code failed, retrying with full callback URL', exchangeError);
-            const retryAttempt = await supabase.auth.exchangeCodeForSession(callbackUrl);
-            exchangeData = retryAttempt.data;
-            exchangeError = retryAttempt.error;
-          }
+          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
@@ -178,7 +168,7 @@ export default function AuthCallback() {
 
           if (sessionFromCheck) {
             console.log('  - Session confirmed via getSession()');
-          } else if (!sessionFromCheck && exchangeData?.session) {
+          } else if (exchangeData?.session) {
             const fallbackReason = sessionCheckError
               ? 'because getSession() failed'
               : 'because getSession() returned null';
