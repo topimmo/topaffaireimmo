@@ -55,6 +55,7 @@ const propertyTypes = [
   { value: 'apartment', icon: Building },
   { value: 'house', icon: Home },
   { value: 'villa', icon: Landmark },
+  { value: 'commercial', icon: Store },
   { value: 'land', icon: Trees },
 ];
 
