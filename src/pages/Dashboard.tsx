@@ -29,7 +29,7 @@ import {
   Loader2,
   AlertTriangle,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isValidUuid } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface Property {
@@ -90,7 +90,7 @@ export default function Dashboard() {
 
   const fetchProperties = async () => {
     // ✅ FIX: Early return if user is not loaded
-    if (!user?.id) {
+    if (!user?.id || !isValidUuid(user.id)) {
       console.warn('⚠️ [Dashboard] Cannot fetch properties - user not loaded');
       setLoading(false);
       return;
@@ -126,7 +126,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId || !user) return;
+    if (!deleteId || !user || !isValidUuid(user.id)) return;
     setDeleting(true);
 
     try {

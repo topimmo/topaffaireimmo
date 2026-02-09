@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { isValidUuid } from '@/lib/utils';
 import { Session } from '@supabase/supabase-js';
 
 interface AdminState {
@@ -50,10 +51,10 @@ export function useAdmin() {
       }
 
       // If no session, user is not admin
-      if (!session) {
-        if (isMountedRef.current) {
-          setState({
-            loading: false,
+        if (!session || !isValidUuid(session.user.id)) {
+          if (isMountedRef.current) {
+            setState({
+              loading: false,
             isAdmin: false,
             role: null,
             error: null,

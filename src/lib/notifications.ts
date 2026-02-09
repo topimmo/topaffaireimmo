@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { isValidUuid } from './utils';
 
 export type NotificationType = 'info' | 'warning' | 'success' | 'error';
 
@@ -63,7 +64,7 @@ export async function fetchUnreadNotifications() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!user || !isValidUuid(user.id)) {
       return { data: null, error: 'No authenticated user' };
     }
 
@@ -95,7 +96,7 @@ export async function fetchAllNotifications(limit: number = 50) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!user || !isValidUuid(user.id)) {
       return { data: null, error: 'No authenticated user' };
     }
 
@@ -150,7 +151,7 @@ export async function markAllNotificationsAsRead(): Promise<{ success: boolean; 
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!user || !isValidUuid(user.id)) {
       return { success: false, error: 'No authenticated user' };
     }
 
@@ -180,7 +181,7 @@ export async function countUnreadNotifications(): Promise<number> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!user || !isValidUuid(user.id)) {
       return 0;
     }
 
