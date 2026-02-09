@@ -6,6 +6,7 @@
  */
 
 import { supabase } from './supabase';
+import { isValidUuid } from './utils';
 import type { PropertyView, PropertyContactClick, PropertyLead } from '@/types/supabase';
 
 /**
@@ -46,6 +47,11 @@ async function getClientIP(): Promise<string | null> {
  * @returns Success status
  */
 export async function trackPropertyView(propertyId: string): Promise<boolean> {
+  if (!isValidUuid(propertyId)) {
+    console.warn('[lead-tracking] Skipping view tracking due to invalid propertyId');
+    return false;
+  }
+
   try {
     const sessionId = getSessionId();
     const ipAddress = await getClientIP();
@@ -89,6 +95,11 @@ export async function trackContactClick(
   propertyId: string,
   contactType: 'phone' | 'whatsapp' | 'email'
 ): Promise<boolean> {
+  if (!isValidUuid(propertyId)) {
+    console.warn('[lead-tracking] Skipping contact click tracking due to invalid propertyId');
+    return false;
+  }
+
   try {
     const sessionId = getSessionId();
     const ipAddress = await getClientIP();
@@ -155,6 +166,16 @@ export async function submitPropertyLead(
  * @returns Analytics data
  */
 export async function getPropertyAnalytics(propertyId: string) {
+  if (!isValidUuid(propertyId)) {
+    console.warn('[lead-tracking] Skipping analytics fetch due to invalid propertyId');
+    return {
+      views: 0,
+      clicks: { total: 0, phone: 0, whatsapp: 0, email: 0 },
+      leads: [],
+      leadsCount: 0,
+    };
+  }
+
   try {
     const [viewsResult, clicksResult, leadsResult] = await Promise.all([
       // Total views
@@ -220,6 +241,11 @@ export async function getPropertyAnalytics(propertyId: string) {
  * @returns Unique visitor count
  */
 export async function getUniqueVisitors(propertyId: string): Promise<number> {
+  if (!isValidUuid(propertyId)) {
+    console.warn('[lead-tracking] Skipping unique visitors fetch due to invalid propertyId');
+    return 0;
+  }
+
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

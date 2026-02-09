@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { SlidersHorizontal, Grid3X3, List, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+ import { cn, isValidUuid } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/contexts/LanguageContext";
 import SortSelect, { SortOption } from "@/components/SortSelect";
@@ -75,6 +75,11 @@ export default function SearchResults() {
   const urlType = useMemo(() => normalize(searchParams.get("type") || ""), [searchParams]);
   const urlCity = useMemo(() => normalize(searchParams.get("city") || ""), [searchParams]);
   const urlOwnerId = useMemo(() => searchParams.get("owner"), [searchParams]);
+  const ownerIdFilter = useMemo(() => {
+    const raw = urlOwnerId ?? '';
+    const trimmed = raw.trim();
+    return isValidUuid(trimmed) ? trimmed : null;
+  }, [urlOwnerId]);
 
   const initialType = urlType ? urlType : "all-types";
   const initialCity = urlCity ? urlCity : "all-cities";
@@ -133,11 +138,11 @@ export default function SearchResults() {
 
         console.log('📋 [SearchResults] Fetching properties with filter: status=published, is_archived IS DISTINCT FROM true');
 
-        // ✅ FIX: Filter by owner (agency) only if urlOwnerId is a valid UUID string
-        if (urlOwnerId && typeof urlOwnerId === 'string' && urlOwnerId.trim() !== '') {
-          console.log(`🏢 [SearchResults] Filtering by owner_id: ${urlOwnerId}`);
-          q = q.eq("owner_id", urlOwnerId);
-        }
+         // ✅ FIX: Filter by owner (agency) only if the owner ID is a valid UUID string
+         if (ownerIdFilter) {
+           console.log(`🏢 [SearchResults] Filtering by owner_id: ${ownerIdFilter}`);
+           q = q.eq("owner_id", ownerIdFilter);
+         }
 
         // ✅ Type filter (SQL) - نخففو فالfrontend filter final
         if (selectedType !== "all-types") {
@@ -174,7 +179,7 @@ export default function SearchResults() {
     };
 
     fetchData();
-  }, [selectedType, urlOwnerId]);
+   }, [selectedType, ownerIdFilter]);
   
   // Track search results view when filters change
   useEffect(() => {
