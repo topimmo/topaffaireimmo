@@ -369,7 +369,22 @@ export default function EditListing() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !id) return;
+
+    // CRITICAL: Verify user authentication before allowing property update
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser || !id) {
+      if (!currentUser) {
+        toast.error(
+          isRTL 
+            ? 'يجب تسجيل الدخول لتحديث الإعلان. يرجى تسجيل الدخول والمحاولة مرة أخرى.'
+            : 'Vous devez être connecté pour modifier une annonce. Veuillez vous connecter et réessayer.',
+          { duration: 5000 }
+        );
+        navigate('/login');
+      }
+      return;
+    }
 
     // Validate phone number (E.164 format)
     if (formData.phone && formData.phone.trim()) {
