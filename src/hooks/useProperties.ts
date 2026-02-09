@@ -245,8 +245,40 @@ export function useFeaturedProperties(limit = 6) {
           isDummy: false
         }));
 
-        // Use only real featured properties (no dummy properties fallback)
-        setProperties(realFeatured.slice(0, limit));
+        // If we don't have enough featured properties, fill with latest published properties
+        if (realFeatured.length < limit) {
+          const neededCount = limit - realFeatured.length;
+          const excludeIds = realFeatured.map(p => p.id);
+          
+          const { data: latestData, error: latestError } = await supabase
+            .from('properties')
+            .select(`
+              *,
+              city:cities(id, name_fr, name_ar),
+              neighborhood:neighborhoods(id, name_fr, name_ar),
+              owner:profiles!properties_owner_id_fkey(id, full_name, phone, agency_name, advertiser_type)
+            `)
+            .eq('status', 'published')
+            .not('id', 'in', `(${excludeIds.length > 0 ? excludeIds.join(',') : 'null'})`)
+            .order('created_at', { ascending: false })
+            .limit(neededCount);
+
+          if (isCancelled) return;
+
+          if (latestError) {
+            console.error('Error loading latest properties:', latestError);
+          }
+
+          const latestProperties = (latestData as PropertyWithRelations[] || []).map(prop => ({
+            ...prop,
+            isDummy: false
+          }));
+
+          // Combine featured and latest properties
+          setProperties([...realFeatured, ...latestProperties]);
+        } else {
+          setProperties(realFeatured.slice(0, limit));
+        }
       } catch (error) {
         if (isCancelled) return;
         console.error('Exception loading featured properties:', error);
