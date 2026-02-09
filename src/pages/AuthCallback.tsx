@@ -152,9 +152,26 @@ export default function AuthCallback() {
             console.error('❌ Error fetching session after exchange:', sessionCheckError);
           }
 
-          const finalSession = sessionFromCheck ?? exchangeData?.session;
+          let finalSession = sessionFromCheck ?? exchangeData?.session;
 
           console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
+
+          // If Supabase hasn't persisted the session yet, force-set it using the returned tokens
+          if (!sessionFromCheck && exchangeData?.session) {
+            const tokens = {
+              access_token: exchangeData.session.access_token,
+              refresh_token: exchangeData.session.refresh_token,
+            };
+
+            const { data: persisted, error: persistError } = await supabase.auth.setSession(tokens);
+
+            if (persistError) {
+              console.error('❌ Failed to persist session after code exchange:', persistError);
+            } else if (persisted.session) {
+              finalSession = persisted.session;
+              console.log('  - Session persisted via setSession()');
+            }
+          }
 
           if (!finalSession) {
             setStatus('error');
