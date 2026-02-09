@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { User, Session, AuthError } from '@supabase/supabase-js'
+import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js'
 import { logger, createCorrelatedLogger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/utils'
 
@@ -96,6 +96,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeAuth = useCallback(async (retryCount = 0): Promise<void> => {
     const maxRetries = 3;
     const log = createCorrelatedLogger('AuthContext:init');
+    const syncAuthState = async (nextSession: Session | null, event?: AuthChangeEvent) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (nextSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        await ensureProfileExists(nextSession.user, log);
+      }
+
+      setLoading(false);
+    };
     
     log.info('Initializing authentication', { retryCount, maxRetries });
 
@@ -125,15 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Ensure profile exists for authenticated user
-      if (session?.user) {
-        await ensureProfileExists(session.user, log);
-      }
-      
-      setLoading(false);
+      await syncAuthState(session, 'INITIAL_SESSION');
       
       log.info('Auth initialized successfully', { 
         hasSession: !!session,
@@ -167,12 +169,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userId: session?.user?.id 
       });
       
+      if (event === 'TOKEN_REFRESHED' && session) {
+        log.info('Token refreshed - updating session state', {
+          userId: session.user.id,
+          expiresAt: session.expires_at,
+        });
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Ensure profile exists when user signs in (especially for Google OAuth)
-      // Only check on SIGNED_IN to avoid unnecessary checks on token refresh
-      if (session?.user && event === 'SIGNED_IN') {
+      // Ensure profile exists when user signs in or when a stored session is restored
+      if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
         try {
           await ensureProfileExists(session.user, log);
         } catch (error) {
