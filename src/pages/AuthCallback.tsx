@@ -126,16 +126,16 @@ export default function AuthCallback() {
 
         // PKCE flow: Exchange code for session
         if (code) {
-          console.log('🔑 PKCE flow detected - exchanging code for session via current URL');
+          console.log('🔑 PKCE flow detected - exchanging code for session');
           
-          // Attempt with the full callback URL so the helper can extract the code/state when supported
-          const firstAttempt = await supabase.auth.exchangeCodeForSession(window.location.href);
+          const callbackUrl = window.location.href;
+          const firstAttempt = await supabase.auth.exchangeCodeForSession(code);
           let exchangeData = firstAttempt.data;
           let exchangeError = firstAttempt.error;
 
           if (exchangeError) {
-            console.warn('⚠️ Exchange via URL failed, retrying with raw code', exchangeError);
-            const retryAttempt = await supabase.auth.exchangeCodeForSession(code);
+            console.warn('⚠️ Exchange via code failed, retrying with full callback URL', exchangeError);
+            const retryAttempt = await supabase.auth.exchangeCodeForSession(callbackUrl);
             exchangeData = retryAttempt.data;
             exchangeError = retryAttempt.error;
           }
@@ -163,7 +163,6 @@ export default function AuthCallback() {
           }
 
           const finalSession = sessionFromCheck ?? exchangeData?.session;
-          const usedExchangeSession = !sessionFromCheck && !!exchangeData?.session;
 
           console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
 
@@ -179,7 +178,7 @@ export default function AuthCallback() {
 
           if (sessionFromCheck) {
             console.log('  - Session confirmed via getSession()');
-          } else if (usedExchangeSession) {
+          } else if (!sessionFromCheck && exchangeData?.session) {
             const fallbackReason = sessionCheckError
               ? 'because getSession() failed'
               : 'because getSession() returned null';
