@@ -406,8 +406,8 @@ export default function AddListing() {
         formData: {
           ...formData,
           phone: formData.phone ? '[REDACTED]' : null
-        },
-        userId: currentUser.id.substring(0, 4) + '***' // Redact user ID for privacy
+        }
+        // User ID intentionally omitted for privacy
       });
     }
 
