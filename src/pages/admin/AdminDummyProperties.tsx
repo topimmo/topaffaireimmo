@@ -106,18 +106,14 @@ export default function AdminDummyProperties() {
     setLoading(true);
 
     try {
-      // Fetch dummy properties
       // Note: dummy_properties table does not exist in the current schema
-      // This page is kept for backward compatibility
-      const dummyError = new Error('Table dummy_properties does not exist');
-      if (dummyError) throw dummyError;
-
+      // This page is kept for backward compatibility but the table is not available
+      // Skip the query and set empty data
       setDummyProperties([]);
       setCities([]);
       setNeighborhoods([]);
     } catch (error: any) {
-      console.warn('Dummy properties table not available:', error);
-      // Silently handle the error - this is expected
+      console.warn('Unexpected error:', error);
       setDummyProperties([]);
       setCities([]);
       setNeighborhoods([]);

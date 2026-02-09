@@ -80,14 +80,11 @@ export default function AdminPromoBanners() {
   const loadBanners = async () => {
     try {
       // Note: promo_banners table does not exist in the current schema
-      // This page is kept for backward compatibility
-      const error = new Error('Table promo_banners does not exist');
-      if (error) throw error;
-
+      // This page is kept for backward compatibility but the table is not available
+      // Skip the query and set empty data
       setBanners([]);
     } catch (error: any) {
-      console.warn('Promo banners table not available:', error);
-      // Silently handle the error - this is expected
+      console.warn('Unexpected error:', error);
       setBanners([]);
     } finally {
       setLoading(false);
