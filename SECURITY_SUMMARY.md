@@ -20,7 +20,7 @@ This document summarizes the security fixes, authentication improvements, and er
 - ✅ Deleted `scripts/verify-ga4.js`
 
 **Files Changed:**
-- `index.html` - Removed GA4 script injection (lines 76-142)
+- `index.html` - Removed GA4 script injection and preconnect tags
 - `src/main.tsx` - Removed `initGA()` call
 - `src/App.tsx` - Removed `trackPageView()` from routing
 - `src/pages/Contact.tsx` - Removed lead tracking
