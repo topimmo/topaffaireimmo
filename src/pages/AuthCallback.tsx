@@ -98,14 +98,6 @@ export default function AuthCallback() {
           setStatus('error');
           setMessage(errorDescription || error);
           
-          // Log to console for debugging (could be sent to Sentry in production)
-          if (typeof window !== 'undefined' && (window as any).Sentry) {
-            (window as any).Sentry.captureMessage('Auth callback error', {
-              level: 'error',
-              extra: { error, errorDescription, url: window.location.href }
-            });
-          }
-          
           // Redirect to login after delay
           setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
           return;
@@ -139,13 +131,6 @@ export default function AuthCallback() {
               ? 'فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى أو الاتصال بالدعم.'
               : 'Failed to confirm email. Please try again or contact support.';
             setMessage(failMsg);
-            
-            // Log for debugging
-            if (typeof window !== 'undefined' && (window as any).Sentry) {
-              (window as any).Sentry.captureException(exchangeError, {
-                extra: { code: code.substring(0, 10) + '...', url: window.location.href }
-              });
-            }
             
             setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
             return;
@@ -198,10 +183,6 @@ export default function AuthCallback() {
               ? 'فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى.'
               : 'Failed to confirm email. Please try again.';
             setMessage(failMsg);
-            
-            if (typeof window !== 'undefined' && (window as any).Sentry) {
-              (window as any).Sentry.captureException(sessionError);
-            }
             
             setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
             return;
@@ -288,13 +269,6 @@ export default function AuthCallback() {
           ? 'حدث خطأ غير متوقع. يرجى تسجيل الدخول.'
           : 'An unexpected error occurred. Please try logging in.';
         setMessage(errorMsg);
-        
-        // Log exception for debugging
-        if (typeof window !== 'undefined' && (window as any).Sentry) {
-          (window as any).Sentry.captureException(err, {
-            extra: { url: window.location.href }
-          });
-        }
         
         setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
       }
