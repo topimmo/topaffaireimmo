@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,20 @@ import { isValidUuid } from '@/lib/utils';
 const SESSION_WAIT_MS = 1000;
 const REDIRECT_DELAY_SHORT_MS = 2000;
 const REDIRECT_DELAY_LONG_MS = 3000;
+const POST_AUTH_REDIRECT_KEY = 'post_auth_redirect';
+
+const peekPostAuthRedirect = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(POST_AUTH_REDIRECT_KEY);
+};
+
+function consumePostAuthRedirect(): string | null {
+  const path = peekPostAuthRedirect();
+  if (path && typeof window !== 'undefined') {
+    localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+  }
+  return path;
+}
 
 /**
  * Get redirect path based on user admin status
@@ -72,6 +85,18 @@ export default function AuthCallback() {
         console.log('  - Current URL:', window.location.href);
         console.log('  - Online status:', navigator.onLine);
         console.log('  - User agent:', navigator.userAgent);
+        console.log('  - Stored redirect preference:', peekPostAuthRedirect() || 'none');
+        const { data: initialSession, error: initialSessionError } = await supabase.auth.getSession();
+        console.log('  - Session on arrival:', {
+          hasSession: !!initialSession?.session,
+          error: initialSessionError?.message,
+        });
+
+        const { data: initialUser, error: initialUserError } = await supabase.auth.getUser();
+        console.log('  - User on arrival:', {
+          hasUser: !!initialUser?.user,
+          error: initialUserError?.message,
+        });
 
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -155,6 +180,12 @@ export default function AuthCallback() {
           let finalSession = sessionFromCheck ?? exchangeData?.session;
 
           console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
+          if (finalSession) {
+            console.log('  - Session user:', {
+              id: finalSession.user.id,
+              email: finalSession.user.email,
+            });
+          }
 
           // If Supabase hasn't persisted the session yet, force-set it using the returned tokens
           if (!sessionFromCheck && exchangeData?.session) {
@@ -196,15 +227,21 @@ export default function AuthCallback() {
             console.log('✅ Session created via PKCE code exchange');
             console.log('  - User ID:', finalSession.user.id);
             console.log('  - User Email:', finalSession.user.email);
-            
+            // Debug: explicitly confirm getUser() resolves after session exchange
+            const { data: confirmedUser, error: confirmedUserError } = await supabase.auth.getUser();
+            console.log('  - getUser() result after exchange:', {
+              hasUser: !!confirmedUser?.user,
+              error: confirmedUserError?.message,
+            });
             setStatus('success');
             const successMsg = isRTL
               ? 'تم تأكيد البريد الإلكتروني بنجاح! جاري إعادة التوجيه...'
               : 'Email confirmed successfully! Redirecting...';
             setMessage(successMsg);
 
-            // Get redirect path based on admin status
-            const redirectPath = await getRedirectPath(finalSession.user.id);
+            // Prefer stored redirect (from login page) before admin-based fallback
+            const storedRedirect = consumePostAuthRedirect();
+            const redirectPath = storedRedirect || (await getRedirectPath(finalSession.user.id));
             console.log('  - Redirect destination:', redirectPath);
             
             setTimeout(() => {
@@ -256,7 +293,8 @@ export default function AuthCallback() {
             setMessage(successMsg);
 
             // Get redirect path based on admin status
-            const redirectPath = await getRedirectPath(session.user.id);
+            const storedRedirect = consumePostAuthRedirect();
+            const redirectPath = storedRedirect || (await getRedirectPath(session.user.id));
             console.log('  - Redirect destination:', redirectPath);
             
             setTimeout(() => {
@@ -302,7 +340,8 @@ export default function AuthCallback() {
           console.log('  - User Email:', session.user.email);
           
           // Get redirect path based on admin status
-          const redirectPath = await getRedirectPath(session.user.id);
+          const storedRedirect = consumePostAuthRedirect();
+          const redirectPath = storedRedirect || (await getRedirectPath(session.user.id));
           console.log('  - Redirect destination:', redirectPath);
           
           setTimeout(() => {

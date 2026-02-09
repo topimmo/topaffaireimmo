@@ -18,6 +18,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { translateAuthError } from '@/lib/authErrors';
 import { supabase } from '@/lib/supabase';
+import { getSiteUrl } from '@/lib/utils';
 import { normalizePhone, isValidPhone, maskPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -378,9 +379,41 @@ export default function AuthPage() {
   /**
    * Handle Google OAuth login
    */
-  const handleGoogleLogin = () => {
-    // Navigate to Google OAuth start endpoint
-    window.location.href = '/api/auth/google/start';
+  const handleGoogleLogin = async () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'server';
+    const redirectTo = `${getSiteUrl()}/auth/callback`;
+
+    console.log('🔐 Starting Google OAuth login', {
+      origin,
+      redirectTo,
+      provider: 'google'
+    });
+
+    try {
+      // Preserve the intended destination for post-auth redirect
+      localStorage.setItem('post_auth_redirect', from);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: false,
+        },
+      });
+
+      if (error) {
+        console.error('❌ Failed to start Google OAuth', error);
+        setError(isRTL ? 'فشل بدء تسجيل الدخول عبر Google' : 'Échec du démarrage de la connexion Google');
+        return;
+      }
+
+      console.log('➡️ Redirecting to Google OAuth', {
+        authUrl: data?.url,
+      });
+    } catch (err) {
+      console.error('❌ Exception during Google OAuth start', err);
+      setError(isRTL ? 'حدث خطأ أثناء بدء Google OAuth' : 'Une erreur est survenue lors du démarrage de Google OAuth');
+    }
   };
 
   return (
