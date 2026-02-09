@@ -44,13 +44,58 @@ export default function AuthPage() {
     const googleAuthSuccess = urlParams.get('google_auth_success');
     
     if (googleAuthSuccess === 'true') {
-      // Extract token from hash
-      const hash = window.location.hash;
-      if (hash.startsWith('#token=')) {
-        const token = decodeURIComponent(hash.substring(7));
-        if (token) {
-          localStorage.setItem('auth_token', token);
-          
+      // Extract tokens from hash
+      const hash = window.location.hash.substring(1); // Remove leading #
+      const hashParams = new URLSearchParams(hash);
+      const token = hashParams.get('token');
+      const hashedToken = hashParams.get('hashed_token');
+      
+      if (token) {
+        // Store custom JWT token
+        localStorage.setItem('auth_token', token);
+        
+        // If we have hashed_token from magic link, use it to create a Supabase session
+        if (hashedToken) {
+          supabase.auth.verifyOtp({
+            token_hash: hashedToken,
+            type: 'magiclink',
+          })
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('Failed to create Supabase session with hashed_token:', error);
+              // Continue anyway - we have the custom JWT token
+            } else if (data.session) {
+              console.log('✅ Supabase session created successfully via magic link verification');
+              console.log('  - User ID:', data.session.user.id);
+              console.log('  - Access token expires at:', new Date(data.session.expires_at! * 1000).toISOString());
+            }
+            
+            // Clear URL params and hash
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Redirect to original destination
+            if (refreshSession) {
+              refreshSession()
+                .then(() => {
+                  navigate(from, { replace: true });
+                })
+                .catch((err) => {
+                  console.error('Session refresh failed:', err);
+                  // Still redirect even if session refresh fails
+                  navigate(from, { replace: true });
+                });
+            } else {
+              navigate(from, { replace: true });
+            }
+          })
+          .catch((err) => {
+            console.error('Exception during Supabase magic link verification:', err);
+            // Clear URL and redirect anyway
+            window.history.replaceState({}, document.title, window.location.pathname);
+            navigate(from, { replace: true });
+          });
+        } else {
+          // No hashed_token, just use custom JWT
           // Clear URL params and hash
           window.history.replaceState({}, document.title, window.location.pathname);
           

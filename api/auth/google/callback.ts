@@ -210,11 +210,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Since we're using email-based auth via Google, we'll use email as identifier
       const token = signToken(userInfo.email);
 
+      console.log('[auth/google/callback] Generating Supabase session...');
+
+      // Generate a magic link for the user to create a Supabase session
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: userInfo.email,
+      });
+
+      if (linkError || !linkData.properties?.hashed_token) {
+        console.error('[auth/google/callback] Failed to generate magic link:', linkError);
+        // Fall back to custom JWT only
+        const redirectUrl = `/?google_auth_success=true#token=${encodeURIComponent(token)}`;
+        return res.redirect(302, redirectUrl);
+      }
+
       console.log('[auth/google/callback] Authentication successful, redirecting to app...');
 
-      // Store token in localStorage via a redirect with token in URL hash
-      // This is safer than query params as hash is not sent to server
-      const redirectUrl = `/?google_auth_success=true#token=${encodeURIComponent(token)}`;
+      // Store both custom JWT token and Supabase hashed_token in URL hash
+      // The hashed_token will be used to create a Supabase session on the client side
+      const hashParams = new URLSearchParams();
+      hashParams.set('token', token);
+      hashParams.set('hashed_token', linkData.properties.hashed_token);
+      
+      const redirectUrl = `/?google_auth_success=true#${hashParams.toString()}`;
       return res.redirect(302, redirectUrl);
 
     } catch (error) {
