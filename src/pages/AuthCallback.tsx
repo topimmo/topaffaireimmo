@@ -126,9 +126,9 @@ export default function AuthCallback() {
 
         // PKCE flow: Exchange code for session
         if (code) {
-          console.log('🔑 PKCE flow detected - exchanging code for session');
+          console.log('🔑 PKCE flow detected - exchanging code for session via current URL');
           
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
@@ -142,10 +142,23 @@ export default function AuthCallback() {
             return;
           }
           
-          if (data.session) {
+          // Debug log: verify session after exchange
+          const {
+            data: { session: sessionFromCheck },
+            error: sessionCheckError
+          } = await supabase.auth.getSession();
+
+          if (sessionCheckError) {
+            console.error('❌ Error fetching session after exchange:', sessionCheckError);
+          }
+
+          const resolvedSession = sessionFromCheck ?? data.session;
+          console.log('  - Session after exchange check:', resolvedSession ? 'present' : 'missing');
+          
+          if (resolvedSession) {
             console.log('✅ Session created via PKCE code exchange');
-            console.log('  - User ID:', data.session.user.id);
-            console.log('  - User Email:', data.session.user.email);
+            console.log('  - User ID:', resolvedSession.user.id);
+            console.log('  - User Email:', resolvedSession.user.email);
             
             setStatus('success');
             const successMsg = isRTL
@@ -154,7 +167,7 @@ export default function AuthCallback() {
             setMessage(successMsg);
 
             // Get redirect path based on admin status
-            const redirectPath = await getRedirectPath(data.session.user.id);
+            const redirectPath = await getRedirectPath(resolvedSession.user.id);
             console.log('  - Redirect destination:', redirectPath);
             
             setTimeout(() => {
