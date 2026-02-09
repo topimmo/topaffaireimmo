@@ -162,9 +162,9 @@ export default function AuthCallback() {
             console.error('❌ Error fetching session after exchange:', sessionCheckError);
           }
 
-          const resolvedSession = sessionFromCheck ?? exchangeData?.session;
+          const finalSession = sessionFromCheck ?? exchangeData?.session;
 
-          if (!resolvedSession) {
+          if (!finalSession) {
             setStatus('error');
             const noSessionMsg = isRTL
               ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
@@ -175,19 +175,18 @@ export default function AuthCallback() {
           }
 
           if (!sessionFromCheck && exchangeData?.session) {
-            if (sessionCheckError) {
-              console.log('  - Using session returned from exchange response because getSession() failed');
-            } else {
-              console.log('  - Using session returned from exchange response (getSession() returned null)');
-            }
+            const fallbackReason = sessionCheckError
+              ? 'because getSession() failed'
+              : '(getSession() returned null)';
+            console.log(`  - Using session returned from exchange response ${fallbackReason}`);
           }
 
-          console.log('  - Session after exchange check:', resolvedSession ? 'present' : 'missing');
+          console.log('  - Session after exchange check:', finalSession ? 'present' : 'missing');
           
-          if (resolvedSession) {
+          if (finalSession) {
             console.log('✅ Session created via PKCE code exchange');
-            console.log('  - User ID:', resolvedSession.user.id);
-            console.log('  - User Email:', resolvedSession.user.email);
+            console.log('  - User ID:', finalSession.user.id);
+            console.log('  - User Email:', finalSession.user.email);
             
             setStatus('success');
             const successMsg = isRTL
@@ -196,7 +195,7 @@ export default function AuthCallback() {
             setMessage(successMsg);
 
             // Get redirect path based on admin status
-            const redirectPath = await getRedirectPath(resolvedSession.user.id);
+            const redirectPath = await getRedirectPath(finalSession.user.id);
             console.log('  - Redirect destination:', redirectPath);
             
             setTimeout(() => {
