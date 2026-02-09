@@ -403,6 +403,49 @@ export default function AddListing() {
       return;
     }
 
+    // CRITICAL: Verify profile exists before allowing property creation
+    // This prevents "user_id = null" errors in database queries
+    // This is a defensive check in case AuthContext profile creation failed silently
+    // or the user was created before this fix was deployed
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, user_role, advertiser_type')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('[AddListing] Error fetching user profile:', profileError);
+      toast.error(
+        isRTL
+          ? 'خطأ في تحميل ملفك الشخصي. يرجى المحاولة مرة أخرى.'
+          : 'Erreur lors du chargement de votre profil. Veuillez réessayer.',
+        { duration: TOAST_ERROR_DURATION }
+      );
+      return;
+    }
+
+    if (!userProfile) {
+      console.error('[AddListing] ❌ CRITICAL: User authenticated but profile missing!', {
+        userId: currentUser.id,
+        email: currentUser.email,
+        provider: currentUser.app_metadata?.provider,
+      });
+      
+      toast.error(
+        isRTL
+          ? 'ملفك الشخصي غير موجود. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى.'
+          : 'Votre profil n\'existe pas. Veuillez vous déconnecter et vous reconnecter.',
+        { duration: TOAST_ERROR_DURATION }
+      );
+      return;
+    }
+
+    console.log('[AddListing] ✅ User and profile verified:', {
+      userId: currentUser.id,
+      userRole: userProfile.user_role,
+      advertiserType: userProfile.advertiser_type,
+    });
+
     // Log the entire form state for debugging
     if (import.meta.env.DEV) {
       console.log('[AddListing] Form submission started:', {

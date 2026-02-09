@@ -45,6 +45,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /**
+   * Ensure profile exists for authenticated user
+   * Creates profile if missing (for Google OAuth or edge cases)
+   */
+  const ensureProfileExists = async (user: User, log: ReturnType<typeof createCorrelatedLogger>): Promise<void> => {
+    try {
+      // Check if profile exists
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        log.error('Error checking profile existence', profileError);
+        return;
+      }
+
+      if (!profile) {
+        // Profile doesn't exist - create it
+        log.warn('Profile missing for authenticated user, creating...', { userId: user.id });
+
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+            user_role: 'real_estate_advertiser', // Default role
+            advertiser_type: 'owner', // Default advertiser type
+            google_id: user.user_metadata?.google_id || null,
+          });
+
+        if (insertError) {
+          log.error('Failed to create missing profile', insertError);
+        } else {
+          log.info('Successfully created missing profile', { userId: user.id });
+        }
+      } else {
+        log.info('Profile exists for user', { userId: user.id });
+      }
+    } catch (exception) {
+      log.error('Exception during profile check', exception);
+    }
+  };
+
+  /**
    * Initialize auth session with retry logic
    */
   const initializeAuth = useCallback(async (retryCount = 0): Promise<void> => {
@@ -81,6 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Ensure profile exists for authenticated user
+      if (session?.user) {
+        await ensureProfileExists(session.user, log);
+      }
+      
       setLoading(false);
       
       log.info('Auth initialized successfully', { 
@@ -107,15 +159,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      logger.info('AuthContext', `Auth state changed: ${event}`, { 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const log = createCorrelatedLogger('AuthContext:onAuthStateChange');
+      
+      log.info(`Auth state changed: ${event}`, { 
         hasSession: !!session,
         userId: session?.user?.id 
       });
       
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      // Ensure profile exists when user signs in (especially for Google OAuth)
+      // Only check on SIGNED_IN to avoid unnecessary checks on token refresh
+      if (session?.user && event === 'SIGNED_IN') {
+        try {
+          await ensureProfileExists(session.user, log);
+        } catch (error) {
+          log.error('Exception in ensureProfileExists during auth state change', error);
+        }
+      }
+      
+      setLoading(false);
     })
 
     return () => {

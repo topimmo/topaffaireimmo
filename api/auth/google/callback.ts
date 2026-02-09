@@ -185,7 +185,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         userId = authData.user.id;
 
-        // Create profile
+        // Create profile with correct schema columns
         const { error: profileError } = await supabaseAdmin
           .from('profiles')
           .insert({
@@ -193,7 +193,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             email: userInfo.email,
             full_name: userInfo.name || '',
             google_id: userInfo.id,
-            user_type: 'advertiser', // Default type
+            user_role: 'real_estate_advertiser', // Default role for new Google users
+            advertiser_type: 'owner', // Default advertiser type
           });
 
         if (profileError) {
