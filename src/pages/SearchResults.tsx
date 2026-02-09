@@ -19,7 +19,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import SortSelect, { SortOption } from "@/components/SortSelect";
 import SEO from "@/components/SEO";
 import { SITE_URL } from "@/config/site";
-import { trackEvent } from "@/lib/analytics/ga4";
 
 // ✅ Supabase -> PropertyCard mapping
 type DbProperty = {
@@ -198,9 +197,6 @@ export default function SearchResults() {
       if (priceRange[1] < DEFAULT_PRICE_RANGE[1]) {
         params.price_max = priceRange[1];
       }
-      
-      // Track the search event
-      trackEvent('view_search_results', params);
     }
     // Only track when filter values change, not dbRows.length
   }, [selectedCity, selectedType, priceRange[0], priceRange[1], loading]);

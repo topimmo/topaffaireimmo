@@ -105,45 +105,12 @@ export default function AdminDummyProperties() {
   const fetchData = async () => {
     setLoading(true);
 
-    try {
-      // Fetch dummy properties
-      const { data: dummyData, error: dummyError } = await supabase
-        .from('dummy_properties')
-        .select(`
-          *,
-          city:cities(id, name_fr, name_ar),
-          neighborhood:neighborhoods(id, name_fr, name_ar)
-        `)
-        .order('featured_rank', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (dummyError) throw dummyError;
-
-      // Fetch cities
-      const { data: citiesData, error: citiesError } = await supabase
-        .from('cities')
-        .select('*')
-        .order('name_fr');
-
-      if (citiesError) throw citiesError;
-
-      // Fetch neighborhoods
-      const { data: neighborhoodsData, error: neighborhoodsError } = await supabase
-        .from('neighborhoods')
-        .select('*')
-        .order('name_fr');
-
-      if (neighborhoodsError) throw neighborhoodsError;
-
-      setDummyProperties(dummyData || []);
-      setCities(citiesData || []);
-      setNeighborhoods(neighborhoodsData || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error(isRTL ? 'خطأ في تحميل البيانات' : 'Error loading data');
-    } finally {
-      setLoading(false);
-    }
+    // Note: dummy_properties table does not exist in the current schema
+    // This page is kept for backward compatibility but the table is not available
+    setDummyProperties([]);
+    setCities([]);
+    setNeighborhoods([]);
+    setLoading(false);
   };
 
   const handleOpenDialog = (property?: DummyProperty) => {
@@ -188,6 +155,10 @@ export default function AdminDummyProperties() {
   };
 
   const handleSave = async () => {
+    // Feature disabled - dummy_properties table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     // Validation
     if (!formData.title_fr || !formData.title_ar || !formData.price || !formData.city_id) {
       toast.error(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
@@ -262,6 +233,10 @@ export default function AdminDummyProperties() {
   };
 
   const handleDelete = async (id: string) => {
+    // Feature disabled - dummy_properties table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     if (!window.confirm(isRTL ? 'هل أنت متأكد من حذف هذا الإعلان الوهمي؟' : 'Are you sure you want to delete this dummy property?')) {
       return;
     }
@@ -293,6 +268,10 @@ export default function AdminDummyProperties() {
   };
 
   const handleToggleActive = async (id: string, currentActive: boolean) => {
+    // Feature disabled - dummy_properties table does not exist
+    toast.error(isRTL ? 'هذه الميزة غير متاحة حاليًا' : 'This feature is currently unavailable');
+    return;
+
     setActionLoading(id);
 
     try {
@@ -355,7 +334,7 @@ export default function AdminDummyProperties() {
                 : 'Fallback properties displayed when not enough featured properties exist'}
             </p>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
+          <Button onClick={() => handleOpenDialog()} disabled>
             <Plus className="h-4 w-4 mr-2" />
             {isRTL ? 'إضافة عقار وهمي' : 'Add Dummy Property'}
           </Button>
@@ -366,9 +345,14 @@ export default function AdminDummyProperties() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : dummyProperties.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">
-              {isRTL ? 'لا توجد عقارات وهمية' : 'No dummy properties found'}
+          <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/50">
+            <p className="text-muted-foreground font-medium mb-2">
+              {isRTL ? 'جدول العقارات الوهمية غير متاح' : 'Dummy Properties table not available'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isRTL 
+                ? 'هذه الميزة معطلة حاليًا. استخدم العقارات المميزة بدلاً من ذلك.'
+                : 'This feature is currently disabled. Use featured properties instead.'}
             </p>
           </div>
         ) : (

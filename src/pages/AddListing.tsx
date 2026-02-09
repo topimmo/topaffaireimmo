@@ -102,6 +102,9 @@ function getErrorMessage(error: any, isRTL: boolean, isDev: boolean): string {
   return message;
 }
 
+// Toast duration for important error messages (in milliseconds)
+const TOAST_ERROR_DURATION = 5000;
+
 export default function AddListing() {
   const { t, language, isRTL } = useLanguage();
   const { user, loading: authLoading } = useAuth();
@@ -383,7 +386,22 @@ export default function AddListing() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+
+    // CRITICAL: Verify user authentication before allowing property creation
+    // This prevents "user logged out" state during property creation
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
+      toast.error(
+        isRTL 
+          ? 'يجب تسجيل الدخول لإنشاء إعلان. يرجى تسجيل الدخول والمحاولة مرة أخرى.'
+          : 'Vous devez être connecté pour créer une annonce. Veuillez vous connecter et réessayer.',
+        { duration: TOAST_ERROR_DURATION }
+      );
+      // Redirect to login page
+      navigate('/login');
+      return;
+    }
 
     // Log the entire form state for debugging
     if (import.meta.env.DEV) {
@@ -392,6 +410,7 @@ export default function AddListing() {
           ...formData,
           phone: formData.phone ? '[REDACTED]' : null
         }
+        // User ID intentionally omitted for privacy
       });
     }
 
@@ -544,8 +563,8 @@ export default function AddListing() {
       }
 
       const insertData: Record<string, unknown> = {
-        owner_id: user.id,
-        created_by: user.id, // Track original creator
+        owner_id: currentUser.id,
+        created_by: currentUser.id, // Track original creator
         transaction_type: mapTransactionType(formData.transactionType || 'sale'),
         property_type: formData.propertyType,
         advertiser_type: mapAnnouncerType(formData.announcerType),
@@ -689,7 +708,7 @@ export default function AddListing() {
             listingId: insertedProperty.id,
           });
 
-          const result = await uploadPropertyImages([file], user.id, insertedProperty.id);
+          const result = await uploadPropertyImages([file], currentUser.id, insertedProperty.id);
           uploadResults.push(result[0]);
 
           if (result[0].error) {

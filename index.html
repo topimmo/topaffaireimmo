@@ -73,72 +73,9 @@
     <!-- Format Detection -->
     <meta name="format-detection" content="telephone=no" />
     
-    <!-- Google Analytics 4 (GA4) - Production Only -->
-    <!-- 
-      This script loads GA4 for production domains only.
-      Measurement ID: G-TMY9XWHH6G
-      
-      Verification:
-      1. Deploy to topaffaireimmo.com or www.topaffaireimmo.com
-      2. Open browser console and check for:
-         - "[GA4] Initialization started from index.html"
-         - "[GA4] Script loaded and configured from index.html"
-         - "[GA4] ✅ Page view tracked: ..."
-      3. Open DevTools → Network tab → Filter "google" or "collect"
-         - Should see: gtag/js?id=G-TMY9XWHH6G (Status 200)
-         - Should see: g/collect?v=2... requests on each page view
-      4. Check Google Analytics → Realtime
-         - Should show active users and page views
-      
-      For detailed verification, see: VERIFICATION_GUIDE.md
-    -->
-    <script>
-      // Only load GA4 on production domains
-      (function() {
-        var hostname = window.location.hostname.toLowerCase();
-        var isProd = hostname === 'topaffaireimmo.com' || hostname === 'www.topaffaireimmo.com';
-        
-        if (isProd) {
-          // Initialize dataLayer
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          window.gtag = gtag;
-          gtag('js', new Date());
-          
-          // Load GA4 script
-          var script = document.createElement('script');
-          script.async = true;
-          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TMY9XWHH6G';
-          
-          // Configure GA4 AFTER script loads - disable automatic page_view (SPA will track manually)
-          script.onload = function() {
-            gtag('config', 'G-TMY9XWHH6G', {
-              'send_page_view': false,
-              'cookie_flags': 'SameSite=None;Secure'
-            });
-            console.log('[GA4] Script loaded and configured from index.html');
-          };
-          
-          script.onerror = function() {
-            console.warn('[GA4] Failed to load - may be blocked by ad blocker or CSP');
-          };
-          
-          document.head.appendChild(script);
-          console.log('[GA4] Initialization started from index.html');
-        } else {
-          console.log('[GA4] Not on production domain, skipping initialization');
-        }
-      })();
-    </script>
-    
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Preconnect to Google Analytics for faster loading -->
-    <link rel="preconnect" href="https://www.googletagmanager.com" />
-    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     
     <!-- DNS Prefetch -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
