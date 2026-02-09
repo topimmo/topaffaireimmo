@@ -148,11 +148,26 @@ export default function AuthCallback() {
             error: sessionCheckError
           } = await supabase.auth.getSession();
 
+          let resolvedSession = data.session;
+
           if (sessionCheckError) {
             console.error('❌ Error fetching session after exchange:', sessionCheckError);
+
+            if (!resolvedSession) {
+              setStatus('error');
+              const noSessionMsg = isRTL
+                ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
+                : 'Could not create session. Please log in.';
+              setMessage(noSessionMsg);
+              setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+              return;
+            }
+
+            console.log('  - Falling back to session returned from exchange response');
+          } else {
+            resolvedSession = sessionFromCheck ?? data.session;
           }
 
-          const resolvedSession = sessionFromCheck ?? data.session;
           console.log('  - Session after exchange check:', resolvedSession ? 'present' : 'missing');
           
           if (resolvedSession) {
