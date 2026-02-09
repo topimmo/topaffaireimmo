@@ -128,7 +128,16 @@ export default function AuthCallback() {
         if (code) {
           console.log('🔑 PKCE flow detected - exchanging code for session via current URL');
           
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
+          const firstAttempt = await supabase.auth.exchangeCodeForSession(window.location.href);
+          let exchangeData = firstAttempt.data;
+          let exchangeError = firstAttempt.error;
+
+          if (exchangeError && code) {
+            console.warn('⚠️ Exchange via URL failed, retrying with raw code');
+            const retryAttempt = await supabase.auth.exchangeCodeForSession(code);
+            exchangeData = retryAttempt.data;
+            exchangeError = retryAttempt.error;
+          }
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
@@ -148,7 +157,7 @@ export default function AuthCallback() {
             error: sessionCheckError
           } = await supabase.auth.getSession();
 
-          let resolvedSession = data.session;
+          const resolvedSession = sessionFromCheck ?? exchangeData.session;
 
           if (sessionCheckError) {
             console.error('❌ Error fetching session after exchange:', sessionCheckError);
@@ -163,9 +172,7 @@ export default function AuthCallback() {
               return;
             }
 
-            console.log('  - Falling back to session returned from exchange response');
-          } else {
-            resolvedSession = sessionFromCheck ?? data.session;
+            console.log('  - Using session returned from exchange response because getSession() failed');
           }
 
           console.log('  - Session after exchange check:', resolvedSession ? 'present' : 'missing');
