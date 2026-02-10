@@ -32,7 +32,6 @@ const EditListing = lazy(() => import("./pages/EditListing"));
 const Advertise = lazy(() => import("./pages/Advertise"));
 const Advertising = lazy(() => import("./pages/Advertising"));
 const NewAdRequest = lazy(() => import("./pages/NewAdRequest"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Agencies = lazy(() => import("./pages/Agencies"));
 const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -463,12 +462,12 @@ function App() {
             }
           />
 
-          {/* Legacy Admin */}
+          {/* Legacy Admin - Redirect to new admin dashboard */}
           <Route
             path="/admin-panel"
             element={
               <AdminProtectedRoute>
-                <AdminPanel />
+                <AdminDashboard />
               </AdminProtectedRoute>
             }
           />
