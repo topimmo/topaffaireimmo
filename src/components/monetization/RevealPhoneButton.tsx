@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import {
   isPayPerContactEnabled,
   getContactRevealFee,
+  getContactPassDuration,
 } from '@/lib/platformSettings';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,6 +45,7 @@ export default function RevealPhoneButton({
   
   const [isMonetizationEnabled, setIsMonetizationEnabled] = useState(false);
   const [fee, setFee] = useState(5);
+  const [duration, setDuration] = useState(12);
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
@@ -59,9 +61,11 @@ export default function RevealPhoneButton({
       try {
         const enabled = await isPayPerContactEnabled();
         const revealFee = await getContactRevealFee();
+        const passDuration = await getContactPassDuration();
         
         setIsMonetizationEnabled(enabled);
         setFee(revealFee);
+        setDuration(passDuration);
         
         // If monetization is disabled, auto-reveal
         if (!enabled) {
@@ -287,8 +291,8 @@ export default function RevealPhoneButton({
             <div className="text-sm text-muted-foreground space-y-1">
               <p>
                 {isRTL 
-                  ? '✓ الوصول صالح لمدة 12 ساعة'
-                  : '✓ Accès valable 12 heures'}
+                  ? `✓ الوصول صالح لمدة ${duration} ساعة`
+                  : `✓ Accès valable ${duration} heures`}
               </p>
               <p>
                 {isRTL 
