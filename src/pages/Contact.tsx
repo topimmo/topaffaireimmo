@@ -85,7 +85,15 @@ export default function Contact() {
     const serviceSlug = searchParams.get('service');
     if (!serviceSlug) return '';
     
-    const formatted = serviceSlug
+    // Basic validation: limit length and allow only alphanumeric, hyphens
+    const sanitized = serviceSlug
+      .slice(0, 50) // Limit to 50 characters
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, ''); // Remove any non-alphanumeric except hyphens
+    
+    if (!sanitized) return '';
+    
+    const formatted = sanitized
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
