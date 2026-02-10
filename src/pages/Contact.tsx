@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -75,8 +76,24 @@ const content = {
 export default function Contact() {
   const { language, isRTL } = useLanguage();
   const c = content[language];
+  const [searchParams] = useSearchParams();
+  const serviceSlug = searchParams.get('service');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Helper function to format service slug into readable subject
+  const getDefaultSubject = () => {
+    if (!serviceSlug) return '';
+    
+    const formatted = serviceSlug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    
+    return language === 'fr' 
+      ? `Demande de devis - ${formatted}`
+      : `طلب عرض أسعار - ${formatted}`;
+  };
 
   // Set SEO metadata with structured data
   useSEO({
@@ -262,6 +279,7 @@ export default function Contact() {
                         <Input
                           id="subject"
                           placeholder={c.placeholderSubject}
+                          defaultValue={getDefaultSubject()}
                           required
                         />
                       </div>
