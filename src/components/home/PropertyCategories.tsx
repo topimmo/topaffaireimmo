@@ -171,7 +171,7 @@ function mapDbToUiCategories(data: DbCategory[]): UiCategory[] {
     const style = FALLBACK_STYLES_BY_SLUG[slug];
 
     return {
-      id: category.id || slug,
+      id: category.id ?? slug,
       slug,
       icon: resolveIcon(category, style?.icon),
       nameFr: category.name_fr || style?.nameFr || slug,
@@ -206,7 +206,7 @@ export default function PropertyCategories() {
           .from<DbCategory>("site_categories")
           .select("*")
           .eq("is_active", true)
-          .order("sort_order");
+          .order("sort_order", { ascending: true });
 
         if (import.meta.env.DEV) {
           const slugs = data?.map((cat) => cat.slug) || [];
