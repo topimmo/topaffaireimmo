@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -80,8 +80,8 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Helper function to format service slug into readable subject
-  const getDefaultSubject = () => {
+  // Memoize the default subject to avoid recalculations on every render
+  const defaultSubject = useMemo(() => {
     const serviceSlug = searchParams.get('service');
     if (!serviceSlug) return '';
     
@@ -93,7 +93,7 @@ export default function Contact() {
     return language === 'fr' 
       ? `Demande de devis - ${formatted}`
       : `طلب عرض أسعار - ${formatted}`;
-  };
+  }, [searchParams, language]);
 
   // Set SEO metadata with structured data
   useSEO({
@@ -279,7 +279,8 @@ export default function Contact() {
                         <Input
                           id="subject"
                           placeholder={c.placeholderSubject}
-                          defaultValue={getDefaultSubject()}
+                          defaultValue={defaultSubject}
+                          key={defaultSubject}
                           required
                         />
                       </div>
