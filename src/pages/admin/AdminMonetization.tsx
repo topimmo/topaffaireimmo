@@ -86,9 +86,9 @@ export default function AdminMonetization() {
         // Log admin action
         await logAdminAction({
           action: 'update',
-          resource_type: 'platform_settings',
-          resource_id: 'monetization',
-          details: {
+          entity_type: 'settings',
+          entity_id: 'monetization',
+          metadata: {
             monetization_enabled: settings.monetization_enabled,
             pay_per_contact_enabled: settings.pay_per_contact_enabled,
             pay_to_be_visible_enabled: settings.pay_to_be_visible_enabled,
