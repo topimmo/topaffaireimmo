@@ -89,6 +89,12 @@ export default function Header() {
           >
             {t('nav.advertise')}
           </Link>
+          <Link
+            to="/services"
+            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+          >
+            {t('nav.services')}
+          </Link>
         </nav>
 
         {/* Desktop Actions */}
@@ -196,6 +202,13 @@ export default function Header() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.advertise')}
+            </Link>
+            <Link
+              to="/services"
+              className="text-sm font-medium py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {t('nav.services')}
             </Link>
             {user ? (
               <>
