@@ -8,79 +8,16 @@
  * - admin → /admin
  */
 
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export default function SmartDashboardRedirect() {
   const { user, loading: authLoading } = useAuth();
-  const [redirectPath, setRedirectPath] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { role, loading: roleLoading } = useUserRole();
+  const location = useLocation();
 
-  useEffect(() => {
-    async function determineRedirect() {
-      if (authLoading) return;
-
-      if (!user) {
-        setRedirectPath("/login");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Check if admin
-        const { data: adminData } = await supabase
-          .from("admins")
-          .select("id")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (adminData) {
-          setRedirectPath("/admin");
-          setLoading(false);
-          return;
-        }
-
-        // Get user profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("user_role, advertiser_type")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (profile) {
-          // Map to app role and redirect
-          if (profile.user_role === 'commercial_advertiser') {
-            setRedirectPath('/merchant');
-          } else if (profile.user_role === 'real_estate_advertiser') {
-            const advertiserType = profile.advertiser_type;
-            if (advertiserType === 'broker') {
-              setRedirectPath('/agent');
-            } else if (advertiserType === 'agency') {
-              setRedirectPath('/merchant');
-            } else {
-              // owner or null stays on /dashboard
-              setRedirectPath(null); // Stay on current page
-            }
-          } else {
-            setRedirectPath(null); // Stay on /dashboard
-          }
-        } else {
-          setRedirectPath(null); // No profile, stay on /dashboard
-        }
-      } catch (error) {
-        console.error("[SmartDashboardRedirect] Error:", error);
-        setRedirectPath(null); // Error, stay on /dashboard
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    determineRedirect();
-  }, [user, authLoading]);
-
-  if (loading || authLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
@@ -88,12 +25,27 @@ export default function SmartDashboardRedirect() {
     );
   }
 
-  // If we have a redirect path, redirect
-  if (redirectPath) {
-    return <Navigate to={redirectPath} replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Otherwise, return null and let the Dashboard component render
-  // This is wrapped in App.tsx route
+  // Determine target path based on role
+  let targetPath: string | null = null;
+  
+  if (role === 'admin') {
+    targetPath = '/admin';
+  } else if (role === 'merchant') {
+    targetPath = '/merchant';
+  } else if (role === 'agent') {
+    targetPath = '/agent';
+  }
+  // user role stays on /dashboard (targetPath = null)
+
+  // Prevent infinite redirect loop
+  if (targetPath && location.pathname !== targetPath) {
+    return <Navigate to={targetPath} replace />;
+  }
+
+  // If user role or already on correct path, don't redirect
   return null;
 }
