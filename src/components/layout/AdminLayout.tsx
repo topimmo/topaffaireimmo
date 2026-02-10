@@ -93,6 +93,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       current: location.pathname === '/admin/dummy-properties',
     },
     {
+      name: isRTL ? 'تحقيق الدخل' : 'Monetization',
+      href: '/admin/monetization',
+      icon: Building2,
+      current: location.pathname === '/admin/monetization',
+    },
+    {
       name: isRTL ? 'الإعدادات' : 'Settings',
       href: '/admin/settings',
       icon: Settings,
