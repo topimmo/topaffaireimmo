@@ -29,6 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasHydratedRef = useRef(false)
   const isInitializingRef = useRef(false)
   const markHydrated = useCallback(() => {
+    if (hasHydratedRef.current) {
+      setLoading(false);
+      return;
+    }
     hasHydratedRef.current = true;
     setLoading(false);
   }, []);
@@ -118,6 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeAuth = useCallback(async (): Promise<void> => {
     const log = createCorrelatedLogger('AuthContext:init');
     log.info('Initializing authentication');
+    if (isInitializingRef.current) {
+      log.info('Initialization already in progress - skipping duplicate call');
+      return;
+    }
     isInitializingRef.current = true;
 
     try {
@@ -160,11 +168,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = window.setTimeout(async () => {
       if (hasHydratedRef.current) return;
       logger.warn('AuthContext', 'Hydration timeout hit - retrying session restoration');
       if (!isInitializingRef.current) {
-        initializeAuth();
+        await initializeAuth();
       }
       if (!hasHydratedRef.current) {
         markHydrated();
