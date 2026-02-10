@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CMSPageWrapper } from "@/components/CMSPageWrapper";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -75,8 +76,32 @@ const content = {
 export default function Contact() {
   const { language, isRTL } = useLanguage();
   const c = content[language];
+  const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Memoize the default subject to avoid recalculations on every render
+  const defaultSubject = useMemo(() => {
+    const serviceSlug = searchParams.get('service');
+    if (!serviceSlug) return '';
+    
+    // Basic validation: limit length and allow only alphanumeric, hyphens
+    const sanitized = serviceSlug
+      .slice(0, 50) // Limit to 50 characters
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, ''); // Remove any non-alphanumeric except hyphens
+    
+    if (!sanitized) return '';
+    
+    const formatted = sanitized
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    
+    return language === 'fr' 
+      ? `Demande de devis - ${formatted}`
+      : `طلب عرض أسعار - ${formatted}`;
+  }, [searchParams, language]);
 
   // Set SEO metadata with structured data
   useSEO({
@@ -262,6 +287,7 @@ export default function Contact() {
                         <Input
                           id="subject"
                           placeholder={c.placeholderSubject}
+                          defaultValue={defaultSubject}
                           required
                         />
                       </div>

@@ -184,7 +184,7 @@ export default function ServiceCategoryPage() {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Link
-                to="/contact"
+                to={`/contact?service=${encodeURIComponent(category.slug)}`}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
               >
                 {isRTL ? "طلب عرض أسعار" : "Demander un devis"}
