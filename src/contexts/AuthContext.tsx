@@ -175,15 +175,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           logger.error('AuthContext', 'Error during hydration retry', error as Error);
-        } finally {
-          if (!hasHydratedRef.current) {
-            markHydrated();
-          }
+        }
+        if (!hasHydratedRef.current) {
+          markHydrated();
         }
       };
-      retryAuth().catch((error) => {
-        logger.error('AuthContext', 'Unhandled retry rejection', error as Error);
-      });
+      void retryAuth();
     }, AUTH_HYDRATION_TIMEOUT_MS);
 
     initializeAuth();
