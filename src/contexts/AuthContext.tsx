@@ -169,16 +169,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (hasHydratedRef.current) return;
       logger.warn('AuthContext', 'Hydration timeout hit - retrying session restoration');
       const retryAuth = async () => {
-        let succeeded = true;
+        let succeeded = false;
         try {
           if (!isInitializingRef.current) {
             await initializeAuth();
+            succeeded = true;
           }
         } catch (error) {
           logger.error('AuthContext', 'Error during hydration retry', error as Error);
-          succeeded = false;
         }
-        if (succeeded && !hasHydratedRef.current) {
+        if (succeeded) {
           markHydrated();
         }
       };
