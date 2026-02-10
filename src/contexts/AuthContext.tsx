@@ -26,6 +26,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
   const lastPathRef = useRef(location.pathname)
+  const hasHydratedRef = useRef(false)
+  const isInitializingRef = useRef(false)
+  const markHydrated = useCallback(() => {
+    if (hasHydratedRef.current) {
+      return
+    }
+    hasHydratedRef.current = true
+    setLoading(false)
+  }, []);
 
   useEffect(() => {
     lastPathRef.current = location.pathname
@@ -112,6 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeAuth = useCallback(async (): Promise<void> => {
     const log = createCorrelatedLogger('AuthContext:init');
     log.info('Initializing authentication');
+    if (isInitializingRef.current) {
+      log.info('Initialization already in progress - skipping duplicate call');
+      return;
+    }
+    isInitializingRef.current = true;
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -124,9 +138,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ensureProfileExists(session.user, log).catch((err) => {
           log.error('ensureProfileExists failed during init', err);
         });
+        markHydrated();
       } else {
         setSession(null);
         setUser(null);
+        markHydrated();
       }
 
       if (error && !isNetworkError(error)) {
@@ -136,22 +152,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       log.error('Exception during auth initialization', exception);
       setSession(null);
       setUser(null);
+      markHydrated();
     } finally {
-      setLoading(false);
+      isInitializingRef.current = false;
     }
-  }, []);
+  }, [markHydrated]);
 
   useEffect(() => {
     // Skip auth initialization if Supabase is not configured
     if (!isSupabaseConfigured) {
       logger.warn('AuthContext', 'Supabase not configured, skipping auth initialization');
+      hasHydratedRef.current = true;
       setLoading(false)
       return
     }
     
     const timeoutId = window.setTimeout(() => {
-      logger.warn('AuthContext', 'Hard timeout hit - forcing loading=false');
-      setLoading(false);
+      if (hasHydratedRef.current) return;
+      logger.warn('AuthContext', 'Hydration timeout hit - retrying session restoration');
+      const retryAuth = async () => {
+        if (isInitializingRef.current) {
+          logger.warn('AuthContext', 'Initialization already running during hydration retry');
+          return;
+        }
+        try {
+          await initializeAuth();
+        } catch (error) {
+          logger.error('AuthContext', 'Error during hydration retry', error as Error);
+          markHydrated();
+        }
+      };
+      void retryAuth();
     }, AUTH_HYDRATION_TIMEOUT_MS);
 
     initializeAuth();
@@ -174,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
 
-      setLoading(false);
+      markHydrated();
     });
 
     return () => {
@@ -187,21 +218,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const log = createCorrelatedLogger('AuthContext:route');
     log.info('Route change observed', { path: location.pathname, search: location.search });
-  }, [location.pathname, location.search]);
-
-  useEffect(() => {
-    if (!loading) return;
-
-    // Additional guard to ensure loading is cleared even if no auth events fire
-    const timeoutId = window.setTimeout(() => {
-      const log = createCorrelatedLogger('AuthContext:hydration-timeout');
-      log.warn('Auth loading exceeded timeout - clearing state', {
-        path: location.pathname,
-      });
-      setLoading(false);
-    }, AUTH_HYDRATION_TIMEOUT_MS);
-
-    return () => window.clearTimeout(timeoutId);
   }, [location.pathname, location.search]);
 
   const signUp = async (
