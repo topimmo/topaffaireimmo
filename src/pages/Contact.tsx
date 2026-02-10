@@ -280,7 +280,6 @@ export default function Contact() {
                           id="subject"
                           placeholder={c.placeholderSubject}
                           defaultValue={defaultSubject}
-                          key={defaultSubject}
                           required
                         />
                       </div>
