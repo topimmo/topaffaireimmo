@@ -77,12 +77,12 @@ export default function Contact() {
   const { language, isRTL } = useLanguage();
   const c = content[language];
   const [searchParams] = useSearchParams();
-  const serviceSlug = searchParams.get('service');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   // Helper function to format service slug into readable subject
   const getDefaultSubject = () => {
+    const serviceSlug = searchParams.get('service');
     if (!serviceSlug) return '';
     
     const formatted = serviceSlug
