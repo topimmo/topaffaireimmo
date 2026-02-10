@@ -5,6 +5,7 @@ import { Routes, Route, useLocation, Outlet } from "react-router-dom";
 import MobileFAB from "./components/layout/MobileFAB";
 import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
 import { runStartupValidation } from "./lib/startup-validation";
@@ -67,6 +68,12 @@ const PropertyTypeNeighborhoodPage = lazy(
 const CityTransactionPage = lazy(() => import("./pages/CityTransactionPage"));
 const CityPropertyTypePage = lazy(() => import("./pages/CityPropertyTypePage"));
 const MoroccanSaharaPage = lazy(() => import("./pages/MoroccanSaharaPage"));
+
+// Role-based Dashboards
+const DashboardRedirect = lazy(() => import("./pages/DashboardRedirect"));
+const UserDashboard = lazy(() => import("./pages/UserDashboard"));
+const AdvertiserDashboard = lazy(() => import("./pages/AdvertiserDashboard"));
+const ArtisanDashboard = lazy(() => import("./pages/ArtisanDashboard"));
 
 function LoadingSpinner() {
   return (
@@ -259,38 +266,51 @@ function App() {
           </Route>
 
           {/* ✅ Protected Routes (خليتهم برا layout) */}
-          <Route
-            path="/add-listing"
-            element={
-              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
-                <AddListing />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/edit-listing/:id"
-            element={
-              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
-                <EditListing />
-              </ProtectedRoute>
-            }
-          />
-
+          
+          {/* Smart Dashboard Redirect */}
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={["user"]}>
-                <Dashboard />
+              <ProtectedRoute>
+                <DashboardRedirect />
               </ProtectedRoute>
             }
           />
 
+          {/* Role-Based Dashboards */}
+          <Route
+            path="/dashboard/user"
+            element={
+              <RoleProtectedRoute allowedRoles={["user", "advertiser", "artisan", "admin"]}>
+                <UserDashboard />
+              </RoleProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/advertiser"
+            element={
+              <RoleProtectedRoute allowedRoles={["advertiser", "admin"]}>
+                <AdvertiserDashboard />
+              </RoleProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/artisan"
+            element={
+              <RoleProtectedRoute allowedRoles={["artisan", "admin"]}>
+                <ArtisanDashboard />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Legacy Routes - Redirect to appropriate dashboard */}
           <Route
             path="/agent"
             element={
-              <ProtectedRoute allowedRoles={["agent"]}>
-                <Dashboard />
+              <ProtectedRoute>
+                <DashboardRedirect />
               </ProtectedRoute>
             }
           />
@@ -298,16 +318,45 @@ function App() {
           <Route
             path="/merchant"
             element={
-              <ProtectedRoute allowedRoles={["merchant"]}>
-                <CommercialDashboard />
+              <ProtectedRoute>
+                <DashboardRedirect />
               </ProtectedRoute>
             }
           />
 
           <Route
+            path="/commercial-dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardRedirect />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Property Management Routes */}
+          <Route
+            path="/add-listing"
+            element={
+              <RoleProtectedRoute allowedRoles={["advertiser", "admin"]}>
+                <AddListing />
+              </RoleProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/edit-listing/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={["advertiser", "admin"]}>
+                <EditListing />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Commercial Advertising Routes */}
+          <Route
             path="/advertising"
             element={
-              <ProtectedRoute allowedRoles={["merchant"]}>
+              <ProtectedRoute>
                 <Advertising />
               </ProtectedRoute>
             }
@@ -316,17 +365,8 @@ function App() {
           <Route
             path="/advertising/new"
             element={
-              <ProtectedRoute allowedRoles={["merchant"]}>
+              <ProtectedRoute>
                 <NewAdRequest />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/commercial-dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["merchant"]}>
-                <CommercialDashboard />
               </ProtectedRoute>
             }
           />
