@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/lib/supabase";
@@ -244,8 +244,6 @@ export default function PropertyCategories() {
     navigate(link);
   };
 
-  const activeCategories = useMemo(() => categories, [categories]);
-
   return (
     <section className={`py-12 md:py-16 lg:py-20 bg-muted/30 ${isRTL ? "rtl" : "ltr"}`}>
       <div className="container px-4 md:px-6 lg:px-8">
@@ -263,7 +261,7 @@ export default function PropertyCategories() {
 
         {/* Categories Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 lg:gap-6">
-          {activeCategories.map((category) => {
+          {categories.map((category) => {
             const Icon = category.icon;
             return (
               <button
