@@ -1,17 +1,78 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { 
-  Building2, 
-  Home, 
-  Castle, 
-  Mountain, 
-  Briefcase, 
-  Store 
+import { supabase } from "@/lib/supabase";
+import {
+  Building2,
+  Home,
+  Castle,
+  Mountain,
+  Briefcase,
+  Store,
+  type LucideIcon
 } from "lucide-react";
 
-const PROPERTY_CATEGORIES = [
+type DbCategory = {
+  id: string;
+  slug: string;
+  name_fr: string;
+  name_ar: string;
+  description_fr?: string | null;
+  description_ar?: string | null;
+  icon?: string | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+};
+
+type UiCategory = {
+  id: string;
+  slug: string;
+  icon: LucideIcon;
+  nameFr: string;
+  nameAr: string;
+  descriptionFr: string;
+  descriptionAr: string;
+  link: string;
+  gradient: string;
+  iconColor: string;
+};
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  building2: Building2,
+  home: Home,
+  castle: Castle,
+  mountain: Mountain,
+  briefcase: Briefcase,
+  store: Store,
+  apartment: Building2,
+  appartement: Building2,
+  villa: Castle,
+  house: Home,
+  maison: Home,
+  terrain: Mountain,
+  land: Mountain,
+  bureau: Briefcase,
+  office: Briefcase,
+  commercial: Store
+};
+
+const SEARCH_TYPE_MAP: Record<string, string> = {
+  appartement: "apartment",
+  apartment: "apartment",
+  villa: "villa",
+  maison: "house",
+  house: "house",
+  terrain: "land",
+  land: "land",
+  bureau: "office",
+  office: "office",
+  commercial: "commercial"
+};
+
+const FALLBACK_CATEGORIES: UiCategory[] = [
   {
     id: "apartment",
+    slug: "apartment",
     icon: Building2,
     nameFr: "Appartement",
     nameAr: "شقة",
@@ -23,6 +84,7 @@ const PROPERTY_CATEGORIES = [
   },
   {
     id: "villa",
+    slug: "villa",
     icon: Castle,
     nameFr: "Villa",
     nameAr: "فيلا",
@@ -34,6 +96,7 @@ const PROPERTY_CATEGORIES = [
   },
   {
     id: "house",
+    slug: "house",
     icon: Home,
     nameFr: "Maison",
     nameAr: "منزل",
@@ -45,6 +108,7 @@ const PROPERTY_CATEGORIES = [
   },
   {
     id: "land",
+    slug: "land",
     icon: Mountain,
     nameFr: "Terrain",
     nameAr: "أرض",
@@ -56,17 +120,19 @@ const PROPERTY_CATEGORIES = [
   },
   {
     id: "office",
+    slug: "office",
     icon: Briefcase,
     nameFr: "Bureau",
     nameAr: "مكتب",
     descriptionFr: "Espaces de bureau professionnels",
     descriptionAr: "مكاتب احترافية",
-    link: "/search?type=commercial",
+    link: "/search?type=office",
     gradient: "from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200",
     iconColor: "text-indigo-600"
   },
   {
     id: "commercial",
+    slug: "commercial",
     icon: Store,
     nameFr: "Commercial",
     nameAr: "تجاري",
@@ -78,13 +144,107 @@ const PROPERTY_CATEGORIES = [
   }
 ];
 
+const FALLBACK_STYLES_BY_SLUG = FALLBACK_CATEGORIES.reduce<Record<string, UiCategory>>(
+  (acc, category) => {
+    acc[category.slug] = category;
+    return acc;
+  },
+  {}
+);
+
+function resolveIcon(category: DbCategory, fallback?: LucideIcon) {
+  const iconKey = category.icon?.toLowerCase() ?? category.slug?.toLowerCase();
+  return (iconKey && ICON_MAP[iconKey]) || fallback || Building2;
+}
+
+function resolveLink(slug: string, fallback?: string) {
+  const searchType = SEARCH_TYPE_MAP[slug] || slug;
+  return fallback ?? `/search?type=${encodeURIComponent(searchType)}`;
+}
+
+function mapDbToUiCategories(data: DbCategory[]): UiCategory[] {
+  if (!data?.length) return FALLBACK_CATEGORIES;
+
+  const palette = FALLBACK_CATEGORIES.map((cat) => cat.gradient);
+  return data.map((category, index) => {
+    const slug = category.slug?.toLowerCase() || `category-${index}`;
+    const style = FALLBACK_STYLES_BY_SLUG[slug];
+
+    return {
+      id: category.id || slug,
+      slug,
+      icon: resolveIcon(category, style?.icon),
+      nameFr: category.name_fr || style?.nameFr || slug,
+      nameAr: category.name_ar || style?.nameAr || slug,
+      descriptionFr: category.description_fr || style?.descriptionFr || category.name_fr || "",
+      descriptionAr: category.description_ar || style?.descriptionAr || category.name_ar || "",
+      link: resolveLink(slug, style?.link),
+      gradient: style?.gradient || palette[index % palette.length],
+      iconColor: style?.iconColor || "text-primary"
+    };
+  });
+}
+
 export default function PropertyCategories() {
   const { isRTL } = useLanguage();
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<UiCategory[]>(FALLBACK_CATEGORIES);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchCategories = async () => {
+      if (import.meta.env.DEV) {
+        console.log("[PropertyCategories] Fetching site_categories", {
+          filters: { is_active: true },
+          order: "sort_order asc"
+        });
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from<DbCategory>("site_categories")
+          .select("*")
+          .eq("is_active", true)
+          .order("sort_order");
+
+        if (import.meta.env.DEV) {
+          const slugs = data?.map((cat) => cat.slug) || [];
+          const newOrUnmapped = slugs.filter(
+            (slug) => slug && !FALLBACK_STYLES_BY_SLUG[slug]
+          );
+          console.log("[PropertyCategories] Active categories fetched", {
+            count: slugs.length,
+            slugs,
+            newOrUnmapped
+          });
+        }
+
+        if (error) {
+          console.error("[PropertyCategories] Error fetching categories", error);
+          return;
+        }
+
+        if (data && data.length && isMounted) {
+          setCategories(mapDbToUiCategories(data));
+        }
+      } catch (err) {
+        console.error("[PropertyCategories] Unexpected error", err);
+      }
+    };
+
+    fetchCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleCategoryClick = (link: string) => {
     navigate(link);
   };
+
+  const activeCategories = useMemo(() => categories, [categories]);
 
   return (
     <section className={`py-12 md:py-16 lg:py-20 bg-muted/30 ${isRTL ? "rtl" : "ltr"}`}>
@@ -103,7 +263,7 @@ export default function PropertyCategories() {
 
         {/* Categories Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 lg:gap-6">
-          {PROPERTY_CATEGORIES.map((category) => {
+          {activeCategories.map((category) => {
             const Icon = category.icon;
             return (
               <button
