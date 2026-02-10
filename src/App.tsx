@@ -23,6 +23,8 @@ const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Services = lazy(() => import("./pages/Services"));
+const ServiceCategoryPage = lazy(() => import("./pages/ServiceCategoryPage"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -186,6 +188,8 @@ function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/agencies" element={<Agencies />} />
             <Route path="/advertise" element={<Advertise />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/services/:slug" element={<ServiceCategoryPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             

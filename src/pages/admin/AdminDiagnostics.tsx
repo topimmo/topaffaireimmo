@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
+import { SERVICE_SLUG_REGEX } from '@/lib/services';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,101 @@ export default function AdminDiagnostics() {
       message: maskedUrl,
       details: supabaseUrl ? 'Supabase URL is configured' : 'Supabase URL is missing',
     });
+
+    // 2b. Supabase environment awareness
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+    let supabaseHost = '';
+    try {
+      supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : '';
+    } catch {
+      supabaseHost = '';
+    }
+    const isPreview = /tempo\.build|vercel\.app/i.test(currentHost);
+    diagnostics.push({
+      name: isRTL ? 'بيئة Supabase' : 'Supabase Environment',
+      status: supabaseUrl ? (isPreview ? 'warning' : 'info') : 'error',
+      message: supabaseHost
+        ? `${supabaseHost}${isPreview ? ' (preview)' : ''}`
+        : (isRTL ? 'غير معروف' : 'Unknown'),
+      details: [
+        currentHost ? `${isRTL ? 'المضيف الحالي' : 'Current host'}: ${currentHost}` : '',
+        supabaseUrl ? `${isRTL ? 'تحقق من التطابق بين المعاينة والإنتاج' : 'Verify preview vs production Supabase project'}` : '',
+      ].filter(Boolean).join(' | '),
+    });
+
+    // 2c. Service categories table health (data + RLS visibility)
+    try {
+      const { data, error } = await supabase
+        .from('service_categories')
+        .select('slug, name_fr, name_ar, icon, sort_order, is_active');
+
+      if (error) {
+        diagnostics.push({
+          name: isRTL ? 'فئات الخدمات' : 'Service Categories',
+          status: 'warning',
+          message: isRTL ? 'خطأ في القراءة' : 'Read error',
+          details: error.message,
+        });
+      } else {
+        const rows = data || [];
+        const activeRows = rows.filter((row) => row.is_active);
+        const invalidSlugs = rows.filter(
+          (row) => !row.slug || !SERVICE_SLUG_REGEX.test(row.slug)
+        );
+        const missingFields = rows.filter(
+          (row) => !row.slug || !(row.name_fr || row.name_ar) || !row.icon
+        );
+        const sortCounter: Record<string, number> = {};
+        rows.forEach((row) => {
+          const key = String(row.sort_order ?? '0');
+          sortCounter[key] = (sortCounter[key] || 0) + 1;
+        });
+        const duplicateSortOrders = Object.entries(sortCounter)
+          .filter(([, count]) => count > 1)
+          .map(([value]) => value);
+
+        diagnostics.push({
+          name: isRTL ? 'فئات الخدمات' : 'Service Categories',
+          status:
+            invalidSlugs.length || missingFields.length || duplicateSortOrders.length
+              ? 'warning'
+              : 'success',
+          message: `${activeRows.length}/${rows.length} ${isRTL ? 'نشط' : 'active'}`,
+          details: [
+            rows.length
+              ? `${isRTL ? 'الأكواد' : 'Slugs'}: ${rows
+                  .map((row) => row.slug)
+                  .filter(Boolean)
+                  .join(', ')}`
+              : isRTL
+                ? 'لا توجد صفوف'
+                : 'No rows',
+            invalidSlugs.length
+              ? `${isRTL ? 'أكواد غير صالحة' : 'Invalid slugs'}: ${invalidSlugs
+                  .map((r) => r.slug || 'missing')
+                  .join(', ')}`
+              : '',
+            missingFields.length
+              ? `${isRTL ? 'حقول ناقصة' : 'Missing fields'}: ${missingFields
+                  .map((r) => r.slug || 'missing')
+                  .join(', ')}`
+              : '',
+            duplicateSortOrders.length
+              ? `${isRTL ? 'ترتيب مكرر' : 'Duplicate sort_order'}: ${duplicateSortOrders.join(', ')}`
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' | '),
+        });
+      }
+    } catch (err) {
+      diagnostics.push({
+        name: isRTL ? 'فئات الخدمات' : 'Service Categories',
+        status: 'error',
+        message: isRTL ? 'فشل التحقق' : 'Check failed',
+        details: String(err),
+      });
+    }
 
     // 3. Check contact email in site_settings
     try {
