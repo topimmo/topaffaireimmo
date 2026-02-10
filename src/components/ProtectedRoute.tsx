@@ -1,7 +1,7 @@
 // src/components/ProtectedRoute.tsx
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth, AUTH_HYDRATION_TIMEOUT_MS } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -13,20 +13,6 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, session, loading } = useAuth();
   const location = useLocation();
-  const [hydrationTimedOut, setHydrationTimedOut] = useState(false);
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setHydrationTimedOut(true);
-        console.warn('[ProtectedRoute] Auth loading exceeded 4s timeout', {
-          path: location.pathname,
-        });
-      }
-    }, AUTH_HYDRATION_TIMEOUT_MS);
-
-    return () => clearTimeout(timeoutId);
-  }, [loading, location.pathname]);
 
   // CRITICAL: Never block /reset-password or /auth/callback routes
   // These routes need to establish session FROM url tokens before auth check
@@ -38,10 +24,6 @@ export default function ProtectedRoute({
     );
     // Allow access anyway to prevent breaking the flow
     return <>{children}</>;
-  }
-
-  if (loading && hydrationTimedOut) {
-    return <Navigate to="/login" replace />;
   }
 
   if (loading) {
