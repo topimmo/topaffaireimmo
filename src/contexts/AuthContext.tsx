@@ -27,6 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const lastPathRef = useRef(location.pathname)
   const hasHydratedRef = useRef(false)
+  const isInitializingRef = useRef(false)
+  const markHydrated = useCallback(() => {
+    hasHydratedRef.current = true;
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     lastPathRef.current = location.pathname
@@ -113,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeAuth = useCallback(async (): Promise<void> => {
     const log = createCorrelatedLogger('AuthContext:init');
     log.info('Initializing authentication');
+    isInitializingRef.current = true;
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -125,11 +131,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ensureProfileExists(session.user, log).catch((err) => {
           log.error('ensureProfileExists failed during init', err);
         });
-        hasHydratedRef.current = true;
-        setLoading(false);
+        markHydrated();
       } else {
         setSession(null);
         setUser(null);
+        markHydrated();
       }
 
       if (error && !isNetworkError(error)) {
@@ -139,8 +145,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       log.error('Exception during auth initialization', exception);
       setSession(null);
       setUser(null);
+      markHydrated();
+    } finally {
+      isInitializingRef.current = false;
     }
-  }, []);
+  }, [markHydrated]);
 
   useEffect(() => {
     // Skip auth initialization if Supabase is not configured
@@ -154,9 +163,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const timeoutId = window.setTimeout(() => {
       if (hasHydratedRef.current) return;
       logger.warn('AuthContext', 'Hydration timeout hit - retrying session restoration');
-      initializeAuth();
-      hasHydratedRef.current = true;
-      setLoading(false);
+      if (!isInitializingRef.current) {
+        initializeAuth();
+      }
+      if (!hasHydratedRef.current) {
+        markHydrated();
+      }
     }, AUTH_HYDRATION_TIMEOUT_MS);
 
     initializeAuth();
@@ -179,8 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
 
-      hasHydratedRef.current = true;
-      setLoading(false);
+      markHydrated();
     });
 
     return () => {
