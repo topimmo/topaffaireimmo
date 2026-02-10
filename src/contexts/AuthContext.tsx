@@ -29,10 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasHydratedRef = useRef(false)
   const isInitializingRef = useRef(false)
   const markHydrated = useCallback(() => {
-    if (hasHydratedRef.current) {
-      setLoading((prev) => (prev ? false : prev));
-      return;
-    }
+    if (hasHydratedRef.current) return;
     hasHydratedRef.current = true;
     setLoading(false);
   }, []);
@@ -168,20 +165,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     
-    const timeoutId = window.setTimeout(async () => {
+    const timeoutId = window.setTimeout(() => {
       if (hasHydratedRef.current) return;
       logger.warn('AuthContext', 'Hydration timeout hit - retrying session restoration');
-      try {
-        if (!isInitializingRef.current) {
-          await initializeAuth();
+      const retryAuth = async () => {
+        try {
+          if (!isInitializingRef.current) {
+            await initializeAuth();
+          }
+        } catch (error) {
+          logger.error('AuthContext', 'Error during hydration retry', error as Error);
+        } finally {
+          if (!hasHydratedRef.current) {
+            markHydrated();
+          }
         }
-      } catch (error) {
-        logger.error('AuthContext', 'Error during hydration retry', error as Error);
-      } finally {
-        if (!hasHydratedRef.current) {
-          markHydrated();
-        }
-      }
+      };
+      retryAuth().catch((error) => {
+        logger.error('AuthContext', 'Unhandled retry rejection', error as Error);
+      });
     }, AUTH_HYDRATION_TIMEOUT_MS);
 
     initializeAuth();
