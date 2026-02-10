@@ -37,15 +37,17 @@ type UiCategory = {
   iconColor: string;
 };
 
+const DEFAULT_ICON = Building2;
+
 const ICON_MAP: Record<string, LucideIcon> = {
-  building2: Building2,
+  building2: DEFAULT_ICON,
   home: Home,
   castle: Castle,
   mountain: Mountain,
   briefcase: Briefcase,
   store: Store,
-  apartment: Building2,
-  appartement: Building2,
+  apartment: DEFAULT_ICON,
+  appartement: DEFAULT_ICON,
   villa: Castle,
   house: Home,
   maison: Home,
@@ -154,7 +156,7 @@ const FALLBACK_STYLES_BY_SLUG = FALLBACK_CATEGORIES.reduce<Record<string, UiCate
 
 function resolveIcon(category: DbCategory, fallback?: LucideIcon) {
   const iconKey = category.icon?.toLowerCase() ?? category.slug?.toLowerCase();
-  return (iconKey && ICON_MAP[iconKey]) || fallback || Building2;
+  return (iconKey && ICON_MAP[iconKey]) || fallback || DEFAULT_ICON;
 }
 
 function resolveLink(slug: string, fallback?: string) {
@@ -162,12 +164,16 @@ function resolveLink(slug: string, fallback?: string) {
   return fallback ?? `/search?type=${encodeURIComponent(searchType)}`;
 }
 
+function generateFallbackSlug(index: number) {
+  return `category-${index}`;
+}
+
 function mapDbToUiCategories(data: DbCategory[]): UiCategory[] {
   if (!data?.length) return FALLBACK_CATEGORIES;
 
   const palette = FALLBACK_CATEGORIES.map((cat) => cat.gradient);
   return data.map((category, index) => {
-    const slug = category.slug?.toLowerCase() || `category-${index}`;
+    const slug = category.slug?.toLowerCase() || generateFallbackSlug(index);
     const style = FALLBACK_STYLES_BY_SLUG[slug];
 
     return {
@@ -195,7 +201,7 @@ export default function PropertyCategories() {
 
     const fetchCategories = async () => {
       const filters = { is_active: true };
-      const orderBy = { column: "sort_order", ascending: true as const };
+      const orderBy = { column: "sort_order", ascending: true };
 
       if (import.meta.env.DEV) {
         console.log("[PropertyCategories] Fetching site_categories", {
