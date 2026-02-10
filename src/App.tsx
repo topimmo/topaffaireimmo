@@ -56,6 +56,20 @@ const AdminContentPageEditor = lazy(() => import("./pages/admin/AdminContentPage
 const AdminContentCategories = lazy(() => import("./pages/admin/AdminContentCategories"));
 const AdminPromoBanners = lazy(() => import("./pages/admin/AdminPromoBanners"));
 const AdminDummyProperties = lazy(() => import("./pages/admin/AdminDummyProperties"));
+const AdminActivityLogs = lazy(() => import("./pages/admin/AdminActivityLogs"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+
+// Artisan Dashboard Pages
+const ArtisanDashboard = lazy(() => import("./pages/artisan/ArtisanDashboard"));
+const ArtisanProfile = lazy(() => import("./pages/artisan/ArtisanProfile"));
+const ArtisanZones = lazy(() => import("./pages/artisan/ArtisanZones"));
+const ArtisanLeads = lazy(() => import("./pages/artisan/ArtisanLeads"));
+const ArtisanStats = lazy(() => import("./pages/artisan/ArtisanStats"));
+
+// Advertiser Dashboard Pages
+const AdvertiserDashboard = lazy(() => import("./pages/advertiser/AdvertiserDashboard"));
+const AdvertiserMedia = lazy(() => import("./pages/advertiser/AdvertiserMedia"));
+const AdvertiserBoost = lazy(() => import("./pages/advertiser/AdvertiserBoost"));
 
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -462,6 +476,22 @@ function App() {
               </AdminProtectedRoute>
             }
           />
+          <Route
+            path="/admin/activity-logs"
+            element={
+              <AdminProtectedRoute>
+                <AdminActivityLogs />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <AdminProtectedRoute>
+                <AdminAnalytics />
+              </AdminProtectedRoute>
+            }
+          />
 
           {/* Legacy Admin */}
           <Route
@@ -470,6 +500,98 @@ function App() {
               <AdminProtectedRoute>
                 <AdminPanel />
               </AdminProtectedRoute>
+            }
+          />
+
+          {/* ✅ Artisan Dashboard Routes */}
+          <Route
+            path="/artisan"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/artisan/profile"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/artisan/zones"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanZones />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/artisan/leads"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanLeads />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/artisan/stats"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanStats />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ Advertiser Dashboard Routes */}
+          <Route
+            path="/advertiser"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <AdvertiserDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/advertiser/listings"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/advertiser/media"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <AdvertiserMedia />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/advertiser/leads"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanLeads />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/advertiser/stats"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanStats />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/advertiser/boost"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <AdvertiserBoost />
+              </ProtectedRoute>
             }
           />
         </Routes>

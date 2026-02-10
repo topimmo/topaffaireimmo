@@ -19,7 +19,10 @@ import {
   Menu,
   X,
   ImageIcon,
-  PackagePlus
+  PackagePlus,
+  BarChart3,
+  History,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -91,6 +94,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: '/admin/dummy-properties',
       icon: PackagePlus,
       current: location.pathname === '/admin/dummy-properties',
+    },
+    {
+      name: isRTL ? 'التحليلات' : 'Analytics',
+      href: '/admin/analytics',
+      icon: BarChart3,
+      current: location.pathname === '/admin/analytics',
+    },
+    {
+      name: isRTL ? 'سجل النشاط' : 'Activity Logs',
+      href: '/admin/activity-logs',
+      icon: History,
+      current: location.pathname === '/admin/activity-logs',
     },
     {
       name: isRTL ? 'الإعدادات' : 'Settings',

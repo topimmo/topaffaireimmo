@@ -255,8 +255,9 @@ export function useFeaturedProperties(limit = 6) {
         if (realFeatured.length < limit) {
           const neededCount = limit - realFeatured.length;
           const excludeIds = realFeatured.map(p => p.id);
-          
-          const { data: latestData, error: latestError } = await supabase
+          // Build the query. Only apply the NOT IN filter when we actually have IDs to exclude.
+          // Passing "null" leads to Postgres trying to parse it as UUID and throwing 22P02.
+          let latestQuery = supabase
             .from('properties')
             .select(`
               *,
@@ -264,8 +265,13 @@ export function useFeaturedProperties(limit = 6) {
               neighborhood:neighborhoods(id, name_fr, name_ar),
               owner:profiles!properties_owner_id_fkey(id, full_name, phone, agency_name, advertiser_type)
             `)
-            .eq('status', 'published')
-            .not('id', 'in', `(${excludeIds.length > 0 ? excludeIds.join(',') : 'null'})`)
+            .eq('status', 'published');
+
+          if (excludeIds.length > 0) {
+            latestQuery = latestQuery.not('id', 'in', `(${excludeIds.join(',')})`);
+          }
+
+          const { data: latestData, error: latestError } = await latestQuery
             .order('created_at', { ascending: false })
             .limit(neededCount);
 

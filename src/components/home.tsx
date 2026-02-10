@@ -2,6 +2,8 @@ import HeroSearch from "@/components/home/HeroSearch";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import LatestListings from "@/components/home/LatestListings";
 import PropertyCategories from "@/components/home/PropertyCategories";
+import ServicesSection from "@/components/home/ServicesSection";
+import CTABanners from "@/components/home/CTABanners";
 import AdBanner from "@/components/home/AdBanner";
 import PromoBanner from "@/components/PromoBanner";
 import SEO from "@/components/SEO";
@@ -71,6 +73,12 @@ function Home() {
 
         {/* Property Categories */}
         <PropertyCategories />
+
+        {/* Services Section - Top 6 services */}
+        <ServicesSection />
+
+        {/* CTA Banners - Artisans & Real Estate */}
+        <CTABanners />
 
         {/* FAQ Section with FAQPage Schema */}
         <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 mt-16" />
