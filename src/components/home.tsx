@@ -2,6 +2,7 @@ import HeroSearch from "@/components/home/HeroSearch";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import LatestListings from "@/components/home/LatestListings";
 import PropertyCategories from "@/components/home/PropertyCategories";
+import ExploreByCityMap from "@/components/home/ExploreByCityMap";
 import AdBanner from "@/components/home/AdBanner";
 import PromoBanner from "@/components/PromoBanner";
 import SEO from "@/components/SEO";
@@ -71,6 +72,9 @@ function Home() {
 
         {/* Property Categories */}
         <PropertyCategories />
+
+        {/* Explore by City - Interactive Map */}
+        <ExploreByCityMap />
 
         {/* FAQ Section with FAQPage Schema */}
         <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 mt-16" />
