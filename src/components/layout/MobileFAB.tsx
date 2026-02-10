@@ -1,13 +1,61 @@
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Plus } from "lucide-react";
 
 export default function MobileFAB() {
   const { t, isRTL } = useLanguage();
+  const { user } = useAuth();
   const location = useLocation();
+  const { role } = useUserRole();
   
-  // Don't show on add-listing page
-  if (location.pathname === "/add-listing") {
+  // Never show on these paths
+  const hiddenPaths = [
+    "/add-listing",
+    "/edit-listing",
+    "/login",
+    "/register",
+    "/",
+    "/search",
+    "/services",
+    "/property",
+    "/about",
+    "/contact",
+    "/privacy",
+    "/terms",
+    "/guides",
+    "/agencies",
+    "/advertise",
+  ];
+  
+  // Check if current path matches any hidden path
+  const shouldHide = hiddenPaths.some(path => {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(path);
+  });
+  
+  if (shouldHide) {
+    return null;
+  }
+
+  // Show only when authenticated
+  if (!user) {
+    return null;
+  }
+
+  // Show only on these specific paths for agents/merchants
+  const showOnPaths = ['/dashboard', '/agent', '/merchant'];
+  const shouldShow = showOnPaths.includes(location.pathname);
+  
+  if (!shouldShow) {
+    return null;
+  }
+
+  // Hide for regular users - only show for agent/merchant
+  if (role === 'user' || role === 'admin') {
     return null;
   }
 
