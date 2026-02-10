@@ -194,10 +194,13 @@ export default function PropertyCategories() {
     let isMounted = true;
 
     const fetchCategories = async () => {
+      const filters = { is_active: true };
+      const orderBy = { column: "sort_order", ascending: true as const };
+
       if (import.meta.env.DEV) {
         console.log("[PropertyCategories] Fetching site_categories", {
-          filters: { is_active: true },
-          order: "sort_order asc"
+          filters,
+          order: orderBy
         });
       }
 
@@ -205,8 +208,8 @@ export default function PropertyCategories() {
         const { data, error } = await supabase
           .from<DbCategory>("site_categories")
           .select("*")
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true });
+          .eq("is_active", filters.is_active)
+          .order(orderBy.column, { ascending: orderBy.ascending });
 
         if (import.meta.env.DEV) {
           const slugs = data?.map((cat) => cat.slug) || [];
@@ -225,7 +228,7 @@ export default function PropertyCategories() {
           return;
         }
 
-        if (data && data.length && isMounted) {
+        if (data?.length && isMounted) {
           setCategories(mapDbToUiCategories(data));
         }
       } catch (err) {
