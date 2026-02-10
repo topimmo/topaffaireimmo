@@ -1,7 +1,3 @@
-// Auto-generated TypeScript types for TopAffaireImmo Supabase database
-// Generated from migrations 001-076
-// Last updated: 2026-02-05
-
 export type Json =
   | string
   | number
@@ -10,629 +6,1766 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-// ============================================================================
-// CORE USER TABLES
-// ============================================================================
-
-export interface Profile {
-  id: string // UUID
-  email: string
-  full_name: string | null
-  phone: string | null
-  
-  // Roles
-  user_role: 'admin' | 'real_estate_advertiser' | 'commercial_advertiser'
-  
-  // For real estate advertisers
-  advertiser_type?: 'owner' | 'broker' | 'agency' | null
-  agency_name?: string | null
-  agency_logo?: string | null
-  agency_description_fr?: string | null
-  agency_description_ar?: string | null
-  agency_cities?: string[] | null
-  agency_license?: string | null
-  
-  // Commercial advertiser fields
-  company_name?: string | null
-  company_website?: string | null
-  
-  // Settings
-  preferred_language: 'fr' | 'ar'
-  is_verified: boolean
-  is_active: boolean
-  is_admin?: boolean | null // Deprecated, use admins table
-  
-  created_at: string // timestamp
-  updated_at: string // timestamp
-}
-
-// ============================================================================
-// PROPERTY TABLES
-// ============================================================================
-
-export interface Property {
-  id: string // UUID
-  owner_id: string // UUID
-  created_by: string // UUID - immutable original creator
-  
-  // Classification
-  transaction_type: 'sale' | 'rent'
-  property_type: 'apartment' | 'house' | 'villa' | 'commercial' | 'land'
-  property_type_id?: number | null
-  advertiser_type: 'owner' | 'broker' | 'agency'
-  
-  // Location
-  city_id: number
-  neighborhood_id?: number | null
-  custom_neighborhood?: string | null
-  address?: string | null
-  
-  // Details
-  price: number
-  area?: number | null
-  bedrooms?: number | null
-  bathrooms?: number | null
-  floor_number?: number | null
-  total_floors?: number | null
-  year_built?: number | null
-  
-  // Multilingual content
-  title_fr: string
-  title_ar: string
-  title_en?: string | null
-  description_fr?: string | null
-  description_ar?: string | null
-  description_en?: string | null
-  
-  // Features & images
-  features?: Json | null
-  amenities?: Json | null
-  images?: string[] | Json | null
-  
-  // Contact
-  phone?: string | null
-  contact_phone?: string | null
-  contact_whatsapp?: string | null
-  contact_email?: string | null
-  
-  // Status workflow
-  status: 'draft' | 'pending' | 'approved' | 'published' | 'rejected' | 'archived' | 'sold' | 'rented' | 'inactive'
-  rejection_reason?: string | null
-  
-  // Admin tracking
-  moderated_at?: string | null
-  moderated_by?: string | null
-  approved_at?: string | null
-  rejected_at?: string | null
-  rejected_by?: string | null
-  
-  // Featured properties
-  featured: boolean
-  is_featured?: boolean | null
-  featured_until?: string | null
-  featured_rank?: number | null
-  
-  // Sample/demo listings
-  is_sample?: boolean | null
-  external_key?: string | null // unique when not null
-  
-  // Stats
-  views_count?: number | null
-  favorites_count?: number | null
-  
-  // Archive flag
-  is_archived?: boolean | null
-  
-  // Dates
-  created_at: string
-  updated_at: string
-  expires_at?: string | null
-}
-
-export interface PropertyImage {
-  id: string // UUID
-  property_id: string // UUID
-  image_url?: string | null
-  url?: string | null
-  storage_path?: string | null
-  thumbnail_url?: string | null
-  alt_text_fr?: string | null
-  alt_text_ar?: string | null
-  sort_order?: number | null
-  is_primary?: boolean | null
-  display_order?: number | null
-  created_at: string
-}
-
-// ============================================================================
-// REFERENCE DATA TABLES
-// ============================================================================
-
-export interface City {
-  id: number
-  name_en?: string | null
-  name_fr: string
-  name_ar: string
-  slug?: string | null
-  region_en?: string | null
-  region_fr?: string | null
-  region_ar?: string | null
-  latitude?: number | null
-  longitude?: number | null
-  is_active?: boolean | null
-  display_order?: number | null
-  sort_order?: number | null
-  created_at?: string | null
-}
-
-export interface Neighborhood {
-  id: number
-  city_id: number
-  name_en?: string | null
-  name_fr: string
-  name_ar: string
-  slug: string // URL-friendly slug for SEO
-  is_custom?: boolean | null
-  is_active?: boolean | null
-  created_by?: string | null // UUID
-  created_at?: string | null
-}
-
-export interface PropertyType {
-  id: number
-  code: string // unique
-  name_en?: string | null
-  name_fr: string
-  name_ar: string
-  icon?: string | null
-  is_active?: boolean | null
-  sort_order?: number | null
-  display_order?: number | null
-  created_at?: string | null
-}
-
-// ============================================================================
-// COMMERCIAL ADVERTISING SYSTEM
-// ============================================================================
-
-export interface BannerSlot {
-  id: number
-  code: string // unique
-  name_en?: string | null
-  name_fr: string
-  name_ar: string
-  page: string
-  position: string
-  size: string
-  width?: number | null
-  height?: number | null
-  price_per_day?: number | null
-  price_per_week?: number | null
-  price_per_month?: number | null
-  description_en?: string | null
-  description_fr?: string | null
-  description_ar?: string | null
-  is_active?: boolean | null
-  max_file_size?: number | null
-  allowed_formats?: string[] | null
-  created_at?: string | null
-}
-
-export interface BannerRequest {
-  id: string // UUID
-  advertiser_id: string // UUID
-  slot_id: number
-  
-  // Advertiser info
-  company_name: string
-  contact_email: string
-  contact_phone?: string | null
-  website_url?: string | null
-  
-  // Banner details
-  banner_image_url: string
-  target_url: string
-  alt_text_en?: string | null
-  alt_text_fr?: string | null
-  alt_text_ar?: string | null
-  
-  // Duration & pricing
-  duration_days: number
-  price: number
-  
-  // Payment
-  payment_method?: 'bank_transfer' | 'cash' | 'mobile_payment' | 'check' | null
-  payment_proof_url?: string | null
-  payment_reference?: string | null
-  payment_status?: 'pending' | 'received' | 'verified' | 'refunded' | null
-  
-  // Status workflow
-  status: 'pending' | 'approved' | 'active' | 'rejected' | 'expired' | 'cancelled'
-  admin_notes?: string | null
-  rejection_reason?: string | null
-  
-  // Admin tracking
-  approved_by?: string | null
-  approved_at?: string | null
-  
-  // Dates
-  start_date?: string | null
-  end_date?: string | null
-  
-  // Analytics
-  impressions?: number | null
-  clicks?: number | null
-  
-  created_at: string
-  updated_at: string
-}
-
-export interface Payment {
-  id: string // UUID
-  user_id: string // UUID
-  banner_request_id?: string | null
-  
-  amount: number
-  currency?: string | null
-  
-  payment_method: 'bank_transfer' | 'cash' | 'check' | 'mobile_payment'
-  payment_reference?: string | null
-  receipt_url?: string | null
-  
-  status: 'pending' | 'completed' | 'confirmed' | 'failed' | 'refunded'
-  
-  description?: string | null
-  notes?: string | null
-  admin_notes?: string | null
-  
-  // Confirmation tracking
-  confirmed_by?: string | null
-  confirmed_at?: string | null
-  verified_by?: string | null
-  verified_at?: string | null
-  
-  created_at: string
-  updated_at: string
-}
-
-export interface AdvertisingInquiry {
-  id: string // UUID
-  advertiser_type?: 'real_estate' | 'commercial' | null
-  company_name?: string | null
-  contact_name: string
-  contact_email: string
-  contact_phone?: string | null
-  message: string
-  status?: 'new' | 'contacted' | 'converted' | 'rejected' | null
-  admin_notes?: string | null
-  created_at: string
-  updated_at: string
-}
-
-// ============================================================================
-// ADMIN & CONTENT MANAGEMENT
-// ============================================================================
-
-export interface Admin {
-  user_id: string // UUID primary key
-  role?: string | null // 'admin'
-  is_active?: boolean | null
-  created_at: string
-}
-
-export interface AdminAuditLog {
-  id: string // UUID
-  created_at: string
-  admin_id: string // UUID
-  action: 'approve' | 'reject' | 'delete' | 'feature' | 'unfeature' | 'update' | 'create' | 'bulk_action'
-  entity_type: 'property' | 'user' | 'page' | 'category' | 'settings' | 'location' | 'other'
-  entity_id?: string | null
-  resource_type?: string | null
-  metadata?: Json | null
-}
-
-export interface AdminNotification {
-  id: string // UUID
-  created_at: string
-  title: string
-  body: string
-  read_at?: string | null
-  user_id?: string | null // NULL for broadcast
-  link?: string | null
-  notification_type: 'info' | 'warning' | 'success' | 'error'
-}
-
-export interface SitePage {
-  id: string // UUID
-  slug: string // unique
-  title_en?: string | null
-  title_fr: string
-  title_ar: string
-  content_en?: string | null
-  content_fr: string
-  content_ar: string
-  meta_description_en?: string | null
-  meta_description_fr?: string | null
-  meta_description_ar?: string | null
-  is_published?: boolean | null
-  created_at: string
-  updated_at: string
-  updated_by?: string | null
-}
-
-export interface SiteCategory {
-  id: string // UUID
-  slug: string // unique
-  name_en?: string | null
-  name_fr: string
-  name_ar: string
-  description_en?: string | null
-  description_fr?: string | null
-  description_ar?: string | null
-  icon?: string | null
-  sort_order?: number | null
-  is_active?: boolean | null
-  created_at: string
-  updated_at: string
-}
-
-export interface SiteSetting {
-  id: number
-  key: string // unique
-  value?: string | null
-  value_text?: string | null
-  value_json?: Json | null
-  value_type?: 'string' | 'number' | 'boolean' | 'json' | 'html' | null
-  description_en?: string | null
-  description_fr?: string | null
-  description_ar?: string | null
-  category?: string | null
-  is_public?: boolean | null
-  created_at?: string | null
-  updated_at: string
-  updated_by?: string | null
-}
-
-export interface PromoBanner {
-  id: string // UUID
-  title: string
-  image_url: string
-  link_url?: string | null
-  position: 'home-top' | 'home-middle' | 'listing-top'
-  is_active?: boolean | null
-  starts_at?: string | null
-  ends_at?: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface DummyProperty {
-  id: string // UUID
-  transaction_type: 'sale' | 'rent'
-  property_type: 'apartment' | 'house' | 'villa' | 'commercial' | 'land'
-  city_id: number
-  neighborhood_id?: number | null
-  title_en?: string | null
-  title_fr: string
-  title_ar: string
-  description_en?: string | null
-  description_fr?: string | null
-  description_ar?: string | null
-  price: number
-  area?: number | null
-  bedrooms?: number | null
-  bathrooms?: number | null
-  images?: string[] | null
-  featured_rank?: number | null
-  is_active?: boolean | null
-  created_at: string
-  updated_at: string
-}
-
-export interface PushSubscription {
-  id: string // UUID
-  user_id?: string | null // nullable for anonymous
-  endpoint: string // unique
-  p256dh: string
-  auth: string
-  is_active?: boolean | null
-  created_at: string
-  updated_at: string
-}
-
-// ============================================================================
-// LEAD TRACKING TABLES
-// ============================================================================
-
-export interface PropertyView {
-  id: string // UUID
-  property_id: string // UUID
-  user_id?: string | null // nullable for anonymous visitors
-  ip_address?: string | null
-  user_agent?: string | null
-  referrer?: string | null
-  session_id?: string | null
-  created_at: string
-}
-
-export interface PropertyContactClick {
-  id: string // UUID
-  property_id: string // UUID
-  contact_type: 'phone' | 'whatsapp' | 'email'
-  user_id?: string | null // nullable for anonymous
-  ip_address?: string | null
-  session_id?: string | null
-  created_at: string
-}
-
-export interface PropertyLead {
-  id: string // UUID
-  property_id: string // UUID
-  advertiser_id: string // UUID - property owner
-  name: string
-  email?: string | null
-  phone?: string | null
-  message?: string | null
-  source: 'form' | 'phone' | 'whatsapp' | 'email'
-  status: 'new' | 'contacted' | 'qualified' | 'closed' | 'spam'
-  notes?: string | null
-  advertiser_notes?: string | null
-  created_at: string
-  updated_at: string
-  contacted_at?: string | null
-}
-
-// ============================================================================
-// HELPER TYPES FOR QUERIES
-// ============================================================================
-
-export interface PropertyWithRelations extends Property {
-  city?: City
-  neighborhood?: Neighborhood
-  property_type_rel?: PropertyType
-}
-
-export interface PropertyFilters {
-  transaction_type?: 'sale' | 'rent'
-  property_type?: string
-  city_id?: number
-  neighborhood_id?: number
-  min_price?: number
-  max_price?: number
-  bedrooms?: number
-  min_area?: number
-  max_area?: number
-  status?: string
-  featured?: boolean
-  filters?: any
-}
-
-export interface AuditLogEntry {
-  admin_id: string
-  action: string
-  entity_type: string
-  entity_id?: string
-  metadata?: Json
-  resource_type?: string
-}
-
-// Database type for Supabase client
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
   public: {
     Tables: {
-      profiles: {
-        Row: Profile
-        Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Profile, 'id'>>
-      }
-      properties: {
-        Row: Property
-        Insert: Omit<Property, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Property, 'id' | 'created_by'>>
-      }
-      property_images: {
-        Row: PropertyImage
-        Insert: Omit<PropertyImage, 'id' | 'created_at'>
-        Update: Partial<Omit<PropertyImage, 'id'>>
-      }
-      cities: {
-        Row: City
-        Insert: Omit<City, 'id'>
-        Update: Partial<Omit<City, 'id'>>
-      }
-      neighborhoods: {
-        Row: Neighborhood
-        Insert: Omit<Neighborhood, 'id'>
-        Update: Partial<Omit<Neighborhood, 'id'>>
-      }
-      property_types: {
-        Row: PropertyType
-        Insert: Omit<PropertyType, 'id'>
-        Update: Partial<Omit<PropertyType, 'id'>>
-      }
-      banner_slots: {
-        Row: BannerSlot
-        Insert: Omit<BannerSlot, 'id'>
-        Update: Partial<Omit<BannerSlot, 'id'>>
-      }
-      banner_requests: {
-        Row: BannerRequest
-        Insert: Omit<BannerRequest, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<BannerRequest, 'id'>>
-      }
-      payments: {
-        Row: Payment
-        Insert: Omit<Payment, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Payment, 'id'>>
-      }
-      advertising_inquiries: {
-        Row: AdvertisingInquiry
-        Insert: Omit<AdvertisingInquiry, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<AdvertisingInquiry, 'id'>>
-      }
-      admins: {
-        Row: Admin
-        Insert: Omit<Admin, 'created_at'>
-        Update: Partial<Omit<Admin, 'user_id'>>
-      }
       admin_audit_logs: {
-        Row: AdminAuditLog
-        Insert: Omit<AdminAuditLog, 'id' | 'created_at'>
-        Update: never
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
       }
       admin_notifications: {
-        Row: AdminNotification
-        Insert: Omit<AdminNotification, 'id' | 'created_at'>
-        Update: Partial<Omit<AdminNotification, 'id' | 'created_at'>>
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          link: string | null
+          notification_type: string | null
+          read_at: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          notification_type?: string | null
+          read_at?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          notification_type?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
-      site_pages: {
-        Row: SitePage
-        Insert: Omit<SitePage, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<SitePage, 'id'>>
+      admin_whitelist: {
+        Row: {
+          email: string
+        }
+        Insert: {
+          email: string
+        }
+        Update: {
+          email?: string
+        }
+        Relationships: []
       }
-      site_categories: {
-        Row: SiteCategory
-        Insert: Omit<SiteCategory, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<SiteCategory, 'id'>>
+      admins: {
+        Row: {
+          created_at: string | null
+          is_active: boolean | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          is_active?: boolean | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          is_active?: boolean | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
-      site_settings: {
-        Row: SiteSetting
-        Insert: Omit<SiteSetting, 'id' | 'updated_at'>
-        Update: Partial<Omit<SiteSetting, 'id'>>
+      advertising_inquiries: {
+        Row: {
+          advertiser_type: string | null
+          company_name: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          message: string
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          advertiser_type?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          message: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          advertiser_type?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
-      promo_banners: {
-        Row: PromoBanner
-        Insert: Omit<PromoBanner, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<PromoBanner, 'id'>>
+      artisan_service_zones: {
+        Row: {
+          city_slug: string
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          neighborhood_slugs: string[] | null
+          updated_at: string
+          user_id: string
+          zone_slug: string | null
+        }
+        Insert: {
+          city_slug: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          neighborhood_slugs?: string[] | null
+          updated_at?: string
+          user_id: string
+          zone_slug?: string | null
+        }
+        Update: {
+          city_slug?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          neighborhood_slugs?: string[] | null
+          updated_at?: string
+          user_id?: string
+          zone_slug?: string | null
+        }
+        Relationships: []
       }
-      dummy_properties: {
-        Row: DummyProperty
-        Insert: Omit<DummyProperty, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<DummyProperty, 'id'>>
+      banner_requests: {
+        Row: {
+          admin_notes: string | null
+          advertiser_id: string
+          alt_text_ar: string | null
+          alt_text_fr: string | null
+          approved_at: string | null
+          approved_by: string | null
+          banner_image_url: string
+          clicks: number | null
+          company_name: string
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          duration_days: number
+          end_date: string | null
+          id: string
+          impressions: number | null
+          payment_method: string | null
+          payment_proof_url: string | null
+          payment_reference: string | null
+          price: number
+          slot_id: number
+          start_date: string | null
+          status: string | null
+          target_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          advertiser_id: string
+          alt_text_ar?: string | null
+          alt_text_fr?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          banner_image_url: string
+          clicks?: number | null
+          company_name: string
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          duration_days: number
+          end_date?: string | null
+          id?: string
+          impressions?: number | null
+          payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          price: number
+          slot_id: number
+          start_date?: string | null
+          status?: string | null
+          target_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          advertiser_id?: string
+          alt_text_ar?: string | null
+          alt_text_fr?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          banner_image_url?: string
+          clicks?: number | null
+          company_name?: string
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          duration_days?: number
+          end_date?: string | null
+          id?: string
+          impressions?: number | null
+          payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          price?: number
+          slot_id?: number
+          start_date?: string | null
+          status?: string | null
+          target_url?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_requests_advertiser_id_fkey"
+            columns: ["advertiser_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_requests_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "banner_slots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      push_subscriptions: {
-        Row: PushSubscription
-        Insert: Omit<PushSubscription, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<PushSubscription, 'id'>>
+      banner_slots: {
+        Row: {
+          allowed_formats: string[] | null
+          code: string
+          created_at: string | null
+          id: number
+          is_active: boolean | null
+          max_file_size: number | null
+          name_ar: string
+          name_fr: string
+          page: string
+          position: string
+          price_per_day: number
+          price_per_month: number | null
+          price_per_week: number | null
+          size: string
+        }
+        Insert: {
+          allowed_formats?: string[] | null
+          code: string
+          created_at?: string | null
+          id?: number
+          is_active?: boolean | null
+          max_file_size?: number | null
+          name_ar: string
+          name_fr: string
+          page: string
+          position: string
+          price_per_day: number
+          price_per_month?: number | null
+          price_per_week?: number | null
+          size: string
+        }
+        Update: {
+          allowed_formats?: string[] | null
+          code?: string
+          created_at?: string | null
+          id?: number
+          is_active?: boolean | null
+          max_file_size?: number | null
+          name_ar?: string
+          name_fr?: string
+          page?: string
+          position?: string
+          price_per_day?: number
+          price_per_month?: number | null
+          price_per_week?: number | null
+          size?: string
+        }
+        Relationships: []
       }
-      property_views: {
-        Row: PropertyView
-        Insert: Omit<PropertyView, 'id' | 'created_at'>
-        Update: never
+      cities: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: number
+          is_active: boolean | null
+          name_ar: string
+          name_fr: string
+          region_ar: string | null
+          region_fr: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: number
+          is_active?: boolean | null
+          name_ar: string
+          name_fr: string
+          region_ar?: string | null
+          region_fr?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: number
+          is_active?: boolean | null
+          name_ar?: string
+          name_fr?: string
+          region_ar?: string | null
+          region_fr?: string | null
+        }
+        Relationships: []
+      }
+      neighborhoods: {
+        Row: {
+          city_id: number
+          created_at: string | null
+          created_by: string | null
+          id: number
+          is_custom: boolean | null
+          name_ar: string
+          name_fr: string
+          slug: string
+        }
+        Insert: {
+          city_id: number
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          is_custom?: boolean | null
+          name_ar: string
+          name_fr: string
+          slug: string
+        }
+        Update: {
+          city_id?: number
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          is_custom?: boolean | null
+          name_ar?: string
+          name_fr?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neighborhoods_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "neighborhoods_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      otp_attempts: {
+        Row: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          last_sent_at: string
+          locked_until: string | null
+          otp_hash: string
+          phone: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          last_sent_at?: string
+          locked_until?: string | null
+          otp_hash: string
+          phone: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_sent_at?: string
+          locked_until?: string | null
+          otp_hash?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          banner_request_id: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          receipt_url: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          banner_request_id?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          banner_request_id?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_banner_request_id_fkey"
+            columns: ["banner_request_id"]
+            isOneToOne: false
+            referencedRelation: "banner_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          advertiser_type: string | null
+          agency_cities: string[] | null
+          agency_description_ar: string | null
+          agency_description_fr: string | null
+          agency_license: string | null
+          agency_logo: string | null
+          agency_name: string | null
+          company_name: string | null
+          company_website: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          google_id: string | null
+          id: string
+          is_active: boolean | null
+          is_admin: boolean | null
+          is_verified: boolean | null
+          phone: string | null
+          preferred_language: string | null
+          updated_at: string | null
+          user_role: string
+          user_type: string | null
+        }
+        Insert: {
+          advertiser_type?: string | null
+          agency_cities?: string[] | null
+          agency_description_ar?: string | null
+          agency_description_fr?: string | null
+          agency_license?: string | null
+          agency_logo?: string | null
+          agency_name?: string | null
+          company_name?: string | null
+          company_website?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          google_id?: string | null
+          id: string
+          is_active?: boolean | null
+          is_admin?: boolean | null
+          is_verified?: boolean | null
+          phone?: string | null
+          preferred_language?: string | null
+          updated_at?: string | null
+          user_role?: string
+          user_type?: string | null
+        }
+        Update: {
+          advertiser_type?: string | null
+          agency_cities?: string[] | null
+          agency_description_ar?: string | null
+          agency_description_fr?: string | null
+          agency_license?: string | null
+          agency_logo?: string | null
+          agency_name?: string | null
+          company_name?: string | null
+          company_website?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          google_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_admin?: boolean | null
+          is_verified?: boolean | null
+          phone?: string | null
+          preferred_language?: string | null
+          updated_at?: string | null
+          user_role?: string
+          user_type?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string | null
+          advertiser_type: string
+          amenities: Json | null
+          approved_at: string | null
+          approved_by: string | null
+          area: number | null
+          area_sqm: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          city_id: number
+          contact_email: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
+          created_at: string | null
+          created_by: string | null
+          custom_neighborhood: string | null
+          description: string | null
+          description_ar: string | null
+          description_fr: string | null
+          external_key: string | null
+          featured: boolean | null
+          featured_rank: number | null
+          features: Json | null
+          floor_number: number | null
+          id: string
+          images: string[] | null
+          is_active: boolean | null
+          is_archived: boolean
+          is_dummy: boolean | null
+          is_featured: boolean | null
+          is_sample: boolean | null
+          moderated_at: string | null
+          moderated_by: string | null
+          neighborhood_id: number | null
+          owner_id: string
+          price: number
+          property_type: string
+          property_type_id: number | null
+          published_at: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          show_email_public: boolean
+          show_phone_public: boolean
+          show_whatsapp_public: boolean
+          status: string | null
+          title: string | null
+          title_ar: string
+          title_fr: string
+          total_floors: number | null
+          transaction_type: string
+          updated_at: string | null
+          views_count: number | null
+          year_built: number | null
+        }
+        Insert: {
+          address?: string | null
+          advertiser_type?: string
+          amenities?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: number | null
+          area_sqm?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          city_id: number
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_neighborhood?: string | null
+          description?: string | null
+          description_ar?: string | null
+          description_fr?: string | null
+          external_key?: string | null
+          featured?: boolean | null
+          featured_rank?: number | null
+          features?: Json | null
+          floor_number?: number | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_archived?: boolean
+          is_dummy?: boolean | null
+          is_featured?: boolean | null
+          is_sample?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          neighborhood_id?: number | null
+          owner_id: string
+          price: number
+          property_type: string
+          property_type_id?: number | null
+          published_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          show_email_public?: boolean
+          show_phone_public?: boolean
+          show_whatsapp_public?: boolean
+          status?: string | null
+          title?: string | null
+          title_ar: string
+          title_fr: string
+          total_floors?: number | null
+          transaction_type: string
+          updated_at?: string | null
+          views_count?: number | null
+          year_built?: number | null
+        }
+        Update: {
+          address?: string | null
+          advertiser_type?: string
+          amenities?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: number | null
+          area_sqm?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          city_id?: number
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_neighborhood?: string | null
+          description?: string | null
+          description_ar?: string | null
+          description_fr?: string | null
+          external_key?: string | null
+          featured?: boolean | null
+          featured_rank?: number | null
+          features?: Json | null
+          floor_number?: number | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_archived?: boolean
+          is_dummy?: boolean | null
+          is_featured?: boolean | null
+          is_sample?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          neighborhood_id?: number | null
+          owner_id?: string
+          price?: number
+          property_type?: string
+          property_type_id?: number | null
+          published_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          show_email_public?: boolean
+          show_phone_public?: boolean
+          show_whatsapp_public?: boolean
+          status?: string | null
+          title?: string | null
+          title_ar?: string
+          title_fr?: string
+          total_floors?: number | null
+          transaction_type?: string
+          updated_at?: string | null
+          views_count?: number | null
+          year_built?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_property_type_id_fkey"
+            columns: ["property_type_id"]
+            isOneToOne: false
+            referencedRelation: "property_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       property_contact_clicks: {
-        Row: PropertyContactClick
-        Insert: Omit<PropertyContactClick, 'id' | 'created_at'>
-        Update: never
+        Row: {
+          contact_type: string
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          property_id: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          property_id: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          property_id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_contact_clicks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_contact_clicks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_images: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_primary: boolean | null
+          property_id: string
+          storage_path: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean | null
+          property_id: string
+          storage_path?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean | null
+          property_id?: string
+          storage_path?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       property_leads: {
-        Row: PropertyLead
-        Insert: Omit<PropertyLead, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<PropertyLead, 'id' | 'property_id' | 'advertiser_id'>>
+        Row: {
+          advertiser_id: string
+          advertiser_notes: string | null
+          contacted_at: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          message: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          property_id: string
+          source: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          advertiser_id: string
+          advertiser_notes?: string | null
+          contacted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          property_id: string
+          source?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          advertiser_id?: string
+          advertiser_notes?: string | null
+          contacted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          property_id?: string
+          source?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_types: {
+        Row: {
+          code: string
+          created_at: string | null
+          display_order: number | null
+          icon: string | null
+          id: number
+          is_active: boolean | null
+          name_ar: string
+          name_fr: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: number
+          is_active?: boolean | null
+          name_ar: string
+          name_fr: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: number
+          is_active?: boolean | null
+          name_ar?: string
+          name_fr?: string
+        }
+        Relationships: []
+      }
+      property_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          property_id: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          property_id: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          property_id?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_views_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_views_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          is_active: boolean | null
+          p256dh: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          is_active?: boolean | null
+          p256dh: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean | null
+          p256dh?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      service_categories: {
+        Row: {
+          created_at: string
+          description_ar: string | null
+          description_fr: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name_ar: string
+          name_fr: string
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          description_ar?: string | null
+          description_fr?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name_ar: string
+          name_fr: string
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          description_ar?: string | null
+          description_fr?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name_ar?: string
+          name_fr?: string
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      service_provider_payments: {
+        Row: {
+          admin_note: string | null
+          amount_mad: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          method: string
+          plan: string
+          proof_url: string | null
+          provider_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount_mad: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          method: string
+          plan: string
+          proof_url?: string | null
+          provider_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount_mad?: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          method?: string
+          plan?: string
+          proof_url?: string | null
+          provider_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_payments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_provider_portfolio_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_path: string
+          provider_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_path: string
+          provider_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_path?: string
+          provider_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_portfolio_images_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_provider_profiles: {
+        Row: {
+          active_until: string | null
+          bio_ar: string | null
+          bio_fr: string | null
+          cities: string[]
+          created_at: string
+          display_name: string
+          id: string
+          neighborhoods: string[]
+          phone: string | null
+          service_category_id: string | null
+          updated_at: string
+          user_id: string
+          visibility_status: string
+          whatsapp: string | null
+        }
+        Insert: {
+          active_until?: string | null
+          bio_ar?: string | null
+          bio_fr?: string | null
+          cities?: string[]
+          created_at?: string
+          display_name: string
+          id?: string
+          neighborhoods?: string[]
+          phone?: string | null
+          service_category_id?: string | null
+          updated_at?: string
+          user_id: string
+          visibility_status?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          active_until?: string | null
+          bio_ar?: string | null
+          bio_fr?: string | null
+          cities?: string[]
+          created_at?: string
+          display_name?: string
+          id?: string
+          neighborhoods?: string[]
+          phone?: string | null
+          service_category_id?: string | null
+          updated_at?: string
+          user_id?: string
+          visibility_status?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_profiles_service_category_id_fkey"
+            columns: ["service_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_categories: {
+        Row: {
+          created_at: string
+          description_ar: string | null
+          description_fr: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name_ar: string
+          name_fr: string
+          slug: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_ar?: string | null
+          description_fr?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_ar: string
+          name_fr: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_ar?: string | null
+          description_fr?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_ar?: string
+          name_fr?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_pages: {
+        Row: {
+          content_ar: string
+          content_fr: string
+          created_at: string
+          id: string
+          is_published: boolean | null
+          meta_description_ar: string | null
+          meta_description_fr: string | null
+          slug: string
+          title_ar: string
+          title_fr: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content_ar: string
+          content_fr: string
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          meta_description_ar?: string | null
+          meta_description_fr?: string | null
+          slug: string
+          title_ar: string
+          title_fr: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content_ar?: string
+          content_fr?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          meta_description_ar?: string | null
+          meta_description_fr?: string | null
+          slug?: string
+          title_ar?: string
+          title_fr?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description_ar: string | null
+          description_fr: string | null
+          id: number
+          is_public: boolean | null
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+          value_type: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description_ar?: string | null
+          description_fr?: string | null
+          id?: number
+          is_public?: boolean | null
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+          value_type?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description_ar?: string | null
+          description_fr?: string | null
+          id?: number
+          is_public?: boolean | null
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+          value_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
-    Views: {}
-    Functions: {}
-    Enums: {}
+    Views: {
+      properties_public: {
+        Row: {
+          address: string | null
+          advertiser_type: string | null
+          amenities: Json | null
+          approved_at: string | null
+          approved_by: string | null
+          area: number | null
+          area_sqm: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          city_id: number | null
+          contact_email: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
+          created_at: string | null
+          created_by: string | null
+          custom_neighborhood: string | null
+          description: string | null
+          description_ar: string | null
+          description_fr: string | null
+          external_key: string | null
+          featured: boolean | null
+          featured_rank: number | null
+          features: Json | null
+          floor_number: number | null
+          id: string | null
+          images: string[] | null
+          is_active: boolean | null
+          is_archived: boolean | null
+          is_dummy: boolean | null
+          is_featured: boolean | null
+          is_sample: boolean | null
+          moderated_at: string | null
+          moderated_by: string | null
+          neighborhood_id: number | null
+          owner_id: string | null
+          price: number | null
+          property_type: string | null
+          property_type_id: number | null
+          published_at: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          show_email_public: boolean | null
+          show_phone_public: boolean | null
+          show_whatsapp_public: boolean | null
+          status: string | null
+          title: string | null
+          title_ar: string | null
+          title_fr: string | null
+          total_floors: number | null
+          transaction_type: string | null
+          updated_at: string | null
+          views_count: number | null
+          year_built: number | null
+        }
+        Insert: {
+          address?: string | null
+          advertiser_type?: string | null
+          amenities?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: number | null
+          area_sqm?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          city_id?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_neighborhood?: string | null
+          description?: string | null
+          description_ar?: string | null
+          description_fr?: string | null
+          external_key?: string | null
+          featured?: boolean | null
+          featured_rank?: number | null
+          features?: Json | null
+          floor_number?: number | null
+          id?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          is_archived?: boolean | null
+          is_dummy?: boolean | null
+          is_featured?: boolean | null
+          is_sample?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          neighborhood_id?: number | null
+          owner_id?: string | null
+          price?: number | null
+          property_type?: string | null
+          property_type_id?: number | null
+          published_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          show_email_public?: boolean | null
+          show_phone_public?: boolean | null
+          show_whatsapp_public?: boolean | null
+          status?: string | null
+          title?: string | null
+          title_ar?: string | null
+          title_fr?: string | null
+          total_floors?: number | null
+          transaction_type?: string | null
+          updated_at?: string | null
+          views_count?: number | null
+          year_built?: number | null
+        }
+        Update: {
+          address?: string | null
+          advertiser_type?: string | null
+          amenities?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: number | null
+          area_sqm?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          city_id?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_neighborhood?: string | null
+          description?: string | null
+          description_ar?: string | null
+          description_fr?: string | null
+          external_key?: string | null
+          featured?: boolean | null
+          featured_rank?: number | null
+          features?: Json | null
+          floor_number?: number | null
+          id?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          is_archived?: boolean | null
+          is_dummy?: boolean | null
+          is_featured?: boolean | null
+          is_sample?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          neighborhood_id?: number | null
+          owner_id?: string | null
+          price?: number | null
+          property_type?: string | null
+          property_type_id?: number | null
+          published_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          show_email_public?: boolean | null
+          show_phone_public?: boolean | null
+          show_whatsapp_public?: boolean | null
+          status?: string | null
+          title?: string | null
+          title_ar?: string | null
+          title_fr?: string | null
+          total_floors?: number | null
+          transaction_type?: string | null
+          updated_at?: string | null
+          views_count?: number | null
+          year_built?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_property_type_id_fkey"
+            columns: ["property_type_id"]
+            isOneToOne: false
+            referencedRelation: "property_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Functions: {
+      can_insert_property: { Args: { user_id: string }; Returns: boolean }
+      check_user_role: {
+        Args: { allowed_roles: string[]; user_id: string }
+        Returns: boolean
+      }
+      is_admin: { Args: { user_id: string }; Returns: boolean }
+    }
+    Enums: {
+      user_role_enum: "user" | "agent" | "merchant" | "admin"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      user_role_enum: ["user", "agent", "merchant", "admin"],
+    },
+  },
+} as const
