@@ -105,7 +105,7 @@ export default function Advertising() {
           .single();
         
         if (error) {
-          const isRlsBlocked = error.code === '42501' || [401, 403].includes(error.status ?? 0) || error.message?.toLowerCase().includes('permission');
+          const isRlsBlocked = error.code === '42501' || error.message?.toLowerCase().includes('permission');
           console.error('Error fetching profile:', error);
           if (isRlsBlocked) {
             toast.error(isRTL ? 'سياسة الأمان منعت تحميل ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles.');
@@ -128,7 +128,7 @@ export default function Advertising() {
 
           if (createError) {
             console.error('Error auto-creating profile:', createError);
-            const isRlsBlocked = createError.code === '42501' || [401, 403].includes(createError.status ?? 0);
+            const isRlsBlocked = createError.code === '42501';
             if (isRlsBlocked) {
               toast.error(isRTL ? 'سياسة الأمان منعت إنشاء ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles.');
             }

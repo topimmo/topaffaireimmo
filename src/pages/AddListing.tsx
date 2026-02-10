@@ -414,7 +414,7 @@ export default function AddListing() {
       .maybeSingle();
 
     if (profileError) {
-      const isRlsBlocked = profileError.code === '42501' || [401, 403].includes(profileError.status ?? 0) || profileError.message?.toLowerCase().includes('permission');
+      const isRlsBlocked = profileError.code === '42501' || profileError.message?.toLowerCase().includes('permission');
       console.error('[AddListing] Error fetching user profile:', profileError);
       if (isRlsBlocked) {
         toast.error(
@@ -453,11 +453,11 @@ export default function AddListing() {
           advertiser_type: 'owner',
           google_id: currentUser.user_metadata?.google_id || null,
         })
-        .select('id, user_role, advertiser_type')
+        .select('id, user_role, advertiser_type, email, full_name')
         .single();
 
       if (createError) {
-        const isRlsBlocked = createError.code === '42501' || [401, 403].includes(createError.status ?? 0) || createError.message?.toLowerCase().includes('permission');
+        const isRlsBlocked = createError.code === '42501' || createError.message?.toLowerCase().includes('permission');
         console.error('[AddListing] Failed to auto-create profile', createError);
         toast.error(
           isRlsBlocked
