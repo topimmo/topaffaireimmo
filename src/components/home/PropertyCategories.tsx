@@ -212,7 +212,7 @@ export default function PropertyCategories() {
 
       try {
         const { data, error } = await supabase
-          .from<DbCategory>("site_categories")
+          .from("site_categories")
           .select("*")
           .eq("is_active", filters.is_active)
           .order(orderBy.column, { ascending: orderBy.ascending });
