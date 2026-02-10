@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import SmartDashboardRedirect from '@/components/SmartDashboardRedirect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -205,6 +206,9 @@ export default function Dashboard() {
 
   return (
     <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+      {/* Smart redirect based on role */}
+      <SmartDashboardRedirect />
+      
       <Header />
 
       <main className="flex-1 pt-24 pb-16">

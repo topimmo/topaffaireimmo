@@ -169,14 +169,41 @@ export default function ServiceCategoryPage() {
           </Link>
         </div>
 
+        {/* Enhanced Empty State with CTAs */}
+        <div className="rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 p-8 text-center">
+          <div className="max-w-2xl mx-auto space-y-4">
+            <h2 className="text-2xl font-semibold text-blue-900">
+              {isRTL ? "الخدمة قيد التطوير" : "Service en cours d'ouverture"}
+            </h2>
+            <p className="text-blue-800">
+              {isRTL 
+                ? "نحن نعمل على جلب أفضل مزودي الخدمات في هذه الفئة. سيتم إعلامك عند توفر الخدمة."
+                : "Nous travaillons à rassembler les meilleurs prestataires dans cette catégorie. Vous serez informé dès que le service sera disponible."}
+            </p>
+            
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+              <Link
+                to="/contact"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+              >
+                {isRTL ? "طلب عرض أسعار" : "Demander un devis"}
+              </Link>
+              <Link
+                to="/contact"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-lg border-2 border-primary text-primary font-medium hover:bg-primary/10 transition-colors"
+              >
+                {isRTL ? "هل أنت مزود خدمة؟ انضم إلينا" : "Êtes-vous prestataire ? Rejoignez-nous"}
+              </Link>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-xl border bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold mb-2">
-              {isRTL ? "مقدمو الخدمات" : "Prestataires"}
+              {isRTL ? "ما يمكن توقعه" : "À quoi s'attendre"}
             </h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              {copy.providersComing}
-            </p>
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="w-2 h-2 rounded-full bg-primary/60" />
