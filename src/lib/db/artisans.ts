@@ -13,6 +13,13 @@ type ServiceCategory = Database['public']['Tables']['service_categories']['Row']
 type City = Database['public']['Tables']['cities']['Row'];
 type Neighborhood = Database['public']['Tables']['neighborhoods']['Row'];
 
+// Type for safe updates that excludes monetization and admin-only fields
+// These fields can only be modified via RPC functions or by admins
+type SafeArtisanProfileUpdate = Omit<
+  Partial<ArtisanProfile>,
+  'id' | 'user_id' | 'is_verified' | 'is_active' | 'is_boosted' | 'boosted_at' | 'created_at' | 'updated_at'
+>;
+
 // Extended type with relations
 export interface ArtisanProfileWithRelations extends ArtisanProfile {
   service_category: ServiceCategory;
@@ -285,11 +292,16 @@ export async function getMyArtisanProfiles(
 
 /**
  * Update artisan profile
+ * 
+ * SECURITY: This function only accepts safe update fields.
+ * Monetization fields (is_boosted, boosted_at) can only be modified via RPC functions.
+ * Admin fields (is_verified, is_active) can only be modified by admins directly.
+ * RLS policies provide defense-in-depth protection.
  */
 export async function updateArtisanProfile(
   supabase: ReturnType<typeof createClient<Database>>,
   id: string,
-  updates: Partial<ArtisanProfile>
+  updates: SafeArtisanProfileUpdate
 ): Promise<{ success: boolean; error?: string; data?: ArtisanProfile }> {
   const { data, error } = await supabase
     .from('artisan_profiles')
