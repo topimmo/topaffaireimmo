@@ -205,13 +205,6 @@ export default function PropertyCategories() {
       const filters = { is_active: true };
       const orderBy = { column: "sort_order", ascending: true };
 
-      if (import.meta.env.DEV) {
-        console.log("[PropertyCategories] Fetching site_categories", {
-          filters,
-          order: orderBy
-        });
-      }
-
       try {
         const { data, error } = await supabase
           .from("site_categories")
@@ -219,20 +212,7 @@ export default function PropertyCategories() {
           .eq("is_active", filters.is_active)
           .order(orderBy.column, { ascending: orderBy.ascending });
 
-        if (import.meta.env.DEV) {
-          const slugs = data?.map((cat) => cat.slug) || [];
-          const newOrUnmapped = slugs.filter(
-            (slug) => slug && !FALLBACK_STYLES_BY_SLUG[slug]
-          );
-          console.log("[PropertyCategories] Active categories fetched", {
-            count: slugs.length,
-            slugs,
-            newOrUnmapped
-          });
-        }
-
         if (error) {
-          console.error("[PropertyCategories] Error fetching categories", error);
           return;
         }
 
@@ -240,7 +220,7 @@ export default function PropertyCategories() {
           setCategories(mapDbToUiCategories(data));
         }
       } catch (err) {
-        console.error("[PropertyCategories] Unexpected error", err);
+        // Silently handle errors and fall back to default categories
       }
     };
 
