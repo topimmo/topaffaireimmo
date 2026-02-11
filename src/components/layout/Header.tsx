@@ -47,57 +47,57 @@ export default function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
         isScrolled
-          ? "h-16 bg-background/98 backdrop-blur-md shadow-sm border-b border-border/50"
-          : "h-18 bg-background/95 backdrop-blur-sm",
+          ? "h-16 bg-background/98 backdrop-blur-lg shadow-lg border-b-2 border-border/60"
+          : "h-20 bg-background/95 backdrop-blur-md shadow-md",
         isRTL ? "rtl" : "ltr"
       )}
     >
       <div className="container h-full flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <Building2 className="h-7 w-7 text-primary" />
-          <span className="font-display text-lg font-semibold text-foreground">
+        <Link to="/" className="flex items-center gap-2 group">
+          <Building2 className="h-8 w-8 text-primary group-hover:scale-110 transition-transform duration-300" />
+          <span className="font-display text-xl font-bold text-foreground">
             TopAffaire<span className="text-primary">Immo</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-8">
           <Link
             to="/buy"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.buy')}
           </Link>
           <Link
             to="/rent"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.rent')}
           </Link>
           <Link
             to="/services"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.services')}
           </Link>
           <Link
             to="/agencies"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.agencies')}
           </Link>
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-4">
           <LanguageSwitcher />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2 shadow-md hover:shadow-lg font-semibold">
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
                     {user?.email?.split('@')[0] || 'User'}
@@ -136,10 +136,10 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="font-semibold">
                 <Link to="/login">{t('nav.login')}</Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" asChild className="shadow-md hover:shadow-lg font-semibold">
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
                   {isRTL ? 'نشر إعلان مجاني' : 'Publier gratuitement'}
@@ -150,10 +150,10 @@ export default function Header() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-2">
+        <div className="md:hidden flex items-center gap-3">
           <LanguageSwitcher />
           <button
-            className="p-2"
+            className="p-2 hover:bg-muted rounded-lg transition-all duration-300"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? (
@@ -167,39 +167,39 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b shadow-lg">
-          <nav className="container py-4 flex flex-col gap-4">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-lg border-b-2 shadow-2xl">
+          <nav className="container py-6 flex flex-col gap-5">
             <Link
               to="/buy"
-              className="text-sm font-medium py-2"
+              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.buy')}
             </Link>
             <Link
               to="/rent"
-              className="text-sm font-medium py-2"
+              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.rent')}
             </Link>
             <Link
               to="/agencies"
-              className="text-sm font-medium py-2"
+              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.agencies')}
             </Link>
             <Link
               to="/advertise"
-              className="text-sm font-medium py-2"
+              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.advertise')}
             </Link>
             <Link
               to="/services"
-              className="text-sm font-medium py-2"
+              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.services')}
@@ -209,12 +209,12 @@ export default function Header() {
                 <>
                   <Link
                       to="/dashboard"
-                      className="text-sm font-medium py-2"
+                      className="text-sm font-semibold py-2 hover:text-primary transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {t('nav.dashboard')}
                     </Link>
-                    <Button asChild className="mt-2">
+                    <Button asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
                       <Link to="/add-listing" onClick={() => setIsMobileMenuOpen(false)}>
                         <Plus className="h-4 w-4" />
                         {t('nav.addListing')}
@@ -224,7 +224,7 @@ export default function Header() {
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className="text-sm font-medium py-2"
+                    className="text-sm font-semibold py-2 hover:text-primary transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {t('admin.title')}
@@ -236,7 +236,7 @@ export default function Header() {
                     handleSignOut();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="mt-2"
+                  className="mt-2 shadow-md hover:shadow-lg font-semibold"
                 >
                   <LogOut className="h-4 w-4" />
                   {t('nav.logout')}
@@ -244,12 +244,12 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Button variant="outline" asChild className="mt-2">
+                <Button variant="outline" asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                     {t('nav.login')}
                   </Link>
                 </Button>
-                <Button asChild>
+                <Button asChild className="shadow-md hover:shadow-lg font-semibold">
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
                     {t('nav.register')}

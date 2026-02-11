@@ -60,23 +60,23 @@ export default function EntryGateway() {
   return (
     <section
       className={cn(
-        "py-16 md:py-24 bg-gradient-to-b from-background to-muted/30",
+        "py-20 md:py-28 bg-gradient-to-b from-background via-muted/20 to-background",
         isRTL && "rtl"
       )}
     >
       <div className="container">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground mb-4">
+        <div className="text-center max-w-2xl mx-auto mb-14 md:mb-20">
+          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-5 leading-tight">
             {copy.headline}
           </h2>
-          <p className="text-lg text-muted-foreground">{copy.subheadline}</p>
+          <p className="text-lg md:text-xl text-muted-foreground font-medium">{copy.subheadline}</p>
         </div>
 
         {/* Gateway Cards - Flexible Grid */}
         <div
           className={cn(
-            "grid gap-6 md:gap-8 max-w-5xl mx-auto",
+            "grid gap-8 md:gap-10 max-w-5xl mx-auto",
             // Auto-fit grid that adapts to content
             "grid-cols-1 sm:grid-cols-2",
             // When there are more than 2 items, use 3 columns on large screens
@@ -92,25 +92,26 @@ export default function EntryGateway() {
                 key={category.id}
                 onClick={() => navigate(category.link)}
                 className={cn(
-                  "group relative overflow-hidden rounded-2xl border border-border/50",
+                  "group relative overflow-hidden rounded-3xl border-2 border-border/40",
                   "bg-card hover:bg-gradient-to-br",
                   category.bgGradient,
-                  "p-8 md:p-10 text-start transition-all duration-300",
-                  "hover:shadow-xl hover:-translate-y-1 hover:border-border",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                  "p-10 md:p-12 text-start transition-all duration-500",
+                  "hover:shadow-2xl hover:-translate-y-2 hover:border-primary/30 hover:scale-105",
+                  "focus:outline-none focus:ring-4 focus:ring-primary/20 focus:ring-offset-2",
+                  "shadow-lg"
                 )}
               >
                 {/* Icon */}
                 <div
                   className={cn(
-                    "w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center mb-6",
+                    "w-20 h-20 md:w-24 md:h-24 rounded-3xl flex items-center justify-center mb-8",
                     category.iconBg,
-                    "group-hover:scale-110 transition-transform duration-300"
+                    "group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-md"
                   )}
                 >
                   <Icon
                     className={cn(
-                      "w-8 h-8 md:w-10 md:h-10",
+                      "w-10 h-10 md:w-12 md:h-12",
                       category.accentColor
                     )}
                   />
@@ -119,22 +120,22 @@ export default function EntryGateway() {
                 {/* Content */}
                 <h3
                   className={cn(
-                    "font-display text-2xl md:text-3xl font-semibold mb-3",
+                    "font-display text-3xl md:text-4xl font-bold mb-4",
                     "text-foreground group-hover:text-foreground"
                   )}
                 >
                   {isRTL ? category.titleAr : category.titleFr}
                 </h3>
-                <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-6">
+                <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-8 font-medium">
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
 
                 {/* CTA */}
                 <div
                   className={cn(
-                    "inline-flex items-center gap-2 font-medium",
+                    "inline-flex items-center gap-3 font-semibold text-base",
                     category.accentColor,
-                    "group-hover:gap-3 transition-all duration-300"
+                    "group-hover:gap-4 transition-all duration-300"
                   )}
                 >
                   <span>{copy.explore}</span>
@@ -151,11 +152,11 @@ export default function EntryGateway() {
                 {/* Decorative Corner */}
                 <div
                   className={cn(
-                    "absolute -bottom-12 -right-12 w-32 h-32 rounded-full opacity-10",
+                    "absolute -bottom-16 -right-16 w-40 h-40 rounded-full opacity-10",
                     category.accentColor === "text-primary"
                       ? "bg-primary"
                       : "bg-secondary",
-                    "group-hover:opacity-20 transition-opacity duration-300"
+                    "group-hover:opacity-25 group-hover:scale-125 transition-all duration-500"
                   )}
                 />
               </button>

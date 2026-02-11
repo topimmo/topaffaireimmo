@@ -129,17 +129,17 @@ export default function HeroSearch() {
           alt="Beautiful modern home"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-charcoal/70 via-charcoal/50 to-charcoal/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-charcoal/75 via-charcoal/55 to-charcoal/85" />
       </div>
 
       {/* Content */}
       <div className="container relative z-10 pt-24 pb-12 md:pt-28 md:pb-16">
         <div className="max-w-3xl mx-auto text-center mb-8 md:mb-12">
-          <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-white mb-4 leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700 drop-shadow-lg">
             {t('hero.title')}{" "}
-            <span className="text-primary">{t('hero.titleHighlight')}</span>
+            <span className="text-primary drop-shadow-md">{t('hero.titleHighlight')}</span>
           </h1>
-          <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+          <p className="text-base md:text-xl text-white/90 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 font-medium drop-shadow-md">
             {t('hero.subtitle')}
           </p>
         </div>
@@ -147,17 +147,17 @@ export default function HeroSearch() {
         {/* Search Form */}
         <form
           onSubmit={handleSearch}
-          className="bg-white rounded-xl p-5 md:p-6 shadow-2xl max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300"
+          className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-2xl max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300 border-2 border-white/50"
         >
           {/* Transaction Type Tabs */}
-          <div className="flex gap-2 mb-5">
+          <div className="flex gap-2 mb-6">
             <button
               type="button"
               onClick={() => setTransactionType("sale")}
-              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 transactionType === "sale"
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-muted text-foreground/70 hover:bg-muted/80"
+                  ? "bg-primary text-white shadow-lg scale-105"
+                  : "bg-muted/50 text-foreground/70 hover:bg-muted hover:scale-102 shadow-sm"
               }`}
             >
               {t('hero.forSale')}
@@ -165,10 +165,10 @@ export default function HeroSearch() {
             <button
               type="button"
               onClick={() => setTransactionType("rent")}
-              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 transactionType === "rent"
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-muted text-foreground/70 hover:bg-muted/80"
+                  ? "bg-primary text-white shadow-lg scale-105"
+                  : "bg-muted/50 text-foreground/70 hover:bg-muted hover:scale-102 shadow-sm"
               }`}
             >
               {t('hero.forRent')}
@@ -176,12 +176,12 @@ export default function HeroSearch() {
           </div>
 
           {/* Search Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* City */}
             <div className="relative">
-              <MapPin className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10`} />
+              <MapPin className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10`} />
               <Select value={city} onValueChange={setCity}>
-                <SelectTrigger className={`${isRTL ? 'pr-9' : 'pl-9'} h-11 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all`}>
+                <SelectTrigger className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 bg-background border-2 border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm hover:shadow-md hover:border-primary/40`}>
                   <SelectValue placeholder={t('hero.selectCity')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -196,9 +196,9 @@ export default function HeroSearch() {
 
             {/* Property Type */}
             <div className="relative">
-              <Home className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10`} />
+              <Home className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10`} />
               <Select value={propertyType} onValueChange={setPropertyType}>
-                <SelectTrigger className={`${isRTL ? 'pr-9' : 'pl-9'} h-11 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all`}>
+                <SelectTrigger className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 bg-background border-2 border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm hover:shadow-md hover:border-primary/40`}>
                   <SelectValue placeholder={t('hero.propertyType')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,7 +216,7 @@ export default function HeroSearch() {
 
             {/* Max Price */}
             <div className="relative">
-              <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-muted-foreground font-mono-price text-xs`}>
+              <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-muted-foreground font-mono-price text-sm font-semibold`}>
                 MAD
               </span>
               <Input
@@ -224,7 +224,7 @@ export default function HeroSearch() {
                 placeholder={t('hero.maxPrice')}
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className={`${isRTL ? 'pr-11' : 'pl-11'} h-11 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all`}
+                className={`${isRTL ? 'pr-12' : 'pl-12'} h-12 bg-background border-2 border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm hover:shadow-md hover:border-primary/40`}
               />
             </div>
 
@@ -232,9 +232,9 @@ export default function HeroSearch() {
             <Button
               type="submit"
               size="lg"
-              className="h-11 text-sm font-medium shadow-md hover:shadow-lg transition-all"
+              className="h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 active:translate-y-0"
             >
-              <Search className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              <Search className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
               {t('hero.search')}
             </Button>
           </div>
