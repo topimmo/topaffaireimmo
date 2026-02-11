@@ -92,7 +92,10 @@ export default function PropertyCard({
         )} />
 
         {/* Badges - Premium styling */}
-        <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} flex gap-2 flex-wrap`}>
+        <div className={cn(
+          "absolute top-3 flex gap-2 flex-wrap",
+          isRTL ? "right-3" : "left-3"
+        )}>
           {property.isPremium && (
             <Badge className="bg-primary text-primary-foreground font-semibold shadow-lg border border-primary-foreground/20">
               {isRTL ? 'بريميوم' : 'Premium'}
