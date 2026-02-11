@@ -47,17 +47,17 @@ export default function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
         isScrolled
-          ? "h-16 bg-background/98 backdrop-blur-md shadow-sm border-b border-border/50"
-          : "h-18 bg-background/95 backdrop-blur-sm",
+          ? "h-16 bg-background/98 backdrop-blur-md shadow-lg border-b-2 border-border/60"
+          : "h-18 bg-background/95 backdrop-blur-sm shadow-md",
         isRTL ? "rtl" : "ltr"
       )}
     >
       <div className="container h-full flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <Building2 className="h-7 w-7 text-primary" />
+        <Link to="/" className="flex items-center gap-2 group transition-all duration-300 hover:scale-105">
+          <Building2 className="h-7 w-7 text-primary group-hover:rotate-6 transition-transform duration-300" />
           <span className="font-display text-lg font-semibold text-foreground">
             TopAffaire<span className="text-primary">Immo</span>
           </span>
@@ -67,25 +67,25 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-6">
           <Link
             to="/buy"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.buy')}
           </Link>
           <Link
             to="/rent"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.rent')}
           </Link>
           <Link
             to="/services"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.services')}
           </Link>
           <Link
             to="/agencies"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.agencies')}
           </Link>
@@ -97,14 +97,14 @@ export default function Header() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2 shadow-sm hover:shadow-md">
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
                     {user?.email?.split('@')[0] || 'User'}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 shadow-xl border-2">
                 <>
                   <DropdownMenuItem asChild>
                       <Link to="/dashboard" className="flex items-center gap-2">
@@ -136,10 +136,10 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="hover:scale-105 transition-transform duration-300">
                 <Link to="/login">{t('nav.login')}</Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" asChild className="shadow-md hover:shadow-lg">
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
                   {isRTL ? 'نشر إعلان مجاني' : 'Publier gratuitement'}
@@ -153,13 +153,13 @@ export default function Header() {
         <div className="md:hidden flex items-center gap-2">
           <LanguageSwitcher />
           <button
-            className="p-2"
+            className="p-2 hover:bg-muted rounded-lg transition-all duration-300"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className="h-6 w-6 transition-transform duration-300 rotate-90" />
             ) : (
-              <Menu className="h-6 w-6" />
+              <Menu className="h-6 w-6 transition-transform duration-300" />
             )}
           </button>
         </div>
@@ -167,8 +167,8 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b shadow-lg">
-          <nav className="container py-4 flex flex-col gap-4">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-md border-b-2 shadow-xl animate-in slide-in-from-top-4 duration-300">
+          <nav className="container py-6 flex flex-col gap-4">
             <Link
               to="/buy"
               className="text-sm font-medium py-2"
