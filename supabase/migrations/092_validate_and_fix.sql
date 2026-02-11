@@ -206,3 +206,62 @@ BEGIN
   RAISE NOTICE 'RLS enabled on required tables';
   RAISE NOTICE 'All required indexes created';
 END $$;
+
+-- =====================================================
+-- 7. TESTING HELPER FUNCTIONS
+-- =====================================================
+-- NOTE: These are for testing in SQL Editor only
+-- In production, auth.uid() is automatically set by Supabase Auth
+
+-- Helper function to simulate authenticated user for testing
+-- Usage: SELECT set_config('request.jwt.claim.sub', 'your-user-uuid-here', false);
+-- Then you can test functions that use auth.uid()
+
+-- Example test scenario:
+-- 1. Set test user ID:
+--    SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+--
+-- 2. Verify it works:
+--    SELECT auth.uid();
+--    -- Should return: 00000000-0000-0000-0000-000000000001
+--
+-- 3. Test create_my_artisan_profile:
+--    SELECT * FROM public.create_my_artisan_profile(
+--      p_service_category_id := 'category-uuid-here',
+--      p_business_name := 'Test Business',
+--      p_city_id := 1,
+--      p_neighborhood_ids := ARRAY[1,2],
+--      p_phone := '0612345678'
+--    );
+--
+-- 4. Clear test user (reset to postgres/admin):
+--    SELECT set_config('request.jwt.claim.sub', '', false);
+
+-- Create a test helper function for convenience
+CREATE OR REPLACE FUNCTION public.set_test_user(user_uuid TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', user_uuid, false);
+  RETURN 'Test user set to: ' || user_uuid || '. auth.uid() will now return this UUID.';
+END;
+$$;
+
+COMMENT ON FUNCTION public.set_test_user IS 
+  'Helper function for testing - sets auth.uid() to a specific UUID in SQL Editor. Use only for development/testing.';
+
+-- Create a function to clear test user
+CREATE OR REPLACE FUNCTION public.clear_test_user()
+RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '', false);
+  RETURN 'Test user cleared. auth.uid() will now return NULL.';
+END;
+$$;
+
+COMMENT ON FUNCTION public.clear_test_user IS 
+  'Helper function for testing - clears the test user set by set_test_user(). Use only for development/testing.';
+

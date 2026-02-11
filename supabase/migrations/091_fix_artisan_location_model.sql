@@ -246,8 +246,11 @@ $$;
 COMMENT ON FUNCTION public.create_my_artisan_profile IS 
   'Create artisan profile for authenticated user (SECURITY DEFINER) - validates all inputs and ensures wallet exists';
 
--- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.create_my_artisan_profile TO authenticated;
+-- Drop old function signature if it exists (from before location model fix)
+DROP FUNCTION IF EXISTS public.create_my_artisan_profile(UUID, TEXT, TEXT, TEXT, INTEGER[], TEXT, TEXT, TEXT);
+
+-- Grant execute permission to authenticated users with explicit signature
+GRANT EXECUTE ON FUNCTION public.create_my_artisan_profile(UUID, TEXT, TEXT, TEXT, INTEGER, INTEGER[], TEXT, TEXT, TEXT) TO authenticated;
 
 -- =====================================================
 -- 5. UPDATE check_contact_access FOR NEIGHBORHOOD SCOPE
@@ -312,7 +315,7 @@ $$;
 COMMENT ON FUNCTION public.check_contact_access IS 
   'Check if user has valid contact access pass for city + service category + optional neighborhoods';
 
-GRANT EXECUTE ON FUNCTION public.check_contact_access TO authenticated;
+GRANT EXECUTE ON FUNCTION public.check_contact_access(UUID, INTEGER, UUID, INTEGER[]) TO authenticated;
 
 -- =====================================================
 -- 6. UPDATE debit_wallet_for_contact FOR NEIGHBORHOOD SCOPE
@@ -464,4 +467,4 @@ $$;
 COMMENT ON FUNCTION public.debit_wallet_for_contact IS 
   'Debit wallet and create contact access pass with neighborhood scope (SECURITY DEFINER)';
 
-GRANT EXECUTE ON FUNCTION public.debit_wallet_for_contact TO authenticated;
+GRANT EXECUTE ON FUNCTION public.debit_wallet_for_contact(INTEGER, UUID, INTEGER[]) TO authenticated;
