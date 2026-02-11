@@ -19,7 +19,9 @@ import {
   Menu,
   X,
   ImageIcon,
-  PackagePlus
+  PackagePlus,
+  Wrench,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +77,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       current: location.pathname === '/admin/locations',
     },
     {
+      name: isRTL ? 'الخدمات' : 'Services',
+      href: '/admin/services/categories',
+      icon: Wrench,
+      current: location.pathname.startsWith('/admin/services'),
+    },
+    {
+      name: isRTL ? 'الحرفيون' : 'Artisans',
+      href: '/admin/artisans',
+      icon: Users,
+      current: location.pathname === '/admin/artisans',
+    },
+    {
       name: isRTL ? 'المحتوى' : 'Content',
       href: '/admin/content/pages',
       icon: BookOpen,
@@ -95,7 +109,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       name: isRTL ? 'تحقيق الدخل' : 'Monetization',
       href: '/admin/monetization',
-      icon: Building2,
+      icon: DollarSign,
       current: location.pathname === '/admin/monetization',
     },
     {

@@ -197,6 +197,32 @@ export default function ArtisanDashboard() {
                   }}
                 />
               )}
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{isRTL ? 'الإجراءات السريعة' : 'Actions rapides'}</CardTitle>
+                  <CardDescription>
+                    {isRTL
+                      ? 'إدارة خدماتك وطلباتك'
+                      : 'Gérez vos services et demandes'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button asChild className="w-full justify-start" variant="outline">
+                    <Link to="/artisan/services">
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      {isRTL ? 'إدارة الخدمات' : 'Gérer les services'}
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full justify-start" variant="outline">
+                    <Link to="/artisan/requests">
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      {isRTL ? 'الطلبات المعينة' : 'Demandes assignées'}
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Sidebar - Wallet (only show when monetization is ON) */}
