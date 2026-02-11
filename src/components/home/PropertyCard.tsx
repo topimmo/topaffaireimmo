@@ -60,9 +60,8 @@ export default function PropertyCard({
       to={`/property/${property.id}`}
       onClick={handleCardClick}
       className={cn(
-        "group block bg-white rounded-xl border border-muted overflow-hidden transition-all duration-300 hover:-translate-y-1",
-        "shadow-[0_2px_4px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.06)]",
-        "hover:shadow-[0_4px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.1)]",
+        "group block bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:-translate-y-0.5",
+        "shadow-sm hover:shadow-lg hover:border-primary/20",
         className
       )}
     >

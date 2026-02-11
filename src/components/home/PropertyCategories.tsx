@@ -254,57 +254,44 @@ export default function PropertyCategories() {
   };
 
   return (
-    <section className={`py-12 md:py-16 lg:py-20 bg-muted/30 ${isRTL ? "rtl" : "ltr"}`}>
-      <div className="container px-4 md:px-6 lg:px-8">
+    <section className={`py-12 md:py-16 bg-background ${isRTL ? "rtl" : "ltr"}`}>
+      <div className="container">
         {/* Section Title */}
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-semibold mb-3 md:mb-4">
+        <div className="text-center mb-8 md:mb-10">
+          <h2 className="font-display text-2xl md:text-3xl font-semibold mb-2">
             {isRTL ? "تصفح حسب نوع العقار" : "Parcourir par catégorie"}
           </h2>
-          <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
             {isRTL
               ? "اكتشف مجموعة واسعة من العقارات التي تناسب احتياجاتك"
               : "Découvrez une large gamme de propriétés adaptées à vos besoins"}
           </p>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 lg:gap-6">
+        {/* Categories Grid - Auto-fit for scalability */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {categories.map((category) => {
             const Icon = category.icon;
             return (
               <button
                 key={category.id}
                 onClick={() => handleCategoryClick(category.link)}
-                className={`
-                  group relative overflow-hidden rounded-lg md:rounded-xl 
-                  bg-gradient-to-br ${category.gradient}
-                  p-4 md:p-6 lg:p-8
-                  transition-all duration-300 ease-out
-                  hover:shadow-lg hover:scale-105
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                  text-left
-                `}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-md hover:border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 text-start"
               >
                 {/* Icon */}
-                <div className="mb-3 md:mb-4">
-                  <div className="inline-flex p-2 md:p-3 rounded-lg bg-white/80 backdrop-blur-sm">
-                    <Icon className={`h-5 w-5 md:h-6 md:w-6 lg:h-8 lg:w-8 ${category.iconColor}`} />
+                <div className="mb-3">
+                  <div className={`inline-flex p-2.5 rounded-lg ${category.gradient}`}>
+                    <Icon className={`h-5 w-5 ${category.iconColor}`} />
                   </div>
                 </div>
 
                 {/* Content */}
-                <div>
-                  <h3 className="font-semibold text-sm md:text-base lg:text-lg mb-1 md:mb-2 text-foreground">
-                    {isRTL ? category.nameAr : category.nameFr}
-                  </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">
-                    {isRTL ? category.descriptionAr : category.descriptionFr}
-                  </p>
-                </div>
-
-                {/* Hover effect overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                <h3 className="font-medium text-sm mb-1 text-foreground group-hover:text-primary transition-colors">
+                  {isRTL ? category.nameAr : category.nameFr}
+                </h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {isRTL ? category.descriptionAr : category.descriptionFr}
+                </p>
               </button>
             );
           })}

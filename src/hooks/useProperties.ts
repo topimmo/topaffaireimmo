@@ -254,9 +254,11 @@ export function useFeaturedProperties(limit = 6) {
         // If we don't have enough featured properties, fill with latest published properties
         if (realFeatured.length < limit) {
           const neededCount = limit - realFeatured.length;
-          const excludeIds = realFeatured.map(p => p.id);
-          
-          const { data: latestData, error: latestError } = await supabase
+          const excludeIds = realFeatured.map((p) => p.id).filter(Boolean);
+
+          // Supabase `.in()` expects a non-empty array. Passing `null` (or building an `in (null)` string)
+          // causes Postgres UUID parse errors (22P02).
+          let latestQuery = supabase
             .from('properties')
             .select(`
               *,
@@ -265,9 +267,14 @@ export function useFeaturedProperties(limit = 6) {
               owner:profiles!properties_owner_id_fkey(id, full_name, phone, agency_name, advertiser_type)
             `)
             .eq('status', 'published')
-            .not('id', 'in', `(${excludeIds.length > 0 ? excludeIds.join(',') : 'null'})`)
             .order('created_at', { ascending: false })
             .limit(neededCount);
+
+          if (excludeIds.length > 0) {
+            latestQuery = latestQuery.not('id', 'in', `(${excludeIds.join(',')})`);
+          }
+
+          const { data: latestData, error: latestError } = await latestQuery;
 
           if (isCancelled) return;
 

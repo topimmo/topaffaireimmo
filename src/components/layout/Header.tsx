@@ -49,51 +49,45 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out",
         isScrolled
-          ? "h-16 bg-background/95 backdrop-blur-md shadow-sm"
-          : "h-20 bg-transparent",
+          ? "h-16 bg-background/98 backdrop-blur-md shadow-sm border-b border-border/50"
+          : "h-18 bg-background/95 backdrop-blur-sm",
         isRTL ? "rtl" : "ltr"
       )}
     >
       <div className="container h-full flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <Building2 className="h-8 w-8 text-primary" />
-          <span className="font-display text-xl font-semibold text-foreground">
+          <Building2 className="h-7 w-7 text-primary" />
+          <span className="font-display text-lg font-semibold text-foreground">
             TopAffaire<span className="text-primary">Immo</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6">
           <Link
             to="/buy"
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
           >
             {t('nav.buy')}
           </Link>
           <Link
             to="/rent"
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
           >
             {t('nav.rent')}
           </Link>
           <Link
-            to="/agencies"
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
-          >
-            {t('nav.agencies')}
-          </Link>
-          <Link
-            to="/advertise"
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
-          >
-            {t('nav.advertise')}
-          </Link>
-          <Link
             to="/services"
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
           >
             {t('nav.services')}
+          </Link>
+          <Link
+            to="/agencies"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+          >
+            {t('nav.agencies')}
           </Link>
         </nav>
 

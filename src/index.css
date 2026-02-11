@@ -194,11 +194,28 @@
 
   /* Responsive Spacing Utilities */
   .section-spacing {
-    @apply py-8 md:py-12 lg:py-16;
+    @apply py-12 md:py-16;
+  }
+
+  .section-spacing-lg {
+    @apply py-16 md:py-20;
   }
 
   .content-spacing {
-    @apply space-y-4 md:space-y-6 lg:space-y-8;
+    @apply space-y-4 md:space-y-6;
+  }
+
+  /* Text styles for unified design */
+  .section-title {
+    @apply font-display text-2xl md:text-3xl font-semibold text-foreground;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-muted-foreground mt-1;
+  }
+
+  .section-label {
+    @apply text-xs font-medium uppercase tracking-wider;
   }
 
   /* Prevent layout shift with aspect ratio containers */

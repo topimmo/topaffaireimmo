@@ -1,4 +1,5 @@
 import HeroSearch from "@/components/home/HeroSearch";
+import EntryGateway from "@/components/home/EntryGateway";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import LatestListings from "@/components/home/LatestListings";
 import PropertyCategories from "@/components/home/PropertyCategories";
@@ -41,39 +42,32 @@ function Home() {
         structuredData={structuredData}
       />
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* Hero Section with Search */}
         <HeroSearch />
 
-        {/* Promo Banner (home-top) - After hero, before featured properties */}
-        <section className="py-6">
-          <PromoBanner position="home-top" />
-        </section>
+        {/* Entry Gateway - Services / Real Estate */}
+        <EntryGateway />
 
-        {/* Featured properties - Reduced spacing for compact design */}
+        {/* Promo Banner (home-top) */}
+        <PromoBanner position="home-top" />
+
+        {/* Featured properties */}
         <FeaturedProperties />
 
-        {/* ✅ Ad banner (home middle) - Small gap above Featured section */}
-        <AdBanner
-          page="home"
-          position="home-middle"
-          className="-mt-4"
-        />
+        {/* Ad banner (home middle) */}
+        <AdBanner page="home" position="home-middle" className="py-8" />
 
-        {/* Promo Banner (home-middle) - Between sections */}
-        <section className="py-6">
-          <PromoBanner position="home-middle" />
-        </section>
+        {/* Promo Banner (home-middle) */}
+        <PromoBanner position="home-middle" />
 
         {/* Latest listings */}
-        <section className="mt-16">
-          <LatestListings />
-        </section>
+        <LatestListings />
 
         {/* Property Categories */}
         <PropertyCategories />
 
         {/* FAQ Section with FAQPage Schema */}
-        <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 mt-16" />
+        <FAQ items={getGeneralFAQ(t)} className="bg-muted/20 py-12 md:py-16" />
       </main>
     </>
   );
