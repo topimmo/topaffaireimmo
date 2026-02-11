@@ -149,6 +149,39 @@ export type Database = {
         }
         Relationships: []
       }
+      artisan_profile_neighborhoods: {
+        Row: {
+          artisan_profile_id: string
+          neighborhood_id: number
+          created_at: string
+        }
+        Insert: {
+          artisan_profile_id: string
+          neighborhood_id: number
+          created_at?: string
+        }
+        Update: {
+          artisan_profile_id?: string
+          neighborhood_id?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artisan_profile_neighborhoods_artisan_profile_id_fkey"
+            columns: ["artisan_profile_id"]
+            isOneToOne: false
+            referencedRelation: "artisan_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artisan_profile_neighborhoods_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artisan_profiles: {
         Row: {
           id: string
@@ -158,7 +191,6 @@ export type Database = {
           description_fr: string | null
           description_ar: string | null
           city_id: number
-          neighborhood_ids: number[] | null
           phone: string
           whatsapp: string | null
           email: string | null
@@ -177,7 +209,6 @@ export type Database = {
           description_fr?: string | null
           description_ar?: string | null
           city_id: number
-          neighborhood_ids?: number[] | null
           phone: string
           whatsapp?: string | null
           email?: string | null
@@ -196,7 +227,6 @@ export type Database = {
           description_fr?: string | null
           description_ar?: string | null
           city_id?: number
-          neighborhood_ids?: number[] | null
           phone?: string
           whatsapp?: string | null
           email?: string | null
