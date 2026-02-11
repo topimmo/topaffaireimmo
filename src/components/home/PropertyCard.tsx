@@ -66,7 +66,7 @@ export default function PropertyCard({
         className
       )}
     >
-      <Card className="overflow-hidden hover:-translate-y-1 transition-all duration-300">
+      <Card className="overflow-hidden hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300">
       {/* Image Container */}
       <div
         className={cn(
@@ -80,19 +80,19 @@ export default function PropertyCard({
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        {/* Premium gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-        {/* Badges */}
+        {/* Badges - Premium styling */}
         <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} flex gap-2`}>
           {property.featured && (
-            <Badge className="bg-secondary text-secondary-foreground font-medium">
+            <Badge className="bg-secondary text-secondary-foreground font-semibold shadow-md">
               {isRTL ? 'مميز' : 'À la une'}
             </Badge>
           )}
           <Badge
             variant="outline"
-            className="bg-white/90 backdrop-blur-sm text-foreground border-0"
+            className="bg-white/95 backdrop-blur-sm text-foreground border-0 font-medium shadow-sm"
           >
             {property.type}
           </Badge>
@@ -106,67 +106,67 @@ export default function PropertyCard({
             e.preventDefault();
             e.stopPropagation();
           }}
-          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm`}
+          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-md h-10 w-10`}
         >
-          <Heart className="h-4 w-4 text-foreground/70 hover:text-primary" />
+          <Heart className="h-4 w-4 text-foreground/70 hover:text-primary transition-colors" />
         </Button>
 
-        {/* Price */}
+        {/* Price - Premium display */}
         <div className={`absolute bottom-3 ${isRTL ? 'right-3' : 'left-3'}`}>
-          <p className="font-mono-price text-xl md:text-2xl font-semibold text-white drop-shadow-lg">
+          <p className="font-mono-price text-xl md:text-2xl font-bold text-white drop-shadow-lg">
             {formatPrice(property.price)}{" "}
-            <span className="text-sm font-normal">MAD</span>
+            <span className="text-sm font-medium opacity-90">MAD</span>
             {property.priceType === "rent" && (
-              <span className="text-sm font-normal">{t('property.perMonth')}</span>
+              <span className="text-sm font-medium opacity-90">{t('property.perMonth')}</span>
             )}
           </p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className={cn("p-4", size === "large" ? "md:p-4" : "md:p-5")}>
+      {/* Content - Enhanced spacing */}
+      <div className={cn("p-5", size === "large" ? "md:p-5" : "md:p-6")}>
         <h3
           className={cn(
-            "font-display font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors",
+            "font-display font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors tracking-tight",
             size === "large" ? "text-lg md:text-xl" : "text-lg"
           )}
         >
           {displayTitle}
         </h3>
 
-        <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
+        <div className="flex items-center gap-1.5 mt-2.5 text-muted-foreground">
           <MapPin className="h-4 w-4 flex-shrink-0" />
           <p className="text-sm line-clamp-1">
             {displayNeighborhood && (
               <>
                 <span className="font-medium text-foreground">{displayNeighborhood}</span>
-                <span className="mx-1.5">•</span>
+                <span className="mx-1.5 opacity-50">•</span>
               </>
             )}
             {displayCity}
           </p>
         </div>
 
-        {/* Features */}
+        {/* Features - Premium divider */}
         <div className={cn(
-          "flex items-center gap-4 border-t border-muted",
-          size === "large" ? "mt-3 pt-3" : "mt-4 pt-4"
+          "flex items-center gap-5 border-t border-border/50",
+          size === "large" ? "mt-4 pt-4" : "mt-5 pt-5"
         )}>
           {property.bedrooms !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Bed className="h-4 w-4" />
-              <span>{property.bedrooms}</span>
+              <span className="font-medium">{property.bedrooms}</span>
             </div>
           )}
           {property.bathrooms !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Bath className="h-4 w-4" />
-              <span>{property.bathrooms}</span>
+              <span className="font-medium">{property.bathrooms}</span>
             </div>
           )}
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Square className="h-4 w-4" />
-            <span>{property.area} m²</span>
+            <span className="font-medium">{property.area} m²</span>
           </div>
         </div>
       </div>

@@ -21,23 +21,23 @@ export default function ExploreByCityMap() {
   }
 
   return (
-    <section className={`home-bottom-section bg-background noise-texture ${isRTL ? "rtl" : "ltr"}`}>
+    <section className={`py-20 md:py-24 bg-muted/20 ${isRTL ? "rtl" : "ltr"}`}>
       <div className="container">
-        {/* Section Title */}
-        <div className="text-center mb-8">
-          <h2 className="font-display text-3xl md:text-4xl font-semibold mb-3">
+        {/* Section Title - Premium Typography */}
+        <div className="text-center mb-12">
+          <h2 className="section-title mb-3">
             {isRTL ? "استكشف حسب المدينة" : "Explore by City"}
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="section-subtitle max-w-2xl mx-auto">
             {isRTL
               ? "اكتشف العقارات في المدن الرئيسية بالمغرب"
               : "Découvrez les propriétés dans les principales villes du Maroc"}
           </p>
         </div>
 
-        {/* Most Requested Cities - Clickable Chips */}
-        <div className="mb-8">
-          <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">
+        {/* Most Requested Cities - Premium Chips */}
+        <div className="mb-12">
+          <h3 className="text-center section-label text-muted-foreground mb-5">
             {isRTL ? "المدن الأكثر طلباً" : "Most Requested Cities"}
           </h3>
           <div className="flex flex-wrap justify-center gap-3">
@@ -46,9 +46,9 @@ export default function ExploreByCityMap() {
                 key={city.slug}
                 variant="outline"
                 onClick={() => handleCityClick(city.slug)}
-                className="px-6 py-2.5 rounded-full hover:border-primary hover:bg-primary/5 shadow-sm"
+                className="px-6 py-3 rounded-full hover:border-primary hover:bg-primary/5 hover:shadow-md shadow-sm transition-all duration-300"
               >
-                <span className="font-medium">
+                <span className="font-semibold">
                   {isRTL ? city.nameAr : city.name}
                 </span>
               </Button>
@@ -57,7 +57,7 @@ export default function ExploreByCityMap() {
         </div>
 
         {/* Morocco Map */}
-        <div className="mt-8">
+        <div className="mt-10">
           <MoroccoMap />
         </div>
       </div>

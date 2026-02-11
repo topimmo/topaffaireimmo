@@ -26,8 +26,8 @@ const GATEWAY_CATEGORIES: GatewayCategory[] = [
     descriptionAr: "اشترِ أو استأجر أو بِع العقارات في المغرب",
     link: "/search",
     accentColor: "text-primary",
-    bgGradient: "from-primary/5 via-primary/10 to-primary/5",
-    iconBg: "bg-primary/10",
+    bgGradient: "from-primary/5 via-primary/8 to-primary/3",
+    iconBg: "bg-primary/12",
   },
   {
     id: "services",
@@ -38,8 +38,8 @@ const GATEWAY_CATEGORIES: GatewayCategory[] = [
     descriptionAr: "ابحث عن محترفين لمنزلك",
     link: "/services",
     accentColor: "text-secondary",
-    bgGradient: "from-secondary/5 via-secondary/10 to-secondary/5",
-    iconBg: "bg-secondary/10",
+    bgGradient: "from-secondary/5 via-secondary/8 to-secondary/3",
+    iconBg: "bg-secondary/12",
   },
 ];
 
@@ -60,23 +60,25 @@ export default function EntryGateway() {
   return (
     <section
       className={cn(
-        "py-20 md:py-28 bg-gradient-to-b from-background via-muted/20 to-background",
+        "py-20 md:py-28 bg-gradient-to-b from-muted/30 via-background to-muted/20",
         isRTL && "rtl"
       )}
     >
-      <div className="container">
-        {/* Section Header */}
+      <div className="container max-w-6xl">
+        {/* Section Header - Premium Typography */}
         <div className="text-center max-w-2xl mx-auto mb-16 md:mb-20">
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground mb-4 animate-in fade-in slide-in-from-bottom-3 duration-700">
+          <h2 className="section-title mb-4 animate-in fade-in slide-in-from-bottom-3 duration-700">
             {copy.headline}
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground animate-in fade-in slide-in-from-bottom-3 duration-700 delay-150">{copy.subheadline}</p>
+          <p className="section-subtitle animate-in fade-in slide-in-from-bottom-3 duration-700 delay-150">
+            {copy.subheadline}
+          </p>
         </div>
 
-        {/* Gateway Cards - Flexible Grid */}
+        {/* Gateway Cards - Premium Grid with auto-fit */}
         <div
           className={cn(
-            "grid gap-6 md:gap-8 max-w-5xl mx-auto",
+            "grid gap-8 md:gap-10 max-w-5xl mx-auto",
             // Auto-fit grid that adapts to content
             "grid-cols-1 sm:grid-cols-2",
             // When there are more than 2 items, use 3 columns on large screens
@@ -92,17 +94,18 @@ export default function EntryGateway() {
                 key={category.id}
                 onClick={() => navigate(category.link)}
                 className={cn(
-                  "group relative overflow-hidden rounded-2xl border-2 border-border/60",
+                  "group relative overflow-hidden rounded-2xl",
+                  "border border-border/40 shadow-lg hover:shadow-2xl",
                   "bg-card hover:bg-gradient-to-br",
                   category.bgGradient,
                   "p-10 md:p-12 text-start transition-all duration-500",
-                  "hover:shadow-2xl hover:-translate-y-2 hover:border-border hover:scale-[1.02]",
+                  "hover:-translate-y-2 hover:border-border/60 hover:scale-[1.02]",
                   "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2",
                   "animate-in fade-in slide-in-from-bottom-4",
                   index === 0 ? "duration-700" : "duration-700 delay-300"
                 )}
               >
-                {/* Icon */}
+                {/* Icon - Larger & more prominent */}
                 <div
                   className={cn(
                     "w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center mb-8",
@@ -118,10 +121,10 @@ export default function EntryGateway() {
                   />
                 </div>
 
-                {/* Content */}
+                {/* Content - Enhanced Typography */}
                 <h3
                   className={cn(
-                    "font-display text-2xl md:text-3xl font-semibold mb-4",
+                    "font-display text-2xl md:text-3xl font-bold mb-4 tracking-tight",
                     "text-foreground group-hover:text-foreground"
                   )}
                 >
@@ -131,10 +134,10 @@ export default function EntryGateway() {
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
 
-                {/* CTA */}
+                {/* CTA - Premium style */}
                 <div
                   className={cn(
-                    "inline-flex items-center gap-2 font-medium text-base",
+                    "inline-flex items-center gap-2 font-semibold text-base",
                     category.accentColor,
                     "group-hover:gap-3 transition-all duration-300"
                   )}
@@ -150,14 +153,14 @@ export default function EntryGateway() {
                   />
                 </div>
 
-                {/* Decorative Corner */}
+                {/* Decorative Corner - Subtle accent */}
                 <div
                   className={cn(
-                    "absolute -bottom-12 -right-12 w-40 h-40 rounded-full opacity-10",
+                    "absolute -bottom-16 -right-16 w-48 h-48 rounded-full opacity-8",
                     category.accentColor === "text-primary"
                       ? "bg-primary"
                       : "bg-secondary",
-                    "group-hover:opacity-20 group-hover:scale-125 transition-all duration-500"
+                    "group-hover:opacity-15 group-hover:scale-125 transition-all duration-500"
                   )}
                 />
               </button>

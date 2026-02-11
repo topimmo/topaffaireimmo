@@ -67,52 +67,52 @@ export default function FeaturedProperties() {
     const skeletonCount = 4;
     
     return (
-      <section className={`section-spacing bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+      <section className={`py-20 md:py-24 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="container">
           {/* Section Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-xs font-medium text-primary uppercase tracking-wider">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <span className="section-label text-primary">
                   {isRTL ? 'مختارة لك' : 'Sélectionné pour vous'}
                 </span>
               </div>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">
+              <h2 className="section-title">
                 {t('featured.title')}
               </h2>
-              <p className="text-muted-foreground text-sm mt-1 max-w-xl">
+              <p className="section-subtitle max-w-xl">
                 {t('featured.subtitle')}
               </p>
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 variant="outline"
                 size="icon"
                 disabled
-                className="rounded-full h-9 w-9 border-border"
+                className="rounded-full h-11 w-11 border-border/60"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
                 disabled
-                className="rounded-full h-9 w-9 border-border"
+                className="rounded-full h-11 w-11 border-border/60"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               </Button>
             </div>
           </div>
 
           {/* Skeleton Carousel */}
-          <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
             {Array.from({ length: skeletonCount }).map((_, index) => (
               <div
                 key={index}
-                className="flex-shrink-0 w-[280px] md:w-[320px] snap-start"
+                className="flex-shrink-0 w-[300px] md:w-[340px] snap-start"
               >
                 <PropertyCardSkeleton size="large" />
               </div>
@@ -126,56 +126,56 @@ export default function FeaturedProperties() {
   // Always render section - never empty (fallback to dummy properties handled in hook)
 
   return (
-    <section className={`py-12 md:py-16 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+    <section className={`py-20 md:py-24 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="container">
-        {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        {/* Section Header - Premium Typography */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">
+            <div className="flex items-center gap-2.5 mb-3">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <span className="section-label text-primary">
                 {isRTL ? 'مختارة لك' : 'Sélectionné pour vous'}
               </span>
             </div>
-            <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">
+            <h2 className="section-title">
               {t('featured.title')}
             </h2>
-            <p className="text-muted-foreground text-sm mt-1 max-w-xl">
+            <p className="section-subtitle max-w-xl">
               {t('featured.subtitle')}
             </p>
           </div>
 
-          {/* Navigation Buttons */}
-          <div className="flex gap-2">
+          {/* Navigation Buttons - Premium */}
+          <div className="flex gap-3">
             <Button
               variant="outline"
               size="icon"
               onClick={() => scroll("left")}
-              className="rounded-full h-9 w-9 border-border hover:border-primary hover:text-primary"
+              className="rounded-full h-11 w-11 border-border/60 hover:border-primary hover:text-primary hover:bg-primary/5"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => scroll("right")}
-              className="rounded-full h-9 w-9 border-border hover:border-primary hover:text-primary"
+              className="rounded-full h-11 w-11 border-border/60 hover:border-primary hover:text-primary hover:bg-primary/5"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        {/* Carousel */}
+        {/* Carousel - Premium spacing */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
+          className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {featuredProperties.map((property) => (
             <div
               key={property.id}
-              className="flex-shrink-0 w-[280px] md:w-[320px] snap-start"
+              className="flex-shrink-0 w-[300px] md:w-[340px] snap-start"
             >
               <PropertyCard property={property} size="large" />
             </div>

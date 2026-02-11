@@ -72,27 +72,27 @@ export default function LatestListings() {
     const skeletonCount = 6;
     
     return (
-      <section className={`section-spacing bg-muted/20 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <section className={`py-20 md:py-24 bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="container">
           {/* Section Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-xs font-medium text-primary uppercase tracking-wider">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Clock className="h-5 w-5 text-primary" />
+                <span className="section-label text-primary">
                   {isRTL ? 'أضيف مؤخراً' : 'Récemment ajouté'}
                 </span>
               </div>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">
+              <h2 className="section-title">
                 {t('latest.title')}
               </h2>
-              <p className="text-muted-foreground text-sm mt-1 max-w-xl">
+              <p className="section-subtitle max-w-xl">
                 {t('latest.subtitle')}
               </p>
             </div>
 
             <Link to="/search">
-              <Button variant="outline" className="gap-2 h-9" disabled>
+              <Button variant="outline" className="gap-2.5 h-11" disabled>
                 {t('viewAll')}
                 <ArrowRight className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
               </Button>
@@ -100,13 +100,14 @@ export default function LatestListings() {
           </div>
 
           {/* Filter Pills - Show as disabled during loading */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-3 mb-10">
             {filters.map((filter) => (
               <Button
                 key={filter.value}
                 variant="outline"
                 size="sm"
                 disabled
+                className="rounded-full px-5"
               >
                 {filter.label}
               </Button>
@@ -114,7 +115,7 @@ export default function LatestListings() {
           </div>
 
           {/* Skeleton Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {Array.from({ length: skeletonCount }).map((_, index) => (
               <div key={index}>
                 <PropertyCardSkeleton size="default" />
@@ -132,35 +133,35 @@ export default function LatestListings() {
   }
 
   return (
-    <section className={`py-12 md:py-16 bg-muted/20 ${isRTL ? 'rtl' : 'ltr'}`}>
+    <section className={`py-20 md:py-24 bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="container">
-        {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        {/* Section Header - Premium Typography */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">
+            <div className="flex items-center gap-2.5 mb-3">
+              <Clock className="h-5 w-5 text-primary" />
+              <span className="section-label text-primary">
                 {isRTL ? 'أضيف مؤخراً' : 'Récemment ajouté'}
               </span>
             </div>
-            <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">
+            <h2 className="section-title">
               {t('latest.title')}
             </h2>
-            <p className="text-muted-foreground text-sm mt-1 max-w-xl">
+            <p className="section-subtitle max-w-xl">
               {t('latest.subtitle')}
             </p>
           </div>
 
           <Link to="/search">
-            <Button variant="outline" className="gap-2 h-9">
+            <Button variant="outline" className="gap-2.5 h-11">
               {t('viewAll')}
               <ArrowRight className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
             </Button>
           </Link>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        {/* Filter Pills - Premium Styling */}
+        <div className="flex flex-wrap gap-3 mb-10">
           {filters.map((filter) => (
             <Button
               key={filter.value}
@@ -168,8 +169,8 @@ export default function LatestListings() {
               size="sm"
               onClick={() => setActiveFilter(filter.value)}
               className={cn(
-                "transition-all duration-300",
-                activeFilter === filter.value && "shadow-md"
+                "transition-all duration-300 rounded-full px-5",
+                activeFilter === filter.value && "shadow-md shadow-primary/25"
               )}
             >
               {filter.label}
@@ -177,8 +178,8 @@ export default function LatestListings() {
           ))}
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Grid - Premium Spacing */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {filteredListings.slice(0, 6).map((property, index) => (
             <div
               key={property.id}
@@ -191,8 +192,8 @@ export default function LatestListings() {
         </div>
 
         {filteredListings.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
+          <div className="text-center py-16">
+            <p className="text-muted-foreground text-lg">
               {isRTL ? 'لم يتم العثور على عقارات لهذه الفئة.' : 'Aucune propriété trouvée pour cette catégorie.'}
             </p>
           </div>

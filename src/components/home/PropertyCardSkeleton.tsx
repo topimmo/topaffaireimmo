@@ -13,8 +13,8 @@ export default function PropertyCardSkeleton({
   return (
     <div
       className={cn(
-        "block bg-white rounded-xl border border-muted overflow-hidden",
-        "shadow-[0_2px_4px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.06)]",
+        "block bg-white rounded-2xl border border-border/50 overflow-hidden",
+        "shadow-lg",
         className
       )}
     >
@@ -27,32 +27,32 @@ export default function PropertyCardSkeleton({
       />
 
       {/* Content Skeleton */}
-      <div className="p-4 md:p-5">
+      <div className="p-5 md:p-6">
         {/* Title Skeleton */}
         <Skeleton className={cn(
           "w-3/4 mb-3",
-          size === "large" ? "h-6" : "h-5"
+          size === "large" ? "h-7" : "h-6"
         )} />
 
         {/* Location Skeleton */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-5">
           <Skeleton className="h-4 w-4 rounded" />
           <Skeleton className="h-4 w-1/2" />
         </div>
 
         {/* Features Skeleton */}
-        <div className="flex items-center gap-4 pt-4 border-t border-muted">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-5 pt-5 border-t border-border/50">
+          <div className="flex items-center gap-2">
             <Skeleton className="h-4 w-4 rounded" />
             <Skeleton className="h-4 w-6" />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Skeleton className="h-4 w-4 rounded" />
             <Skeleton className="h-4 w-6" />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Skeleton className="h-4 w-4 rounded" />
-            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-14" />
           </div>
         </div>
       </div>

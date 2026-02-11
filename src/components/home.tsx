@@ -49,17 +49,23 @@ function Home() {
         {/* Entry Gateway - Services / Real Estate */}
         <EntryGateway />
 
-        {/* Promo Banner (home-top) */}
-        <PromoBanner position="home-top" />
+        {/* Promo Banner (home-top) - Ad Zone */}
+        <div className="ad-zone-wrapper py-6 md:py-8">
+          <PromoBanner position="home-top" />
+        </div>
 
         {/* Featured properties */}
         <FeaturedProperties />
 
-        {/* Ad banner (home middle) */}
-        <AdBanner page="home" position="home-middle" className="py-8" />
+        {/* Ad banner (home middle) - Ad Zone */}
+        <div className="ad-zone-wrapper">
+          <AdBanner page="home" position="home-middle" className="py-10 md:py-12" />
+        </div>
 
-        {/* Promo Banner (home-middle) */}
-        <PromoBanner position="home-middle" />
+        {/* Promo Banner (home-middle) - Ad Zone */}
+        <div className="ad-zone-wrapper py-6 md:py-8">
+          <PromoBanner position="home-middle" />
+        </div>
 
         {/* Latest listings */}
         <LatestListings />
@@ -71,7 +77,7 @@ function Home() {
         <ExploreByCityMap />
 
         {/* FAQ Section with FAQPage Schema */}
-        <FAQ items={getGeneralFAQ(t)} className="bg-muted/20 py-12 md:py-16" />
+        <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 py-20 md:py-24" />
       </main>
     </>
   );

@@ -121,43 +121,48 @@ export default function HeroSearch() {
   };
 
   return (
-    <section className={`relative min-h-[70vh] md:min-h-[75vh] flex items-center justify-center overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
-      {/* Background Image */}
+    <section className={`relative min-h-[65vh] md:min-h-[70vh] max-h-[75vh] flex items-center justify-center overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
+      {/* Background Image with Premium Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=80"
+          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=85"
           alt="Beautiful modern home"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-105 transition-transform duration-[20s] hover:scale-100"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-charcoal/75 via-charcoal/60 to-charcoal/85" />
+        {/* Premium darker gradient overlay for better contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
       </div>
 
       {/* Content */}
-      <div className="container relative z-10 pt-24 pb-12 md:pt-28 md:pb-16">
-        <div className="max-w-3xl mx-auto text-center mb-8 md:mb-12">
-          <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-white mb-4 leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700 drop-shadow-lg">
+      <div className="container relative z-10 pt-28 pb-16 md:pt-32 md:pb-20">
+        <div className="max-w-4xl mx-auto text-center mb-10 md:mb-14">
+          <h1 className="hero-title mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {t('hero.title')}{" "}
-            <span className="text-primary drop-shadow-md">{t('hero.titleHighlight')}</span>
+            <span className="text-primary relative">
+              {t('hero.titleHighlight')}
+              <span className="absolute -bottom-1 left-0 right-0 h-1 bg-primary/40 rounded-full" />
+            </span>
           </h1>
-          <p className="text-base md:text-lg text-white/90 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 drop-shadow-md">
+          <p className="hero-subtitle mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
             {t('hero.subtitle')}
           </p>
         </div>
 
-        {/* Search Form */}
+        {/* Search Form - Premium Glass Design */}
         <form
           onSubmit={handleSearch}
-          className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-2xl max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300 border-2 border-white/20"
+          className="bg-white/98 backdrop-blur-xl rounded-2xl p-7 md:p-10 shadow-2xl max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300 border border-white/50 ring-1 ring-black/5"
         >
-          {/* Transaction Type Tabs */}
-          <div className="flex gap-2 mb-6">
+          {/* Transaction Type Tabs - Premium Styling */}
+          <div className="flex gap-3 mb-8">
             <button
               type="button"
               onClick={() => setTransactionType("sale")}
-              className={`flex-1 px-5 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`flex-1 px-6 py-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 transactionType === "sale"
-                  ? "bg-primary text-white shadow-lg scale-105"
-                  : "bg-muted text-foreground/70 hover:bg-muted/90 hover:shadow-sm"
+                  ? "bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]"
+                  : "bg-muted/80 text-foreground/70 hover:bg-muted hover:shadow-sm"
               }`}
             >
               {t('hero.forSale')}
@@ -165,23 +170,23 @@ export default function HeroSearch() {
             <button
               type="button"
               onClick={() => setTransactionType("rent")}
-              className={`flex-1 px-5 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`flex-1 px-6 py-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 transactionType === "rent"
-                  ? "bg-primary text-white shadow-lg scale-105"
-                  : "bg-muted text-foreground/70 hover:bg-muted/90 hover:shadow-sm"
+                  ? "bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]"
+                  : "bg-muted/80 text-foreground/70 hover:bg-muted hover:shadow-sm"
               }`}
             >
               {t('hero.forRent')}
             </button>
           </div>
 
-          {/* Search Fields */}
+          {/* Search Fields - Premium Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* City */}
             <div className="relative">
-              <MapPin className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10`} />
+              <MapPin className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10`} />
               <Select value={city} onValueChange={setCity}>
-                <SelectTrigger className={`${isRTL ? 'pr-9' : 'pl-9'} h-12 bg-background border-2 border-border/60 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all shadow-sm hover:shadow-md`}>
+                <SelectTrigger className={`${isRTL ? 'pr-11' : 'pl-11'} h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}>
                   <SelectValue placeholder={t('hero.selectCity')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -196,9 +201,9 @@ export default function HeroSearch() {
 
             {/* Property Type */}
             <div className="relative">
-              <Home className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10`} />
+              <Home className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10`} />
               <Select value={propertyType} onValueChange={setPropertyType}>
-                <SelectTrigger className={`${isRTL ? 'pr-9' : 'pl-9'} h-12 bg-background border-2 border-border/60 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all shadow-sm hover:shadow-md`}>
+                <SelectTrigger className={`${isRTL ? 'pr-11' : 'pl-11'} h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}>
                   <SelectValue placeholder={t('hero.propertyType')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,7 +221,7 @@ export default function HeroSearch() {
 
             {/* Max Price */}
             <div className="relative">
-              <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-muted-foreground font-mono-price text-xs`}>
+              <span className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-muted-foreground font-mono-price text-xs font-medium`}>
                 MAD
               </span>
               <Input
@@ -224,22 +229,25 @@ export default function HeroSearch() {
                 placeholder={t('hero.maxPrice')}
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className={`${isRTL ? 'pr-11' : 'pl-11'} h-12 bg-background border-2 border-border/60 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all shadow-sm hover:shadow-md`}
+                className={`${isRTL ? 'pr-12' : 'pl-12'} h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}
               />
             </div>
 
-            {/* Search Button */}
+            {/* Search Button - Premium CTA */}
             <Button
               type="submit"
               size="lg"
-              className="h-12 text-sm font-medium shadow-lg hover:shadow-xl transition-all"
+              className="h-14 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all rounded-xl"
             >
-              <Search className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              <Search className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
               {t('hero.search')}
             </Button>
           </div>
         </form>
       </div>
+
+      {/* Spacer for section separation */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 }
