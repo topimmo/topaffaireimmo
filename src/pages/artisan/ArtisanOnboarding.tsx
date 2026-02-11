@@ -383,36 +383,6 @@ export default function ArtisanOnboarding() {
                   </div>
                 )}
 
-                {/* Cities Multi-Select */}
-                <div className="space-y-2">
-                  <Label>
-                    {isRTL ? 'المدن التي تخدمها' : 'Villes desservies'} *
-                  </Label>
-                  <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {cities.map((city) => (
-                        <div key={city.id} className="flex items-center space-x-2 space-x-reverse">
-                          <Checkbox
-                            id={`city-${city.id}`}
-                            checked={selectedCities.includes(city.id)}
-                            onCheckedChange={() => handleCityToggle(city.id)}
-                          />
-                          <Label
-                            htmlFor={`city-${city.id}`}
-                            className="text-sm font-normal cursor-pointer flex-1"
-                          >
-                            {isRTL ? city.name_ar : city.name_fr}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedCities.length}{' '}
-                    {isRTL ? 'مدينة محددة' : 'ville(s) sélectionnée(s)'}
-                  </p>
-                </div>
-
                 {/* Phone */}
                 <div className="space-y-2">
                   <Label htmlFor="phone">
