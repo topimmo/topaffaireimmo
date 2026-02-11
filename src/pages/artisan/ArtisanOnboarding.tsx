@@ -34,6 +34,13 @@ interface City {
   name_ar: string;
 }
 
+interface Neighborhood {
+  id: number;
+  city_id: number;
+  name_fr: string;
+  name_ar: string;
+}
+
 export default function ArtisanOnboarding() {
   const { isRTL } = useLanguage();
   const { user, loading: authLoading } = useAuth();
@@ -41,6 +48,7 @@ export default function ArtisanOnboarding() {
 
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
   const [cities, setCities] = useState<City[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +59,12 @@ export default function ArtisanOnboarding() {
     business_name: '',
     description_fr: '',
     description_ar: '',
+    city_id: '',
     phone: '',
     whatsapp: '',
     email: '',
   });
-  const [selectedCities, setSelectedCities] = useState<number[]>([]);
+  const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<number[]>([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -114,13 +123,44 @@ export default function ArtisanOnboarding() {
     }
   }, [user, isRTL]);
 
+  // Load neighborhoods when city changes
+  useEffect(() => {
+    const fetchNeighborhoods = async () => {
+      if (!formData.city_id) {
+        setNeighborhoods([]);
+        setSelectedNeighborhoods([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('neighborhoods')
+          .select('id, city_id, name_fr, name_ar')
+          .eq('city_id', parseInt(formData.city_id))
+          .order('name_fr', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching neighborhoods:', error);
+          return;
+        }
+
+        setNeighborhoods(data || []);
+        setSelectedNeighborhoods([]); // Reset selection when city changes
+      } catch (err) {
+        console.error('Exception fetching neighborhoods:', err);
+      }
+    };
+
+    fetchNeighborhoods();
+  }, [formData.city_id]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCityToggle = (cityId: number) => {
-    setSelectedCities((prev) =>
-      prev.includes(cityId) ? prev.filter((id) => id !== cityId) : [...prev, cityId]
+  const handleNeighborhoodToggle = (neighborhoodId: number) => {
+    setSelectedNeighborhoods((prev) =>
+      prev.includes(neighborhoodId) ? prev.filter((id) => id !== neighborhoodId) : [...prev, neighborhoodId]
     );
   };
 
@@ -134,8 +174,8 @@ export default function ArtisanOnboarding() {
       toast.error(isRTL ? 'يرجى إدخال اسم العمل' : 'Veuillez entrer le nom de l\'entreprise');
       return false;
     }
-    if (selectedCities.length === 0) {
-      toast.error(isRTL ? 'يرجى اختيار مدينة واحدة على الأقل' : 'Veuillez sélectionner au moins une ville');
+    if (!formData.city_id) {
+      toast.error(isRTL ? 'يرجى اختيار المدينة' : 'Veuillez sélectionner une ville');
       return false;
     }
     if (!formData.phone.trim()) {
@@ -159,7 +199,8 @@ export default function ArtisanOnboarding() {
         p_business_name: formData.business_name,
         p_description_fr: formData.description_fr || null,
         p_description_ar: formData.description_ar || null,
-        p_cities: selectedCities,
+        p_city_id: parseInt(formData.city_id),
+        p_neighborhood_ids: selectedNeighborhoods.length > 0 ? selectedNeighborhoods : null,
         p_phone: formData.phone,
         p_whatsapp: formData.whatsapp || null,
         p_email: formData.email || null,
@@ -176,7 +217,8 @@ export default function ArtisanOnboarding() {
         return;
       }
 
-      toast.success(isRTL ? 'تم إنشاء ملفك الشخصي بنجاح!' : 'Profil créé avec succès !');
+      // Show success message
+      toast.success(isRTL ? 'تم إنشاء حسابك! دابا كاين فمرحلة المراجعة.' : 'Profil créé ! Il est en attente de validation.');
       navigate('/dashboard/artisan');
     } catch (err) {
       console.error('Exception during submission:', err);
@@ -211,7 +253,7 @@ export default function ArtisanOnboarding() {
               <Briefcase className="h-8 w-8 text-primary" />
             </div>
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-              {isRTL ? 'انضم كمزود خدمة' : 'Rejoignez-nous comme prestataire'}
+              {isRTL ? 'إنشاء حساب حرفي' : 'Créer un profil prestataire'}
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               {isRTL
@@ -247,7 +289,7 @@ export default function ArtisanOnboarding() {
                 {/* Service Category */}
                 <div className="space-y-2">
                   <Label htmlFor="service_category">
-                    {isRTL ? 'فئة الخدمة' : 'Catégorie de service'} *
+                    {isRTL ? 'الحرفة' : 'Catégorie de service'} *
                   </Label>
                   <Select
                     value={formData.service_category_id}
@@ -271,7 +313,7 @@ export default function ArtisanOnboarding() {
                 {/* Business Name */}
                 <div className="space-y-2">
                   <Label htmlFor="business_name">
-                    {isRTL ? 'اسم العمل' : 'Nom de l\'entreprise'} *
+                    {isRTL ? 'الإسم التجاري' : 'Nom / Activité'} *
                   </Label>
                   <Input
                     id="business_name"
@@ -282,6 +324,64 @@ export default function ArtisanOnboarding() {
                     }
                   />
                 </div>
+
+                {/* City Select */}
+                <div className="space-y-2">
+                  <Label htmlFor="city">
+                    {isRTL ? 'المدينة' : 'Ville'} *
+                  </Label>
+                  <Select
+                    value={formData.city_id}
+                    onValueChange={(value) => handleInputChange('city_id', value)}
+                  >
+                    <SelectTrigger id="city">
+                      <SelectValue
+                        placeholder={isRTL ? 'اختر المدينة' : 'Sélectionnez une ville'}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.id.toString()}>
+                          {isRTL ? city.name_ar : city.name_fr}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Neighborhoods Multi-Select (filtered by city) */}
+                {formData.city_id && neighborhoods.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>
+                      {isRTL ? 'الأحياء (اختياري)' : 'Quartiers (optionnel)'}
+                    </Label>
+                    <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {neighborhoods.map((neighborhood) => (
+                          <div key={neighborhood.id} className="flex items-center space-x-2 space-x-reverse">
+                            <Checkbox
+                              id={`neighborhood-${neighborhood.id}`}
+                              checked={selectedNeighborhoods.includes(neighborhood.id)}
+                              onCheckedChange={() => handleNeighborhoodToggle(neighborhood.id)}
+                            />
+                            <Label
+                              htmlFor={`neighborhood-${neighborhood.id}`}
+                              className="text-sm font-normal cursor-pointer flex-1"
+                            >
+                              {isRTL ? neighborhood.name_ar : neighborhood.name_fr}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {selectedNeighborhoods.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {selectedNeighborhoods.length}{' '}
+                        {isRTL ? 'حي محدد' : 'quartier(s) sélectionné(s)'}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Cities Multi-Select */}
                 <div className="space-y-2">
@@ -358,7 +458,7 @@ export default function ArtisanOnboarding() {
                 {/* Description FR (Optional) */}
                 <div className="space-y-2">
                   <Label htmlFor="description_fr">
-                    {isRTL ? 'الوصف بالفرنسية (اختياري)' : 'Description en français (optionnel)'}
+                    {isRTL ? 'وصف الخدمة (اختياري)' : 'Description (optionnel)'}
                   </Label>
                   <Textarea
                     id="description_fr"
@@ -373,7 +473,8 @@ export default function ArtisanOnboarding() {
                   />
                 </div>
 
-                {/* Description AR (Optional) */}
+                {/* Description AR (Optional) - Hidden, we'll use description_fr for both */}
+                {false && (
                 <div className="space-y-2">
                   <Label htmlFor="description_ar">
                     {isRTL ? 'الوصف بالعربية (اختياري)' : 'Description en arabe (optionnel)'}
@@ -391,6 +492,7 @@ export default function ArtisanOnboarding() {
                     dir="rtl"
                   />
                 </div>
+                )}
 
                 {/* Submit Button */}
                 <div className="flex items-center gap-4 pt-4">
@@ -403,7 +505,7 @@ export default function ArtisanOnboarding() {
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4" />
-                        {isRTL ? 'إنشاء الملف الشخصي' : 'Créer le profil'}
+                        {isRTL ? 'تأكيد وإنشاء الحساب' : 'Valider et créer'}
                       </>
                     )}
                   </Button>
