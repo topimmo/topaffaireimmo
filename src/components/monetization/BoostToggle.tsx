@@ -134,7 +134,7 @@ export default function BoostToggle({
       <CardHeader>
         <div className="flex items-center gap-2">
           <Zap className={`h-5 w-5 ${isBoosted ? 'text-yellow-600' : ''}`} />
-          <CardTitle>{isRTL ? 'تعزيز الظهور' : 'Boost de visibilité'}</CardTitle>
+          <CardTitle>{isRTL ? 'الرفع فنتائج البحث (Boost)' : 'Boost de visibilité'}</CardTitle>
         </div>
         <CardDescription>
           {isRTL 
@@ -146,12 +146,12 @@ export default function BoostToggle({
         <div className="flex items-center justify-between">
           <div>
             <Label htmlFor="boost-toggle" className="text-base font-semibold">
-              {isRTL ? 'تفعيل التعزيز' : 'Activer le boost'}
+              {isRTL ? 'فعّل الرفع ديال الظهور' : 'Activer le boost'}
             </Label>
             <p className="text-sm text-muted-foreground">
               {isRTL 
-                ? `يتطلب رصيد ${minWallet} درهم على الأقل`
-                : `Nécessite au moins ${minWallet} MAD de solde`}
+                ? `خاص يكون فالرصيد على الأقل ${minWallet} درهم باش تقدر تفعّل الرفع.`
+                : `Il faut au moins ${minWallet} MAD de solde pour activer le boost.`}
             </p>
           </div>
           <Switch
@@ -174,7 +174,7 @@ export default function BoostToggle({
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <div>
                   <p className="font-semibold text-green-900 dark:text-green-100">
-                    {isRTL ? 'التعزيز نشط' : 'Boost actif'}
+                    {isRTL ? 'مفعّل — غادي تبان من الأوائل فـ المدينة ديالك.' : 'Activé — vous apparaissez en haut dans votre ville.'}
                   </p>
                   <p className="text-sm text-green-800 dark:text-green-200">
                     {isRTL 
@@ -188,7 +188,7 @@ export default function BoostToggle({
                 <AlertCircle className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <p className="font-semibold">
-                    {isRTL ? 'التعزيز غير نشط' : 'Boost inactif'}
+                    {isRTL ? 'موقّف — غادي تبان عادي ولكن من اللخر.' : 'Désactivé — vous restez visible mais plus bas.'}
                   </p>
                   {!canEnableBoost && walletBalance !== null && (
                     <p className="text-sm text-muted-foreground">

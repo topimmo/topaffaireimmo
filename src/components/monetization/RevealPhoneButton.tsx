@@ -31,6 +31,7 @@ interface RevealPhoneButtonProps {
   phone: string;
   cityId: number;
   serviceCategoryId: string;
+  neighborhoodIds?: number[] | null;
   artisanName: string;
 }
 
@@ -38,6 +39,7 @@ export default function RevealPhoneButton({
   phone,
   cityId,
   serviceCategoryId,
+  neighborhoodIds,
   artisanName,
 }: RevealPhoneButtonProps) {
   const { user } = useAuth();
@@ -96,6 +98,7 @@ export default function RevealPhoneButton({
           p_user_id: user.id,
           p_city_id: cityId,
           p_service_category_id: serviceCategoryId,
+          p_neighborhood_ids: neighborhoodIds || null,
         });
 
         if (error) {
@@ -168,6 +171,7 @@ export default function RevealPhoneButton({
       const { data, error } = await supabase.rpc('debit_wallet_for_contact', {
         p_city_id: cityId,
         p_service_category_id: serviceCategoryId,
+        p_neighborhood_ids: neighborhoodIds || null,
       });
 
       if (error) {
@@ -185,14 +189,14 @@ export default function RevealPhoneButton({
           setShowConfirmDialog(false);
           toast.success(
             isRTL 
-              ? `تم الكشف عن الهاتف بنجاح! الرصيد الجديد: ${result.new_balance} درهم`
-              : `Téléphone révélé ! Nouveau solde: ${result.new_balance} MAD`
+              ? 'تم! دابا تقدر تشوف جميع الأرقام فـ هاد الحرفة فـ هاد المدينة لمدة 12 ساعة.'
+              : 'C\'est bon ! Vous pouvez voir tous les numéros de cette catégorie dans cette ville pendant 12h.'
           );
         } else {
           toast.error(
             isRTL 
-              ? result.message || 'رصيد غير كافٍ'
-              : result.message || 'Solde insuffisant'
+              ? 'رصيدك ما كافيش. عَمّر المحفظة باش تكشف الرقم.'
+              : 'Solde insuffisant. Rechargez votre portefeuille pour afficher le numéro.'
           );
         }
       }
@@ -225,9 +229,9 @@ export default function RevealPhoneButton({
           <span className="font-semibold">{phone}</span>
         </a>
         {hasAccess && isMonetizationEnabled && (
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <span className="text-xs text-green-700 dark:text-green-300 flex items-center gap-1 font-medium">
             <Unlock className="h-3 w-3" />
-            {isRTL ? 'لديك وصول' : 'Accès actif'}
+            {isRTL ? 'ولوج مفعل' : 'Accès actif'}
           </span>
         )}
       </div>
@@ -237,25 +241,32 @@ export default function RevealPhoneButton({
   // Show reveal button
   return (
     <>
-      <Button
-        onClick={handleRevealClick}
-        className="flex items-center gap-2"
-        variant="default"
-      >
-        <Lock className="h-4 w-4" />
-        {isRTL ? `كشف الهاتف (${fee} درهم)` : `Révéler le téléphone (${fee} MAD)`}
-      </Button>
+      <div className="space-y-2">
+        <Button
+          onClick={handleRevealClick}
+          className="flex items-center gap-2"
+          variant="default"
+        >
+          <Lock className="h-4 w-4" />
+          {isRTL ? `كشف الرقم (${fee} دراهم)` : `Afficher le numéro (${fee} MAD)`}
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          {isRTL 
+            ? 'كتخلص غير مرة وحدة وكيبانولك جميع أرقام نفس الحرفة فـ نفس المدينة (والأحياء اللي مختار) لمدة 12 ساعة.'
+            : 'Vous payez une seule fois et vous voyez tous les numéros de la même catégorie dans la même ville (et quartiers sélectionnés) pendant 12h.'}
+        </p>
+      </div>
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {isRTL ? 'تأكيد الكشف عن الهاتف' : 'Confirmer la révélation du téléphone'}
+              {isRTL ? 'تأكيد كشف الرقم' : 'Confirmer l\'affichage du numéro'}
             </DialogTitle>
             <DialogDescription>
               {isRTL 
-                ? `سيتم خصم ${fee} درهم من رصيدك للكشف عن رقم هاتف ${artisanName}.`
+                ? `غادي يخصم ${fee} درهم من رصيدك باش تكشف رقم ${artisanName}.`
                 : `${fee} MAD seront déduits de votre solde pour révéler le numéro de ${artisanName}.`}
             </DialogDescription>
           </DialogHeader>
@@ -275,30 +286,46 @@ export default function RevealPhoneButton({
 
             {walletBalance !== null && walletBalance < fee && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-destructive font-medium">
                   {isRTL 
-                    ? `رصيد غير كافٍ. تحتاج إلى ${fee - walletBalance} درهم إضافي.`
-                    : `Solde insuffisant. Vous avez besoin de ${fee - walletBalance} MAD supplémentaires.`}
+                    ? 'رصيدك ما كافيش. عَمّر المحفظة باش تكشف الرقم.'
+                    : 'Solde insuffisant. Rechargez votre portefeuille pour afficher le numéro.'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
                   {isRTL 
-                    ? 'يرجى الاتصال بالإدارة لشحن رصيدك.'
-                    : 'Veuillez contacter l\'administration pour recharger votre solde.'}
+                    ? 'التعبئة كتدار يدوياً من طرف الإدارة حالياً.'
+                    : 'Le rechargement est manuel (par l\'admin) pour le moment.'}
                 </p>
               </div>
             )}
 
             <div className="text-sm text-muted-foreground space-y-1">
+              <p className="font-medium mb-2">
+                {isRTL ? 'باش تعرف:' : 'À savoir:'}
+              </p>
               <p>
                 {isRTL 
-                  ? `✓ الوصول صالح لمدة ${duration} ساعة`
+                  ? `✓ الولوج صالح لمدة ${duration} ساعة`
                   : `✓ Accès valable ${duration} heures`}
               </p>
               <p>
                 {isRTL 
-                  ? '✓ يمكنك الاتصال بجميع الحرفيين في نفس المدينة والفئة'
-                  : '✓ Contactez tous les artisans de la même ville et catégorie'}
+                  ? '✓ كتقدر تشوف جميع الأرقام فـ نفس الحرفة والمدينة'
+                  : '✓ Vous pouvez voir tous les numéros de la même catégorie dans cette ville'}
               </p>
+              {neighborhoodIds && neighborhoodIds.length > 0 ? (
+                <p>
+                  {isRTL 
+                    ? 'هاذ الولوج كينطبق غير على الأحياء اللي مختار.'
+                    : 'Cet accès couvre uniquement les quartiers sélectionnés.'}
+                </p>
+              ) : (
+                <p>
+                  {isRTL 
+                    ? 'هاذ الولوج كينطبق على كامل المدينة.'
+                    : 'Cet accès couvre toute la ville.'}
+                </p>
+              )}
             </div>
           </div>
 
@@ -317,11 +344,11 @@ export default function RevealPhoneButton({
               {purchasing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isRTL ? 'جاري الشراء...' : 'Achat...'}
+                  {isRTL ? 'كنعالج الطلب...' : 'Traitement...'}
                 </>
               ) : (
                 <>
-                  {isRTL ? `تأكيد (${fee} درهم)` : `Confirmer (${fee} MAD)`}
+                  {isRTL ? `تأكيد (${fee} دراهم)` : `Confirmer (${fee} MAD)`}
                 </>
               )}
             </Button>
