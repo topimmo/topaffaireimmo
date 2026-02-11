@@ -256,42 +256,42 @@ export default function PropertyCategories() {
   };
 
   return (
-    <section className={`section-spacing bg-background ${isRTL ? "rtl" : "ltr"}`}>
+    <section className={`py-20 md:py-24 bg-background ${isRTL ? "rtl" : "ltr"}`}>
       <div className="container">
-        {/* Section Title */}
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="font-display text-2xl md:text-3xl font-semibold mb-2">
+        {/* Section Title - Premium Typography */}
+        <div className="text-center mb-12 md:mb-14">
+          <h2 className="section-title mb-3">
             {isRTL ? "تصفح حسب نوع العقار" : "Parcourir par catégorie"}
           </h2>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          <p className="section-subtitle max-w-xl mx-auto">
             {isRTL
               ? "اكتشف مجموعة واسعة من العقارات التي تناسب احتياجاتك"
               : "Découvrez une large gamme de propriétés adaptées à vos besoins"}
           </p>
         </div>
 
-        {/* Categories Grid - Auto-fit for scalability */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* Categories Grid - Premium Cards with auto-fit */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 md:gap-6">
           {categories.map((category) => {
             const Icon = category.icon;
             return (
               <Card
                 key={category.id}
-                className="group relative overflow-hidden p-5 hover:cursor-pointer transition-all duration-300 text-start"
+                className="group relative overflow-hidden p-6 hover:cursor-pointer transition-all duration-300 text-start hover:-translate-y-1 hover:shadow-xl"
                 onClick={() => handleCategoryClick(category.link)}
               >
-                {/* Icon */}
-                <div className="mb-3">
-                  <div className={`inline-flex p-2.5 rounded-lg ${category.gradient}`}>
-                    <Icon className={`h-5 w-5 ${category.iconColor}`} />
+                {/* Icon - Premium sizing */}
+                <div className="mb-4">
+                  <div className={`inline-flex p-3 rounded-xl ${category.gradient} shadow-sm`}>
+                    <Icon className={`h-6 w-6 ${category.iconColor}`} />
                   </div>
                 </div>
 
-                {/* Content */}
-                <h3 className="font-medium text-sm mb-1 text-foreground group-hover:text-primary transition-colors">
+                {/* Content - Enhanced typography */}
+                <h3 className="font-semibold text-base mb-1.5 text-foreground group-hover:text-primary transition-colors tracking-tight">
                   {isRTL ? category.nameAr : category.nameFr}
                 </h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
               </Card>

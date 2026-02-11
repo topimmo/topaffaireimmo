@@ -4,17 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-sm",
+  "inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-md",
+          "border-transparent bg-primary text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 hover:shadow-md",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90 hover:shadow-md",
+          "border-transparent bg-secondary text-secondary-foreground shadow-sm shadow-secondary/20 hover:bg-secondary/90 hover:shadow-md",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md",
-        outline: "border-2 border-border text-foreground bg-background hover:bg-muted hover:border-primary/40",
+          "border-transparent bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md",
+        outline: "border border-border/60 text-foreground bg-background/90 hover:bg-muted hover:border-primary/50",
       },
     },
     defaultVariants: {
