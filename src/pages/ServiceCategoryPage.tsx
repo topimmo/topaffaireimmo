@@ -190,7 +190,7 @@ export default function ServiceCategoryPage() {
                 {isRTL ? "طلب عرض أسعار" : "Demander un devis"}
               </Link>
               <Link
-                to="/contact"
+                to="/artisan/onboarding"
                 className="inline-flex items-center justify-center px-6 py-3 rounded-lg border-2 border-primary text-primary font-medium hover:bg-primary/10 transition-colors"
               >
                 {isRTL ? "هل أنت مزود خدمة؟ انضم إلينا" : "Êtes-vous prestataire ? Rejoignez-nous"}

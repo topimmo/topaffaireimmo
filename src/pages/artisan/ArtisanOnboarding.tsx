@@ -1,0 +1,425 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, AlertCircle, CheckCircle, Briefcase } from 'lucide-react';
+
+interface ServiceCategory {
+  id: string;
+  name_fr: string;
+  name_ar: string;
+  slug: string;
+}
+
+interface City {
+  id: number;
+  name_fr: string;
+  name_ar: string;
+}
+
+export default function ArtisanOnboarding() {
+  const { isRTL } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    service_category_id: '',
+    business_name: '',
+    description_fr: '',
+    description_ar: '',
+    phone: '',
+    whatsapp: '',
+    email: '',
+  });
+  const [selectedCities, setSelectedCities] = useState<number[]>([]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login?next=/artisan/onboarding');
+    }
+  }, [user, authLoading, navigate]);
+
+  // Load service categories and cities
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Fetch service categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('service_categories')
+          .select('id, name_fr, name_ar, slug')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
+
+        if (categoriesError) {
+          console.error('Error fetching service categories:', categoriesError);
+          setError(isRTL ? 'خطأ في تحميل فئات الخدمات' : 'Erreur lors du chargement des catégories');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch cities
+        const { data: citiesData, error: citiesError } = await supabase
+          .from('cities')
+          .select('id, name_fr, name_ar')
+          .eq('is_active', true)
+          .order('name_fr', { ascending: true });
+
+        if (citiesError) {
+          console.error('Error fetching cities:', citiesError);
+          setError(isRTL ? 'خطأ في تحميل المدن' : 'Erreur lors du chargement des villes');
+          setLoading(false);
+          return;
+        }
+
+        setServiceCategories(categoriesData || []);
+        setCities(citiesData || []);
+        setLoading(false);
+      } catch (err) {
+        console.error('Exception fetching data:', err);
+        setError(isRTL ? 'حدث خطأ غير متوقع' : 'Une erreur inattendue s\'est produite');
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchData();
+    }
+  }, [user, isRTL]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCityToggle = (cityId: number) => {
+    setSelectedCities((prev) =>
+      prev.includes(cityId) ? prev.filter((id) => id !== cityId) : [...prev, cityId]
+    );
+  };
+
+  const validateForm = (): boolean => {
+    // Required fields
+    if (!formData.service_category_id) {
+      toast.error(isRTL ? 'يرجى اختيار فئة الخدمة' : 'Veuillez sélectionner une catégorie de service');
+      return false;
+    }
+    if (!formData.business_name.trim()) {
+      toast.error(isRTL ? 'يرجى إدخال اسم العمل' : 'Veuillez entrer le nom de l\'entreprise');
+      return false;
+    }
+    if (selectedCities.length === 0) {
+      toast.error(isRTL ? 'يرجى اختيار مدينة واحدة على الأقل' : 'Veuillez sélectionner au moins une ville');
+      return false;
+    }
+    if (!formData.phone.trim()) {
+      toast.error(isRTL ? 'يرجى إدخال رقم الهاتف' : 'Veuillez entrer un numéro de téléphone');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const { data, error: rpcError } = await supabase.rpc('create_my_artisan_profile', {
+        p_service_category_id: formData.service_category_id,
+        p_business_name: formData.business_name,
+        p_description_fr: formData.description_fr || null,
+        p_description_ar: formData.description_ar || null,
+        p_cities: selectedCities,
+        p_phone: formData.phone,
+        p_whatsapp: formData.whatsapp || null,
+        p_email: formData.email || null,
+      });
+
+      if (rpcError) {
+        console.error('RPC error:', rpcError);
+        const errorMsg = isRTL
+          ? `خطأ في إنشاء الملف الشخصي: ${rpcError.message}`
+          : `Erreur lors de la création du profil: ${rpcError.message}`;
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setSubmitting(false);
+        return;
+      }
+
+      toast.success(isRTL ? 'تم إنشاء ملفك الشخصي بنجاح!' : 'Profil créé avec succès !');
+      navigate('/dashboard/artisan');
+    } catch (err) {
+      console.error('Exception during submission:', err);
+      const errorMsg = isRTL ? 'حدث خطأ غير متوقع' : 'Une erreur inattendue s\'est produite';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setSubmitting(false);
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+        <Header />
+        <main className="flex-1 flex items-center justify-center pt-24 pb-16">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+      <Header />
+
+      <main className="flex-1 pt-24 pb-16">
+        <div className="container max-w-3xl">
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <Briefcase className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+              {isRTL ? 'انضم كمزود خدمة' : 'Rejoignez-nous comme prestataire'}
+            </h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              {isRTL
+                ? 'قم بإنشاء ملفك الشخصي كمزود خدمة وابدأ في تلقي طلبات العملاء'
+                : 'Créez votre profil de prestataire et commencez à recevoir des demandes de clients'}
+            </p>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-destructive font-medium">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {isRTL ? 'معلومات الملف الشخصي' : 'Informations du profil'}
+              </CardTitle>
+              <CardDescription>
+                {isRTL
+                  ? 'جميع الحقول المميزة بـ * إلزامية'
+                  : 'Tous les champs marqués d\'un * sont obligatoires'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Service Category */}
+                <div className="space-y-2">
+                  <Label htmlFor="service_category">
+                    {isRTL ? 'فئة الخدمة' : 'Catégorie de service'} *
+                  </Label>
+                  <Select
+                    value={formData.service_category_id}
+                    onValueChange={(value) => handleInputChange('service_category_id', value)}
+                  >
+                    <SelectTrigger id="service_category">
+                      <SelectValue
+                        placeholder={isRTL ? 'اختر فئة الخدمة' : 'Sélectionnez une catégorie'}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {serviceCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {isRTL ? category.name_ar : category.name_fr}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Business Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="business_name">
+                    {isRTL ? 'اسم العمل' : 'Nom de l\'entreprise'} *
+                  </Label>
+                  <Input
+                    id="business_name"
+                    value={formData.business_name}
+                    onChange={(e) => handleInputChange('business_name', e.target.value)}
+                    placeholder={
+                      isRTL ? 'أدخل اسم عملك' : 'Entrez le nom de votre entreprise'
+                    }
+                  />
+                </div>
+
+                {/* Cities Multi-Select */}
+                <div className="space-y-2">
+                  <Label>
+                    {isRTL ? 'المدن التي تخدمها' : 'Villes desservies'} *
+                  </Label>
+                  <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {cities.map((city) => (
+                        <div key={city.id} className="flex items-center space-x-2 space-x-reverse">
+                          <Checkbox
+                            id={`city-${city.id}`}
+                            checked={selectedCities.includes(city.id)}
+                            onCheckedChange={() => handleCityToggle(city.id)}
+                          />
+                          <Label
+                            htmlFor={`city-${city.id}`}
+                            className="text-sm font-normal cursor-pointer flex-1"
+                          >
+                            {isRTL ? city.name_ar : city.name_fr}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedCities.length}{' '}
+                    {isRTL ? 'مدينة محددة' : 'ville(s) sélectionnée(s)'}
+                  </p>
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-2">
+                  <Label htmlFor="phone">
+                    {isRTL ? 'رقم الهاتف' : 'Numéro de téléphone'} *
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder={isRTL ? 'مثال: 0612345678' : 'Ex: 0612345678'}
+                  />
+                </div>
+
+                {/* WhatsApp (Optional) */}
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">
+                    {isRTL ? 'واتساب (اختياري)' : 'WhatsApp (optionnel)'}
+                  </Label>
+                  <Input
+                    id="whatsapp"
+                    type="tel"
+                    value={formData.whatsapp}
+                    onChange={(e) => handleInputChange('whatsapp', e.target.value)}
+                    placeholder={isRTL ? 'مثال: 0612345678' : 'Ex: 0612345678'}
+                  />
+                </div>
+
+                {/* Email (Optional) */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    {isRTL ? 'البريد الإلكتروني (اختياري)' : 'Email (optionnel)'}
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder={isRTL ? 'مثال: contact@example.com' : 'Ex: contact@example.com'}
+                  />
+                </div>
+
+                {/* Description FR (Optional) */}
+                <div className="space-y-2">
+                  <Label htmlFor="description_fr">
+                    {isRTL ? 'الوصف بالفرنسية (اختياري)' : 'Description en français (optionnel)'}
+                  </Label>
+                  <Textarea
+                    id="description_fr"
+                    value={formData.description_fr}
+                    onChange={(e) => handleInputChange('description_fr', e.target.value)}
+                    placeholder={
+                      isRTL
+                        ? 'اكتب وصفاً لخدماتك بالفرنسية...'
+                        : 'Décrivez vos services en français...'
+                    }
+                    rows={4}
+                  />
+                </div>
+
+                {/* Description AR (Optional) */}
+                <div className="space-y-2">
+                  <Label htmlFor="description_ar">
+                    {isRTL ? 'الوصف بالعربية (اختياري)' : 'Description en arabe (optionnel)'}
+                  </Label>
+                  <Textarea
+                    id="description_ar"
+                    value={formData.description_ar}
+                    onChange={(e) => handleInputChange('description_ar', e.target.value)}
+                    placeholder={
+                      isRTL
+                        ? 'اكتب وصفاً لخدماتك بالعربية...'
+                        : 'Décrivez vos services en arabe...'
+                    }
+                    rows={4}
+                    dir="rtl"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex items-center gap-4 pt-4">
+                  <Button type="submit" disabled={submitting} className="flex-1">
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {isRTL ? 'جاري الإنشاء...' : 'Création en cours...'}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        {isRTL ? 'إنشاء الملف الشخصي' : 'Créer le profil'}
+                      </>
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" asChild>
+                    <Link to="/services">
+                      {isRTL ? 'إلغاء' : 'Annuler'}
+                    </Link>
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
