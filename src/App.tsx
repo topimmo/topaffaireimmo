@@ -64,6 +64,8 @@ const AdminArtisans = lazy(() => import("./pages/admin/AdminArtisans"));
 // Artisan Pages
 const ArtisanOnboarding = lazy(() => import("./pages/artisan/ArtisanOnboarding"));
 const ArtisanDashboard = lazy(() => import("./pages/artisan/ArtisanDashboard"));
+const ArtisanServices = lazy(() => import("./pages/artisan/ArtisanServices"));
+const ArtisanRequests = lazy(() => import("./pages/artisan/ArtisanRequests"));
 
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -304,6 +306,24 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
                 <ArtisanDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/artisan/services"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanServices />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/artisan/requests"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanRequests />
               </ProtectedRoute>
             }
           />
