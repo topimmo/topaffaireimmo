@@ -88,7 +88,6 @@ export default function ArtisanOnboarding() {
           .order('sort_order', { ascending: true });
 
         if (categoriesError) {
-          console.error('Error fetching service categories:', categoriesError);
           setError(isRTL ? 'خطأ في تحميل فئات الخدمات' : 'Erreur lors du chargement des catégories');
           setLoading(false);
           return;
@@ -102,7 +101,6 @@ export default function ArtisanOnboarding() {
           .order('name_fr', { ascending: true });
 
         if (citiesError) {
-          console.error('Error fetching cities:', citiesError);
           setError(isRTL ? 'خطأ في تحميل المدن' : 'Erreur lors du chargement des villes');
           setLoading(false);
           return;
@@ -112,7 +110,6 @@ export default function ArtisanOnboarding() {
         setCities(citiesData || []);
         setLoading(false);
       } catch (err) {
-        console.error('Exception fetching data:', err);
         setError(isRTL ? 'حدث خطأ غير متوقع' : 'Une erreur inattendue s\'est produite');
         setLoading(false);
       }
@@ -140,14 +137,13 @@ export default function ArtisanOnboarding() {
           .order('name_fr', { ascending: true });
 
         if (error) {
-          console.error('Error fetching neighborhoods:', error);
           return;
         }
 
         setNeighborhoods(data || []);
         setSelectedNeighborhoods([]); // Reset selection when city changes
       } catch (err) {
-        console.error('Exception fetching neighborhoods:', err);
+        // Silently handle neighborhood fetching errors
       }
     };
 
@@ -207,7 +203,6 @@ export default function ArtisanOnboarding() {
       });
 
       if (rpcError) {
-        console.error('RPC error:', rpcError);
         const errorMsg = isRTL
           ? `خطأ في إنشاء الملف الشخصي: ${rpcError.message}`
           : `Erreur lors de la création du profil: ${rpcError.message}`;
@@ -221,7 +216,6 @@ export default function ArtisanOnboarding() {
       toast.success(isRTL ? 'تم إنشاء حسابك! دابا كاين فمرحلة المراجعة.' : 'Profil créé ! Il est en attente de validation.');
       navigate('/dashboard/artisan');
     } catch (err) {
-      console.error('Exception during submission:', err);
       const errorMsg = isRTL ? 'حدث خطأ غير متوقع' : 'Une erreur inattendue s\'est produite';
       setError(errorMsg);
       toast.error(errorMsg);
