@@ -124,13 +124,23 @@ export default function WalletDisplay() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-bold text-primary">
-            {balance !== null ? `${balance} MAD` : '...'}
+          <div className="text-sm text-muted-foreground mb-2">
+            {isRTL ? 'الرصيد:' : 'Solde :'}
           </div>
+          <div className="text-4xl font-bold text-primary">
+            {balance !== null ? `${balance}` : '...'} {balance !== null && (isRTL ? 'درهم' : 'MAD')}
+          </div>
+          {balance === 0 && (
+            <p className="text-sm text-muted-foreground mt-3">
+              {isRTL 
+                ? 'مازال ماعندكش رصيد.'
+                : 'Vous n\'avez pas encore de solde.'}
+            </p>
+          )}
           <p className="text-sm text-muted-foreground mt-2">
             {isRTL 
-              ? 'اتصل بالإدارة لشحن رصيدك'
-              : 'Contactez l\'administration pour recharger votre solde'}
+              ? 'التعبئة كتدار يدوياً من طرف الإدارة حالياً.'
+              : 'Le rechargement est manuel (par l\'admin) pour le moment.'}
           </p>
         </CardContent>
       </Card>
