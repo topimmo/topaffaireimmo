@@ -1769,3 +1769,15 @@ export const Constants = {
     },
   },
 } as const
+
+// Helper type exports for commonly used database tables
+export type City = Tables<'cities'>
+export type Neighborhood = Tables<'neighborhoods'>
+export type Property = Tables<'properties'>
+export type PropertyType = Tables<'property_types'>
+export type SiteSetting = Tables<'site_settings'>
+export type PropertyView = Tables<'property_views'>
+export type PropertyContactClick = Tables<'property_contact_clicks'>
+export type PropertyLead = Tables<'property_leads'>
+export type BannerRequest = Tables<'banner_requests'>
+export type BannerSlot = Tables<'banner_slots'>

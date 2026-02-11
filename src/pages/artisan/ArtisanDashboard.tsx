@@ -52,7 +52,6 @@ export default function ArtisanDashboard() {
           .maybeSingle();
 
         if (error) {
-          console.error('Error checking artisan profile:', error);
           setProfile(null);
           setLoading(false);
           navigate('/artisan/onboarding');
@@ -76,7 +75,6 @@ export default function ArtisanDashboard() {
 
         setLoading(false);
       } catch (err) {
-        console.error('Exception checking profile:', err);
         setProfile(null);
         setLoading(false);
       }

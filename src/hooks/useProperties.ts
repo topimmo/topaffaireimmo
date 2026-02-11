@@ -18,7 +18,7 @@ export interface PropertyFilters {
   owner_id?: string;
 }
 
-export interface PropertyWithRelations extends Omit<Property, 'title_fr' | 'title_ar' | 'status'> {
+export interface PropertyWithRelations extends Partial<Omit<Property, 'title_fr' | 'title_ar' | 'status' | 'city' | 'neighborhood'>> {
   city?: City;
   neighborhood?: Neighborhood;
   owner?: {
