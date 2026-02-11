@@ -149,6 +149,88 @@ export type Database = {
         }
         Relationships: []
       }
+      artisan_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          service_category_id: string
+          business_name: string
+          description_fr: string | null
+          description_ar: string | null
+          city_id: number
+          neighborhood_ids: number[] | null
+          phone: string
+          whatsapp: string | null
+          email: string | null
+          is_verified: boolean
+          is_active: boolean
+          is_boosted: boolean
+          boosted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          service_category_id: string
+          business_name: string
+          description_fr?: string | null
+          description_ar?: string | null
+          city_id: number
+          neighborhood_ids?: number[] | null
+          phone: string
+          whatsapp?: string | null
+          email?: string | null
+          is_verified?: boolean
+          is_active?: boolean
+          is_boosted?: boolean
+          boosted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          service_category_id?: string
+          business_name?: string
+          description_fr?: string | null
+          description_ar?: string | null
+          city_id?: number
+          neighborhood_ids?: number[] | null
+          phone?: string
+          whatsapp?: string | null
+          email?: string | null
+          is_verified?: boolean
+          is_active?: boolean
+          is_boosted?: boolean
+          boosted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artisan_profiles_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artisan_profiles_service_category_id_fkey"
+            columns: ["service_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artisan_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artisan_service_zones: {
         Row: {
           city_slug: string
@@ -339,6 +421,58 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_access_passes: {
+        Row: {
+          id: string
+          user_id: string
+          city_id: number
+          service_category_id: string
+          neighborhood_ids: number[] | null
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          city_id: number
+          service_category_id: string
+          neighborhood_ids?: number[] | null
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          city_id?: number
+          service_category_id?: string
+          neighborhood_ids?: number[] | null
+          expires_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_access_passes_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_access_passes_service_category_id_fkey"
+            columns: ["service_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_access_passes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           created_at: string | null
@@ -525,6 +659,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          key: string
+          value: Json
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: Json
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1404,6 +1556,67 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          user_id: string
+          balance_mad: number
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          balance_mad?: number
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          balance_mad?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          amount_mad: number
+          reason: string
+          meta: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount_mad: number
+          reason: string
+          meta?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount_mad?: number
+          reason?: string
+          meta?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
