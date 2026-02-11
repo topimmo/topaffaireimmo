@@ -56,6 +56,10 @@ const AdminContentCategories = lazy(() => import("./pages/admin/AdminContentCate
 const AdminPromoBanners = lazy(() => import("./pages/admin/AdminPromoBanners"));
 const AdminDummyProperties = lazy(() => import("./pages/admin/AdminDummyProperties"));
 const AdminMonetization = lazy(() => import("./pages/admin/AdminMonetization"));
+const AdminServiceCategories = lazy(() => import("./pages/admin/AdminServiceCategories"));
+const AdminServiceSubcategories = lazy(() => import("./pages/admin/AdminServiceSubcategories"));
+const AdminServiceRequests = lazy(() => import("./pages/admin/AdminServiceRequests"));
+const AdminArtisans = lazy(() => import("./pages/admin/AdminArtisans"));
 
 // Artisan Pages
 const ArtisanOnboarding = lazy(() => import("./pages/artisan/ArtisanOnboarding"));
@@ -484,6 +488,38 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminMonetization />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/services/categories"
+            element={
+              <AdminProtectedRoute>
+                <AdminServiceCategories />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/services/subcategories"
+            element={
+              <AdminProtectedRoute>
+                <AdminServiceSubcategories />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/services/requests"
+            element={
+              <AdminProtectedRoute>
+                <AdminServiceRequests />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/artisans"
+            element={
+              <AdminProtectedRoute>
+                <AdminArtisans />
               </AdminProtectedRoute>
             }
           />
