@@ -314,23 +314,23 @@ export default function AuthPage() {
   };
 
   return (
-    <div className={`flex items-center justify-center min-h-screen py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="w-full max-w-[420px]">
-        <div className="bg-white rounded-2xl border p-8 shadow-sm">
+    <div className={`flex items-center justify-center min-h-screen py-12 px-4 bg-gradient-to-b from-muted/30 via-background to-muted/20 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="w-full max-w-[440px]">
+        <div className="bg-white rounded-2xl border-2 border-border/60 p-8 md:p-10 shadow-2xl hover:shadow-3xl transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
           {/* Header */}
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <Building2 className="h-8 w-8 text-primary" />
+          <div className="text-center mb-10">
+            <Link to="/" className="inline-flex items-center gap-2 mb-8 group transition-all duration-300 hover:scale-105">
+              <Building2 className="h-8 w-8 text-primary group-hover:rotate-6 transition-transform duration-300" />
               <span className="font-display text-xl font-semibold">
                 TopAffaire<span className="text-primary">Immo</span>
               </span>
             </Link>
-            <h1 className="font-display text-2xl font-semibold text-foreground mb-2">
+            <h1 className="font-display text-2xl md:text-3xl font-semibold text-foreground mb-3">
               {step === 'phone' ? t('auth.enterPhoneTitle') : t('auth.verifyPhoneTitle')}
             </h1>
             {step === 'verify' && phone && (
               <p className="text-sm text-muted-foreground">
-                {t('auth.sentTo')} <span className="font-medium">{maskPhoneNumber(phone)}</span>
+                {t('auth.sentTo')} <span className="font-medium text-foreground">{maskPhoneNumber(phone)}</span>
               </p>
             )}
           </div>
@@ -339,31 +339,31 @@ export default function AuthPage() {
           {step === 'phone' && (
             <form onSubmit={handleRequestOTP} className="space-y-6">
               {error && (
-                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
+                <div className="p-4 rounded-xl bg-destructive/10 text-destructive text-sm text-center border-2 border-destructive/20 animate-in fade-in slide-in-from-top-2">
                   {error}
                 </div>
               )}
 
               {successMessage && (
-                <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm text-center">
+                <div className="p-4 rounded-xl bg-green-50 text-green-600 text-sm text-center border-2 border-green-200 animate-in fade-in slide-in-from-top-2">
                   {successMessage}
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-base">
+              <div className="space-y-3">
+                <Label htmlFor="phone" className="text-base font-medium">
                   {t('auth.phoneNumber')}
                 </Label>
                 <div className="relative">
                   <Phone
-                    className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground`}
+                    className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors duration-300`}
                   />
                   <Input
                     id="phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className={`${isRTL ? 'pr-12' : 'pl-12'} h-14 text-lg`}
+                    className={`${isRTL ? 'pr-12' : 'pl-12'} h-14 text-lg shadow-sm`}
                     placeholder={t('auth.phonePlaceholder')}
                     required
                     disabled={loading}
@@ -373,7 +373,7 @@ export default function AuthPage() {
                 <p className="text-xs text-muted-foreground">{t('auth.phoneHint')}</p>
               </div>
 
-              <Button type="submit" className="w-full h-14 text-lg" disabled={loading}>
+              <Button type="submit" className="w-full h-14 text-lg shadow-lg hover:shadow-xl" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -385,12 +385,12 @@ export default function AuthPage() {
               </Button>
 
               {/* Separator */}
-              <div className="relative my-6">
+              <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t-2 border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-muted-foreground">{t('auth.or')}</span>
+                  <span className="px-4 bg-white text-muted-foreground font-medium">{t('auth.or')}</span>
                 </div>
               </div>
 
@@ -400,7 +400,7 @@ export default function AuthPage() {
                 variant="outline"
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full h-14 text-lg border-2"
+                className="w-full h-14 text-lg border-2 shadow-sm hover:shadow-md"
               >
                 <svg className={`h-5 w-5 ${isRTL ? 'ml-3' : 'mr-3'}`} viewBox="0 0 24 24">
                   <path
@@ -429,19 +429,19 @@ export default function AuthPage() {
           {step === 'verify' && (
             <form onSubmit={handleVerifyOTP} className="space-y-6">
               {error && (
-                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
+                <div className="p-4 rounded-xl bg-destructive/10 text-destructive text-sm text-center border-2 border-destructive/20 animate-in fade-in slide-in-from-top-2">
                   {error}
                 </div>
               )}
 
               {successMessage && (
-                <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm text-center">
+                <div className="p-4 rounded-xl bg-green-50 text-green-600 text-sm text-center border-2 border-green-200 animate-in fade-in slide-in-from-top-2">
                   {successMessage}
                 </div>
               )}
 
-              <div className="space-y-4">
-                <Label htmlFor="otp" className="text-base text-center block">
+              <div className="space-y-5">
+                <Label htmlFor="otp" className="text-base font-medium text-center block">
                   {t('auth.otpCode')}
                 </Label>
                 <div className="flex justify-center">
@@ -451,13 +451,13 @@ export default function AuthPage() {
                     onChange={setOtpCode}
                     disabled={loading}
                   >
-                    <InputOTPGroup className="gap-2">
-                      <InputOTPSlot index={0} className="h-14 w-12 text-xl" />
-                      <InputOTPSlot index={1} className="h-14 w-12 text-xl" />
-                      <InputOTPSlot index={2} className="h-14 w-12 text-xl" />
-                      <InputOTPSlot index={3} className="h-14 w-12 text-xl" />
-                      <InputOTPSlot index={4} className="h-14 w-12 text-xl" />
-                      <InputOTPSlot index={5} className="h-14 w-12 text-xl" />
+                    <InputOTPGroup className="gap-3">
+                      <InputOTPSlot index={0} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md transition-all duration-300" />
+                      <InputOTPSlot index={1} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md transition-all duration-300" />
+                      <InputOTPSlot index={2} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md transition-all duration-300" />
+                      <InputOTPSlot index={3} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md transition-all duration-300" />
+                      <InputOTPSlot index={4} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md transition-all duration-300" />
+                      <InputOTPSlot index={5} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md transition-all duration-300" />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
@@ -467,7 +467,7 @@ export default function AuthPage() {
               <Button 
                 type="submit" 
                 disabled={loading || otpCode.length !== 6} 
-                className="w-full h-14 text-lg"
+                className="w-full h-14 text-lg shadow-lg hover:shadow-xl"
               >
                 {loading ? (
                   <>
@@ -483,7 +483,7 @@ export default function AuthPage() {
               <div className="text-center">
                 {resendCooldown > 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    {t('auth.resendIn')} {resendCooldown} {t('auth.seconds')}
+                    {t('auth.resendIn')} <span className="font-medium text-primary">{resendCooldown}</span> {t('auth.seconds')}
                   </p>
                 ) : (
                   <Button
@@ -491,7 +491,7 @@ export default function AuthPage() {
                     variant="link"
                     onClick={handleResendOTP}
                     disabled={loading}
-                    className="text-sm"
+                    className="text-sm font-medium"
                   >
                     {t('auth.resendCode')}
                   </Button>
@@ -504,7 +504,7 @@ export default function AuthPage() {
                 variant="outline"
                 onClick={handleBackToPhone}
                 disabled={loading}
-                className="w-full"
+                className="w-full border-2 shadow-sm hover:shadow-md"
               >
                 <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rotate-180 ml-2' : 'mr-2'}`} />
                 {t('auth.changePhone')}
