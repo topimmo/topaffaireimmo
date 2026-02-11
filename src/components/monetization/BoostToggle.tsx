@@ -90,10 +90,15 @@ export default function BoostToggle({
           setIsBoosted(result.is_boosted);
           onBoostChange?.(result.is_boosted);
           
+          // Update wallet balance if returned
+          if (result.new_balance !== null && result.new_balance !== undefined) {
+            setWalletBalance(result.new_balance);
+          }
+          
           toast.success(
             isRTL 
               ? (result.is_boosted ? 'تم تفعيل التعزيز' : 'تم إلغاء التعزيز')
-              : (result.is_boosted ? 'Boost activé' : 'Boost désactivé')
+              : result.message || (result.is_boosted ? 'Boost activé' : 'Boost désactivé')
           );
         } else {
           toast.error(
@@ -206,8 +211,8 @@ export default function BoostToggle({
         <div className="text-xs text-muted-foreground">
           <p>
             {isRTL 
-              ? '💡 التعزيز مجاني حالياً. تحتاج فقط إلى الحد الأدنى من الرصيد.'
-              : '💡 Le boost est actuellement gratuit. Vous avez seulement besoin du solde minimum.'}
+              ? '💡 رسوم التفعيل تُخصم من رصيدك عند تفعيل الرفع.'
+              : '💡 Des frais d\'activation sont déduits de votre solde lors de l\'activation du boost.'}
           </p>
         </div>
       </CardContent>
