@@ -9,6 +9,8 @@ import {
   SERVICE_SLUG_REGEX,
   normalizeServiceCategories,
 } from "@/lib/services";
+import { Button } from "@/components/ui/button";
+import { UserPlus } from "lucide-react";
 
 function MaskedSupabaseUrl() {
   const url = import.meta.env.VITE_SUPABASE_URL;
@@ -250,6 +252,30 @@ export default function ServiceCategoryPage() {
                   );
                 })}
             </div>
+          </div>
+        </div>
+
+        {/* Artisan CTA */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl p-6 md:p-8 text-center">
+          <div className="max-w-xl mx-auto space-y-3">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-2">
+              <UserPlus className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-lg md:text-xl font-bold text-foreground">
+              {isRTL
+                ? `هل أنت متخصص في ${category.nameAr}؟`
+                : `Vous êtes spécialiste en ${category.nameFr.toLowerCase()} ?`}
+            </h2>
+            <p className="text-muted-foreground text-sm md:text-base">
+              {isRTL
+                ? "أنشئ ملفك المهني واعثر على عملاء بالقرب منك"
+                : "Créez votre profil et trouvez des clients près de chez vous"}
+            </p>
+            <Button asChild size="default" className="mt-3">
+              <Link to="/register?type=artisan">
+                {isRTL ? "إنشاء ملفي" : "Créer mon profil"}
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

@@ -67,10 +67,10 @@ export default function FeaturedProperties() {
     const skeletonCount = 4;
     
     return (
-      <section className={`py-8 md:py-12 bg-background noise-texture ${isRTL ? 'rtl' : 'ltr'}`}>
+      <section className={`py-12 md:py-16 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="container">
           {/* Section Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -92,7 +92,7 @@ export default function FeaturedProperties() {
                 variant="outline"
                 size="icon"
                 disabled
-                className="rounded-full h-10 w-10 border-muted"
+                className="rounded-full h-9 w-9 border-border"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -100,7 +100,7 @@ export default function FeaturedProperties() {
                 variant="outline"
                 size="icon"
                 disabled
-                className="rounded-full h-10 w-10 border-muted"
+                className="rounded-full h-9 w-9 border-border"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -108,11 +108,11 @@ export default function FeaturedProperties() {
           </div>
 
           {/* Skeleton Carousel */}
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+          <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
             {Array.from({ length: skeletonCount }).map((_, index) => (
               <div
                 key={index}
-                className="flex-shrink-0 w-[280px] md:w-[340px] snap-start"
+                className="flex-shrink-0 w-[280px] md:w-[320px] snap-start"
               >
                 <PropertyCardSkeleton size="large" />
               </div>
@@ -126,10 +126,10 @@ export default function FeaturedProperties() {
   // Always render section - never empty (fallback to dummy properties handled in hook)
 
   return (
-    <section className={`py-8 md:py-12 bg-background noise-texture ${isRTL ? 'rtl' : 'ltr'}`}>
+    <section className={`py-12 md:py-16 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="container">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -151,7 +151,7 @@ export default function FeaturedProperties() {
               variant="outline"
               size="icon"
               onClick={() => scroll("left")}
-              className="rounded-full h-10 w-10 border-muted hover:border-primary hover:text-primary"
+              className="rounded-full h-9 w-9 border-border hover:border-primary hover:text-primary"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -159,7 +159,7 @@ export default function FeaturedProperties() {
               variant="outline"
               size="icon"
               onClick={() => scroll("right")}
-              className="rounded-full h-10 w-10 border-muted hover:border-primary hover:text-primary"
+              className="rounded-full h-9 w-9 border-border hover:border-primary hover:text-primary"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -169,13 +169,13 @@ export default function FeaturedProperties() {
         {/* Carousel */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
+          className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {featuredProperties.map((property) => (
             <div
               key={property.id}
-              className="flex-shrink-0 w-[280px] md:w-[340px] snap-start"
+              className="flex-shrink-0 w-[280px] md:w-[320px] snap-start"
             >
               <PropertyCard property={property} size="large" />
             </div>

@@ -8,6 +8,14 @@ import {
   LucideIcon,
   Shield,
   Hammer,
+  Truck,
+  DoorOpen,
+  Axe,
+  Key,
+  SatelliteDish,
+  HardHat,
+  ShieldAlert,
+  Sofa,
 } from "lucide-react";
 
 export const SERVICE_SLUG_REGEX = /^[a-z0-9-]+$/;
@@ -62,6 +70,29 @@ const ICON_MAP: Record<string, LucideIcon> = {
   jardinage: Leaf,
   garden: Leaf,
   hammer: Hammer,
+  renovation: Hammer,
+  truck: Truck,
+  demenagement: Truck,
+  moving: Truck,
+  "door-open": DoorOpen,
+  "aluminium-menuiserie": DoorOpen,
+  axe: Axe,
+  "menuiserie-bois": Axe,
+  key: Key,
+  serrurerie: Key,
+  lock: Key,
+  "satellite-dish": SatelliteDish,
+  "internet-parabole": SatelliteDish,
+  satellite: SatelliteDish,
+  "hard-hat": HardHat,
+  "nettoyage-fin-chantier": HardHat,
+  construction: HardHat,
+  "shield-alert": ShieldAlert,
+  "securite-alarmes": ShieldAlert,
+  alarm: ShieldAlert,
+  sofa: Sofa,
+  "decoration-interieure": Sofa,
+  decor: Sofa,
 };
 
 export const FALLBACK_SERVICE_CATEGORIES: ServiceCategory[] = [
@@ -96,6 +127,16 @@ export const FALLBACK_SERVICE_CATEGORIES: ServiceCategory[] = [
     gradient: "from-cyan-50 to-cyan-100",
   },
   {
+    id: "renovation",
+    slug: "renovation",
+    nameFr: "Rénovation / Travaux",
+    nameAr: "ترميم / أشغال",
+    descriptionFr: "Rénovation intérieure et extérieure, petits travaux",
+    descriptionAr: "أعمال الترميم الداخلية والخارجية",
+    icon: Hammer,
+    gradient: "from-orange-50 to-orange-100",
+  },
+  {
     id: "peinture",
     slug: "peinture",
     nameFr: "Peinture",
@@ -116,6 +157,56 @@ export const FALLBACK_SERVICE_CATEGORIES: ServiceCategory[] = [
     gradient: "from-emerald-50 to-emerald-100",
   },
   {
+    id: "demenagement",
+    slug: "demenagement",
+    nameFr: "Déménagement",
+    nameAr: "نقل الأثاث",
+    descriptionFr: "Services de déménagement professionnel",
+    descriptionAr: "خدمات نقل الأثاث الاحترافية",
+    icon: Truck,
+    gradient: "from-indigo-50 to-indigo-100",
+  },
+  {
+    id: "aluminium-menuiserie",
+    slug: "aluminium-menuiserie",
+    nameFr: "Aluminium & Menuiserie",
+    nameAr: "الألمنيوم والنجارة",
+    descriptionFr: "Fenêtres, portes aluminium et menuiserie",
+    descriptionAr: "نوافذ وأبواب ألمنيوم ونجارة",
+    icon: DoorOpen,
+    gradient: "from-slate-50 to-slate-100",
+  },
+  {
+    id: "menuiserie-bois",
+    slug: "menuiserie-bois",
+    nameFr: "Menuiserie bois",
+    nameAr: "نجارة الخشب",
+    descriptionFr: "Fabrication et réparation de meubles en bois",
+    descriptionAr: "صناعة وإصلاح الأثاث الخشبي",
+    icon: Axe,
+    gradient: "from-amber-50 to-yellow-100",
+  },
+  {
+    id: "serrurerie",
+    slug: "serrurerie",
+    nameFr: "Serrurerie",
+    nameAr: "أقفال ومفاتيح",
+    descriptionFr: "Ouverture de portes, changement de serrures",
+    descriptionAr: "فتح الأبواب وتغيير الأقفال",
+    icon: Key,
+    gradient: "from-zinc-50 to-zinc-100",
+  },
+  {
+    id: "internet-parabole",
+    slug: "internet-parabole",
+    nameFr: "Internet / Parabole / Caméras",
+    nameAr: "إنترنت / صحن / كاميرات",
+    descriptionFr: "Installation internet, antennes et vidéosurveillance",
+    descriptionAr: "تركيب الإنترنت والصحن وكاميرات المراقبة",
+    icon: SatelliteDish,
+    gradient: "from-violet-50 to-violet-100",
+  },
+  {
     id: "jardinage",
     slug: "jardinage",
     nameFr: "Jardinage",
@@ -126,6 +217,16 @@ export const FALLBACK_SERVICE_CATEGORIES: ServiceCategory[] = [
     gradient: "from-lime-50 to-lime-100",
   },
 ];
+
+// Top 6 priority slugs for hero section
+export const TOP_SERVICE_SLUGS = [
+  "plomberie",
+  "electricite",
+  "climatisation",
+  "renovation",
+  "peinture",
+  "nettoyage",
+] as const;
 
 const FALLBACK_STYLES_BY_SLUG = FALLBACK_SERVICE_CATEGORIES.reduce<
   Record<string, Pick<ServiceCategory, "gradient" | "icon" | "nameFr" | "nameAr" | "descriptionFr" | "descriptionAr">>
