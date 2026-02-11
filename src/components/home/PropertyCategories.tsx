@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Building2,
   Home,
@@ -254,7 +256,7 @@ export default function PropertyCategories() {
   };
 
   return (
-    <section className={`py-12 md:py-16 bg-background ${isRTL ? "rtl" : "ltr"}`}>
+    <section className={`section-spacing bg-background ${isRTL ? "rtl" : "ltr"}`}>
       <div className="container">
         {/* Section Title */}
         <div className="text-center mb-8 md:mb-10">
@@ -273,10 +275,10 @@ export default function PropertyCategories() {
           {categories.map((category) => {
             const Icon = category.icon;
             return (
-              <button
+              <Card
                 key={category.id}
+                className="group relative overflow-hidden p-5 hover:cursor-pointer transition-all duration-300 text-start"
                 onClick={() => handleCategoryClick(category.link)}
-                className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-md hover:border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 text-start"
               >
                 {/* Icon */}
                 <div className="mb-3">
@@ -292,7 +294,7 @@ export default function PropertyCategories() {
                 <p className="text-xs text-muted-foreground line-clamp-2">
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
-              </button>
+              </Card>
             );
           })}
         </div>

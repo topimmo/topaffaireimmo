@@ -67,7 +67,7 @@ export default function FeaturedProperties() {
     const skeletonCount = 4;
     
     return (
-      <section className={`py-12 md:py-16 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+      <section className={`section-spacing bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="container">
           {/* Section Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
