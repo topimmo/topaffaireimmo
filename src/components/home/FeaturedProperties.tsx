@@ -44,6 +44,7 @@ export default function FeaturedProperties() {
         area: prop.area || undefined,
         image,
         featured: prop.featured || false,
+        isPremium: true, // Featured properties are always premium
       };
     });
   }, [dbProperties, language]);
@@ -63,12 +64,11 @@ export default function FeaturedProperties() {
   
   // Show loading state with skeleton cards
   if (loading) {
-    // Show 4 skeleton cards (responsive visibility handled by carousel scroll)
     const skeletonCount = 4;
     
     return (
       <section className={`py-20 md:py-24 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-        <div className="container">
+        <div className="container max-w-7xl mx-auto">
           {/* Section Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
@@ -92,7 +92,7 @@ export default function FeaturedProperties() {
                 variant="outline"
                 size="icon"
                 disabled
-                className="rounded-full h-11 w-11 border-border/60"
+                className="rounded-full h-11 w-11 border-2"
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
@@ -100,7 +100,7 @@ export default function FeaturedProperties() {
                 variant="outline"
                 size="icon"
                 disabled
-                className="rounded-full h-11 w-11 border-border/60"
+                className="rounded-full h-11 w-11 border-2"
               >
                 <ChevronRight className="h-5 w-5" />
               </Button>
@@ -127,7 +127,7 @@ export default function FeaturedProperties() {
 
   return (
     <section className={`py-20 md:py-24 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="container">
+      <div className="container max-w-7xl mx-auto">
         {/* Section Header - Premium Typography */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
@@ -151,7 +151,7 @@ export default function FeaturedProperties() {
               variant="outline"
               size="icon"
               onClick={() => scroll("left")}
-              className="rounded-full h-11 w-11 border-border/60 hover:border-primary hover:text-primary hover:bg-primary/5"
+              className="rounded-full h-11 w-11 border-2 hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-md transition-all duration-300"
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -159,7 +159,7 @@ export default function FeaturedProperties() {
               variant="outline"
               size="icon"
               onClick={() => scroll("right")}
-              className="rounded-full h-11 w-11 border-border/60 hover:border-primary hover:text-primary hover:bg-primary/5"
+              className="rounded-full h-11 w-11 border-2 hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-md transition-all duration-300"
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
@@ -172,10 +172,11 @@ export default function FeaturedProperties() {
           className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {featuredProperties.map((property) => (
+          {featuredProperties.map((property, index) => (
             <div
               key={property.id}
-              className="flex-shrink-0 w-[300px] md:w-[340px] snap-start"
+              className="flex-shrink-0 w-[300px] md:w-[340px] snap-start animate-in fade-in slide-in-from-right-4 duration-500"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
               <PropertyCard property={property} size="large" />
             </div>
