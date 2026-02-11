@@ -212,6 +212,7 @@ export default function PropertyCategories() {
           .eq("is_active", filters.is_active)
           .order(orderBy.column, { ascending: orderBy.ascending });
 
+        // On error, continue using FALLBACK_CATEGORIES from initial state
         if (error) {
           return;
         }
@@ -220,7 +221,8 @@ export default function PropertyCategories() {
           setCategories(mapDbToUiCategories(data));
         }
       } catch (err) {
-        // Silently handle errors and fall back to default categories
+        // On exception, continue using FALLBACK_CATEGORIES from initial state
+        // This ensures the component always renders with sensible defaults
       }
     };
 
