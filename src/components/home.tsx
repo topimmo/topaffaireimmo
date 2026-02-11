@@ -3,7 +3,8 @@ import EntryGateway from "@/components/home/EntryGateway";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import LatestListings from "@/components/home/LatestListings";
 import PropertyCategories from "@/components/home/PropertyCategories";
-import ExploreByCityMap from "@/components/home/ExploreByCityMap";
+import PremiumCityGrid from "@/components/home/PremiumCityGrid";
+import TrustBadges from "@/components/home/TrustBadges";
 import AdBanner from "@/components/home/AdBanner";
 import PromoBanner from "@/components/PromoBanner";
 import SEO from "@/components/SEO";
@@ -73,8 +74,11 @@ function Home() {
         {/* Property Categories */}
         <PropertyCategories />
 
-        {/* Explore by City - Interactive Map */}
-        <ExploreByCityMap />
+        {/* Explore by City - Premium Grid */}
+        <PremiumCityGrid />
+
+        {/* Trust Badges - Before Footer */}
+        <TrustBadges />
 
         {/* FAQ Section with FAQPage Schema */}
         <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 py-20 md:py-24" />

@@ -23,6 +23,8 @@ export interface Property {
   area: number;
   image: string;
   featured?: boolean;
+  isPremium?: boolean;
+  sponsored?: boolean;
 }
 
 interface PropertyCardProps {
@@ -38,14 +40,6 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const { t, language, isRTL } = useLanguage();
   
-  // ✅ Click handler with debug log (for navigation issue diagnosis - Issue #5 verification)
-  const handleCardClick = () => {
-    console.log("[PropertyCard] Clicked property:", {
-      id: property.id,
-      title: property.title,
-    });
-  };
-  
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-MA", {
       style: "decimal",
@@ -60,13 +54,15 @@ export default function PropertyCard({
   return (
     <Link
       to={`/property/${property.id}`}
-      onClick={handleCardClick}
       className={cn(
         "group block",
         className
       )}
     >
-      <Card className="overflow-hidden hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300">
+      <Card className={cn(
+        "overflow-hidden hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300",
+        property.isPremium && "ring-2 ring-primary/20 hover:ring-primary/40"
+      )}>
       {/* Image Container */}
       <div
         className={cn(
@@ -81,10 +77,26 @@ export default function PropertyCard({
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Premium gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+        <div className={cn(
+          "absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent",
+          property.isPremium && "from-primary/20 via-black/10"
+        )} />
 
         {/* Badges - Premium styling */}
-        <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} flex gap-2`}>
+        <div className={cn(
+          "absolute top-3 flex gap-2 flex-wrap",
+          isRTL ? "right-3" : "left-3"
+        )}>
+          {property.isPremium && (
+            <Badge className="bg-primary text-primary-foreground font-semibold shadow-lg border border-primary-foreground/20">
+              {isRTL ? 'بريميوم' : 'Premium'}
+            </Badge>
+          )}
+          {property.sponsored && (
+            <Badge className="bg-amber-500 text-white font-semibold shadow-lg">
+              {isRTL ? 'مدعوم' : 'Sponsorisé'}
+            </Badge>
+          )}
           {property.featured && (
             <Badge className="bg-secondary text-secondary-foreground font-semibold shadow-md">
               {isRTL ? 'مميز' : 'À la une'}
