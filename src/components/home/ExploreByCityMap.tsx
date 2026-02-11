@@ -49,7 +49,7 @@ export default function ExploreByCityMap() {
                 className="px-6 py-2.5 rounded-full hover:border-primary hover:bg-primary/5 shadow-sm"
               >
                 <span className="font-medium">
-                  {isRTL ? city.nameAr : city.name}</span>
+                  {isRTL ? city.nameAr : city.name}
                 </span>
               </Button>
             ))}
