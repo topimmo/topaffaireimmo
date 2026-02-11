@@ -257,11 +257,11 @@ export default function PropertyCategories() {
 
   return (
     <section className={`py-20 md:py-24 bg-background ${isRTL ? "rtl" : "ltr"}`}>
-      <div className="container">
+      <div className="container max-w-7xl mx-auto">
         {/* Section Title - Premium Typography */}
         <div className="text-center mb-12 md:mb-14">
           <h2 className="section-title mb-3">
-            {isRTL ? "تصفح حسب نوع العقار" : "Parcourir par catégorie"}
+            {isRTL ? "تصفح حسب نوع العقار" : "Parcourir par Catégorie"}
           </h2>
           <p className="section-subtitle max-w-xl mx-auto">
             {isRTL
@@ -272,17 +272,18 @@ export default function PropertyCategories() {
 
         {/* Categories Grid - Premium Cards with auto-fit */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 md:gap-6">
-          {categories.map((category) => {
+          {categories.map((category, index) => {
             const Icon = category.icon;
             return (
               <Card
                 key={category.id}
-                className="group relative overflow-hidden p-6 hover:cursor-pointer transition-all duration-300 text-start hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden p-6 hover:cursor-pointer transition-all duration-300 text-start hover:-translate-y-1.5 hover:shadow-xl border border-border/50 hover:border-primary/30 rounded-xl animate-in fade-in slide-in-from-bottom-4"
+                style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => handleCategoryClick(category.link)}
               >
                 {/* Icon - Premium sizing */}
                 <div className="mb-4">
-                  <div className={`inline-flex p-3 rounded-xl ${category.gradient} shadow-sm`}>
+                  <div className={`inline-flex p-3 rounded-xl ${category.gradient} shadow-sm group-hover:shadow-md transition-shadow duration-300`}>
                     <Icon className={`h-6 w-6 ${category.iconColor}`} />
                   </div>
                 </div>

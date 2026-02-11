@@ -34,6 +34,9 @@ core
 .github/agents/
 !.github/workflows/
 
+# Tempo
+.tempo/
+
 **/tempobook/**
 .env
 .env.*

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MapPin, Bed, Bath, Square, Heart } from "lucide-react";
+import { MapPin, Bed, Bath, Square, Heart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export interface Property {
   featured?: boolean;
   isPremium?: boolean;
   sponsored?: boolean;
+  boosted?: boolean;
 }
 
 interface PropertyCardProps {
@@ -51,6 +52,9 @@ export default function PropertyCard({
   const displayCity = language === 'ar' && property.cityAr ? property.cityAr : property.city;
   const displayNeighborhood = language === 'ar' && property.neighborhoodAr ? property.neighborhoodAr : property.neighborhood;
 
+  // Determine if this is a premium-tier card (premium, sponsored, or boosted)
+  const isPremiumTier = property.isPremium || property.sponsored || property.boosted;
+
   return (
     <Link
       to={`/property/${property.id}`}
@@ -60,8 +64,11 @@ export default function PropertyCard({
       )}
     >
       <Card className={cn(
-        "overflow-hidden hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300",
-        property.isPremium && "ring-2 ring-primary/20 hover:ring-primary/40"
+        "overflow-hidden hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300 rounded-xl",
+        // Premium card styling
+        isPremiumTier && "ring-2 ring-amber-400/40 hover:ring-amber-400/60 shadow-lg shadow-amber-500/10",
+        property.isPremium && "bg-gradient-to-br from-card via-card to-amber-50/30 dark:to-amber-900/10",
+        property.sponsored && "bg-gradient-to-br from-card via-card to-blue-50/30 dark:to-blue-900/10"
       )}>
       {/* Image Container */}
       <div
@@ -79,8 +86,13 @@ export default function PropertyCard({
         {/* Premium gradient overlay */}
         <div className={cn(
           "absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent",
-          property.isPremium && "from-primary/20 via-black/10"
+          isPremiumTier && "from-black/60 via-amber-900/5"
         )} />
+
+        {/* Premium glow effect */}
+        {isPremiumTier && (
+          <div className="absolute inset-0 bg-gradient-to-t from-amber-400/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        )}
 
         {/* Badges - Premium styling */}
         <div className={cn(
@@ -88,16 +100,22 @@ export default function PropertyCard({
           isRTL ? "right-3" : "left-3"
         )}>
           {property.isPremium && (
-            <Badge className="bg-primary text-primary-foreground font-semibold shadow-lg border border-primary-foreground/20">
+            <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold shadow-lg border-0 gap-1">
+              <Sparkles className="h-3 w-3" />
               {isRTL ? 'بريميوم' : 'Premium'}
             </Badge>
           )}
           {property.sponsored && (
-            <Badge className="bg-amber-500 text-white font-semibold shadow-lg">
+            <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg border-0">
               {isRTL ? 'مدعوم' : 'Sponsorisé'}
             </Badge>
           )}
-          {property.featured && (
+          {property.boosted && !property.isPremium && !property.sponsored && (
+            <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold shadow-lg border-0">
+              {isRTL ? 'معزز' : 'Boosté'}
+            </Badge>
+          )}
+          {property.featured && !isPremiumTier && (
             <Badge className="bg-secondary text-secondary-foreground font-semibold shadow-md">
               {isRTL ? 'مميز' : 'À la une'}
             </Badge>
@@ -125,7 +143,10 @@ export default function PropertyCard({
 
         {/* Price - Premium display */}
         <div className={`absolute bottom-3 ${isRTL ? 'right-3' : 'left-3'}`}>
-          <p className="font-mono-price text-xl md:text-2xl font-bold text-white drop-shadow-lg">
+          <p className={cn(
+            "font-mono-price text-xl md:text-2xl font-bold text-white drop-shadow-lg",
+            isPremiumTier && "drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)]"
+          )}>
             {formatPrice(property.price)}{" "}
             <span className="text-sm font-medium opacity-90">MAD</span>
             {property.priceType === "rent" && (
@@ -161,7 +182,8 @@ export default function PropertyCard({
 
         {/* Features - Premium divider */}
         <div className={cn(
-          "flex items-center gap-5 border-t border-border/50",
+          "flex items-center gap-5 border-t",
+          isPremiumTier ? "border-amber-200/50 dark:border-amber-800/30" : "border-border/50",
           size === "large" ? "mt-4 pt-4" : "mt-5 pt-5"
         )}>
           {property.bedrooms !== undefined && (
