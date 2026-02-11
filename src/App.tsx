@@ -57,6 +57,10 @@ const AdminPromoBanners = lazy(() => import("./pages/admin/AdminPromoBanners"));
 const AdminDummyProperties = lazy(() => import("./pages/admin/AdminDummyProperties"));
 const AdminMonetization = lazy(() => import("./pages/admin/AdminMonetization"));
 
+// Artisan Pages
+const ArtisanOnboarding = lazy(() => import("./pages/artisan/ArtisanOnboarding"));
+const ArtisanDashboard = lazy(() => import("./pages/artisan/ArtisanDashboard"));
+
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
 const TransactionPage = lazy(() => import("./pages/TransactionPage"));
@@ -190,6 +194,10 @@ function App() {
             <Route path="/advertise" element={<Advertise />} />
             <Route path="/services" element={<Services />} />
             <Route path="/services/:slug" element={<ServiceCategoryPage />} />
+            
+            {/* Artisan Onboarding - Public but requires auth (handled in component) */}
+            <Route path="/artisan/onboarding" element={<ArtisanOnboarding />} />
+            
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
@@ -283,6 +291,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["user"]}>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/artisan"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanDashboard />
               </ProtectedRoute>
             }
           />
