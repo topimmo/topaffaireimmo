@@ -227,7 +227,7 @@ export default function ArtisanOnboarding() {
 
       // Step 2: Insert neighborhood relations if any selected
       if (selectedNeighborhoods.length > 0) {
-        const neighborhoodRows = selectedNeighborhoods.map((id: number) => ({
+        const neighborhoodRows = selectedNeighborhoods.map((id) => ({
           artisan_profile_id: profile.id,
           neighborhood_id: id,
         }));
@@ -237,6 +237,12 @@ export default function ArtisanOnboarding() {
           .insert(neighborhoodRows);
 
         if (linkError) {
+          // Clean up the orphaned profile
+          await supabase
+            .from('artisan_profiles')
+            .delete()
+            .eq('id', profile.id);
+
           const errorMsg = isRTL
             ? `خطأ في ربط الأحياء: ${linkError.message}`
             : `Erreur lors de l'association des quartiers: ${linkError.message}`;
