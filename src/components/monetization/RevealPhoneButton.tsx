@@ -76,9 +76,9 @@ export default function RevealPhoneButton({
         }
       } catch (error) {
         console.error('Error checking monetization:', error);
-        // Default to free on error
-        setRevealed(true);
-        setHasAccess(true);
+        // SECURITY: Fail-closed - DO NOT grant access on error
+        // Keep revealed = false and hasAccess = false
+        setIsMonetizationEnabled(true); // Assume monetization is ON on error
       } finally {
         setLoading(false);
       }
