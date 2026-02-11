@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Button } from "@/components/ui/button";
 import MoroccoMap from "./MoroccoMap";
 import ExploreCities from "./ExploreCities";
 import { FEATURED_CITIES } from "@/constants/cities";
@@ -41,15 +42,16 @@ export default function ExploreByCityMap() {
           </h3>
           <div className="flex flex-wrap justify-center gap-3">
             {FEATURED_CITIES.map((city) => (
-              <button
+              <Button
                 key={city.slug}
+                variant="outline"
                 onClick={() => handleCityClick(city.slug)}
-                className="px-6 py-2.5 rounded-full bg-background border border-border hover:border-terracotta hover:bg-terracotta/5 transition-all duration-300 shadow-sm hover:shadow-md"
+                className="px-6 py-2.5 rounded-full hover:border-primary hover:bg-primary/5 shadow-sm"
               >
-                <span className="font-medium text-foreground">
+                <span className="font-medium">
                   {isRTL ? city.nameAr : city.name}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>

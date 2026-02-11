@@ -3,6 +3,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { MapPin, Bed, Bath, Square, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export interface Property {
   id: string;
@@ -60,11 +62,11 @@ export default function PropertyCard({
       to={`/property/${property.id}`}
       onClick={handleCardClick}
       className={cn(
-        "group block bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:-translate-y-0.5",
-        "shadow-sm hover:shadow-lg hover:border-primary/20",
+        "group block",
         className
       )}
     >
+      <Card className="overflow-hidden hover:-translate-y-1 transition-all duration-300">
       {/* Image Container */}
       <div
         className={cn(
@@ -97,15 +99,17 @@ export default function PropertyCard({
         </div>
 
         {/* Favorite Button */}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
           }}
-          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors group/fav`}
+          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm`}
         >
-          <Heart className="h-4 w-4 text-foreground/70 group-hover/fav:text-primary transition-colors" />
-        </button>
+          <Heart className="h-4 w-4 text-foreground/70 hover:text-primary" />
+        </Button>
 
         {/* Price */}
         <div className={`absolute bottom-3 ${isRTL ? 'right-3' : 'left-3'}`}>
@@ -166,6 +170,7 @@ export default function PropertyCard({
           </div>
         </div>
       </div>
+      </Card>
     </Link>
   );
 }

@@ -72,7 +72,7 @@ export default function LatestListings() {
     const skeletonCount = 6;
     
     return (
-      <section className={`py-12 md:py-16 bg-muted/20 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <section className={`section-spacing bg-muted/20 ${isRTL ? 'rtl' : 'ltr'}`}>
         <div className="container">
           {/* Section Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -102,13 +102,14 @@ export default function LatestListings() {
           {/* Filter Pills - Show as disabled during loading */}
           <div className="flex flex-wrap gap-2 mb-8">
             {filters.map((filter) => (
-              <button
+              <Button
                 key={filter.value}
+                variant="outline"
+                size="sm"
                 disabled
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-foreground/40 border border-border cursor-not-allowed"
               >
                 {filter.label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -161,18 +162,18 @@ export default function LatestListings() {
         {/* Filter Pills */}
         <div className="flex flex-wrap gap-2 mb-8">
           {filters.map((filter) => (
-            <button
+            <Button
               key={filter.value}
+              variant={activeFilter === filter.value ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveFilter(filter.value)}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                activeFilter === filter.value
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-white text-foreground/70 border border-border hover:border-primary/30 hover:text-primary"
+                "transition-all duration-300",
+                activeFilter === filter.value && "shadow-md"
               )}
             >
               {filter.label}
-            </button>
+            </Button>
           ))}
         </div>
 
