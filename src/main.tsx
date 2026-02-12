@@ -6,6 +6,14 @@ import { BrowserRouter } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./core/auth/AuthProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { setupGlobalErrorHandlers, checkForStaleAuthToken } from "./lib/globalErrorHandlers";
+
+// CRITICAL: Setup global error handlers BEFORE React renders
+// This catches unhandled promise rejections that ErrorBoundary can't catch
+setupGlobalErrorHandlers();
+
+// Check for stale auth tokens (e.g., after deployment with cache issues)
+checkForStaleAuthToken();
 
 const basename = import.meta.env.BASE_URL;
 
