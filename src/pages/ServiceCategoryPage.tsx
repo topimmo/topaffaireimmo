@@ -11,9 +11,10 @@ import {
 } from "@/lib/services";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
+import { getEnv } from "@/lib/env";
 
 function MaskedSupabaseUrl() {
-  const url = import.meta.env.VITE_SUPABASE_URL;
+  const url = getEnv('VITE_SUPABASE_URL');
   if (!url) return "missing";
   return `${url.substring(0, 30)}...`;
 }
