@@ -277,7 +277,11 @@ export default function CommercialDashboard() {
           setProfile(data);
         } else {
           // Profile doesn't exist - should have been created by trigger
-          // Create with safe default role 'user'
+          console.warn('[CommercialDashboard] Profile missing for authenticated user, creating with default role...', {
+            userId: user.id,
+            email: user.email,
+          });
+          
           const { data: created, error: createError } = await supabase
             .from('profiles')
             .insert({
@@ -291,13 +295,14 @@ export default function CommercialDashboard() {
             .single();
 
           if (createError) {
-            console.error('Error auto-creating profile:', createError);
+            console.error('[CommercialDashboard] Error auto-creating profile:', createError);
             const isRlsBlocked = createError.code === '42501';
             if (isRlsBlocked) {
               toast.error(isRTL ? 'سياسة الأمان منعت إنشاء ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles.');
             }
           } else if (created) {
             setProfile(created);
+            console.log('[CommercialDashboard] Successfully created missing profile with user role');
             // Note: User has 'user' role - may need to upgrade to access commercial features
           }
         }
