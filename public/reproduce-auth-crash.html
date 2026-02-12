@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Crash Reproduction Script</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #3b82f6;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .danger {
+            background: #dc2626;
+        }
+        .danger:hover {
+            background: #b91c1c;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Auth Refresh Token Crash - Reproduction Script</h1>
+        <p>This script helps reproduce the production crash caused by invalid/expired refresh tokens.</p>
+        
+        <div class="step">
+            <h3>Step 1: Check Current Auth State</h3>
+            <button onclick="checkAuthState()">Check Auth State</button>
+            <pre id="authState"></pre>
+        </div>
+        
+        <div class="step warning">
+            <h3>⚠️ Step 2: Simulate Invalid Refresh Token</h3>
+            <p>This will corrupt the refresh token to simulate an expired token scenario.</p>
+            <button class="danger" onclick="corruptRefreshToken()">Corrupt Refresh Token</button>
+            <pre id="corruptResult"></pre>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Reload Page</h3>
+            <p>After corrupting the token, reload to see if the app crashes or handles it gracefully.</p>
+            <button onclick="location.reload()">Reload Page</button>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Clear Auth Storage</h3>
+            <p>Manually clear all auth-related storage (recovery method).</p>
+            <button onclick="clearAuthStorage()">Clear Auth Storage</button>
+            <pre id="clearResult"></pre>
+        </div>
+        
+        <div class="step">
+            <h3>Expected Behavior (After Fix):</h3>
+            <ul>
+                <li>✅ App loads without "Something went wrong" error</li>
+                <li>✅ Console shows: <code>[AuthContext] Refresh token invalid - clearing auth state</code></li>
+                <li>✅ User is treated as logged out</li>
+                <li>✅ Homepage remains accessible</li>
+                <li>✅ Protected routes redirect to /login</li>
+            </ul>
+        </div>
+        
+        <div class="step warning">
+            <h3>Expected Behavior (Before Fix):</h3>
+            <ul>
+                <li>❌ App crashes with "Something went wrong"</li>
+                <li>❌ ErrorBoundary catches unhandled promise rejection</li>
+                <li>❌ User cannot access any page</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const AUTH_KEY = 'topaffaireimmo-auth-token';
+        
+        function checkAuthState() {
+            const authData = localStorage.getItem(AUTH_KEY);
+            const output = document.getElementById('authState');
+            
+            if (!authData) {
+                output.textContent = 'No auth data found in localStorage';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(authData);
+                output.textContent = JSON.stringify({
+                    hasAccessToken: !!parsed.access_token,
+                    hasRefreshToken: !!parsed.refresh_token,
+                    accessTokenPreview: parsed.access_token ? parsed.access_token.substring(0, 20) + '...' : null,
+                    refreshTokenPreview: parsed.refresh_token ? parsed.refresh_token.substring(0, 20) + '...' : null,
+                    expiresAt: parsed.expires_at ? new Date(parsed.expires_at * 1000).toISOString() : null,
+                }, null, 2);
+            } catch (e) {
+                output.textContent = 'Error parsing auth data: ' + e.message;
+            }
+        }
+        
+        function corruptRefreshToken() {
+            const authData = localStorage.getItem(AUTH_KEY);
+            const output = document.getElementById('corruptResult');
+            
+            if (!authData) {
+                output.textContent = 'No auth data found. Please log in first.';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(authData);
+                
+                // Corrupt the refresh token
+                const originalToken = parsed.refresh_token;
+                parsed.refresh_token = 'invalid_token_' + Math.random().toString(36).substring(7);
+                
+                // Save corrupted data
+                localStorage.setItem(AUTH_KEY, JSON.stringify(parsed));
+                
+                output.textContent = '✅ Refresh token corrupted!\n\n' +
+                    'Original (first 20 chars): ' + (originalToken ? originalToken.substring(0, 20) + '...' : 'none') + '\n' +
+                    'Corrupted: ' + parsed.refresh_token + '\n\n' +
+                    'Now reload the page to see if the app handles this gracefully.';
+            } catch (e) {
+                output.textContent = '❌ Error: ' + e.message;
+            }
+        }
+        
+        function clearAuthStorage() {
+            const keys = [
+                'topaffaireimmo-auth-token',
+                'sb-auth-token',
+                'supabase.auth.token',
+            ];
+            
+            const removed = [];
+            keys.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    removed.push(key);
+                }
+            });
+            
+            const output = document.getElementById('clearResult');
+            output.textContent = removed.length > 0
+                ? '✅ Cleared: ' + removed.join(', ')
+                : 'No auth keys found to clear';
+        }
+        
+        // Auto-check on load
+        window.addEventListener('load', checkAuthState);
+    </script>
+</body>
+</html>

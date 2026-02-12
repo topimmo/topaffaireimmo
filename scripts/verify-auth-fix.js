@@ -170,6 +170,88 @@ if (fs.existsSync(migrationPath)) {
   );
 }
 
+// Check 10: Global error handlers exist (NEW - CRITICAL)
+const globalErrorHandlersPath = path.join(__dirname, '../src/lib/globalErrorHandlers.ts');
+check(
+  'Global error handlers file exists',
+  fs.existsSync(globalErrorHandlersPath),
+  'CRITICAL: globalErrorHandlers.ts catches async errors that ErrorBoundary cannot'
+);
+
+if (fs.existsSync(globalErrorHandlersPath)) {
+  const globalErrorHandlersContent = fs.readFileSync(globalErrorHandlersPath, 'utf8');
+  
+  check(
+    'setupGlobalErrorHandlers() function exists',
+    globalErrorHandlersContent.includes('export function setupGlobalErrorHandlers()'),
+    'Should export setupGlobalErrorHandlers function'
+  );
+  
+  check(
+    'Handles unhandledrejection events',
+    globalErrorHandlersContent.includes("addEventListener('unhandledrejection'"),
+    'CRITICAL: Catches async auth errors in callbacks'
+  );
+  
+  check(
+    'Handles global error events',
+    globalErrorHandlersContent.includes("addEventListener('error'"),
+    'Catches errors not caught by ErrorBoundary'
+  );
+  
+  check(
+    'Detects auth-related errors',
+    globalErrorHandlersContent.includes('isAuthError') &&
+    (globalErrorHandlersContent.includes('refresh') || globalErrorHandlersContent.includes('auth')),
+    'Should identify auth errors specifically'
+  );
+  
+  check(
+    'Clears auth storage on auth errors',
+    globalErrorHandlersContent.includes('topaffaireimmo-auth-token') &&
+    globalErrorHandlersContent.includes('localStorage.removeItem'),
+    'Should clear auth keys when auth errors occur'
+  );
+  
+  check(
+    'Prevents default crash behavior',
+    globalErrorHandlersContent.includes('event.preventDefault()'),
+    'Should prevent unhandled rejection from crashing app'
+  );
+}
+
+// Check 11: Global error handlers are initialized in main.tsx
+const mainPath = path.join(__dirname, '../src/main.tsx');
+const mainContent = fs.readFileSync(mainPath, 'utf8');
+
+check(
+  'Global error handlers imported in main.tsx',
+  mainContent.includes('from "./lib/globalErrorHandlers"') ||
+  mainContent.includes('from \'./lib/globalErrorHandlers\''),
+  'Should import global error handlers'
+);
+
+check(
+  'setupGlobalErrorHandlers() called before React',
+  mainContent.includes('setupGlobalErrorHandlers()') &&
+  mainContent.indexOf('setupGlobalErrorHandlers()') < mainContent.indexOf('ReactDOM.createRoot'),
+  'CRITICAL: Must be called BEFORE React renders to catch all errors'
+);
+
+check(
+  'checkForStaleAuthToken() called',
+  mainContent.includes('checkForStaleAuthToken()'),
+  'Should check for stale tokens on startup'
+);
+
+// Check 12: Reproduction script exists
+const reproduceScriptPath = path.join(__dirname, '../public/reproduce-auth-crash.html');
+check(
+  'Reproduction script exists',
+  fs.existsSync(reproduceScriptPath),
+  'Testing tool for simulating auth crashes'
+);
+
 // Summary
 console.log('━'.repeat(60));
 console.log(`\n📊 Results: ${passed} passed, ${failed} failed`);
