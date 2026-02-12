@@ -125,7 +125,7 @@ async function validateStorageBuckets(): Promise<{ errors: string[]; warnings: s
   } catch (exception) {
     // CRITICAL: Catch-all for unexpected errors - log but NEVER fail startup
     // Storage bucket validation must be non-blocking
-    console.log(`ℹ️ Storage bucket validation exception (non-blocking): ${exception instanceof Error ? exception.message : 'Unknown error'}`)
+    console.warn(`ℹ️ Storage bucket validation exception (non-blocking): ${exception instanceof Error ? exception.message : 'Unknown error'}`)
   }
   
   return { errors, warnings }
