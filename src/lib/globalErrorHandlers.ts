@@ -66,27 +66,34 @@ export function setupGlobalErrorHandlers(): void {
   /**
    * Catch unhandled promise rejections
    * This is CRITICAL for auth errors in async callbacks like onAuthStateChange
+   * PRODUCTION SAFETY: Prevents ALL unhandled rejections from crashing the app
    */
   window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
     const error = event.reason;
+    
+    // Log the error for debugging
+    console.error('[GlobalErrorHandlers] Unhandled promise rejection:', {
+      message: error?.message || 'Unknown error',
+      name: error?.name || 'Error',
+      stack: error?.stack,
+      path: window.location.pathname
+    });
+
+    // CRITICAL: Always prevent default to stop the app from crashing
+    // This is especially important for Supabase/Gotrue Navigator.locks errors
+    event.preventDefault();
     
     // Check if this is an auth-related error
     const isAuthError = 
       error?.message?.toLowerCase().includes('refresh') ||
       error?.message?.toLowerCase().includes('auth') ||
       error?.message?.toLowerCase().includes('token') ||
-      error?.message?.toLowerCase().includes('supabase');
+      error?.message?.toLowerCase().includes('supabase') ||
+      error?.message?.toLowerCase().includes('navigator') ||
+      error?.message?.toLowerCase().includes('gotrue');
 
     if (isAuthError) {
-      console.error('[GlobalErrorHandlers] Unhandled auth promise rejection:', {
-        message: error?.message || 'Unknown error',
-        name: error?.name || 'Error',
-        path: window.location.pathname,
-        isAuthError: true
-      });
-
-      // Prevent the default behavior (which would crash the app)
-      event.preventDefault();
+      console.error('[GlobalErrorHandlers] Auth-related unhandled rejection detected');
 
       // Clear auth storage to prevent infinite loops
       try {
@@ -111,18 +118,9 @@ export function setupGlobalErrorHandlers(): void {
       if (!window.location.pathname.includes('/login')) {
         safeRedirect('/login?error=session_expired', 'Auth promise rejection');
       }
-    } else {
-      // Log non-auth errors but let them through (handled by error boundary)
-      console.error('[GlobalErrorHandlers] Unhandled promise rejection:', {
-        message: error?.message || 'Unknown error',
-        name: error?.name || 'Error',
-        path: window.location.pathname,
-        isAuthError: false
-      });
-      
-      // Don't prevent default for non-auth errors - let ErrorBoundary catch them
-      // event.preventDefault() would prevent ErrorBoundary from working
     }
+    // For non-auth errors, we still prevent default to stop crashes
+    // but don't redirect - just log the error
   });
 
   /**

@@ -18,19 +18,6 @@ const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 
-// PRODUCTION SAFETY: Safe console logging - never throws
-try {
-  console.log('🔧 Supabase Client Initialization')
-  console.log('  - Environment:', getEnvVar('MODE') || 'unknown')
-  console.log('  - URL configured:', !!supabaseUrl, supabaseUrl ? `(${supabaseUrl.substring(0, 30)}...)` : '(missing)')
-  console.log('  - Anon Key configured:', !!supabaseAnonKey, supabaseAnonKey ? `(${supabaseAnonKey.substring(0, 20)}...)` : '(missing)')
-  console.log('  - Is Configured:', isSupabaseConfigured)
-  console.log('  - Session Storage:', isSupabaseConfigured ? 'localStorage (cross-domain compatible)' : 'disabled')
-  console.log('  - Current Domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side')
-} catch (error) {
-  // Never let logging crash the app
-}
-
 /**
  * PRODUCTION SAFETY: Safe storage accessor
  * Returns undefined if localStorage is not available
@@ -50,21 +37,58 @@ function getSafeStorage(): Storage | undefined {
   return undefined
 }
 
-const supabaseAuthOptions: SupabaseClientOptions<'public'> = {
-  auth: {
-    // Store session in localStorage instead of cookies
-    // This prevents session loss when domain changes (e.g., from vercel.app to custom domain)
-    persistSession: true,
-    storage: getSafeStorage(),
-    storageKey: 'topaffaireimmo-auth-token',
-    // Automatically refresh tokens when they expire
-    autoRefreshToken: true,
-    // Detect session from URL hash or query params (email confirmations, password resets)
-    detectSessionInUrl: true,
-    // Flow type for better security on modern browsers
-    flowType: 'pkce'
+/**
+ * PRODUCTION SAFETY: Create safe auth options based on storage availability
+ * If storage is not available (private mode, blocked storage, lock issues):
+ * - Set persistSession to false
+ * - Set storage to undefined
+ * - Disable autoRefreshToken (can't work without persistence)
+ * - Disable detectSessionInUrl (requires storage to persist)
+ */
+function createSafeAuthOptions(): SupabaseClientOptions<'public'> {
+  const storage = getSafeStorage();
+  const hasStorage = !!storage;
+
+  if (!hasStorage) {
+    console.warn('[Supabase] Storage not available - disabling session persistence');
   }
+
+  return {
+    auth: {
+      // Only persist session if storage is available
+      persistSession: hasStorage,
+      storage: storage,
+      storageKey: 'topaffaireimmo-auth-token',
+      // Only auto-refresh tokens if we can persist them
+      autoRefreshToken: hasStorage,
+      // Only detect session in URL if we can persist it
+      detectSessionInUrl: hasStorage,
+      // Flow type for better security on modern browsers
+      flowType: 'pkce'
+    }
+  };
 }
+
+// PRODUCTION SAFETY: Safe console logging - never throws
+try {
+  const storage = getSafeStorage();
+  const hasStorage = !!storage;
+  
+  console.log('🔧 Supabase Client Initialization')
+  console.log('  - Environment:', getEnvVar('MODE') || 'unknown')
+  console.log('  - URL configured:', !!supabaseUrl, supabaseUrl ? `(${supabaseUrl.substring(0, 30)}...)` : '(missing)')
+  console.log('  - Anon Key configured:', !!supabaseAnonKey, supabaseAnonKey ? `(${supabaseAnonKey.substring(0, 20)}...)` : '(missing)')
+  console.log('  - Is Configured:', isSupabaseConfigured)
+  console.log('  - Storage Available:', hasStorage)
+  console.log('  - Session Storage:', hasStorage ? 'localStorage (with persistence)' : 'disabled (no persistence)')
+  console.log('  - Auto Refresh Token:', hasStorage)
+  console.log('  - Detect Session In URL:', hasStorage)
+  console.log('  - Current Domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side')
+} catch (error) {
+  // Never let logging crash the app
+}
+
+const supabaseAuthOptions: SupabaseClientOptions<'public'> = createSafeAuthOptions();
 
 /**
  * PRODUCTION SAFETY: Safe Supabase client creation
