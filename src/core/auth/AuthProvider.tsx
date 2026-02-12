@@ -99,9 +99,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Initialize auth session
    * CRITICAL: This must NEVER throw - all errors must be caught
+   * PRODUCTION SAFETY: Guards against null supabase client
    */
   const initializeAuth = useCallback(async (): Promise<void> => {
     console.log('[AuthContext] Initializing authentication');
+    
+    // CRITICAL: Guard against null supabase
+    if (!supabase) {
+      if (import.meta.env.DEV) {
+        console.warn('[AuthContext] Supabase not initialized - skipping auth initialization');
+      }
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setProfileReady(false);
+      markHydrated();
+      isInitializingRef.current = false;
+      return;
+    }
     
     if (isInitializingRef.current) {
       console.log('[AuthContext] Already initializing, skipping');
@@ -204,8 +219,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Handle auth state changes
+   * PRODUCTION SAFETY: Guards against null supabase client
    */
   useEffect(() => {
+    // CRITICAL: Guard against null supabase
+    if (!supabase) {
+      if (import.meta.env.DEV) {
+        console.warn('[AuthContext] Supabase not initialized - skipping auth state change handler');
+      }
+      markHydrated();
+      return;
+    }
+    
     if (!isSupabaseConfigured) {
       console.warn('[AuthContext] Supabase not configured');
       markHydrated();

@@ -4,6 +4,7 @@ import { Routes, Route, useLocation, Outlet } from "react-router-dom";
 
 import MobileFAB from "./components/layout/MobileFAB";
 import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
+import { SupabaseInitBanner } from "./components/SupabaseInitBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
@@ -42,8 +43,8 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const GuidesPage = lazy(() => import("./pages/GuidesPage"));
 const GuidePage = lazy(() => import("./pages/GuidePage"));
 
-// Diagnostics (DEV only)
-const Diagnostics = lazy(() => import("./pages/Diagnostics"));
+// Diagnostics (DEV only) - only import in development
+const Diagnostics = isDev() ? lazy(() => import("./pages/Diagnostics")) : null;
 
 // New Admin Pages
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -220,8 +221,10 @@ function App() {
             <Route path="/guides" element={<GuidesPage />} />
             <Route path="/guides/:slug" element={<GuidePage />} />
             
-            {/* Diagnostics (DEV only) */}
-            <Route path="/diagnostics" element={<Diagnostics />} />
+            {/* Diagnostics (DEV only) - only register route in development */}
+            {isDev() && Diagnostics && (
+              <Route path="/diagnostics" element={<Diagnostics />} />
+            )}
             
             {/* 
               CRITICAL: /reset-password MUST remain public (not wrapped in ProtectedRoute)
@@ -570,6 +573,7 @@ function App() {
       </Suspense>
 
       {/* ⚠️ دابا MobileFAB راه داخل PublicLayout، إلى بغيتيه هنا حيدو من PublicLayout */}
+      <SupabaseInitBanner />
       <ConnectionStatusBanner />
       <DebugMode />
       <Toaster />

@@ -3,6 +3,7 @@
  * 
  * Receives client-side error reports for monitoring and diagnostics
  * PRODUCTION SAFETY: Never throws, always returns 200 to prevent cascading errors
+ * PRODUCTION GATE: Only enabled if ENABLE_ERROR_REPORTING env var is set
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -18,6 +19,9 @@ interface ClientErrorPayload {
   path: string;
   buildVersion?: string;
 }
+
+// PRODUCTION GATE: Check if error reporting is enabled
+const ERROR_REPORTING_ENABLED = process.env.ENABLE_ERROR_REPORTING === 'true' || process.env.NODE_ENV === 'development';
 
 // Rate limiting: simple in-memory tracking with automatic cleanup
 const rateLimitMap = new Map<string, number[]>();
@@ -85,6 +89,14 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // PRODUCTION GATE: Disable endpoint if error reporting is not enabled
+  if (!ERROR_REPORTING_ENABLED) {
+    return res.status(200).json({ 
+      success: false, 
+      message: 'Error reporting disabled' 
+    });
+  }
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
