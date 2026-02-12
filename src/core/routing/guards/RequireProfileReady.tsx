@@ -5,7 +5,7 @@
  */
 
 import { ReactNode } from 'react';
-import { useAuth } from '@/core/auth/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 interface RequireProfileReadyProps {

@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/core/auth/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { getOnboardingState } from '@/features/artisans/application/artisanOnboardingService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Header from '@/components/layout/Header';
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Clock, CheckCircle } from 'lucide-react';
 
 export default function ArtisanPending() {
-  const { user, profile, profileReady } = useAuth();
+  const { user, profileReady } = useAuth();
   const { isRTL } = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
