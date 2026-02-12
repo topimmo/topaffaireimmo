@@ -32,14 +32,18 @@ function safeRedirect(url: string, reason: string): void {
   redirectAttempts++;
   
   if (redirectAttempts > MAX_REDIRECT_ATTEMPTS) {
-    console.error('[GlobalErrorHandlers] Too many redirect attempts - stopping to prevent infinite loop');
-    console.error('[GlobalErrorHandlers] Reason:', reason);
+    if (import.meta.env.DEV) {
+      console.error('[GlobalErrorHandlers] Too many redirect attempts - stopping to prevent infinite loop');
+      console.error('[GlobalErrorHandlers] Reason:', reason);
+    }
     // Don't redirect - just clear auth and stay on current page
     return;
   }
   
-  console.warn(`[GlobalErrorHandlers] Redirecting (attempt ${redirectAttempts}/${MAX_REDIRECT_ATTEMPTS}):`, url);
-  console.warn('[GlobalErrorHandlers] Reason:', reason);
+  if (import.meta.env.DEV) {
+    console.warn(`[GlobalErrorHandlers] Redirecting (attempt ${redirectAttempts}/${MAX_REDIRECT_ATTEMPTS}):`, url);
+    console.warn('[GlobalErrorHandlers] Reason:', reason);
+  }
   
   window.setTimeout(() => {
     window.location.href = url;
@@ -61,32 +65,47 @@ export function setupGlobalErrorHandlers(): void {
   }
   (window as any).__globalErrorHandlersSetup = true;
 
-  console.log('[GlobalErrorHandlers] Setting up global error handlers');
+  if (import.meta.env.DEV) {
+    console.log('[GlobalErrorHandlers] Setting up global error handlers');
+  }
 
   /**
    * Catch unhandled promise rejections
    * This is CRITICAL for auth errors in async callbacks like onAuthStateChange
+   * PRODUCTION SAFETY: Prevents ALL unhandled rejections from crashing the app
    */
   window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
     const error = event.reason;
+    
+    // CRITICAL: Always prevent default to stop the app from crashing
+    // This is especially important for Supabase/Gotrue Navigator.locks errors
+    // REQUIREMENT: Per problem statement, prevent ALL unhandled rejections from crashing
+    // React ErrorBoundary will still catch synchronous errors in components
+    event.preventDefault();
+    
+    // Log the error for debugging (DEV mode only)
+    if (import.meta.env.DEV) {
+      console.error('[GlobalErrorHandlers] Unhandled promise rejection:', {
+        message: error?.message || 'Unknown error',
+        name: error?.name || 'Error',
+        stack: error?.stack,
+        path: window.location.pathname
+      });
+    }
     
     // Check if this is an auth-related error
     const isAuthError = 
       error?.message?.toLowerCase().includes('refresh') ||
       error?.message?.toLowerCase().includes('auth') ||
       error?.message?.toLowerCase().includes('token') ||
-      error?.message?.toLowerCase().includes('supabase');
+      error?.message?.toLowerCase().includes('supabase') ||
+      error?.message?.toLowerCase().includes('navigator') ||
+      error?.message?.toLowerCase().includes('gotrue');
 
     if (isAuthError) {
-      console.error('[GlobalErrorHandlers] Unhandled auth promise rejection:', {
-        message: error?.message || 'Unknown error',
-        name: error?.name || 'Error',
-        path: window.location.pathname,
-        isAuthError: true
-      });
-
-      // Prevent the default behavior (which would crash the app)
-      event.preventDefault();
+      if (import.meta.env.DEV) {
+        console.error('[GlobalErrorHandlers] Auth-related unhandled rejection detected');
+      }
 
       // Clear auth storage to prevent infinite loops
       try {
@@ -102,27 +121,23 @@ export function setupGlobalErrorHandlers(): void {
             // Ignore storage errors
           }
         });
-        console.warn('[GlobalErrorHandlers] Auth storage cleared due to unhandled auth error');
+        if (import.meta.env.DEV) {
+          console.warn('[GlobalErrorHandlers] Auth storage cleared due to unhandled auth error');
+        }
       } catch (err) {
-        console.error('[GlobalErrorHandlers] Failed to clear auth storage:', err);
+        if (import.meta.env.DEV) {
+          console.error('[GlobalErrorHandlers] Failed to clear auth storage:', err);
+        }
       }
 
       // Only redirect if not already on login page and haven't redirected too many times
       if (!window.location.pathname.includes('/login')) {
         safeRedirect('/login?error=session_expired', 'Auth promise rejection');
       }
-    } else {
-      // Log non-auth errors but let them through (handled by error boundary)
-      console.error('[GlobalErrorHandlers] Unhandled promise rejection:', {
-        message: error?.message || 'Unknown error',
-        name: error?.name || 'Error',
-        path: window.location.pathname,
-        isAuthError: false
-      });
-      
-      // Don't prevent default for non-auth errors - let ErrorBoundary catch them
-      // event.preventDefault() would prevent ErrorBoundary from working
     }
+    // For non-auth errors: preventDefault() was called above
+    // We log them but don't redirect - they're just logged for debugging
+    // React ErrorBoundary will still catch synchronous component errors
   });
 
   /**
@@ -138,14 +153,16 @@ export function setupGlobalErrorHandlers(): void {
       error?.message?.toLowerCase().includes('token') ||
       error?.message?.toLowerCase().includes('supabase');
 
-    console.error('[GlobalErrorHandlers] Global error:', {
-      message: event.message,
-      filename: event.filename,
-      lineno: event.lineno,
-      colno: event.colno,
-      path: window.location.pathname,
-      isAuthError
-    });
+    if (import.meta.env.DEV) {
+      console.error('[GlobalErrorHandlers] Global error:', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        path: window.location.pathname,
+        isAuthError
+      });
+    }
 
     // For auth errors, prevent propagation and handle gracefully
     if (isAuthError) {
@@ -165,9 +182,13 @@ export function setupGlobalErrorHandlers(): void {
             // Ignore storage errors
           }
         });
-        console.warn('[GlobalErrorHandlers] Auth storage cleared due to global auth error');
+        if (import.meta.env.DEV) {
+          console.warn('[GlobalErrorHandlers] Auth storage cleared due to global auth error');
+        }
       } catch (err) {
-        console.error('[GlobalErrorHandlers] Failed to clear auth storage:', err);
+        if (import.meta.env.DEV) {
+          console.error('[GlobalErrorHandlers] Failed to clear auth storage:', err);
+        }
       }
 
       // Redirect to login with loop prevention
@@ -180,7 +201,9 @@ export function setupGlobalErrorHandlers(): void {
     // Don't call event.preventDefault() so React ErrorBoundary can catch them
   });
 
-  console.log('[GlobalErrorHandlers] Global error handlers ready');
+  if (import.meta.env.DEV) {
+    console.log('[GlobalErrorHandlers] Global error handlers ready');
+  }
 }
 
 /**
@@ -200,7 +223,9 @@ export function checkForStaleAuthToken(): void {
     const expiresAt = parsed?.expires_at;
 
     if (!expiresAt) {
-      console.warn('[GlobalErrorHandlers] Auth token missing expiry - may be stale');
+      if (import.meta.env.DEV) {
+        console.warn('[GlobalErrorHandlers] Auth token missing expiry - may be stale');
+      }
       return;
     }
 
@@ -208,12 +233,18 @@ export function checkForStaleAuthToken(): void {
     const now = new Date();
 
     if (expiryDate < now) {
-      console.warn('[GlobalErrorHandlers] Auth token is expired, clearing storage');
+      if (import.meta.env.DEV) {
+        console.warn('[GlobalErrorHandlers] Auth token is expired, clearing storage');
+      }
       window.localStorage.removeItem(authKey);
     } else {
-      console.log('[GlobalErrorHandlers] Auth token is valid, expires at:', expiryDate.toISOString());
+      if (import.meta.env.DEV) {
+        console.log('[GlobalErrorHandlers] Auth token is valid, expires at:', expiryDate.toISOString());
+      }
     }
   } catch (error) {
-    console.error('[GlobalErrorHandlers] Error checking auth token:', error);
+    if (import.meta.env.DEV) {
+      console.error('[GlobalErrorHandlers] Error checking auth token:', error);
+    }
   }
 }
