@@ -23,7 +23,8 @@
     "debug:listings": "npx tsx scripts/debug-listings.ts",
     "fix:listings": "npx tsx scripts/quick-fix-listings.ts",
     "check:migrations": "npx tsx scripts/check-migrations.ts",
-    "verify:ga4": "node scripts/verify-ga4.js"
+    "verify:ga4": "node scripts/verify-ga4.js",
+    "verify:auth-fix": "node scripts/verify-auth-fix.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
