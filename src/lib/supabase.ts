@@ -21,6 +21,46 @@ const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 
 /**
+ * PRODUCTION SAFETY: Defensively disable navigator.locks to prevent gotrue-js crashes
+ * This prevents "Error: Acquiring an exclusive Navigator" on browsers where
+ * navigator.locks is unsupported or failing (e.g., private browsing, older browsers)
+ * 
+ * CRITICAL: Must be called BEFORE creating Supabase client
+ * - Only runs in browser (typeof window !== 'undefined')
+ * - Never throws (wrapped in try/catch)
+ * - Logs only in DEV mode
+ */
+function disableNavigatorLocks(): void {
+  // Only run in browser environment
+  if (typeof window === 'undefined') return;
+
+  try {
+    // Check if navigator.locks exists
+    if (typeof navigator !== 'undefined' && 'locks' in navigator) {
+      // Defensively disable navigator.locks by setting it to undefined
+      // This prevents @supabase/gotrue-js from attempting to use it
+      Object.defineProperty(navigator, 'locks', {
+        value: undefined,
+        writable: false,
+        configurable: true
+      });
+
+      if (import.meta.env.DEV) {
+        console.log('[Supabase] Navigator.locks disabled to prevent gotrue-js crashes');
+      }
+    }
+  } catch (error) {
+    // CRITICAL: Never throw - this is defensive code
+    if (import.meta.env.DEV) {
+      console.warn('[Supabase] Failed to disable navigator.locks:', error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+}
+
+// CRITICAL: Disable navigator.locks BEFORE creating Supabase client
+disableNavigatorLocks();
+
+/**
  * PRODUCTION SAFETY: Safe storage accessor
  * Returns undefined if localStorage is not available
  */
@@ -153,10 +193,26 @@ function createSafeSupabaseClient(): SupabaseClient {
       
       // Return a proxy that provides method stubs for common Supabase operations
       const errorStub = () => Promise.resolve({ data: null, error: new Error('Supabase not initialized') })
+      
+      // Create a stub auth object with proper methods that return null session
+      const authStub = {
+        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        signOut: () => Promise.resolve({ error: null }),
+        signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
+        signInWithOtp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
+        signUp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+      };
+      
       return new Proxy({} as SupabaseClient, {
         get(target, prop) {
+          // Handle auth property specially to return proper session stubs
+          if (prop === 'auth') {
+            return authStub;
+          }
           // Handle common property access patterns
-          if (prop === 'from' || prop === 'auth' || prop === 'storage') {
+          if (prop === 'from' || prop === 'storage') {
             return () => new Proxy({}, {
               get() {
                 return errorStub
