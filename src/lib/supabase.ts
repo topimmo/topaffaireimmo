@@ -94,13 +94,23 @@ function createSafeSupabaseClient(): SupabaseClient {
         {}
       )
     } catch (fallbackError) {
-      // This should never happen, but if it does, we need to return something
+      // This should never happen, but if it does, return a stub that matches common usage
       console.error('[Supabase] FATAL: Even fallback client creation failed')
-      // Return a proxy that logs errors instead of crashing
+      // Return a proxy that provides method stubs for common Supabase operations
+      const errorStub = () => Promise.resolve({ data: null, error: new Error('Supabase not initialized') })
       return new Proxy({} as SupabaseClient, {
-        get() {
-          console.error('[Supabase] Attempted to use Supabase client but initialization failed')
-          return () => Promise.resolve({ data: null, error: new Error('Supabase not initialized') })
+        get(target, prop) {
+          // Handle common property access patterns
+          if (prop === 'from' || prop === 'auth' || prop === 'storage') {
+            return () => new Proxy({}, {
+              get() {
+                return errorStub
+              }
+            })
+          }
+          // For any other property, return error stub
+          console.warn(`[Supabase] Attempted to access '${String(prop)}' but client is not initialized`)
+          return errorStub
         }
       })
     }

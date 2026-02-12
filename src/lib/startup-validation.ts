@@ -23,7 +23,11 @@ export interface ValidationResult {
  */
 function validateEnvironmentVariables(): { errors: string[]; warnings: string[] } {
   try {
-    return validateEnvironment()
+    const result = validateEnvironment()
+    return {
+      errors: result.errors,
+      warnings: result.warnings
+    }
   } catch (error) {
     console.error('[StartupValidation] Failed to validate environment:', error instanceof Error ? error.message : 'Unknown error')
     return {

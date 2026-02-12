@@ -37,7 +37,8 @@ export function getSiteUrl(): string {
   try {
     // Priority 1: Check for explicit VITE_SITE_URL
     const envSiteUrl = getEnv('VITE_SITE_URL')
-    if (envSiteUrl) {
+    // Ensure it's not an empty string after trimming (getEnv already trims)
+    if (envSiteUrl && envSiteUrl.length > 0) {
       return envSiteUrl
     }
     
