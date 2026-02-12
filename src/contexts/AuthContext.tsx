@@ -11,6 +11,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  profileReady: boolean
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<void>
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileReady, setProfileReady] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const lastPathRef = useRef(location.pathname)
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Ensure profile exists for authenticated user
    * Creates profile if missing (for Google OAuth or edge cases)
    */
-  const ensureProfileExists = async (user: User, log: ReturnType<typeof createCorrelatedLogger>): Promise<void> => {
+  const ensureProfileExists = async (user: User, log: ReturnType<typeof createCorrelatedLogger>): Promise<boolean> => {
     try {
       // Check if profile exists
       const { data: profile, error: profileError } = await supabase
@@ -81,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (profileError.code === '42501' || profileError.message?.toLowerCase().includes('permission')) {
           setLoading(false);
         }
-        return;
+        return false;
       }
 
       if (!profile) {
@@ -105,14 +107,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (insertError.code === '42501' || insertError.message?.toLowerCase().includes('permission')) {
             setLoading(false);
           }
+          return false;
         } else {
           log.info('Successfully created missing profile with user role', { userId: user.id });
+          return true;
         }
       } else {
         log.info('Profile exists for user', { userId: user.id });
+        return true;
       }
     } catch (exception) {
       log.error('Exception during profile check', exception);
+      return false;
     }
   };
 
@@ -136,13 +142,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setSession(session);
         setUser(session.user);
-        ensureProfileExists(session.user, log).catch((err) => {
-          log.error('ensureProfileExists failed during init', err);
-        });
+        
+        // Wait for profile to be ready before marking as hydrated
+        const profileExists = await ensureProfileExists(session.user, log);
+        setProfileReady(profileExists);
         markHydrated();
       } else {
         setSession(null);
         setUser(null);
+        setProfileReady(false);
         markHydrated();
       }
 
@@ -153,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       log.error('Exception during auth initialization', exception);
       setSession(null);
       setUser(null);
+      setProfileReady(false);
       markHydrated();
     } finally {
       isInitializingRef.current = false;
@@ -201,9 +210,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        ensureProfileExists(session.user, log).catch((error) => {
-          log.error('Exception in ensureProfileExists during auth state change', error);
-        });
+        // Wait for profile to be ready before marking as hydrated
+        const profileExists = await ensureProfileExists(session.user, log);
+        setProfileReady(profileExists);
+      } else {
+        setProfileReady(false);
       }
 
       markHydrated();
@@ -348,7 +359,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, refreshSession }}>
+    <AuthContext.Provider value={{ user, session, loading, profileReady, signUp, signIn, signOut, refreshSession }}>
       {children}
     </AuthContext.Provider>
   )

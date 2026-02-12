@@ -255,6 +255,9 @@ export default function ArtisanOnboarding() {
 
       // Show success message
       toast.success(isRTL ? 'تم إنشاء حسابك! دابا كاين فمرحلة المراجعة.' : 'Profil créé ! Il est en attente de validation.');
+      
+      // Wait a moment to ensure DB transaction completes before redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
       navigate('/dashboard/artisan');
     } catch (err) {
       const errorMsg = isRTL ? 'حدث خطأ غير متوقع' : 'Une erreur inattendue s\'est produite';
