@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { getEnv } from '@/lib/env'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -30,21 +31,26 @@ export function isValidUuid(value: unknown): value is string {
  * 3. Fallback to production domain
  * 
  * This ensures auth email links always redirect to the correct domain
+ * PRODUCTION SAFETY: Never throws, always returns a valid URL
  */
 export function getSiteUrl(): string {
-  // Priority 1: Check for explicit VITE_SITE_URL
-  const envSiteUrl = import.meta.env.VITE_SITE_URL;
-  if (envSiteUrl && typeof envSiteUrl === 'string' && envSiteUrl.trim()) {
-    return envSiteUrl.trim();
-  }
-  
-  // Priority 2: Use current origin if available (browser context)
-  if (typeof window !== 'undefined' && window.location && window.location.origin) {
-    return window.location.origin;
+  try {
+    // Priority 1: Check for explicit VITE_SITE_URL
+    const envSiteUrl = getEnv('VITE_SITE_URL')
+    if (envSiteUrl) {
+      return envSiteUrl
+    }
+    
+    // Priority 2: Use current origin if available (browser context)
+    if (typeof window !== 'undefined' && window.location && window.location.origin) {
+      return window.location.origin
+    }
+  } catch (error) {
+    console.warn('[Utils] Error getting site URL:', error instanceof Error ? error.message : 'Unknown error')
   }
   
   // Priority 3: Fallback to production domain
-  return 'https://www.topaffaireimmo.com';
+  return 'https://www.topaffaireimmo.com'
 }
 
 /**

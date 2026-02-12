@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { getEnv, isDev } from '@/lib/env';
 
 interface AdSenseFallbackCTAProps {
   className?: string;
@@ -40,6 +41,8 @@ const translations = {
  * - Detects language from document.documentElement.lang
  * - Supports 'ar' (Arabic) and 'fr' (French, default)
  * - All text content is dynamically translated
+ * 
+ * PRODUCTION SAFETY: Uses safe env accessor
  */
 export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProps) {
   const [isMounted, setIsMounted] = useState(false);
@@ -54,8 +57,8 @@ export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProp
     setCurrentLang(detectedLang);
   }, []);
 
-  // WhatsApp number from environment variable
-  const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
+  // WhatsApp number from environment variable - safe accessor
+  const WHATSAPP_NUMBER = getEnv('VITE_WHATSAPP_NUMBER');
 
   // Prevent hydration issues
   if (!isMounted) {
@@ -64,7 +67,7 @@ export default function AdSenseFallbackCTA({ className }: AdSenseFallbackCTAProp
 
   // Return null if WhatsApp number is not configured
   if (!WHATSAPP_NUMBER) {
-    if (import.meta.env.DEV) {
+    if (isDev()) {
       console.warn('AdSenseFallbackCTA: VITE_WHATSAPP_NUMBER environment variable not configured');
     }
     return null;
