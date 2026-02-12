@@ -21,6 +21,55 @@ const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 
 /**
+ * PRODUCTION SAFETY: Defensively disable navigator.locks to prevent gotrue-js crashes
+ * This prevents "Error: Acquiring an exclusive Navigator" on browsers where
+ * navigator.locks is unsupported or failing (e.g., private browsing, older browsers)
+ * 
+ * CRITICAL: Must be called BEFORE creating Supabase client
+ * - Only runs in browser (typeof window !== 'undefined')
+ * - Never throws (wrapped in try/catch)
+ * - Logs only in DEV mode
+ * 
+ * WHY: @supabase/gotrue-js automatically uses navigator.locks when available
+ * but has no configuration option to disable it. The library checks for availability
+ * using 'locks' in navigator, but some browsers (iOS Safari private mode, older browsers)
+ * have the API present but it fails at runtime. Setting it to undefined prevents
+ * gotrue-js from attempting to use it, forcing it to use the fallback mechanism.
+ * 
+ * ALTERNATIVE CONSIDERED: Patching gotrue-js or using a custom build was rejected
+ * because it would require maintaining a fork and updating with every gotrue-js release.
+ */
+function disableNavigatorLocks(): void {
+  // Only run in browser environment
+  if (typeof window === 'undefined') return;
+
+  try {
+    // Check if navigator.locks exists
+    if (typeof navigator !== 'undefined' && 'locks' in navigator) {
+      // Defensively disable navigator.locks by setting it to undefined
+      // This prevents @supabase/gotrue-js from attempting to use it
+      Object.defineProperty(navigator, 'locks', {
+        value: undefined,
+        writable: false,
+        configurable: true
+      });
+
+      if (import.meta.env.DEV) {
+        console.log('[Supabase] Navigator.locks disabled to prevent gotrue-js crashes');
+      }
+    }
+  } catch (error) {
+    // CRITICAL: Never throw - this is defensive code
+    if (import.meta.env.DEV) {
+      console.warn('[Supabase] Failed to disable navigator.locks:', error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+}
+
+// CRITICAL: Disable navigator.locks BEFORE creating Supabase client
+disableNavigatorLocks();
+
+/**
  * PRODUCTION SAFETY: Safe storage accessor
  * Returns undefined if localStorage is not available
  */
@@ -153,10 +202,34 @@ function createSafeSupabaseClient(): SupabaseClient {
       
       // Return a proxy that provides method stubs for common Supabase operations
       const errorStub = () => Promise.resolve({ data: null, error: new Error('Supabase not initialized') })
+      
+      // Create a stub auth object with proper methods that return null session
+      const authStub = {
+        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        signOut: () => Promise.resolve({ error: null }),
+        signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
+        signInWithOtp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
+        signUp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
+        onAuthStateChange: (callback: (event: string, session: null) => void) => {
+          // Immediately call the callback with null session to match expected behavior
+          try {
+            callback?.('SIGNED_OUT', null);
+          } catch (e) {
+            // Ignore callback errors
+          }
+          return { data: { subscription: { unsubscribe: () => {} } } };
+        }
+      };
+      
       return new Proxy({} as SupabaseClient, {
         get(target, prop) {
+          // Handle auth property specially to return proper session stubs
+          if (prop === 'auth') {
+            return authStub;
+          }
           // Handle common property access patterns
-          if (prop === 'from' || prop === 'auth' || prop === 'storage') {
+          if (prop === 'from' || prop === 'storage') {
             return () => new Proxy({}, {
               get() {
                 return errorStub
