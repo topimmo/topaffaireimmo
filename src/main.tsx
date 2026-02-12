@@ -7,6 +7,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./core/auth/AuthProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { setupGlobalErrorHandlers, checkForStaleAuthToken } from "./lib/globalErrorHandlers";
+import { runBootHealthCheck, reportHealthCheckFailure } from "./lib/bootHealthCheck";
 import { hasEnv, isProd, getBaseUrl } from "./lib/env";
 
 /**
@@ -86,6 +87,24 @@ if (envValidation.valid) {
 
     // Check for stale auth tokens (e.g., after deployment with cache issues)
     checkForStaleAuthToken();
+
+    // PRODUCTION SAFETY: Run boot health check (non-blocking)
+    // This detects network/API issues early and reports them
+    runBootHealthCheck().then(healthResult => {
+      if (!healthResult.healthy) {
+        if (import.meta.env.DEV) {
+          console.warn('[Main] Boot health check failed (non-blocking)');
+        }
+        // Report health check failure (fire and forget)
+        reportHealthCheckFailure(healthResult).catch(() => {
+          // Silently ignore reporting errors
+        });
+      }
+    }).catch(error => {
+      if (import.meta.env.DEV) {
+        console.warn('[Main] Boot health check error (non-blocking):', error);
+      }
+    });
 
     // Get base URL safely
     const basename = getBaseUrl();

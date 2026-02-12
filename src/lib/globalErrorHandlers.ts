@@ -17,6 +17,71 @@ const MAX_REDIRECT_ATTEMPTS = 3;
 const REDIRECT_RESET_TIMEOUT = 60000; // Reset counter after 1 minute
 
 /**
+ * PRODUCTION-SAFE: Client error reporting payload
+ */
+interface ClientErrorPayload {
+  message: string;
+  stack?: string;
+  url: string;
+  userAgent: string;
+  timestamp: string;
+  type: 'error' | 'unhandledrejection';
+  isAuthRelated: boolean;
+  path: string;
+  buildVersion?: string;
+}
+
+/**
+ * PRODUCTION-SAFE: Send client error to backend API
+ * Never throws - all errors are silently caught
+ * POST to /api/client-error with error details
+ */
+async function sendClientError(payload: ClientErrorPayload): Promise<void> {
+  try {
+    // Only send errors in production or if explicitly enabled in dev
+    if (import.meta.env.DEV && !import.meta.env.VITE_ENABLE_ERROR_REPORTING) {
+      console.log('[GlobalErrorHandlers] Error reporting disabled in DEV');
+      return;
+    }
+
+    // Add build version if available from meta tag
+    try {
+      const buildTimestamp = document.querySelector('meta[name="build-timestamp"]')?.getAttribute('content');
+      if (buildTimestamp) {
+        payload.buildVersion = buildTimestamp;
+      }
+    } catch (e) {
+      // Ignore meta tag errors
+    }
+
+    // Send to API endpoint with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+    await fetch('/api/client-error', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (import.meta.env.DEV) {
+      console.log('[GlobalErrorHandlers] Error reported successfully');
+    }
+  } catch (error) {
+    // CRITICAL: Never throw from error reporting
+    // Silently fail to prevent cascading errors
+    if (import.meta.env.DEV) {
+      console.warn('[GlobalErrorHandlers] Failed to send error report (non-critical):', error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+}
+
+/**
  * Reset redirect counter after timeout
  */
 function resetRedirectCounter() {
@@ -102,6 +167,20 @@ export function setupGlobalErrorHandlers(): void {
       error?.message?.toLowerCase().includes('navigator') ||
       error?.message?.toLowerCase().includes('gotrue');
 
+    // Send error report to backend (production-safe, never throws)
+    sendClientError({
+      message: error?.message || 'Unhandled promise rejection',
+      stack: error?.stack,
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      type: 'unhandledrejection',
+      isAuthRelated: isAuthError,
+      path: window.location.pathname,
+    }).catch(() => {
+      // Silently ignore reporting errors
+    });
+
     if (isAuthError) {
       if (import.meta.env.DEV) {
         console.error('[GlobalErrorHandlers] Auth-related unhandled rejection detected');
@@ -163,6 +242,20 @@ export function setupGlobalErrorHandlers(): void {
         isAuthError
       });
     }
+
+    // Send error report to backend (production-safe, never throws)
+    sendClientError({
+      message: event.message || 'Global error',
+      stack: error?.stack,
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      type: 'error',
+      isAuthRelated: isAuthError,
+      path: window.location.pathname,
+    }).catch(() => {
+      // Silently ignore reporting errors
+    });
 
     // For auth errors, prevent propagation and handle gracefully
     if (isAuthError) {

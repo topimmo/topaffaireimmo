@@ -147,117 +147,85 @@ if (import.meta.env.DEV) {
 const supabaseAuthOptions: SupabaseClientOptions<'public'> = createSafeAuthOptions();
 
 /**
- * PRODUCTION SAFETY: Safe Supabase client creation
- * CRITICAL: Never throws - returns a client even if environment is misconfigured
- * Fallback client will fail gracefully at runtime
+ * PRODUCTION SAFETY: Initialize Supabase client
+ * Returns null if initialization fails
+ * CRITICAL: Never throws - returns null on any error
  */
-function createSafeSupabaseClient(): SupabaseClient {
+function initializeSupabaseClient(): SupabaseClient | null {
   try {
     if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
       // CRITICAL: Wrap createClient in try-catch to prevent crashes
       try {
-        return createClient(supabaseUrl, supabaseAnonKey, supabaseAuthOptions)
+        const client = createClient(supabaseUrl, supabaseAnonKey, supabaseAuthOptions)
+        if (import.meta.env.DEV) {
+          console.log('[Supabase] Client initialized successfully')
+        }
+        return client
       } catch (clientError) {
         if (import.meta.env.DEV) {
           console.error('[Supabase] Failed to create client with credentials:', clientError instanceof Error ? clientError.message : 'Unknown error')
         }
-        throw clientError; // Re-throw to be caught by outer catch
+        return null
       }
     }
     
-    // Fallback to local development server
+    // In development without config, try fallback to local development server
     if (import.meta.env.DEV) {
-      console.warn('[Supabase] Using fallback local development configuration')
-    }
-    try {
-      return createClient(
-        'http://localhost:54321',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
-        supabaseAuthOptions
-      )
-    } catch (fallbackError) {
-      if (import.meta.env.DEV) {
-        console.error('[Supabase] Fallback client creation failed:', fallbackError instanceof Error ? fallbackError.message : 'Unknown error')
+      console.warn('[Supabase] No production config - attempting local development fallback')
+      try {
+        const client = createClient(
+          'http://localhost:54321',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
+          supabaseAuthOptions
+        )
+        console.warn('[Supabase] Using local development server')
+        return client
+      } catch (fallbackError) {
+        console.error('[Supabase] Local development fallback failed:', fallbackError instanceof Error ? fallbackError.message : 'Unknown error')
+        return null
       }
-      throw fallbackError; // Re-throw to be caught by outer catch
     }
+    
+    // Production without config - return null
+    if (import.meta.env.DEV) {
+      console.error('[Supabase] CRITICAL: Missing Supabase environment variables!')
+      console.error('   Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+    }
+    return null
   } catch (error) {
+    // CRITICAL: Never throw - always return null on error
     if (import.meta.env.DEV) {
-      console.error('[Supabase] CRITICAL: Failed to create Supabase client:', error instanceof Error ? error.message : 'Unknown error')
+      console.error('[Supabase] FATAL: Supabase initialization failed:', error instanceof Error ? error.message : 'Unknown error')
     }
-    
-    // CRITICAL: Last resort - create a minimal stub client that won't crash but will fail gracefully
-    // This ensures the app can still load even if Supabase is completely broken
-    try {
-      return createClient(
-        'http://localhost:54321',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
-        {} // Empty options as fallback
-      )
-    } catch (finalError) {
-      // CRITICAL: This should never happen, but if it does, return a proxy stub
-      if (import.meta.env.DEV) {
-        console.error('[Supabase] FATAL: Even fallback client creation failed, using proxy stub')
-      }
-      
-      // Return a proxy that provides method stubs for common Supabase operations
-      const errorStub = () => Promise.resolve({ data: null, error: new Error('Supabase not initialized') })
-      
-      // Create a stub auth object with proper methods that return null session
-      const authStub = {
-        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        signOut: () => Promise.resolve({ error: null }),
-        signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
-        signInWithOtp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
-        signUp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
-        onAuthStateChange: (callback: (event: string, session: null) => void) => {
-          // Immediately call the callback with null session to match expected behavior
-          try {
-            callback?.('SIGNED_OUT', null);
-          } catch (e) {
-            // Ignore callback errors
-          }
-          return { data: { subscription: { unsubscribe: () => {} } } };
-        }
-      };
-      
-      return new Proxy({} as SupabaseClient, {
-        get(target, prop) {
-          // Handle auth property specially to return proper session stubs
-          if (prop === 'auth') {
-            return authStub;
-          }
-          // Handle common property access patterns
-          if (prop === 'from' || prop === 'storage') {
-            return () => new Proxy({}, {
-              get() {
-                return errorStub
-              }
-            })
-          }
-          // For any other property, return error stub
-          if (import.meta.env.DEV) {
-            console.warn(`[Supabase] Attempted to access '${String(prop)}' but client is not initialized`)
-          }
-          return errorStub
-        }
-      })
-    }
+    return null
   }
 }
 
-// Create Supabase client with proper session persistence configuration
-// CRITICAL: Use localStorage for session storage instead of cookies
-// This ensures sessions persist across domain changes and work on all devices
-export const supabase: SupabaseClient = createSafeSupabaseClient()
+/**
+ * Supabase client instance
+ * CRITICAL: Can be null if initialization fails
+ * Components MUST check for null before using
+ */
+export let supabase: SupabaseClient | null = null
 
-// Log warning when env vars are missing (non-blocking, DEV only)
-if (!isSupabaseConfigured && import.meta.env.DEV) {
+/**
+ * Initialize Supabase client
+ * PRODUCTION SAFETY: Returns boolean success status
+ * CRITICAL: Never throws
+ */
+export function initSupabase(): boolean {
   try {
-    console.error('❌ CRITICAL: Missing Supabase environment variables!')
-    console.error('   Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+    supabase = initializeSupabaseClient()
+    return supabase !== null
   } catch (error) {
-    // Never let logging crash the app
+    // CRITICAL: Never throw
+    if (import.meta.env.DEV) {
+      console.error('[Supabase] initSupabase() failed:', error instanceof Error ? error.message : 'Unknown error')
+    }
+    return false
   }
 }
+
+// Auto-initialize on module load
+// This maintains backward compatibility with existing code
+initSupabase()
