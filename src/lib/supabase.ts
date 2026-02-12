@@ -29,6 +29,15 @@ export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
  * - Only runs in browser (typeof window !== 'undefined')
  * - Never throws (wrapped in try/catch)
  * - Logs only in DEV mode
+ * 
+ * WHY: @supabase/gotrue-js automatically uses navigator.locks when available
+ * but has no configuration option to disable it. The library checks for availability
+ * using 'locks' in navigator, but some browsers (iOS Safari private mode, older browsers)
+ * have the API present but it fails at runtime. Setting it to undefined prevents
+ * gotrue-js from attempting to use it, forcing it to use the fallback mechanism.
+ * 
+ * ALTERNATIVE CONSIDERED: Patching gotrue-js or using a custom build was rejected
+ * because it would require maintaining a fork and updating with every gotrue-js release.
  */
 function disableNavigatorLocks(): void {
   // Only run in browser environment
@@ -202,7 +211,15 @@ function createSafeSupabaseClient(): SupabaseClient {
         signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
         signInWithOtp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
         signUp: () => Promise.resolve({ data: { user: null, session: null }, error: new Error('Supabase not initialized') }),
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+        onAuthStateChange: (callback: (event: string, session: null) => void) => {
+          // Immediately call the callback with null session to match expected behavior
+          try {
+            callback?.('SIGNED_OUT', null);
+          } catch (e) {
+            // Ignore callback errors
+          }
+          return { data: { subscription: { unsubscribe: () => {} } } };
+        }
       };
       
       return new Proxy({} as SupabaseClient, {
