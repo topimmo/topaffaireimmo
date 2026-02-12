@@ -67,8 +67,10 @@ check(
 
 check(
   'initializeAuth() has try-catch block',
-  authProviderContent.includes('initializeAuth') &&
-  authProviderContent.match(/const initializeAuth[\s\S]{100,2000}try\s*{[\s\S]{100,2000}catch/),
+  authProviderContent.includes('const initializeAuth') &&
+  authProviderContent.includes('try {') &&
+  authProviderContent.includes('} catch (exception)') &&
+  authProviderContent.includes('isInitializingRef.current = true'),
   'Should wrap auth operations in try-catch'
 );
 

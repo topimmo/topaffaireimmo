@@ -164,11 +164,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       markHydrated();
     } catch (exception) {
-      console.error('[AuthContext] Exception during initialization:', exception);
       // Don't expose exception details, just log code and message
       if (exception instanceof Error) {
         console.error('[AuthContext] Error details:', {
           message: exception.message,
+          path: window.location.pathname
+        });
+      } else {
+        console.error('[AuthContext] Unknown error during initialization:', {
           path: window.location.pathname
         });
       }
