@@ -24,7 +24,8 @@
     "fix:listings": "npx tsx scripts/quick-fix-listings.ts",
     "check:migrations": "npx tsx scripts/check-migrations.ts",
     "verify:ga4": "node scripts/verify-ga4.js",
-    "verify:auth-fix": "node scripts/verify-auth-fix.js"
+    "verify:auth-fix": "node scripts/verify-auth-fix.js",
+    "setup:storage-buckets": "node scripts/setup-storage-buckets.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
