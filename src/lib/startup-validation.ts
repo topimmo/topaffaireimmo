@@ -43,13 +43,16 @@ function validateEnvironmentVariables(): { errors: string[]; warnings: string[] 
 
 /**
  * Test database connectivity
+ * CRITICAL: This should warn but not block app startup
+ * Database issues should be handled gracefully at runtime
  */
 async function testDatabaseConnectivity(): Promise<{ errors: string[]; warnings: string[] }> {
   const errors: string[] = []
   const warnings: string[] = []
   
   if (!isSupabaseConfigured) {
-    errors.push('Supabase not configured - cannot test database connectivity')
+    // Not a critical error - app can handle this at runtime
+    console.log('ℹ️ Skipping database connectivity test (Supabase not configured)')
     return { errors, warnings }
   }
   
@@ -60,12 +63,16 @@ async function testDatabaseConnectivity(): Promise<{ errors: string[]; warnings:
     
     if (error && error.code !== 'PGRST116') {
       // PGRST116 = no rows returned, which is fine for connectivity test
-      errors.push(`Database connectivity test failed: ${error.message}`)
+      // Don't treat as error - app can handle DB issues at runtime
+      warnings.push(`Database connectivity issue: ${error.message}`)
+      console.warn('⚠️ Database connectivity test failed (non-blocking):', error.message)
     } else {
       console.log('✅ Database connectivity test passed')
     }
   } catch (exception) {
-    errors.push(`Database connectivity exception: ${exception instanceof Error ? exception.message : 'Unknown error'}`)
+    // CRITICAL: Never let DB connectivity test crash the app
+    warnings.push(`Database connectivity exception: ${exception instanceof Error ? exception.message : 'Unknown error'}`)
+    console.warn('⚠️ Database connectivity exception (non-blocking):', exception)
   }
   
   return { errors, warnings }
@@ -73,13 +80,16 @@ async function testDatabaseConnectivity(): Promise<{ errors: string[]; warnings:
 
 /**
  * Validate storage bucket configuration
+ * CRITICAL: This should NEVER add errors, only warnings
+ * Storage bucket issues should not prevent app from starting
  */
 async function validateStorageBuckets(): Promise<{ errors: string[]; warnings: string[] }> {
   const errors: string[] = []
   const warnings: string[] = []
   
   if (!isSupabaseConfigured) {
-    errors.push('Supabase not configured - cannot validate storage buckets')
+    // Not an error - just skip validation silently
+    console.log('ℹ️ Skipping storage bucket validation (Supabase not configured)')
     return { errors, warnings }
   }
   
@@ -113,8 +123,9 @@ async function validateStorageBuckets(): Promise<{ errors: string[]; warnings: s
       console.log(`✅ Found ${bucketNames.length} storage bucket(s):`, bucketNames.join(', '))
     }
   } catch (exception) {
-    // Catch-all for unexpected errors - log but don't fail startup
-    console.log(`ℹ️ Storage bucket validation exception: ${exception instanceof Error ? exception.message : 'Unknown error'}`)
+    // CRITICAL: Catch-all for unexpected errors - log but NEVER fail startup
+    // Storage bucket validation must be non-blocking
+    console.warn(`ℹ️ Storage bucket validation exception (non-blocking): ${exception instanceof Error ? exception.message : 'Unknown error'}`)
   }
   
   return { errors, warnings }
@@ -128,13 +139,13 @@ function validateAuthConfiguration(): { errors: string[]; warnings: string[] } {
   const warnings: string[] = []
   
   if (!isSupabaseConfigured) {
-    errors.push('Supabase not configured - authentication will not work')
+    warnings.push('Supabase not configured - authentication will not work')
     return { errors, warnings }
   }
   
-  // Check session storage
+  // Check session storage (warn only, don't block)
   if (typeof window !== 'undefined' && !window.localStorage) {
-    errors.push('localStorage not available - session persistence will fail')
+    warnings.push('localStorage not available - session persistence may fail')
   }
   
   return { errors, warnings }

@@ -98,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Initialize auth session
+   * CRITICAL: This must NEVER throw - all errors must be caught
    */
   const initializeAuth = useCallback(async (): Promise<void> => {
     console.log('[AuthContext] Initializing authentication');
@@ -129,7 +130,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
           console.warn('[AuthContext] Refresh token invalid - clearing auth state');
           await clearAuthStorage();
-          await supabase.auth.signOut();
+          
+          // Don't call signOut if we're already logged out (prevents errors)
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.warn('[AuthContext] SignOut failed (already logged out?):', signOutError);
+          }
         }
         
         setSession(null);
@@ -145,13 +152,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session.user);
         
         // Load profile (will create if missing)
-        const profileResult = await loadProfile(session.user);
-        
-        if (profileResult.success && profileResult.profile) {
-          setProfile(profileResult.profile);
-          setProfileReady(true);
-        } else {
-          console.error('[AuthContext] Failed to load profile:', profileResult.error);
+        // CRITICAL: Wrap in try-catch to prevent crashes
+        try {
+          const profileResult = await loadProfile(session.user);
+          
+          if (profileResult.success && profileResult.profile) {
+            setProfile(profileResult.profile);
+            setProfileReady(true);
+          } else {
+            console.error('[AuthContext] Failed to load profile:', profileResult.error);
+            setProfile(null);
+            setProfileReady(false);
+          }
+        } catch (profileError) {
+          console.error('[AuthContext] Profile loading exception:', profileError);
           setProfile(null);
           setProfileReady(false);
         }
@@ -164,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       markHydrated();
     } catch (exception) {
+      // CRITICAL: Catch ALL exceptions to prevent app crash
       // Don't expose exception details, just log code and message
       if (exception instanceof Error) {
         console.error('[AuthContext] Error details:', {
@@ -175,6 +190,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           path: window.location.pathname
         });
       }
+      
+      // Clear auth state on any error
       setSession(null);
       setUser(null);
       setProfile(null);
@@ -222,13 +239,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (session?.user) {
             // Load profile on auth change
-            const profileResult = await loadProfile(session.user);
-            
-            if (profileResult.success && profileResult.profile) {
-              setProfile(profileResult.profile);
-              setProfileReady(true);
-            } else {
-              console.error('[AuthContext] Profile load failed in auth change:', profileResult.error);
+            // CRITICAL: Wrap in try-catch to prevent crashes
+            try {
+              const profileResult = await loadProfile(session.user);
+              
+              if (profileResult.success && profileResult.profile) {
+                setProfile(profileResult.profile);
+                setProfileReady(true);
+              } else {
+                console.error('[AuthContext] Profile load failed in auth change:', profileResult.error);
+                setProfile(null);
+                setProfileReady(false);
+              }
+            } catch (profileError) {
+              console.error('[AuthContext] Profile loading exception in auth change:', profileError);
               setProfile(null);
               setProfileReady(false);
             }
@@ -239,7 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           markHydrated();
         } catch (error) {
-          // Catch any errors in the callback to prevent app crash
+          // CRITICAL: Catch any errors in the callback to prevent app crash
           console.error('[AuthContext] Error in auth state change callback:', {
             event,
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -353,7 +377,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
           console.warn('[AuthContext] Refresh token invalid - clearing auth state');
           await clearAuthStorage();
-          await supabase.auth.signOut();
+          
+          // Wrap signOut in try-catch to handle already logged out state
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.warn('[AuthContext] SignOut failed (already logged out?):', signOutError);
+          }
+          
           setUser(null);
           setSession(null);
           setProfile(null);
@@ -366,7 +397,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) {
         setSession(session);
         setUser(session.user);
-        await refreshProfile();
+        
+        // Wrap profile refresh in try-catch
+        try {
+          await refreshProfile();
+        } catch (profileError) {
+          console.error('[AuthContext] Profile refresh failed:', profileError);
+          // Don't fail the whole operation if just profile refresh fails
+        }
       }
 
       return { error: null };

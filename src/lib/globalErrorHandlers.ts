@@ -11,6 +11,43 @@
  * and prevent the "Something went wrong" crash from unhandled promise rejections
  */
 
+// Track redirects to prevent infinite loops
+let redirectAttempts = 0;
+const MAX_REDIRECT_ATTEMPTS = 3;
+const REDIRECT_RESET_TIMEOUT = 60000; // Reset counter after 1 minute
+
+/**
+ * Reset redirect counter after timeout
+ */
+function resetRedirectCounter() {
+  setTimeout(() => {
+    redirectAttempts = 0;
+  }, REDIRECT_RESET_TIMEOUT);
+}
+
+/**
+ * Safely redirect with loop prevention
+ */
+function safeRedirect(url: string, reason: string): void {
+  redirectAttempts++;
+  
+  if (redirectAttempts > MAX_REDIRECT_ATTEMPTS) {
+    console.error('[GlobalErrorHandlers] Too many redirect attempts - stopping to prevent infinite loop');
+    console.error('[GlobalErrorHandlers] Reason:', reason);
+    // Don't redirect - just clear auth and stay on current page
+    return;
+  }
+  
+  console.warn(`[GlobalErrorHandlers] Redirecting (attempt ${redirectAttempts}/${MAX_REDIRECT_ATTEMPTS}):`, url);
+  console.warn('[GlobalErrorHandlers] Reason:', reason);
+  
+  window.setTimeout(() => {
+    window.location.href = url;
+  }, 1000);
+  
+  resetRedirectCounter();
+}
+
 /**
  * Setup global error handlers
  * Must be called BEFORE React renders to catch all errors
@@ -70,12 +107,9 @@ export function setupGlobalErrorHandlers(): void {
         console.error('[GlobalErrorHandlers] Failed to clear auth storage:', err);
       }
 
-      // Reload to clear state (only if not already on login page)
+      // Only redirect if not already on login page and haven't redirected too many times
       if (!window.location.pathname.includes('/login')) {
-        console.warn('[GlobalErrorHandlers] Reloading to clear auth state...');
-        window.setTimeout(() => {
-          window.location.href = '/login?error=session_expired';
-        }, 1000);
+        safeRedirect('/login?error=session_expired', 'Auth promise rejection');
       }
     } else {
       // Log non-auth errors but let them through (handled by error boundary)
@@ -136,12 +170,9 @@ export function setupGlobalErrorHandlers(): void {
         console.error('[GlobalErrorHandlers] Failed to clear auth storage:', err);
       }
 
-      // Redirect to login
+      // Redirect to login with loop prevention
       if (!window.location.pathname.includes('/login')) {
-        console.warn('[GlobalErrorHandlers] Redirecting to login...');
-        window.setTimeout(() => {
-          window.location.href = '/login?error=session_expired';
-        }, 1000);
+        safeRedirect('/login?error=session_expired', 'Global auth error');
       }
     }
     
