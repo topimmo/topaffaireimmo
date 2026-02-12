@@ -42,6 +42,9 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const GuidesPage = lazy(() => import("./pages/GuidesPage"));
 const GuidePage = lazy(() => import("./pages/GuidePage"));
 
+// Diagnostics (DEV only)
+const Diagnostics = lazy(() => import("./pages/Diagnostics"));
+
 // New Admin Pages
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminListings = lazy(() => import("./pages/admin/AdminListings"));
@@ -216,6 +219,10 @@ function App() {
             {/* SEO Guides */}
             <Route path="/guides" element={<GuidesPage />} />
             <Route path="/guides/:slug" element={<GuidePage />} />
+            
+            {/* Diagnostics (DEV only) */}
+            <Route path="/diagnostics" element={<Diagnostics />} />
+            
             {/* 
               CRITICAL: /reset-password MUST remain public (not wrapped in ProtectedRoute)
               This route needs to be accessible WITHOUT authentication because:
