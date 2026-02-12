@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import { AuthProvider } from "./core/auth/AuthProvider";
+import { AuthProvider } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { setupGlobalErrorHandlers, checkForStaleAuthToken } from "./lib/globalErrorHandlers";
 import { runBootHealthCheck, reportHealthCheckFailure } from "./lib/bootHealthCheck";
