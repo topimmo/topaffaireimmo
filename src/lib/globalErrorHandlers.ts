@@ -81,6 +81,8 @@ export function setupGlobalErrorHandlers(): void {
 
     // CRITICAL: Always prevent default to stop the app from crashing
     // This is especially important for Supabase/Gotrue Navigator.locks errors
+    // REQUIREMENT: Per problem statement, prevent ALL unhandled rejections from crashing
+    // React ErrorBoundary will still catch synchronous errors in components
     event.preventDefault();
     
     // Check if this is an auth-related error
@@ -119,8 +121,9 @@ export function setupGlobalErrorHandlers(): void {
         safeRedirect('/login?error=session_expired', 'Auth promise rejection');
       }
     }
-    // For non-auth errors, we still prevent default to stop crashes
-    // but don't redirect - just log the error
+    // For non-auth errors: preventDefault() was called above (line 84)
+    // We log them but don't redirect - they're just logged for debugging
+    // React ErrorBoundary will still catch synchronous component errors
   });
 
   /**
