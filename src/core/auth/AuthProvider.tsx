@@ -11,6 +11,35 @@ import type { EnrichedProfile } from '@/core/permissions/capabilities';
 
 export const AUTH_HYDRATION_TIMEOUT_MS = 4000;
 
+/**
+ * Clear only Supabase auth-related keys from storage
+ * This prevents stale auth data from causing issues
+ */
+async function clearAuthStorage(): Promise<void> {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    
+    // Clear Supabase auth keys
+    const keysToRemove = [
+      'topaffaireimmo-auth-token',
+      'sb-auth-token', // Legacy key
+      'supabase.auth.token', // Another common pattern
+    ];
+    
+    keysToRemove.forEach(key => {
+      try {
+        window.localStorage.removeItem(key);
+      } catch (err) {
+        console.warn(`[AuthContext] Could not remove storage key ${key}:`, err);
+      }
+    });
+    
+    console.log('[AuthContext] Auth storage cleared');
+  } catch (err) {
+    console.warn('[AuthContext] Error clearing auth storage:', err);
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -88,6 +117,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: error?.message 
       });
 
+      // Handle refresh token errors gracefully
+      if (error) {
+        console.error('[AuthContext] Session error:', {
+          code: error.code,
+          message: error.message,
+          path: window.location.pathname
+        });
+        
+        // If it's a refresh token error, clear auth state and treat as logged out
+        if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
+          console.warn('[AuthContext] Refresh token invalid - clearing auth state');
+          await clearAuthStorage();
+          await supabase.auth.signOut();
+        }
+        
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setProfileReady(false);
+        markHydrated();
+        return;
+      }
+
       if (session?.user) {
         setSession(session);
         setUser(session.user);
@@ -111,12 +163,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       markHydrated();
-
-      if (error) {
-        console.error('[AuthContext] Session error:', error);
-      }
     } catch (exception) {
-      console.error('[AuthContext] Exception during initialization:', exception);
+      // Don't expose exception details, just log code and message
+      if (exception instanceof Error) {
+        console.error('[AuthContext] Error details:', {
+          message: exception.message,
+          path: window.location.pathname
+        });
+      } else {
+        console.error('[AuthContext] Unknown error during initialization:', {
+          path: window.location.pathname
+        });
+      }
       setSession(null);
       setUser(null);
       setProfile(null);
@@ -158,26 +216,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         console.log('[AuthContext] Auth state changed:', event);
 
-        setSession(session);
-        setUser(session?.user ?? null);
+        try {
+          setSession(session);
+          setUser(session?.user ?? null);
 
-        if (session?.user) {
-          // Load profile on auth change
-          const profileResult = await loadProfile(session.user);
-          
-          if (profileResult.success && profileResult.profile) {
-            setProfile(profileResult.profile);
-            setProfileReady(true);
+          if (session?.user) {
+            // Load profile on auth change
+            const profileResult = await loadProfile(session.user);
+            
+            if (profileResult.success && profileResult.profile) {
+              setProfile(profileResult.profile);
+              setProfileReady(true);
+            } else {
+              console.error('[AuthContext] Profile load failed in auth change:', profileResult.error);
+              setProfile(null);
+              setProfileReady(false);
+            }
           } else {
             setProfile(null);
             setProfileReady(false);
           }
-        } else {
+
+          markHydrated();
+        } catch (error) {
+          // Catch any errors in the callback to prevent app crash
+          console.error('[AuthContext] Error in auth state change callback:', {
+            event,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            path: window.location.pathname
+          });
+          
+          // If error occurs, treat as logged out to be safe
+          setSession(null);
+          setUser(null);
           setProfile(null);
           setProfileReady(false);
+          markHydrated();
         }
-
-        markHydrated();
       }
     );
 
@@ -246,26 +321,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     console.log('[AuthContext] Signing out');
     
-    await supabase.auth.signOut();
-    
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setProfileReady(false);
+    try {
+      await clearAuthStorage();
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('[AuthContext] Error during signOut:', error instanceof Error ? error.message : 'Unknown error');
+      // Even if signOut fails, clear local state
+      await clearAuthStorage();
+    } finally {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setProfileReady(false);
+    }
   };
 
   const refreshSession = async (): Promise<{ error: AuthError | null }> => {
     console.log('[AuthContext] Refreshing session');
 
-    const { data: { session }, error } = await supabase.auth.refreshSession();
+    try {
+      const { data: { session }, error } = await supabase.auth.refreshSession();
 
-    if (session) {
-      setSession(session);
-      setUser(session.user);
-      await refreshProfile();
+      if (error) {
+        console.error('[AuthContext] Refresh session error:', {
+          code: error.code,
+          message: error.message,
+          path: window.location.pathname
+        });
+        
+        // If refresh fails, treat as logged out
+        if (error.message?.includes('refresh') || error.message?.includes('Refresh Token')) {
+          console.warn('[AuthContext] Refresh token invalid - clearing auth state');
+          await clearAuthStorage();
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          setProfileReady(false);
+        }
+        
+        return { error };
+      }
+
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+        await refreshProfile();
+      }
+
+      return { error: null };
+    } catch (exception) {
+      const errorMessage = exception instanceof Error ? exception.message : 'Unknown error';
+      console.error('[AuthContext] Exception during session refresh:', {
+        message: errorMessage,
+        path: window.location.pathname
+      });
+      
+      // Treat exception as auth failure
+      await clearAuthStorage();
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setProfileReady(false);
+      
+      return { 
+        error: { 
+          message: errorMessage,
+          name: 'RefreshSessionError',
+          status: 0
+        } as AuthError 
+      };
     }
-
-    return { error };
   };
 
   return (
