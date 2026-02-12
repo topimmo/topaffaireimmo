@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { isDev } from "@/lib/env";
 
 type ActiveBannerRow = {
   id: string;
@@ -55,7 +56,7 @@ export default function BannerSlot({
   const isBlockedPosition = BLOCKED_AD_POSITIONS.includes(position as any);
   
   if (isBlockedPosition) {
-    if (import.meta.env.DEV) {
+    if (isDev()) {
       console.warn(`[BannerSlot] Blocked header position: "${position}" - This is permanent from PR #86`);
     }
     return null;

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle, XCircle, AlertTriangle, Info, Loader2 } from 'lucide-react';
+import { getMode, getEnv } from '@/lib/env';
 
 interface DiagnosticCheck {
   name: string;
@@ -29,7 +30,7 @@ export default function AdminDiagnostics() {
     const diagnostics: DiagnosticCheck[] = [];
 
     // 1. Runtime Environment
-    const mode = import.meta.env.MODE;
+    const mode = getMode();
     diagnostics.push({
       name: isRTL ? 'بيئة التشغيل' : 'Runtime Environment',
       status: 'info',
@@ -38,7 +39,7 @@ export default function AdminDiagnostics() {
     });
 
     // 2. Supabase URL
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    const supabaseUrl = getEnv('VITE_SUPABASE_URL') || '';
     const maskedUrl = supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'Not configured';
     diagnostics.push({
       name: isRTL ? 'عنوان Supabase' : 'Supabase URL',

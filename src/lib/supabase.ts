@@ -1,25 +1,61 @@
 import { createClient, type SupabaseClientOptions, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+/**
+ * PRODUCTION SAFETY: Defensive environment variable access
+ * Never throws, returns undefined for missing variables
+ */
+function getEnvVar(key: string): string | undefined {
+  try {
+    return import.meta.env?.[key]
+  } catch (error) {
+    console.warn(`[Supabase] Failed to read env var ${key}:`, error instanceof Error ? error.message : 'Unknown error')
+    return undefined
+  }
+}
+
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL')
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 
-// Log Supabase configuration status at startup (ALWAYS log in production for debugging)
-console.log('🔧 Supabase Client Initialization')
-console.log('  - Environment:', import.meta.env.MODE || 'unknown')
-console.log('  - URL configured:', !!supabaseUrl, supabaseUrl ? `(${supabaseUrl.substring(0, 30)}...)` : '(missing)')
-console.log('  - Anon Key configured:', !!supabaseAnonKey, supabaseAnonKey ? `(${supabaseAnonKey.substring(0, 20)}...)` : '(missing)')
-console.log('  - Is Configured:', isSupabaseConfigured)
-console.log('  - Session Storage:', isSupabaseConfigured ? 'localStorage (cross-domain compatible)' : 'disabled')
-console.log('  - Current Domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side')
+// PRODUCTION SAFETY: Safe console logging - never throws
+try {
+  console.log('🔧 Supabase Client Initialization')
+  console.log('  - Environment:', getEnvVar('MODE') || 'unknown')
+  console.log('  - URL configured:', !!supabaseUrl, supabaseUrl ? `(${supabaseUrl.substring(0, 30)}...)` : '(missing)')
+  console.log('  - Anon Key configured:', !!supabaseAnonKey, supabaseAnonKey ? `(${supabaseAnonKey.substring(0, 20)}...)` : '(missing)')
+  console.log('  - Is Configured:', isSupabaseConfigured)
+  console.log('  - Session Storage:', isSupabaseConfigured ? 'localStorage (cross-domain compatible)' : 'disabled')
+  console.log('  - Current Domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side')
+} catch (error) {
+  // Never let logging crash the app
+}
+
+/**
+ * PRODUCTION SAFETY: Safe storage accessor
+ * Returns undefined if localStorage is not available
+ */
+function getSafeStorage(): Storage | undefined {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      // Test if localStorage is actually accessible (can be blocked in private mode)
+      const testKey = '__storage_test__'
+      window.localStorage.setItem(testKey, 'test')
+      window.localStorage.removeItem(testKey)
+      return window.localStorage
+    }
+  } catch (error) {
+    console.warn('[Supabase] localStorage not accessible:', error instanceof Error ? error.message : 'Unknown error')
+  }
+  return undefined
+}
 
 const supabaseAuthOptions: SupabaseClientOptions<'public'> = {
   auth: {
     // Store session in localStorage instead of cookies
     // This prevents session loss when domain changes (e.g., from vercel.app to custom domain)
     persistSession: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storage: getSafeStorage(),
     storageKey: 'topaffaireimmo-auth-token',
     // Automatically refresh tokens when they expire
     autoRefreshToken: true,
@@ -30,19 +66,68 @@ const supabaseAuthOptions: SupabaseClientOptions<'public'> = {
   }
 }
 
-// Create Supabase client with proper session persistence configuration
-// CRITICAL: Use localStorage for session storage instead of cookies
-// This ensures sessions persist across domain changes and work on all devices
-export const supabase: SupabaseClient = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, supabaseAuthOptions)
-  : createClient(
+/**
+ * PRODUCTION SAFETY: Safe Supabase client creation
+ * Never throws - returns a client even if environment is misconfigured
+ * Fallback client will fail gracefully at runtime
+ */
+function createSafeSupabaseClient(): SupabaseClient {
+  try {
+    if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
+      return createClient(supabaseUrl, supabaseAnonKey, supabaseAuthOptions)
+    }
+    
+    // Fallback to local development server
+    console.warn('[Supabase] Using fallback local development configuration')
+    return createClient(
       'http://localhost:54321',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
       supabaseAuthOptions
     )
+  } catch (error) {
+    console.error('[Supabase] CRITICAL: Failed to create Supabase client:', error instanceof Error ? error.message : 'Unknown error')
+    // Last resort: create a minimal client that won't crash but will fail gracefully at runtime
+    try {
+      return createClient(
+        'http://localhost:54321',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
+        {}
+      )
+    } catch (fallbackError) {
+      // This should never happen, but if it does, return a stub that matches common usage
+      console.error('[Supabase] FATAL: Even fallback client creation failed')
+      // Return a proxy that provides method stubs for common Supabase operations
+      const errorStub = () => Promise.resolve({ data: null, error: new Error('Supabase not initialized') })
+      return new Proxy({} as SupabaseClient, {
+        get(target, prop) {
+          // Handle common property access patterns
+          if (prop === 'from' || prop === 'auth' || prop === 'storage') {
+            return () => new Proxy({}, {
+              get() {
+                return errorStub
+              }
+            })
+          }
+          // For any other property, return error stub
+          console.warn(`[Supabase] Attempted to access '${String(prop)}' but client is not initialized`)
+          return errorStub
+        }
+      })
+    }
+  }
+}
 
-// Log warning when env vars are missing
+// Create Supabase client with proper session persistence configuration
+// CRITICAL: Use localStorage for session storage instead of cookies
+// This ensures sessions persist across domain changes and work on all devices
+export const supabase: SupabaseClient = createSafeSupabaseClient()
+
+// Log warning when env vars are missing (non-blocking)
 if (!isSupabaseConfigured) {
-  console.error('❌ CRITICAL: Missing Supabase environment variables!')
-  console.error('   Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+  try {
+    console.error('❌ CRITICAL: Missing Supabase environment variables!')
+    console.error('   Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+  } catch (error) {
+    // Never let logging crash the app
+  }
 }

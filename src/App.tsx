@@ -9,6 +9,7 @@ import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
 import { runStartupValidation } from "./lib/startup-validation";
 import { Toaster } from "@/components/ui/sonner";
+import { isDev } from "@/lib/env";
 
 // ✅ Layout imports
 import Header from "@/components/layout/Header";
@@ -166,7 +167,7 @@ function App() {
 
   return (
     <>
-      {validationFailed && import.meta.env.DEV && (
+      {validationFailed && isDev() && (
         <div
           style={{
             position: "fixed",
