@@ -43,40 +43,63 @@ export default function ArtisanDashboard() {
       if (!user) return;
 
       setLoading(true);
-      try {
-        // Fetch artisan profile
-        const { data, error } = await supabase
-          .from('artisan_profiles')
-          .select('id, business_name, is_verified, is_active, is_boosted')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      
+      // Retry logic with exponential backoff for profile fetching
+      const maxRetries = 3;
+      const baseDelay = 500; // 500ms
+      
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          // Fetch artisan profile
+          const { data, error } = await supabase
+            .from('artisan_profiles')
+            .select('id, business_name, is_verified, is_active, is_boosted')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-        if (error) {
+          if (error) {
+            // If it's a network error and we have retries left, try again
+            if (attempt < maxRetries - 1 && error.message?.toLowerCase().includes('fetch')) {
+              const delay = baseDelay * Math.pow(2, attempt);
+              console.warn(`Profile fetch failed, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+            
+            setProfile(null);
+            setLoading(false);
+            navigate('/artisan/onboarding');
+            return;
+          }
+
+          if (!data) {
+            setProfile(null);
+            navigate('/artisan/onboarding');
+            return;
+          }
+
+          setProfile(data);
+
+          // Check monetization settings
+          const monetizationEnabled = await isMonetizationEnabled();
+          setMonetizationOn(monetizationEnabled);
+
+          // Ensure wallet exists
+          await supabase.rpc('ensure_wallet_exists', { target_user_id: user.id });
+
+          setLoading(false);
+          return; // Success, exit the retry loop
+        } catch (err) {
+          if (attempt < maxRetries - 1) {
+            const delay = baseDelay * Math.pow(2, attempt);
+            console.warn(`Profile fetch exception, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`, err);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
           setProfile(null);
           setLoading(false);
-          navigate('/artisan/onboarding');
-          return;
         }
-
-        if (!data) {
-          setProfile(null);
-          navigate('/artisan/onboarding');
-          return;
-        }
-
-        setProfile(data);
-
-        // Check monetization settings
-        const monetizationEnabled = await isMonetizationEnabled();
-        setMonetizationOn(monetizationEnabled);
-
-        // Ensure wallet exists
-        await supabase.rpc('ensure_wallet_exists', { target_user_id: user.id });
-
-        setLoading(false);
-      } catch (err) {
-        setProfile(null);
-        setLoading(false);
       }
     };
 
