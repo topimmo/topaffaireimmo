@@ -61,11 +61,15 @@ const AdminServiceSubcategories = lazy(() => import("./pages/admin/AdminServiceS
 const AdminServiceRequests = lazy(() => import("./pages/admin/AdminServiceRequests"));
 const AdminArtisans = lazy(() => import("./pages/admin/AdminArtisans"));
 
-// Artisan Pages
+// Artisan Pages (old)
 const ArtisanOnboarding = lazy(() => import("./pages/artisan/ArtisanOnboarding"));
 const ArtisanDashboard = lazy(() => import("./pages/artisan/ArtisanDashboard"));
 const ArtisanServices = lazy(() => import("./pages/artisan/ArtisanServices"));
 const ArtisanRequests = lazy(() => import("./pages/artisan/ArtisanRequests"));
+
+// Artisan Pages (new - clean architecture)
+const ArtisanOnboardingNew = lazy(() => import("./features/artisans/ui/pages/ArtisanOnboardingRefactored"));
+const ArtisanPending = lazy(() => import("./features/artisans/ui/pages/ArtisanPending"));
 
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -202,7 +206,8 @@ function App() {
             <Route path="/services/:slug" element={<ServiceCategoryPage />} />
             
             {/* Artisan Onboarding - Public but requires auth (handled in component) */}
-            <Route path="/artisan/onboarding" element={<ArtisanOnboarding />} />
+            <Route path="/artisan/onboarding" element={<ArtisanOnboardingNew />} />
+            <Route path="/artisan/pending" element={<ArtisanPending />} />
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
