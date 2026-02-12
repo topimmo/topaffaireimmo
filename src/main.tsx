@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./core/auth/AuthProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const basename = import.meta.env.BASE_URL;

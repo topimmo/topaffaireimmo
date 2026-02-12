@@ -28,8 +28,6 @@ dist-ssr
 **/tempobook/dynamic/
 **/tempobook/storyboards/
 
-core
-
 # Allow GitHub workflows but ignore agent configs
 .github/agents/
 !.github/workflows/
