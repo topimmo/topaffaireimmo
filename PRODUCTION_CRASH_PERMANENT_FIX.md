@@ -37,8 +37,10 @@ if ('locks' in navigator) {
 
 When `navigator.locks.request()` fails, it throws an unhandled promise rejection with the error:
 ```
-Error: Acquiring an exclusive Navigator
+Error: Acquiring an exclusive Navigator lock failed
 ```
+
+This error occurs because the browser environment doesn't support the locks API properly, even though `navigator.locks` exists.
 
 ### Why ErrorBoundary Didn't Catch It
 

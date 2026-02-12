@@ -19,10 +19,38 @@ interface ClientErrorPayload {
   buildVersion?: string;
 }
 
-// Rate limiting: simple in-memory tracking
+// Rate limiting: simple in-memory tracking with automatic cleanup
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 30;
+const MAX_RATE_LIMIT_ENTRIES = 1000; // Prevent unbounded memory growth
+
+/**
+ * Periodic cleanup of rate limit map to prevent memory growth
+ * Removes entries that are fully outside the time window
+ */
+function cleanupRateLimitMap(): void {
+  const now = Date.now();
+  const keysToDelete: string[] = [];
+  
+  // Find entries that are fully expired
+  for (const [ip, requests] of rateLimitMap.entries()) {
+    const recentRequests = requests.filter(time => now - time < RATE_LIMIT_WINDOW_MS);
+    if (recentRequests.length === 0) {
+      keysToDelete.push(ip);
+    }
+  }
+  
+  // Delete expired entries
+  keysToDelete.forEach(key => rateLimitMap.delete(key));
+  
+  // If still too large, remove oldest entries
+  if (rateLimitMap.size > MAX_RATE_LIMIT_ENTRIES) {
+    const entriesToDelete = rateLimitMap.size - MAX_RATE_LIMIT_ENTRIES;
+    const keys = Array.from(rateLimitMap.keys()).slice(0, entriesToDelete);
+    keys.forEach(key => rateLimitMap.delete(key));
+  }
+}
 
 /**
  * Get client IP address
@@ -63,6 +91,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Periodic cleanup to prevent memory growth
+    cleanupRateLimitMap();
+    
     // Check rate limit
     const clientIp = getClientIp(req);
     if (!checkRateLimit(clientIp)) {
