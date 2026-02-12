@@ -85,7 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!profile) {
-        // Profile doesn't exist - create it
+        // Profile doesn't exist - create it with safe defaults
+        // Note: This should rarely happen as the DB trigger should create profiles automatically
         log.warn('Profile missing for authenticated user, creating...', { userId: user.id });
 
         const { error: insertError } = await supabase
@@ -94,9 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: user.id,
             email: user.email || '',
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-            user_role: 'real_estate_advertiser', // Default role
-            advertiser_type: 'owner', // Default advertiser type
+            user_role: 'user', // Default role for new users
             google_id: user.user_metadata?.google_id || null,
+            // Do not set advertiser_type - users must explicitly choose this
           });
 
         if (insertError) {
@@ -105,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
           }
         } else {
-          log.info('Successfully created missing profile', { userId: user.id });
+          log.info('Successfully created missing profile with user role', { userId: user.id });
         }
       } else {
         log.info('Profile exists for user', { userId: user.id });

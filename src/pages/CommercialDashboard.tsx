@@ -276,14 +276,15 @@ export default function CommercialDashboard() {
         } else if (data) {
           setProfile(data);
         } else {
+          // Profile doesn't exist - should have been created by trigger
+          // Create with safe default role 'user'
           const { data: created, error: createError } = await supabase
             .from('profiles')
             .insert({
               id: user.id,
               email: user.email || '',
               full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-              user_role: 'merchant',
-              advertiser_type: 'owner',
+              user_role: 'user', // Default role - user must explicitly upgrade
               google_id: user.user_metadata?.google_id || null,
             })
             .select('*')
@@ -297,6 +298,7 @@ export default function CommercialDashboard() {
             }
           } else if (created) {
             setProfile(created);
+            // Note: User has 'user' role - may need to upgrade to access commercial features
           }
         }
       } catch (error) {

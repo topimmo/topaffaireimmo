@@ -100,15 +100,14 @@ export default function NewAdRequest() {
             contactPhone: data.phone || '',
           }));
         } else {
-          // Auto-create missing profile to unblock onboarding
+          // Auto-create missing profile with safe defaults
           const { data: created, error: createError } = await supabase
             .from('profiles')
             .insert({
               id: user.id,
               email: user.email || '',
               full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-              user_role: 'merchant',
-              advertiser_type: 'owner',
+              user_role: 'user', // Default role - user must explicitly upgrade
               google_id: user.user_metadata?.google_id || null,
             })
             .select('*')
