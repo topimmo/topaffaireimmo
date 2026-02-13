@@ -2,115 +2,115 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://www.topaffaireimmo.com/</loc>
+    <loc>https://topaffaireimmo.co/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/search</loc>
+    <loc>https://topaffaireimmo.co/search</loc>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/acheter</loc>
+    <loc>https://topaffaireimmo.co/acheter</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/louer</loc>
+    <loc>https://topaffaireimmo.co/louer</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/sahara-marocain</loc>
+    <loc>https://topaffaireimmo.co/sahara-marocain</loc>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/about</loc>
+    <loc>https://topaffaireimmo.co/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/contact</loc>
+    <loc>https://topaffaireimmo.co/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/advertise</loc>
+    <loc>https://topaffaireimmo.co/advertise</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/agencies</loc>
+    <loc>https://topaffaireimmo.co/agencies</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/acheter-appartement</loc>
+    <loc>https://topaffaireimmo.co/acheter-appartement</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/louer-appartement</loc>
+    <loc>https://topaffaireimmo.co/louer-appartement</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/acheter-villa</loc>
+    <loc>https://topaffaireimmo.co/acheter-villa</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/louer-villa</loc>
+    <loc>https://topaffaireimmo.co/louer-villa</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/acheter-maison</loc>
+    <loc>https://topaffaireimmo.co/acheter-maison</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/louer-maison</loc>
+    <loc>https://topaffaireimmo.co/louer-maison</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/acheter-commercial</loc>
+    <loc>https://topaffaireimmo.co/acheter-commercial</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/louer-commercial</loc>
+    <loc>https://topaffaireimmo.co/louer-commercial</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/acheter-terrain</loc>
+    <loc>https://topaffaireimmo.co/acheter-terrain</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
   </url>
   <url>
-    <loc>https://www.topaffaireimmo.com/louer-terrain</loc>
+    <loc>https://topaffaireimmo.co/louer-terrain</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     
