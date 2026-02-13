@@ -81,12 +81,12 @@ export default function Header() {
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-3">
           <LanguageSwitcher />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 shadow-md hover:shadow-lg">
+
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
                     {user?.email?.split('@')[0] || 'User'}
@@ -123,10 +123,7 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/login">{t('nav.login')}</Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild className="shadow-md hover:shadow-lg">
+
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
                   {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
@@ -143,7 +140,7 @@ export default function Header() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-3">
+        <div className="md:hidden flex items-center gap-2">
           <LanguageSwitcher />
           <button
             className="p-2 hover:bg-muted rounded-lg transition-all duration-300"
@@ -164,14 +161,14 @@ export default function Header() {
           <nav className="container py-6 flex flex-col gap-4">
             <Link
               to="/buy"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
+              className="text-sm font-medium py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {isRTL ? 'عقارات' : 'Immobilier'}
             </Link>
             <Link
               to="/services"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
+              className="text-sm font-medium py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.services')}
@@ -206,7 +203,7 @@ export default function Header() {
                     handleSignOut();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="mt-2 shadow-md hover:shadow-lg font-semibold"
+                  className="mt-2"
                 >
                   <LogOut className="h-4 w-4" />
                   {t('nav.logout')}
@@ -214,12 +211,12 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Button variant="outline" asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
+                <Button variant="outline" asChild className="mt-2">
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                     {t('nav.login')}
                   </Link>
                 </Button>
-                <Button variant="outline" asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
+
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
                     {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
