@@ -43,16 +43,16 @@ export function FAQ({ items, title, className = "" }: FAQProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       
-      <div className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-8 text-center">{faqTitle}</h2>
+      <div className="container max-w-7xl mx-auto px-4">
+        <h2 className="section-title mb-10 text-center">{faqTitle}</h2>
         
-        <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
+        <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto space-y-3">
           {items.map((item, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left text-lg font-medium">
+            <AccordionItem key={index} value={`item-${index}`} className="border border-border/50 rounded-xl px-6 bg-card shadow-sm hover:shadow-md transition-shadow duration-300">
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold py-5">
                 {item.question}
               </AccordionTrigger>
-              <AccordionContent className="text-base text-muted-foreground">
+              <AccordionContent className="text-base text-muted-foreground pb-5 leading-relaxed">
                 {item.answer}
               </AccordionContent>
             </AccordionItem>

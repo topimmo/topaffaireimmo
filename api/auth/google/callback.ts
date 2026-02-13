@@ -168,6 +168,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('[auth/google/callback] Creating new user...');
 
         // Create auth user in Supabase Auth
+        // Note: The database trigger will automatically create the profile with user_role='user'
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email: userInfo.email,
           email_confirm: true, // Auto-confirm since Google verified it
@@ -175,6 +176,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             full_name: userInfo.name,
             google_id: userInfo.id,
             picture: userInfo.picture,
+            // Do not set user_role here - let trigger default to 'user'
           },
         });
 
@@ -185,26 +187,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         userId = authData.user.id;
 
-        // Create profile with correct schema columns
-        const { error: profileError } = await supabaseAdmin
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: userInfo.email,
-            full_name: userInfo.name || '',
-            google_id: userInfo.id,
-            user_role: 'real_estate_advertiser', // Default role for new Google users
-            advertiser_type: 'owner', // Default advertiser type
-          });
+        // Wait briefly for trigger to create profile
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        if (profileError) {
-          console.error('[auth/google/callback] Error creating profile:', profileError);
+        // Verify profile was created by trigger
+        const { data: newProfile, error: profileCheckError } = await supabaseAdmin
+          .from('profiles')
+          .select('id, user_role')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (profileCheckError || !newProfile) {
+          console.error('[auth/google/callback] Profile not created by trigger:', profileCheckError);
           // Try to clean up auth user
           await supabaseAdmin.auth.admin.deleteUser(userId);
           return res.redirect('/?auth_error=profile_creation_failed');
         }
 
-        console.log('[auth/google/callback] New user created successfully');
+        console.log('[auth/google/callback] New user created successfully with role:', newProfile.user_role);
       }
 
       // Generate JWT token for the user

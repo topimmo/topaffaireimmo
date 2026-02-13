@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
 import BannerSlot from "@/components/advertising/BannerSlot";
 import AdSenseBanner from "@/components/advertising/AdSenseBanner";
+import { isDev } from "@/lib/env";
 
 interface AdBannerProps {
   className?: string;
@@ -39,7 +40,7 @@ export default function AdBanner({
   // CRITICAL ENFORCEMENT #2: Disable header banners globally (only allow middle/bottom placements)
   // This is permanent from PR #86 - header ads must NEVER render site-wide
   if (BLOCKED_AD_POSITIONS.includes(position as any)) {
-    if (import.meta.env.DEV) {
+    if (isDev()) {
       console.warn(`[AdBanner] Blocked header position: "${position}" - This is permanent from PR #86`);
     }
     return null;

@@ -276,27 +276,34 @@ export default function CommercialDashboard() {
         } else if (data) {
           setProfile(data);
         } else {
+          // Profile doesn't exist - should have been created by trigger
+          console.warn('[CommercialDashboard] Profile missing for authenticated user, creating with default role...', {
+            userId: user.id,
+            email: user.email,
+          });
+          
           const { data: created, error: createError } = await supabase
             .from('profiles')
             .insert({
               id: user.id,
               email: user.email || '',
               full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-              user_role: 'merchant',
-              advertiser_type: 'owner',
+              user_role: 'user', // Default role - user must explicitly upgrade
               google_id: user.user_metadata?.google_id || null,
             })
             .select('*')
             .single();
 
           if (createError) {
-            console.error('Error auto-creating profile:', createError);
+            console.error('[CommercialDashboard] Error auto-creating profile:', createError);
             const isRlsBlocked = createError.code === '42501';
             if (isRlsBlocked) {
               toast.error(isRTL ? 'سياسة الأمان منعت إنشاء ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles.');
             }
           } else if (created) {
             setProfile(created);
+            console.log('[CommercialDashboard] Successfully created missing profile with user role');
+            // Note: User has 'user' role - may need to upgrade to access commercial features
           }
         }
       } catch (error) {
@@ -313,8 +320,8 @@ export default function CommercialDashboard() {
     if (!authLoading && !profileLoading && !user) {
       navigate('/login', { state: { from: '/commercial-dashboard' } });
     }
-    // Redirect real estate advertisers to their dashboard
-    if (!authLoading && !profileLoading && profile && profile.user_role === 'real_estate_advertiser') {
+    // Redirect non-merchant users to their dashboard
+    if (!authLoading && !profileLoading && profile && profile.user_role !== 'merchant' && profile.user_role !== 'admin') {
       navigate('/dashboard');
     }
   }, [user, authLoading, profileLoading, navigate, profile]);
@@ -481,8 +488,8 @@ export default function CommercialDashboard() {
     return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-MA');
   };
 
-  // Check if user is a commercial advertiser
-  const isCommercialAdvertiser = profile?.user_role === 'commercial_advertiser' || profile?.user_role === 'admin';
+  // Check if user is a merchant or admin
+  const isCommercialAdvertiser = profile?.user_role === 'merchant' || profile?.user_role === 'admin';
 
   if (authLoading || profileLoading || loading) {
     return (

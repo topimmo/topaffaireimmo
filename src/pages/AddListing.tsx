@@ -449,8 +449,7 @@ export default function AddListing() {
           id: currentUser.id,
           email: currentUser.email || '',
           full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '',
-          user_role: 'real_estate_advertiser',
-          advertiser_type: 'owner',
+          user_role: 'user', // Default role - permissions will be checked separately
           google_id: currentUser.user_metadata?.google_id || null,
         })
         .select('id, user_role, advertiser_type, email, full_name')

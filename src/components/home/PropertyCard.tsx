@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MapPin, Bed, Bath, Square, Heart } from "lucide-react";
+import { MapPin, Bed, Bath, Square, Heart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export interface Property {
   id: string;
@@ -21,6 +23,9 @@ export interface Property {
   area: number;
   image: string;
   featured?: boolean;
+  isPremium?: boolean;
+  sponsored?: boolean;
+  boosted?: boolean;
 }
 
 interface PropertyCardProps {
@@ -36,14 +41,6 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const { t, language, isRTL } = useLanguage();
   
-  // ✅ Click handler with debug log (for navigation issue diagnosis - Issue #5 verification)
-  const handleCardClick = () => {
-    console.log("[PropertyCard] Clicked property:", {
-      id: property.id,
-      title: property.title,
-    });
-  };
-  
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-MA", {
       style: "decimal",
@@ -55,16 +52,24 @@ export default function PropertyCard({
   const displayCity = language === 'ar' && property.cityAr ? property.cityAr : property.city;
   const displayNeighborhood = language === 'ar' && property.neighborhoodAr ? property.neighborhoodAr : property.neighborhood;
 
+  // Determine if this is a premium-tier card (premium, sponsored, or boosted)
+  const isPremiumTier = property.isPremium || property.sponsored || property.boosted;
+
   return (
     <Link
       to={`/property/${property.id}`}
-      onClick={handleCardClick}
       className={cn(
-        "group block bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:-translate-y-0.5",
-        "shadow-sm hover:shadow-lg hover:border-primary/20",
+        "group block",
         className
       )}
     >
+      <Card className={cn(
+        "overflow-hidden hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300 rounded-xl",
+        // Premium card styling
+        isPremiumTier && "ring-2 ring-amber-400/40 hover:ring-amber-400/60 shadow-lg shadow-amber-500/10",
+        property.isPremium && "bg-gradient-to-br from-card via-card to-amber-50/30 dark:to-amber-900/10",
+        property.sponsored && "bg-gradient-to-br from-card via-card to-blue-50/30 dark:to-blue-900/10"
+      )}>
       {/* Image Container */}
       <div
         className={cn(
@@ -78,94 +83,128 @@ export default function PropertyCard({
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        {/* Premium gradient overlay */}
+        <div className={cn(
+          "absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent",
+          isPremiumTier && "from-black/60 via-amber-900/5"
+        )} />
 
-        {/* Badges */}
-        <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} flex gap-2`}>
-          {property.featured && (
-            <Badge className="bg-secondary text-secondary-foreground font-medium">
+        {/* Premium glow effect */}
+        {isPremiumTier && (
+          <div className="absolute inset-0 bg-gradient-to-t from-amber-400/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        )}
+
+        {/* Badges - Premium styling */}
+        <div className={cn(
+          "absolute top-3 flex gap-2 flex-wrap",
+          isRTL ? "right-3" : "left-3"
+        )}>
+          {property.isPremium && (
+            <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold shadow-lg border-0 gap-1">
+              <Sparkles className="h-3 w-3" />
+              {isRTL ? 'بريميوم' : 'Premium'}
+            </Badge>
+          )}
+          {property.sponsored && (
+            <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg border-0">
+              {isRTL ? 'مدعوم' : 'Sponsorisé'}
+            </Badge>
+          )}
+          {property.boosted && !property.isPremium && !property.sponsored && (
+            <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold shadow-lg border-0">
+              {isRTL ? 'معزز' : 'Boosté'}
+            </Badge>
+          )}
+          {property.featured && !isPremiumTier && (
+            <Badge className="bg-secondary text-secondary-foreground font-semibold shadow-md">
               {isRTL ? 'مميز' : 'À la une'}
             </Badge>
           )}
           <Badge
             variant="outline"
-            className="bg-white/90 backdrop-blur-sm text-foreground border-0"
+            className="bg-white/95 backdrop-blur-sm text-foreground border-0 font-medium shadow-sm"
           >
             {property.type}
           </Badge>
         </div>
 
         {/* Favorite Button */}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
           }}
-          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors group/fav`}
+          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-md h-10 w-10`}
         >
-          <Heart className="h-4 w-4 text-foreground/70 group-hover/fav:text-primary transition-colors" />
-        </button>
+          <Heart className="h-4 w-4 text-foreground/70 hover:text-primary transition-colors" />
+        </Button>
 
-        {/* Price */}
+        {/* Price - Premium display */}
         <div className={`absolute bottom-3 ${isRTL ? 'right-3' : 'left-3'}`}>
-          <p className="font-mono-price text-xl md:text-2xl font-semibold text-white drop-shadow-lg">
+          <p className={cn(
+            "font-mono-price text-xl md:text-2xl font-bold text-white drop-shadow-lg",
+            isPremiumTier && "drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)]"
+          )}>
             {formatPrice(property.price)}{" "}
-            <span className="text-sm font-normal">MAD</span>
+            <span className="text-sm font-medium opacity-90">MAD</span>
             {property.priceType === "rent" && (
-              <span className="text-sm font-normal">{t('property.perMonth')}</span>
+              <span className="text-sm font-medium opacity-90">{t('property.perMonth')}</span>
             )}
           </p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className={cn("p-4", size === "large" ? "md:p-4" : "md:p-5")}>
+      {/* Content - Enhanced spacing */}
+      <div className={cn("p-5", size === "large" ? "md:p-5" : "md:p-6")}>
         <h3
           className={cn(
-            "font-display font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors",
+            "font-display font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors tracking-tight",
             size === "large" ? "text-lg md:text-xl" : "text-lg"
           )}
         >
           {displayTitle}
         </h3>
 
-        <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
+        <div className="flex items-center gap-1.5 mt-2.5 text-muted-foreground">
           <MapPin className="h-4 w-4 flex-shrink-0" />
           <p className="text-sm line-clamp-1">
             {displayNeighborhood && (
               <>
                 <span className="font-medium text-foreground">{displayNeighborhood}</span>
-                <span className="mx-1.5">•</span>
+                <span className="mx-1.5 opacity-50">•</span>
               </>
             )}
             {displayCity}
           </p>
         </div>
 
-        {/* Features */}
+        {/* Features - Premium divider */}
         <div className={cn(
-          "flex items-center gap-4 border-t border-muted",
-          size === "large" ? "mt-3 pt-3" : "mt-4 pt-4"
+          "flex items-center gap-5 border-t",
+          isPremiumTier ? "border-amber-200/50 dark:border-amber-800/30" : "border-border/50",
+          size === "large" ? "mt-4 pt-4" : "mt-5 pt-5"
         )}>
           {property.bedrooms !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Bed className="h-4 w-4" />
-              <span>{property.bedrooms}</span>
+              <span className="font-medium">{property.bedrooms}</span>
             </div>
           )}
           {property.bathrooms !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Bath className="h-4 w-4" />
-              <span>{property.bathrooms}</span>
+              <span className="font-medium">{property.bathrooms}</span>
             </div>
           )}
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Square className="h-4 w-4" />
-            <span>{property.area} m²</span>
+            <span className="font-medium">{property.area} m²</span>
           </div>
         </div>
       </div>
+      </Card>
     </Link>
   );
 }

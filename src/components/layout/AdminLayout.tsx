@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -19,7 +19,9 @@ import {
   Menu,
   X,
   ImageIcon,
-  PackagePlus
+  PackagePlus,
+  Wrench,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +42,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { t, isRTL } = useLanguage();
   const { signOut, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { notifications, unreadCount, refresh } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -75,6 +78,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       current: location.pathname === '/admin/locations',
     },
     {
+      name: isRTL ? 'الخدمات' : 'Services',
+      href: '/admin/services/categories',
+      icon: Wrench,
+      current: location.pathname.startsWith('/admin/services'),
+    },
+    {
+      name: isRTL ? 'الحرفيون' : 'Artisans',
+      href: '/admin/artisans',
+      icon: Users,
+      current: location.pathname === '/admin/artisans',
+    },
+    {
       name: isRTL ? 'المحتوى' : 'Content',
       href: '/admin/content/pages',
       icon: BookOpen,
@@ -95,7 +110,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       name: isRTL ? 'تحقيق الدخل' : 'Monetization',
       href: '/admin/monetization',
-      icon: Building2,
+      icon: DollarSign,
       current: location.pathname === '/admin/monetization',
     },
     {
@@ -114,14 +129,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = async () => {
     await signOut();
-    window.location.href = '/';
+    navigate('/', { replace: true });
   };
 
   const handleNotificationClick = async (notificationId: string, link?: string | null) => {
     await markNotificationAsRead(notificationId);
     refresh();
     if (link) {
-      window.location.href = link;
+      navigate(link);
     }
   };
 

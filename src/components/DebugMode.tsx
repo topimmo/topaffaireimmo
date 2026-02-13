@@ -10,6 +10,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { X, RefreshCw, Download, Trash2 } from 'lucide-react';
+import { getMode, getEnv } from '@/lib/env';
 
 export default function DebugMode() {
   const { user, session, loading: authLoading } = useAuth();
@@ -142,19 +143,19 @@ export default function DebugMode() {
             </h3>
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <dt className="text-muted-foreground">Mode:</dt>
-              <dd className="font-mono">{import.meta.env.MODE}</dd>
+              <dd className="font-mono">{getMode()}</dd>
               
               <dt className="text-muted-foreground">Supabase Configured:</dt>
               <dd className="font-mono">{isSupabaseConfigured ? '✅ Yes' : '❌ No'}</dd>
               
               <dt className="text-muted-foreground">Supabase URL:</dt>
               <dd className="font-mono text-xs truncate">
-                {import.meta.env.VITE_SUPABASE_URL || '❌ Not set'}
+                {getEnv("VITE_SUPABASE_URL") || '❌ Not set'}
               </dd>
               
               <dt className="text-muted-foreground">Production Domain:</dt>
               <dd className="font-mono text-xs truncate">
-                {import.meta.env.VITE_PRODUCTION_DOMAIN || '⚠️ Not set'}
+                {getEnv("VITE_PRODUCTION_DOMAIN") || '⚠️ Not set'}
               </dd>
               
               <dt className="text-muted-foreground">Current Origin:</dt>

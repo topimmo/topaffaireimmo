@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react'
+import { isDev } from '@/lib/env'
 
 interface Props {
   children: ReactNode
@@ -50,7 +51,7 @@ class ErrorBoundary extends Component<Props, State> {
               We're sorry, but something unexpected happened. Please try refreshing the page.
             </p>
 
-            {this.state.error && import.meta.env.DEV && (
+            {this.state.error && isDev() && (
               <details className="mb-4">
                 <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                   Error details (dev only)

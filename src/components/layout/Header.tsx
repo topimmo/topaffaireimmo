@@ -21,6 +21,7 @@ import {
   LogOut,
   LayoutDashboard,
   ShieldCheck,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,16 +50,7 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
         isScrolled
-          ? "h-16 bg-background/98 backdrop-blur-lg shadow-lg border-b-2 border-border/60"
-          : "h-20 bg-background/95 backdrop-blur-md shadow-md",
-        isRTL ? "rtl" : "ltr"
-      )}
-    >
-      <div className="container h-full flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <Building2 className="h-8 w-8 text-primary group-hover:scale-110 transition-transform duration-300" />
-          <span className="font-display text-xl font-bold text-foreground">
+
             TopAffaire<span className="text-primary">Immo</span>
           </span>
         </Link>
@@ -67,28 +59,7 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-8">
           <Link
             to="/buy"
-            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
-          >
-            {t('nav.buy')}
-          </Link>
-          <Link
-            to="/rent"
-            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
-          >
-            {t('nav.rent')}
-          </Link>
-          <Link
-            to="/services"
-            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
-          >
-            {t('nav.services')}
-          </Link>
-          <Link
-            to="/agencies"
-            className="text-sm font-semibold text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
-          >
-            {t('nav.agencies')}
-          </Link>
+
         </nav>
 
         {/* Desktop Actions */}
@@ -97,14 +68,14 @@ export default function Header() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 shadow-md hover:shadow-lg font-semibold">
+
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
                     {user?.email?.split('@')[0] || 'User'}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 shadow-xl border-2">
                 <>
                   <DropdownMenuItem asChild>
                       <Link to="/dashboard" className="flex items-center gap-2">
@@ -136,13 +107,16 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild className="font-semibold">
-                <Link to="/login">{t('nav.login')}</Link>
-              </Button>
-              <Button size="sm" asChild className="shadow-md hover:shadow-lg font-semibold">
+
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
-                  {isRTL ? 'نشر إعلان مجاني' : 'Publier gratuitement'}
+                  {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
+                </Link>
+              </Button>
+              <Button size="sm" asChild className="shadow-md hover:shadow-lg">
+                <Link to="/artisan/onboarding">
+                  <UserPlus className="h-4 w-4" />
+                  {isRTL ? 'أصبح مزود خدمة' : 'Devenir prestataire'}
                 </Link>
               </Button>
             </>
@@ -167,35 +141,13 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-lg border-b-2 shadow-2xl">
-          <nav className="container py-6 flex flex-col gap-5">
+
             <Link
               to="/buy"
               className="text-sm font-semibold py-2 hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              {t('nav.buy')}
-            </Link>
-            <Link
-              to="/rent"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t('nav.rent')}
-            </Link>
-            <Link
-              to="/agencies"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t('nav.agencies')}
-            </Link>
-            <Link
-              to="/advertise"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t('nav.advertise')}
+
             </Link>
             <Link
               to="/services"
@@ -249,10 +201,15 @@ export default function Header() {
                     {t('nav.login')}
                   </Link>
                 </Button>
-                <Button asChild className="shadow-md hover:shadow-lg font-semibold">
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
-                    {t('nav.register')}
+                    {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
+                  </Link>
+                </Button>
+                <Button asChild className="mt-2">
+                  <Link to="/artisan/onboarding" onClick={() => setIsMobileMenuOpen(false)}>
+                    <UserPlus className="h-4 w-4" />
+                    {isRTL ? 'أصبح مزود خدمة' : 'Devenir prestataire'}
                   </Link>
                 </Button>
               </>

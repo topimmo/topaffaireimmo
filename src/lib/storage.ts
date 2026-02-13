@@ -35,7 +35,9 @@ async function checkBucketExists(bucketName: string): Promise<boolean> {
     
     if (error) {
       console.warn(`[Storage] Unable to verify bucket existence for '${bucketName}':`, error.message);
+      console.warn('[Storage] This is non-blocking - upload will be attempted anyway');
       // Assume bucket exists to avoid blocking uploads
+      bucketExistenceCache.set(bucketName, true);
       return true;
     }
 
@@ -45,14 +47,19 @@ async function checkBucketExists(bucketName: string): Promise<boolean> {
     bucketExistenceCache.set(bucketName, exists);
     
     if (!exists) {
-      console.warn(`[Storage] Bucket '${bucketName}' not found in Supabase Storage. Expected buckets: property-images, banner-images, payment-receipts, agency-logos`);
-      console.warn(`[Storage] Please ensure the bucket is created in Supabase Storage or run the storage bucket migrations.`);
+      console.warn(`[Storage] ⚠️ Bucket '${bucketName}' not found in Supabase Storage`);
+      console.warn('[Storage] Expected buckets: property-images, banner-images, payment-receipts, agency-logos');
+      console.warn('[Storage] To fix: Run migration supabase/migrations/065_verify_storage_buckets.sql');
+      console.warn('[Storage] Or create buckets manually in Supabase Storage Dashboard');
+      console.warn('[Storage] Upload will be attempted anyway - it may fail if bucket does not exist');
     }
     
     return exists;
   } catch (err) {
-    console.warn(`[Storage] Error checking bucket '${bucketName}':`, err);
+    console.warn(`[Storage] Error checking bucket '${bucketName}':`, err instanceof Error ? err.message : 'Unknown error');
+    console.warn('[Storage] This is non-blocking - upload will be attempted anyway');
     // Assume bucket exists to avoid blocking uploads
+    bucketExistenceCache.set(bucketName, true);
     return true;
   }
 }

@@ -19,6 +19,7 @@ interface MonetizationSettings {
   contact_reveal_fee_mad: number;
   artisan_min_wallet_mad: number;
   contact_pass_duration_hours: number;
+  boost_activation_fee_mad: number;
 }
 
 export default function AdminMonetization() {
@@ -30,6 +31,7 @@ export default function AdminMonetization() {
     contact_reveal_fee_mad: 5,
     artisan_min_wallet_mad: 50,
     contact_pass_duration_hours: 12,
+    boost_activation_fee_mad: 50,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -318,6 +320,22 @@ export default function AdminMonetization() {
                   How long access lasts for same city + service category
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="boost-fee">
+                  Boost Activation Fee (MAD)
+                </Label>
+                <Input
+                  id="boost-fee"
+                  type="number"
+                  min="0"
+                  value={settings.boost_activation_fee_mad}
+                  onChange={(e) => updateSetting('boost_activation_fee_mad', parseInt(e.target.value) || 0)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  One-time fee charged when artisan enables boost
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -343,8 +361,11 @@ export default function AdminMonetization() {
             <div>
               <p className="font-semibold">Pay-to-be-Visible (Boost):</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
-                <li>Artisans can enable boost if wallet balance ≥ minimum</li>
+                <li>Artisans pay a one-time activation fee to enable boost</li>
+                <li>Fee is deducted from wallet when boost is enabled</li>
                 <li>Boosted artisans rank higher in search results</li>
+                <li>Boost can be disabled at any time (no refund)</li>
+                <li>Each boost activation requires payment</li>
                 <li>Boost is optional - non-boosted artisans still appear normally</li>
                 <li>No automatic charges - artisan controls their boost status</li>
               </ul>

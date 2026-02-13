@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Building2,
   Home,
@@ -203,13 +205,6 @@ export default function PropertyCategories() {
       const filters = { is_active: true };
       const orderBy = { column: "sort_order", ascending: true };
 
-      if (import.meta.env.DEV) {
-        console.log("[PropertyCategories] Fetching site_categories", {
-          filters,
-          order: orderBy
-        });
-      }
-
       try {
         const { data, error } = await supabase
           .from("site_categories")
@@ -217,20 +212,8 @@ export default function PropertyCategories() {
           .eq("is_active", filters.is_active)
           .order(orderBy.column, { ascending: orderBy.ascending });
 
-        if (import.meta.env.DEV) {
-          const slugs = data?.map((cat) => cat.slug) || [];
-          const newOrUnmapped = slugs.filter(
-            (slug) => slug && !FALLBACK_STYLES_BY_SLUG[slug]
-          );
-          console.log("[PropertyCategories] Active categories fetched", {
-            count: slugs.length,
-            slugs,
-            newOrUnmapped
-          });
-        }
-
+        // On error, continue using FALLBACK_CATEGORIES from initial state
         if (error) {
-          console.error("[PropertyCategories] Error fetching categories", error);
           return;
         }
 
@@ -238,7 +221,8 @@ export default function PropertyCategories() {
           setCategories(mapDbToUiCategories(data));
         }
       } catch (err) {
-        console.error("[PropertyCategories] Unexpected error", err);
+        // On exception, continue using FALLBACK_CATEGORIES from initial state
+        // This ensures the component always renders with sensible defaults
       }
     };
 
@@ -254,45 +238,46 @@ export default function PropertyCategories() {
   };
 
   return (
-    <section className={`py-12 md:py-16 bg-background ${isRTL ? "rtl" : "ltr"}`}>
-      <div className="container">
-        {/* Section Title */}
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="font-display text-2xl md:text-3xl font-semibold mb-2">
-            {isRTL ? "تصفح حسب نوع العقار" : "Parcourir par catégorie"}
+    <section className={`py-20 md:py-24 bg-background ${isRTL ? "rtl" : "ltr"}`}>
+      <div className="container max-w-7xl mx-auto">
+        {/* Section Title - Premium Typography */}
+        <div className="text-center mb-12 md:mb-14">
+          <h2 className="section-title mb-3">
+            {isRTL ? "تصفح حسب نوع العقار" : "Parcourir par Catégorie"}
           </h2>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          <p className="section-subtitle max-w-xl mx-auto">
             {isRTL
               ? "اكتشف مجموعة واسعة من العقارات التي تناسب احتياجاتك"
               : "Découvrez une large gamme de propriétés adaptées à vos besoins"}
           </p>
         </div>
 
-        {/* Categories Grid - Auto-fit for scalability */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((category) => {
+        {/* Categories Grid - Premium Cards with auto-fit */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 md:gap-6">
+          {categories.map((category, index) => {
             const Icon = category.icon;
             return (
-              <button
+              <Card
                 key={category.id}
+                className="group relative overflow-hidden p-6 hover:cursor-pointer transition-all duration-300 text-start hover:-translate-y-1.5 hover:shadow-xl border border-border/50 hover:border-primary/30 rounded-xl animate-in fade-in slide-in-from-bottom-4"
+                style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => handleCategoryClick(category.link)}
-                className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-md hover:border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 text-start"
               >
-                {/* Icon */}
-                <div className="mb-3">
-                  <div className={`inline-flex p-2.5 rounded-lg ${category.gradient}`}>
-                    <Icon className={`h-5 w-5 ${category.iconColor}`} />
+                {/* Icon - Premium sizing */}
+                <div className="mb-4">
+                  <div className={`inline-flex p-3 rounded-xl ${category.gradient} shadow-sm group-hover:shadow-md transition-shadow duration-300`}>
+                    <Icon className={`h-6 w-6 ${category.iconColor}`} />
                   </div>
                 </div>
 
-                {/* Content */}
-                <h3 className="font-medium text-sm mb-1 text-foreground group-hover:text-primary transition-colors">
+                {/* Content - Enhanced typography */}
+                <h3 className="font-semibold text-base mb-1.5 text-foreground group-hover:text-primary transition-colors tracking-tight">
                   {isRTL ? category.nameAr : category.nameFr}
                 </h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
-              </button>
+              </Card>
             );
           })}
         </div>

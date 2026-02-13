@@ -3,7 +3,8 @@ import EntryGateway from "@/components/home/EntryGateway";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
 import LatestListings from "@/components/home/LatestListings";
 import PropertyCategories from "@/components/home/PropertyCategories";
-import ExploreByCityMap from "@/components/home/ExploreByCityMap";
+import PremiumCityGrid from "@/components/home/PremiumCityGrid";
+import TrustBadges from "@/components/home/TrustBadges";
 import AdBanner from "@/components/home/AdBanner";
 import PromoBanner from "@/components/PromoBanner";
 import SEO from "@/components/SEO";
@@ -49,17 +50,23 @@ function Home() {
         {/* Entry Gateway - Services / Real Estate */}
         <EntryGateway />
 
-        {/* Promo Banner (home-top) */}
-        <PromoBanner position="home-top" />
+        {/* Promo Banner (home-top) - Ad Zone */}
+        <div className="ad-zone-wrapper py-6 md:py-8">
+          <PromoBanner position="home-top" />
+        </div>
 
         {/* Featured properties */}
         <FeaturedProperties />
 
-        {/* Ad banner (home middle) */}
-        <AdBanner page="home" position="home-middle" className="py-8" />
+        {/* Ad banner (home middle) - Ad Zone */}
+        <div className="ad-zone-wrapper">
+          <AdBanner page="home" position="home-middle" className="py-10 md:py-12" />
+        </div>
 
-        {/* Promo Banner (home-middle) */}
-        <PromoBanner position="home-middle" />
+        {/* Promo Banner (home-middle) - Ad Zone */}
+        <div className="ad-zone-wrapper py-6 md:py-8">
+          <PromoBanner position="home-middle" />
+        </div>
 
         {/* Latest listings */}
         <LatestListings />
@@ -67,11 +74,14 @@ function Home() {
         {/* Property Categories */}
         <PropertyCategories />
 
-        {/* Explore by City - Interactive Map */}
-        <ExploreByCityMap />
+        {/* Explore by City - Premium Grid */}
+        <PremiumCityGrid />
+
+        {/* Trust Badges - Before Footer */}
+        <TrustBadges />
 
         {/* FAQ Section with FAQPage Schema */}
-        <FAQ items={getGeneralFAQ(t)} className="bg-muted/20 py-12 md:py-16" />
+        <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 py-20 md:py-24" />
       </main>
     </>
   );

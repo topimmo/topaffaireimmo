@@ -12,13 +12,13 @@ interface AdminState {
 
 /**
  * Hook to check if the current user is an admin
- * Queries the public.admins table to determine admin status
+ * Checks profiles.user_role field (single source of truth for permissions)
  * 
  * Features:
  * - Checks admin status on mount and session changes
  * - Subscribes to auth state changes (login/logout/token refresh)
  * - Prevents state updates after unmount
- * - Uses maybeSingle() to avoid errors for non-admin users
+ * - Uses profiles.user_role as the ONLY source of truth
  * 
  * Returns { loading, isAdmin, role, error }
  */
@@ -64,12 +64,11 @@ export function useAdmin() {
       }
 
       try {
-        // Query public.admins table
-        // Use maybeSingle() to avoid PGRST116 error when no row exists
+        // Query profiles table for user_role (single source of truth)
         const { data, error } = await supabase
-          .from('admins')
-          .select('role')
-          .eq('user_id', session.user.id)
+          .from('profiles')
+          .select('user_role')
+          .eq('id', session.user.id)
           .maybeSingle();
 
         if (isMountedRef.current) {
@@ -83,12 +82,12 @@ export function useAdmin() {
               error: new Error(error.message),
             });
           } else {
-            // data will be null if no admin row exists, otherwise it will have the role
-            const isAdmin = !!data;
+            // Check if user_role is 'admin'
+            const isAdmin = data?.user_role === 'admin';
             setState({
               loading: false,
               isAdmin,
-              role: data?.role || null,
+              role: data?.user_role || null,
               error: null,
             });
           }

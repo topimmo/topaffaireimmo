@@ -4,11 +4,13 @@ import { Routes, Route, useLocation, Outlet } from "react-router-dom";
 
 import MobileFAB from "./components/layout/MobileFAB";
 import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
+import { SupabaseInitBanner } from "./components/SupabaseInitBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import DebugMode from "./components/DebugMode";
 import { runStartupValidation } from "./lib/startup-validation";
 import { Toaster } from "@/components/ui/sonner";
+import { isDev } from "@/lib/env";
 
 // ✅ Layout imports
 import Header from "@/components/layout/Header";
@@ -27,6 +29,7 @@ const Services = lazy(() => import("./pages/Services"));
 const ServiceCategoryPage = lazy(() => import("./pages/ServiceCategoryPage"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const SelectRole = lazy(() => import("./pages/SelectRole"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const EditListing = lazy(() => import("./pages/EditListing"));
 const Advertise = lazy(() => import("./pages/Advertise"));
@@ -40,6 +43,9 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 // SEO Guides
 const GuidesPage = lazy(() => import("./pages/GuidesPage"));
 const GuidePage = lazy(() => import("./pages/GuidePage"));
+
+// Diagnostics (DEV only) - only import in development
+const Diagnostics = isDev() ? lazy(() => import("./pages/Diagnostics")) : null;
 
 // New Admin Pages
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -56,10 +62,20 @@ const AdminContentCategories = lazy(() => import("./pages/admin/AdminContentCate
 const AdminPromoBanners = lazy(() => import("./pages/admin/AdminPromoBanners"));
 const AdminDummyProperties = lazy(() => import("./pages/admin/AdminDummyProperties"));
 const AdminMonetization = lazy(() => import("./pages/admin/AdminMonetization"));
+const AdminServiceCategories = lazy(() => import("./pages/admin/AdminServiceCategories"));
+const AdminServiceSubcategories = lazy(() => import("./pages/admin/AdminServiceSubcategories"));
+const AdminServiceRequests = lazy(() => import("./pages/admin/AdminServiceRequests"));
+const AdminArtisans = lazy(() => import("./pages/admin/AdminArtisans"));
 
-// Artisan Pages
+// Artisan Pages (old)
 const ArtisanOnboarding = lazy(() => import("./pages/artisan/ArtisanOnboarding"));
 const ArtisanDashboard = lazy(() => import("./pages/artisan/ArtisanDashboard"));
+const ArtisanServices = lazy(() => import("./pages/artisan/ArtisanServices"));
+const ArtisanRequests = lazy(() => import("./pages/artisan/ArtisanRequests"));
+
+// Artisan Pages (new - clean architecture)
+const ArtisanOnboardingNew = lazy(() => import("./features/artisans/ui/pages/ArtisanOnboardingRefactored"));
+const ArtisanPending = lazy(() => import("./features/artisans/ui/pages/ArtisanPending"));
 
 // SEO Landing Pages
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -156,7 +172,7 @@ function App() {
 
   return (
     <>
-      {validationFailed && import.meta.env.DEV && (
+      {validationFailed && isDev() && (
         <div
           style={{
             position: "fixed",
@@ -196,14 +212,31 @@ function App() {
             <Route path="/services/:slug" element={<ServiceCategoryPage />} />
             
             {/* Artisan Onboarding - Public but requires auth (handled in component) */}
-            <Route path="/artisan/onboarding" element={<ArtisanOnboarding />} />
+            <Route path="/artisan/onboarding" element={<ArtisanOnboardingNew />} />
+            <Route path="/artisan/pending" element={<ArtisanPending />} />
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
+            {/* Role Selection - Protected but for users with default role */}
+            <Route
+              path="/select-role"
+              element={
+                <ProtectedRoute>
+                  <SelectRole />
+                </ProtectedRoute>
+              }
+            />
+            
             {/* SEO Guides */}
             <Route path="/guides" element={<GuidesPage />} />
             <Route path="/guides/:slug" element={<GuidePage />} />
+            
+            {/* Diagnostics (DEV only) - only register route in development */}
+            {isDev() && Diagnostics && (
+              <Route path="/diagnostics" element={<Diagnostics />} />
+            )}
+            
             {/* 
               CRITICAL: /reset-password MUST remain public (not wrapped in ProtectedRoute)
               This route needs to be accessible WITHOUT authentication because:
@@ -300,6 +333,24 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
                 <ArtisanDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/artisan/services"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanServices />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/artisan/requests"
+            element={
+              <ProtectedRoute allowedRoles={["user", "agent", "merchant", "admin"]}>
+                <ArtisanRequests />
               </ProtectedRoute>
             }
           />
@@ -487,6 +538,38 @@ function App() {
               </AdminProtectedRoute>
             }
           />
+          <Route
+            path="/admin/services/categories"
+            element={
+              <AdminProtectedRoute>
+                <AdminServiceCategories />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/services/subcategories"
+            element={
+              <AdminProtectedRoute>
+                <AdminServiceSubcategories />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/services/requests"
+            element={
+              <AdminProtectedRoute>
+                <AdminServiceRequests />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/artisans"
+            element={
+              <AdminProtectedRoute>
+                <AdminArtisans />
+              </AdminProtectedRoute>
+            }
+          />
 
           {/* Legacy Admin - Redirect to new admin dashboard */}
           <Route
@@ -501,6 +584,7 @@ function App() {
       </Suspense>
 
       {/* ⚠️ دابا MobileFAB راه داخل PublicLayout، إلى بغيتيه هنا حيدو من PublicLayout */}
+      <SupabaseInitBanner />
       <ConnectionStatusBanner />
       <DebugMode />
       <Toaster />

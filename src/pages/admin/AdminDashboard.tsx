@@ -47,64 +47,47 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     setLoading(true);
 
-    // Fetch listings by status
-    const { count: pendingCount } = await supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending');
-
-    const { count: approvedCount } = await supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'approved');
-
-    const { count: publishedCount } = await supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'published');
-
-    const { count: rejectedCount } = await supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'rejected');
-
-    const { count: allListingsCount } = await supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true });
-
-    // Fetch total users from profiles
-    const { count: usersCount } = await supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true });
-
-    // Fetch agencies count (profiles with advertiser_type = 'agency')
-    const { count: agenciesCount } = await supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('advertiser_type', 'agency');
-
-    // Fetch recent activity from audit logs
-    const { data: activityData } = await supabase
-      .from('admin_audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(10);
+    try {
+      // Fetch all property counts in parallel using Promise.all
+      const [
+        pendingResult,
+        approvedResult,
+        publishedResult,
+        rejectedResult,
+        allListingsResult,
+        usersResult,
+        agenciesResult,
+        activityResult
+      ] = await Promise.all([
+        supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+        supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
+        supabase.from('properties').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('announcer_type', 'agence'),
+        supabase.from('admin_audit_logs').select('*').order('created_at', { ascending: false }).limit(10)
+      ]);
 
     setStats({
-      pendingListings: pendingCount || 0,
-      approvedListings: approvedCount || 0,
-      publishedListings: publishedCount || 0,
-      rejectedListings: rejectedCount || 0,
-      totalListings: allListingsCount || 0,
-      totalUsers: usersCount || 0,
-      totalAgencies: agenciesCount || 0,
+      pendingListings: pendingResult.count || 0,
+      approvedListings: approvedResult.count || 0,
+      publishedListings: publishedResult.count || 0,
+      rejectedListings: rejectedResult.count || 0,
+      totalListings: allListingsResult.count || 0,
+      totalUsers: usersResult.count || 0,
+      totalAgencies: agenciesResult.count || 0,
     });
 
-    if (activityData) {
-      setRecentActivity(activityData);
+    if (activityResult.data) {
+      setRecentActivity(activityResult.data);
     }
 
     setLoading(false);
+    } catch (error) {
+      // Silently handle errors in production
+      setLoading(false);
+    }
   };
 
   const statCards = [

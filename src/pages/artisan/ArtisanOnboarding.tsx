@@ -88,7 +88,6 @@ export default function ArtisanOnboarding() {
           .order('sort_order', { ascending: true });
 
         if (categoriesError) {
-          console.error('Error fetching service categories:', categoriesError);
           setError(isRTL ? 'خطأ في تحميل فئات الخدمات' : 'Erreur lors du chargement des catégories');
           setLoading(false);
           return;
@@ -102,7 +101,6 @@ export default function ArtisanOnboarding() {
           .order('name_fr', { ascending: true });
 
         if (citiesError) {
-          console.error('Error fetching cities:', citiesError);
           setError(isRTL ? 'خطأ في تحميل المدن' : 'Erreur lors du chargement des villes');
           setLoading(false);
           return;
@@ -112,7 +110,6 @@ export default function ArtisanOnboarding() {
         setCities(citiesData || []);
         setLoading(false);
       } catch (err) {
-        console.error('Exception fetching data:', err);
         setError(isRTL ? 'حدث خطأ غير متوقع' : 'Une erreur inattendue s\'est produite');
         setLoading(false);
       }
@@ -140,14 +137,13 @@ export default function ArtisanOnboarding() {
           .order('name_fr', { ascending: true });
 
         if (error) {
-          console.error('Error fetching neighborhoods:', error);
           return;
         }
 
         setNeighborhoods(data || []);
         setSelectedNeighborhoods([]); // Reset selection when city changes
       } catch (err) {
-        console.error('Exception fetching neighborhoods:', err);
+        // Silently handle neighborhood fetching errors
       }
     };
 
@@ -190,38 +186,80 @@ export default function ArtisanOnboarding() {
 
     if (!validateForm()) return;
 
+    // Validate selectedNeighborhoods is an array of integers
+    if (!Array.isArray(selectedNeighborhoods)) {
+      toast.error(isRTL ? 'خطأ في بيانات الأحياء' : 'Erreur dans les données des quartiers');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('create_my_artisan_profile', {
-        p_service_category_id: formData.service_category_id,
-        p_business_name: formData.business_name,
-        p_description_fr: formData.description_fr || null,
-        p_description_ar: formData.description_ar || null,
-        p_city_id: parseInt(formData.city_id),
-        p_neighborhood_ids: selectedNeighborhoods.length > 0 ? selectedNeighborhoods : null,
-        p_phone: formData.phone,
-        p_whatsapp: formData.whatsapp || null,
-        p_email: formData.email || null,
-      });
+      // Step 1: Create artisan profile
+      const profileData = {
+        user_id: user!.id,
+        service_category_id: formData.service_category_id,
+        business_name: formData.business_name.trim(),
+        description_fr: formData.description_fr || null,
+        description_ar: formData.description_ar || null,
+        city_id: parseInt(formData.city_id),
+        phone: formData.phone.trim(),
+        whatsapp: formData.whatsapp || null,
+        email: formData.email || null,
+      };
 
-      if (rpcError) {
-        console.error('RPC error:', rpcError);
+      const { data: profile, error: profileError } = await supabase
+        .from('artisan_profiles')
+        .insert(profileData)
+        .select()
+        .single();
+
+      if (profileError) {
         const errorMsg = isRTL
-          ? `خطأ في إنشاء الملف الشخصي: ${rpcError.message}`
-          : `Erreur lors de la création du profil: ${rpcError.message}`;
+          ? `خطأ في إنشاء الملف الشخصي: ${profileError.message}`
+          : `Erreur lors de la création du profil: ${profileError.message}`;
         setError(errorMsg);
         toast.error(errorMsg);
         setSubmitting(false);
         return;
       }
 
+      // Step 2: Insert neighborhood relations if any selected
+      if (selectedNeighborhoods.length > 0) {
+        const neighborhoodRows = selectedNeighborhoods.map((id) => ({
+          artisan_profile_id: profile.id,
+          neighborhood_id: id,
+        }));
+
+        const { error: linkError } = await supabase
+          .from('artisan_profile_neighborhoods')
+          .insert(neighborhoodRows);
+
+        if (linkError) {
+          // Clean up the orphaned profile
+          await supabase
+            .from('artisan_profiles')
+            .delete()
+            .eq('id', profile.id);
+
+          const errorMsg = isRTL
+            ? `خطأ في ربط الأحياء: ${linkError.message}`
+            : `Erreur lors de l'association des quartiers: ${linkError.message}`;
+          setError(errorMsg);
+          toast.error(errorMsg);
+          setSubmitting(false);
+          return;
+        }
+      }
+
       // Show success message
       toast.success(isRTL ? 'تم إنشاء حسابك! دابا كاين فمرحلة المراجعة.' : 'Profil créé ! Il est en attente de validation.');
+      
+      // Wait a moment to ensure DB transaction completes before redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
       navigate('/dashboard/artisan');
     } catch (err) {
-      console.error('Exception during submission:', err);
       const errorMsg = isRTL ? 'حدث خطأ غير متوقع' : 'Une erreur inattendue s\'est produite';
       setError(errorMsg);
       toast.error(errorMsg);

@@ -113,27 +113,34 @@ export default function Advertising() {
         } else if (data) {
           setProfile(data);
         } else {
+          // Profile doesn't exist - should have been created by trigger
+          console.warn('[Advertising] Profile missing for authenticated user, creating with default role...', {
+            userId: user.id,
+            email: user.email,
+          });
+          
           const { data: created, error: createError } = await supabase
             .from('profiles')
             .insert({
               id: user.id,
               email: user.email || '',
               full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-              user_role: 'merchant',
-              advertiser_type: 'owner',
+              user_role: 'user', // Default role - user must explicitly upgrade
               google_id: user.user_metadata?.google_id || null,
             })
             .select('*')
             .single();
 
           if (createError) {
-            console.error('Error auto-creating profile:', createError);
+            console.error('[Advertising] Error auto-creating profile:', createError);
             const isRlsBlocked = createError.code === '42501';
             if (isRlsBlocked) {
               toast.error(isRTL ? 'سياسة الأمان منعت إنشاء ملفك الشخصي (RLS).' : 'RLS/policy blocked profiles.');
             }
           } else if (created) {
             setProfile(created);
+            console.log('[Advertising] Successfully created missing profile with user role');
+            // Note: User has 'user' role - may need to upgrade to access commercial features
           }
         }
       } catch (error) {
@@ -146,9 +153,9 @@ export default function Advertising() {
     fetchProfile();
   }, [user]);
 
-  // Redirect real estate advertisers away from commercial advertising
+  // Redirect non-merchant users away from commercial advertising
   useEffect(() => {
-    if (!authLoading && !profileLoading && profile && profile.user_role === 'real_estate_advertiser') {
+    if (!authLoading && !profileLoading && profile && profile.user_role !== 'merchant' && profile.user_role !== 'admin') {
       navigate('/dashboard');
     }
   }, [authLoading, profileLoading, profile, navigate]);
