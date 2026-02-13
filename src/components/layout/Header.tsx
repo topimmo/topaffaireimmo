@@ -107,15 +107,15 @@ export default function Header() {
                         {t('nav.addListing')}
                       </Link>
                     </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" />
+                        {t('admin.title')}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   </>
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin" className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4" />
-                      {t('admin.title')}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                   <LogOut className="h-4 w-4 mr-2" />
@@ -194,16 +194,16 @@ export default function Header() {
                         {t('nav.addListing')}
                       </Link>
                     </Button>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="text-sm font-medium py-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {t('admin.title')}
+                    </Link>
+                  )}
                   </>
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className="text-sm font-medium py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {t('admin.title')}
-                  </Link>
-                )}
                 <Button
                   variant="outline"
                   onClick={() => {
