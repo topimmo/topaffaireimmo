@@ -49,23 +49,27 @@ export default function Header() {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
-        isScrolled
-
-            TopAffaire<span className="text-primary">Immo</span>
-          </span>
+        isScrolled ? "bg-background/95 backdrop-blur-md shadow-lg" : "bg-transparent"
+      )}
+    >
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-1 font-bold text-xl hover:opacity-80 transition-opacity">
+          <Building2 className="h-6 w-6 text-primary" />
+          <span>TopAffaire<span className="text-primary">Immo</span></span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link
             to="/buy"
-
+            className="text-sm font-medium transition-colors hover:text-primary"
           >
             {isRTL ? 'عقارات' : 'Immobilier'}
           </Link>
           <Link
             to="/services"
-
+            className="text-sm font-medium transition-colors hover:text-primary"
           >
             {t('nav.services')}
           </Link>
@@ -208,7 +212,7 @@ export default function Header() {
                     {t('nav.login')}
                   </Link>
                 </Button>
-
+                <Button variant="outline" asChild className="mt-2">
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
                     {isRTL ? 'نشر إعلان' : 'Publier une annonce'}

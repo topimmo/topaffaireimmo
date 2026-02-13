@@ -60,7 +60,16 @@ export default function EntryGateway() {
   return (
     <section
       className={cn(
-
+        "relative py-20 md:py-28 px-6 overflow-hidden bg-gradient-to-b from-background via-background/98 to-background"
+      )}
+    >
+      <div className="container mx-auto relative z-10">
+        {/* Header - Premium Typography */}
+        <div className="text-center mb-16 space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent leading-tight">
+            {copy.headline}
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light">
             {copy.subheadline}
           </p>
         </div>
@@ -87,13 +96,19 @@ export default function EntryGateway() {
                 key={category.id}
                 onClick={() => navigate(category.link)}
                 className={cn(
-
+                  "group relative flex flex-col items-center text-center p-10 md:p-12 rounded-2xl",
+                  "bg-gradient-to-br border-2 border-border/40 shadow-lg hover:shadow-2xl",
+                  "transition-all duration-500 ease-out",
+                  "hover:scale-[1.03] hover:border-border hover:-translate-y-1",
+                  "animate-in fade-in slide-in-from-bottom-8 duration-700",
+                  delayClass,
+                  category.bgGradient
                 )}
               >
                 {/* Icon - Larger & more prominent */}
                 <div
                   className={cn(
-
+                    "w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center mb-6",
                     category.iconBg,
                     "group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-md"
                   )}
@@ -109,7 +124,7 @@ export default function EntryGateway() {
                 {/* Content - Enhanced Typography */}
                 <h3
                   className={cn(
-
+                    "text-2xl md:text-3xl font-bold mb-4 transition-colors duration-300",
                     "text-foreground group-hover:text-foreground"
                   )}
                 >
@@ -119,7 +134,11 @@ export default function EntryGateway() {
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
 
-
+                {/* CTA - Premium Button */}
+                <div className="mt-auto flex items-center gap-2 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-300">
+                  <span>{copy.explore}</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </div>
               </button>
             );
           })}
