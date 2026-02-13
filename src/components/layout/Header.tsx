@@ -94,20 +94,18 @@ export default function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 shadow-xl border-2">
-                <>
-                  <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="flex items-center gap-2">
-                        <LayoutDashboard className="h-4 w-4" />
-                        {t('nav.dashboard')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/add-listing" className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        {t('nav.addListing')}
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard" className="flex items-center gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    {t('nav.dashboard')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/add-listing" className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    {t('nav.addListing')}
+                  </Link>
+                </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center gap-2">
@@ -180,21 +178,19 @@ export default function Header() {
             </Link>
             {user ? (
               <>
-                <>
-                  <Link
-                      to="/dashboard"
-                      className="text-sm font-medium py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {t('nav.dashboard')}
-                    </Link>
-                    <Button asChild className="mt-2">
-                      <Link to="/add-listing" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Plus className="h-4 w-4" />
-                        {t('nav.addListing')}
-                      </Link>
-                    </Button>
-                  </>
+                <Link
+                  to="/dashboard"
+                  className="text-sm font-medium py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {t('nav.dashboard')}
+                </Link>
+                <Button asChild className="mt-2">
+                  <Link to="/add-listing" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Plus className="h-4 w-4" />
+                    {t('nav.addListing')}
+                  </Link>
+                </Button>
                 {isAdmin && (
                   <Link
                     to="/admin"

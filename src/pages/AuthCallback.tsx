@@ -98,10 +98,7 @@ export default function AuthCallback() {
             : 'La confirmation a expiré. Veuillez réessayer.';
           setMessage(timeoutMsg);
           setTimeout(() => navigate('/login'), REDIRECT_DELAY_SHORT_MS);
-        }, CALLBACK_TIMEOUT_MS);
-        }, CALLBACK_TIMEOUT_MS);
-        }, CALLBACK_TIMEOUT_MS);
-
+          
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
