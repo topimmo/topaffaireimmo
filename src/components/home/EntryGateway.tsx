@@ -60,17 +60,7 @@ export default function EntryGateway() {
   return (
     <section
       className={cn(
-        "py-20 md:py-28 bg-gradient-to-b from-background via-muted/20 to-background",
-        isRTL ? "rtl" : "ltr"
-      )}
-    >
-      <div className="container">
-        {/* Header - Premium Typography */}
-        <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-foreground">
-            {copy.headline}
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+
             {copy.subheadline}
           </p>
         </div>
@@ -97,17 +87,13 @@ export default function EntryGateway() {
                 key={category.id}
                 onClick={() => navigate(category.link)}
                 className={cn(
-                  "group relative flex flex-col items-center gap-6 p-8 md:p-10 rounded-2xl border-2 border-border/50 bg-gradient-to-br",
-                  category.bgGradient,
-                  "hover:border-border hover:shadow-2xl hover:scale-[1.02] transition-all duration-500",
-                  "animate-in fade-in slide-in-from-bottom-8 duration-700",
-                  delayClass
+
                 )}
               >
                 {/* Icon - Larger & more prominent */}
                 <div
                   className={cn(
-                    "rounded-2xl p-6 md:p-7",
+
                     category.iconBg,
                     "group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-md"
                   )}
@@ -123,27 +109,17 @@ export default function EntryGateway() {
                 {/* Content - Enhanced Typography */}
                 <h3
                   className={cn(
-                    "text-2xl md:text-3xl font-display font-bold",
+
                     "text-foreground group-hover:text-foreground"
                   )}
                 >
                   {isRTL ? category.titleAr : category.titleFr}
                 </h3>
-
-                <p className="text-base text-muted-foreground text-center">
+                <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-8">
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
 
-                {/* CTA - Subtle but inviting */}
-                <div className="flex items-center gap-2 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-300">
-                  <span>{copy.explore}</span>
-                  <ArrowRight
-                    className={cn(
-                      "w-4 h-4 group-hover:translate-x-1 transition-transform",
-                      isRTL && "rotate-180 group-hover:-translate-x-1"
-                    )}
-                  />
-                </div>
+
               </button>
             );
           })}

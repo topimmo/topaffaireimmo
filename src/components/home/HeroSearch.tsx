@@ -129,15 +129,7 @@ export default function HeroSearch() {
           alt="Beautiful modern home"
           className="w-full h-full object-cover scale-105 transition-transform duration-[20s] hover:scale-100"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/60" />
-      </div>
 
-      {/* Hero Content - Elevated above background */}
-      <div className="relative z-10 container text-center px-4 space-y-12">
-        {/* Hero Title & Subtitle - Premium Typography */}
-        <div className="space-y-5 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <h1 className="hero-title leading-tight">
-            {t('hero.title')}{' '}
             <span className="text-primary relative">
               {t('hero.titleHighlight')}
               <span className="absolute -bottom-1 left-0 right-0 h-1 bg-primary/40 rounded-full" />
@@ -180,8 +172,7 @@ export default function HeroSearch() {
           </div>
 
           {/* Search Fields - Premium Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* City */}
+
             <div className="relative">
               <MapPin className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10`} />
               <Select value={city} onValueChange={setCity}>

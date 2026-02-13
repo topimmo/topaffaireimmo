@@ -50,36 +50,29 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
         isScrolled
-          ? "bg-background/98 backdrop-blur-xl shadow-xl border-b-2"
-          : "bg-gradient-to-b from-black/40 to-transparent"
-      )}
-    >
-      <div className="container h-20 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-3 group">
-          <Building2 className="h-8 w-8 text-primary drop-shadow-lg transition-transform group-hover:scale-110 duration-300" />
-          <span className="font-display text-2xl font-bold text-foreground drop-shadow-md transition-all group-hover:text-primary duration-300">
+
             TopAffaire<span className="text-primary">Immo</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6">
           <Link
             to="/buy"
-            className="text-sm font-medium hover:text-primary transition-colors"
+
           >
             {isRTL ? 'عقارات' : 'Immobilier'}
           </Link>
           <Link
             to="/services"
-            className="text-sm font-medium hover:text-primary transition-colors"
+
           >
             {t('nav.services')}
           </Link>
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-3">
           <LanguageSwitcher />
           {user ? (
             <DropdownMenu>
@@ -138,7 +131,7 @@ export default function Header() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-3">
+        <div className="md:hidden flex items-center gap-2">
           <LanguageSwitcher />
           <button
             className="p-2 hover:bg-muted rounded-lg transition-all duration-300"
@@ -159,14 +152,14 @@ export default function Header() {
           <nav className="container py-6 flex flex-col gap-4">
             <Link
               to="/buy"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
+              className="text-sm font-medium py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {isRTL ? 'عقارات' : 'Immobilier'}
             </Link>
             <Link
               to="/services"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
+              className="text-sm font-medium py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.services')}
@@ -192,7 +185,7 @@ export default function Header() {
                     className="text-sm font-medium py-2"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <ShieldCheck className="h-4 w-4 inline-block mr-2" />
+
                     {t('admin.title')}
                   </Link>
                 )}
@@ -202,7 +195,7 @@ export default function Header() {
                     handleSignOut();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="mt-2 shadow-md hover:shadow-lg font-semibold"
+                  className="mt-2"
                 >
                   <LogOut className="h-4 w-4" />
                   {t('nav.logout')}
@@ -210,12 +203,12 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Button variant="outline" asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
+                <Button variant="outline" asChild className="mt-2">
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                     {t('nav.login')}
                   </Link>
                 </Button>
-                <Button variant="outline" asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
+
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
                     {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
