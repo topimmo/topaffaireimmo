@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type StorageBucket = 'property-images' | 'banner-images' | 'payment-receipts' | 'agency-logos';
+export type StorageBucket = 'property-images' | 'banner-images' | 'payment-receipts' | 'agency-logos' | 'artisan-avatars';
 
 interface UploadOptions {
   bucket: StorageBucket;
@@ -48,8 +48,8 @@ async function checkBucketExists(bucketName: string): Promise<boolean> {
     
     if (!exists) {
       console.warn(`[Storage] ⚠️ Bucket '${bucketName}' not found in Supabase Storage`);
-      console.warn('[Storage] Expected buckets: property-images, banner-images, payment-receipts, agency-logos');
-      console.warn('[Storage] To fix: Run migration supabase/migrations/065_verify_storage_buckets.sql');
+      console.warn('[Storage] Expected buckets: property-images, banner-images, payment-receipts, agency-logos, artisan-avatars');
+      console.warn('[Storage] To fix: Run migrations supabase/migrations/065_verify_storage_buckets.sql and 106_add_artisan_avatar_support.sql');
       console.warn('[Storage] Or create buckets manually in Supabase Storage Dashboard');
       console.warn('[Storage] Upload will be attempted anyway - it may fail if bucket does not exist');
     }
@@ -310,6 +310,20 @@ export async function uploadAgencyLogo(
 }
 
 /**
+ * Upload artisan avatar
+ */
+export async function uploadArtisanAvatar(
+  file: File, 
+  userId: string
+): Promise<UploadResult> {
+  return uploadFile({
+    bucket: 'artisan-avatars',
+    file,
+    userId,
+  });
+}
+
+/**
  * Validate file before upload with detailed error messages
  */
 export function validateFile(
@@ -392,5 +406,9 @@ export const BUCKET_CONFIG = {
   'agency-logos': {
     maxSize: 1 * 1024 * 1024, // 1MB
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
+  },
+  'artisan-avatars': {
+    maxSize: 2 * 1024 * 1024, // 2MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
   },
 };

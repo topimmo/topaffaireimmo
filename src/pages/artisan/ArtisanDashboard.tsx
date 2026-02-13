@@ -143,7 +143,7 @@ export default function ArtisanDashboard() {
               )}
             </div>
             <Button asChild variant="outline">
-              <Link to="/artisan/onboarding">
+              <Link to="/artisan/profile/edit">
                 <Settings className="h-4 w-4" />
                 {isRTL ? 'تحديث الملف الشخصي' : 'Modifier le profil'}
               </Link>
