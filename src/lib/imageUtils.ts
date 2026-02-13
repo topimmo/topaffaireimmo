@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
  * Get public URL for a property image
  * Handles both full URLs and storage paths
  * @param pathOrUrl - Storage path or full URL
- * @returns Public URL to the image
+ * @returns Public URL to the image, or empty string if input is null/undefined
  */
 export function getPublicImageUrl(pathOrUrl: string | null | undefined): string {
   if (!pathOrUrl) return '';

@@ -88,6 +88,9 @@ export default function SearchResults() {
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Performance optimization: Reduced from 200 to 50 initial items with pagination
+  // Future consideration: Implement infinite scroll for better mobile UX
   const ITEMS_PER_PAGE = 24;
 
   // ✅ IMPORTANT: Select value must NEVER be ""

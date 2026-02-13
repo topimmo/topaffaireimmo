@@ -65,7 +65,7 @@ export default function AdminDashboard() {
         supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
         supabase.from('properties').select('id', { count: 'exact', head: true }),
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('user_role', 'merchant'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('announcer_type', 'agence'),
         supabase.from('admin_audit_logs').select('*').order('created_at', { ascending: false }).limit(10)
       ]);
 
