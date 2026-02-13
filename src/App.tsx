@@ -29,6 +29,7 @@ const Services = lazy(() => import("./pages/Services"));
 const ServiceCategoryPage = lazy(() => import("./pages/ServiceCategoryPage"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const SelectRole = lazy(() => import("./pages/SelectRole"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const EditListing = lazy(() => import("./pages/EditListing"));
 const Advertise = lazy(() => import("./pages/Advertise"));
@@ -216,6 +217,16 @@ function App() {
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
+            {/* Role Selection - Protected but for users with default role */}
+            <Route
+              path="/select-role"
+              element={
+                <ProtectedRoute>
+                  <SelectRole />
+                </ProtectedRoute>
+              }
+            />
             
             {/* SEO Guides */}
             <Route path="/guides" element={<GuidesPage />} />
