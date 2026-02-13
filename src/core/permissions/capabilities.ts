@@ -1,7 +1,17 @@
 /**
  * Capabilities Model
- * Centralized permission definitions based on roles and statuses
- * DB is the single source of truth
+ * Centralized permission definitions based ONLY on profiles.user_role
+ * 
+ * IMPORTANT: All permissions derive from profiles.user_role field.
+ * announcer_type and advertiser_type are NOT used for permissions.
+ * 
+ * Roles:
+ * - user: Default role, can create listings and service requests
+ * - agent: Real estate agents (immobilier)
+ * - merchant: Service providers and agencies
+ * - admin: Platform administrators
+ * 
+ * Artisan status (merchant + artisan_profile) adds additional capabilities.
  */
 
 import type { ArtisanProfile } from '@/features/artisans/domain/types';
@@ -105,38 +115,33 @@ export const CAPABILITY_MAP: Record<string, Capability[]> = {
 
 /**
  * Determine user's effective role for capability checking
- * Priority: admin > artisan_verified > artisan_pending > merchant > agent > user
+ * Uses ONLY profiles.user_role as the source of truth
+ * Priority: admin > merchant (includes artisan_verified) > agent > user
  */
 export function getEffectiveRole(profile: EnrichedProfile): string {
-  // Admin always takes priority
-  if (profile.isAdmin) {
+  // Admin role takes priority (from user_role field)
+  if (profile.user_role === 'admin') {
     return 'admin';
   }
   
-  // Check artisan status
-  if (profile.artisanProfile) {
-    if (profile.artisanProfile.is_verified && profile.artisanProfile.is_active) {
+  // Check artisan status for merchant users
+  if (profile.user_role === 'merchant') {
+    // Merchants with verified artisan profile get artisan capabilities
+    if (profile.artisanProfile?.is_verified && profile.artisanProfile?.is_active) {
       return 'artisan_verified';
-    } else if (!profile.artisanProfile.is_verified) {
+    } else if (profile.artisanProfile && !profile.artisanProfile.is_verified) {
       return 'artisan_pending';
     }
-  }
-  
-  // Check user_role and advertiser_type from profile
-  if (profile.user_role === 'commercial_advertiser') {
+    // Regular merchant (no artisan profile or inactive)
     return 'merchant';
   }
   
-  if (profile.user_role === 'real_estate_advertiser') {
-    if (profile.advertiser_type === 'broker') {
-      return 'agent';
-    }
-    if (profile.advertiser_type === 'agency') {
-      return 'merchant';
-    }
+  // Agent role (real estate agents)
+  if (profile.user_role === 'agent') {
+    return 'agent';
   }
   
-  // Default to user
+  // Default user role
   return 'user';
 }
 

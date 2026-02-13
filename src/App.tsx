@@ -29,6 +29,7 @@ const Services = lazy(() => import("./pages/Services"));
 const ServiceCategoryPage = lazy(() => import("./pages/ServiceCategoryPage"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const SelectRole = lazy(() => import("./pages/SelectRole"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const EditListing = lazy(() => import("./pages/EditListing"));
 const Advertise = lazy(() => import("./pages/Advertise"));
@@ -124,50 +125,22 @@ function PublicLayout() {
 }
 
 function App() {
-  const [validationComplete, setValidationComplete] = useState(false);
   const [validationFailed, setValidationFailed] = useState(false);
 
   useEffect(() => {
-    let hasCompleted = false;
-
-    // Add a timeout to prevent indefinite blocking
-    const timeout = setTimeout(() => {
-      if (!hasCompleted) {
-        console.warn("⚠️ Startup validation timeout - proceeding anyway");
-        hasCompleted = true;
-        setValidationComplete(true);
-        setValidationFailed(true);
-      }
-    }, 10000); // 10 second timeout
-
+    // Run startup validation in background (non-blocking)
     runStartupValidation()
       .then((result) => {
-        if (!hasCompleted) {
-          hasCompleted = true;
-          clearTimeout(timeout);
-          setValidationComplete(true);
-          if (!result.valid && result.errors.length > 0) {
-            console.error("⚠️ Startup validation found errors, but app will continue");
-            setValidationFailed(true);
-          }
+        if (!result.valid && result.errors.length > 0) {
+          console.error("⚠️ Startup validation found errors, but app will continue");
+          setValidationFailed(true);
         }
       })
       .catch((error) => {
-        if (!hasCompleted) {
-          hasCompleted = true;
-          clearTimeout(timeout);
-          console.error("⚠️ Startup validation exception:", error);
-          setValidationComplete(true);
-          setValidationFailed(true);
-        }
+        console.error("⚠️ Startup validation exception:", error);
+        setValidationFailed(true);
       });
-
-    return () => {
-      clearTimeout(timeout);
-    };
   }, []);
-
-  if (!validationComplete) return <LoadingSpinner />;
 
   return (
     <>
@@ -216,6 +189,16 @@ function App() {
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
+            {/* Role Selection - Protected but for users with default role */}
+            <Route
+              path="/select-role"
+              element={
+                <ProtectedRoute>
+                  <SelectRole />
+                </ProtectedRoute>
+              }
+            />
             
             {/* SEO Guides */}
             <Route path="/guides" element={<GuidesPage />} />

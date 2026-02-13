@@ -127,7 +127,7 @@ export default function AdminPanel() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userFilter, setUserFilter] = useState<'all' | 'real_estate_advertiser' | 'commercial_advertiser'>('all');
+  const [userFilter, setUserFilter] = useState<'all' | 'user' | 'agent' | 'merchant' | 'admin'>('all');
   const [selectedRequest, setSelectedRequest] = useState<BannerRequest | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
@@ -936,18 +936,25 @@ export default function AdminPanel() {
                   {isRTL ? 'الكل' : 'Tous'} ({users.length})
                 </Button>
                 <Button
-                  variant={userFilter === 'real_estate_advertiser' ? 'default' : 'outline'}
+                  variant={userFilter === 'user' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setUserFilter('real_estate_advertiser')}
+                  onClick={() => setUserFilter('user')}
                 >
-                  {isRTL ? 'معلنو العقارات' : 'Immobilier'} ({users.filter(u => u.user_role === 'real_estate_advertiser').length})
+                  {isRTL ? 'مستخدمون' : 'Utilisateurs'} ({users.filter(u => u.user_role === 'user').length})
                 </Button>
                 <Button
-                  variant={userFilter === 'commercial_advertiser' ? 'default' : 'outline'}
+                  variant={userFilter === 'agent' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setUserFilter('commercial_advertiser')}
+                  onClick={() => setUserFilter('agent')}
                 >
-                  {isRTL ? 'المعلنون التجاريون' : 'Publicités'} ({users.filter(u => u.user_role === 'commercial_advertiser').length})
+                  {isRTL ? 'وكلاء' : 'Agents'} ({users.filter(u => u.user_role === 'agent').length})
+                </Button>
+                <Button
+                  variant={userFilter === 'merchant' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setUserFilter('merchant')}
+                >
+                  {isRTL ? 'تجار' : 'Marchands'} ({users.filter(u => u.user_role === 'merchant').length})
                 </Button>
               </div>
 
@@ -966,8 +973,9 @@ export default function AdminPanel() {
                             </Badge>
                             <Badge variant="outline">
                               {userItem.user_role === 'admin' ? (isRTL ? 'مدير' : 'Admin') :
-                               userItem.user_role === 'commercial_advertiser' ? (isRTL ? 'إعلانات تجارية' : 'Publicités') :
-                               (isRTL ? 'عقارات' : 'Immobilier')}
+                               userItem.user_role === 'merchant' ? (isRTL ? 'تاجر' : 'Marchand') :
+                               userItem.user_role === 'agent' ? (isRTL ? 'وكيل' : 'Agent') :
+                               (isRTL ? 'مستخدم' : 'Utilisateur')}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">{userItem.email}</p>
@@ -982,8 +990,9 @@ export default function AdminPanel() {
                             value={userItem.user_role}
                             onChange={(e) => changeUserRole(userItem.id, e.target.value)}
                           >
-                            <option value="real_estate_advertiser">{isRTL ? 'عقارات' : 'Immobilier'}</option>
-                            <option value="commercial_advertiser">{isRTL ? 'إعلانات تجارية' : 'Publicités'}</option>
+                            <option value="user">{isRTL ? 'مستخدم' : 'Utilisateur'}</option>
+                            <option value="agent">{isRTL ? 'وكيل' : 'Agent'}</option>
+                            <option value="merchant">{isRTL ? 'تاجر' : 'Marchand'}</option>
                             <option value="admin">{isRTL ? 'مدير' : 'Admin'}</option>
                           </select>
                           <Button

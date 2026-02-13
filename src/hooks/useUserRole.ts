@@ -1,8 +1,15 @@
 /**
  * useUserRole Hook
  * 
- * Efficiently fetches and caches user role
- * Avoids redundant DB calls by caching in context
+ * Fetches user role from profiles.user_role field ONLY.
+ * This is the single source of truth for all permissions and routing.
+ * 
+ * Valid roles: user | agent | merchant | admin
+ * 
+ * - user: Default role for all new signups
+ * - agent: Real estate agents (immobilier)
+ * - merchant: Service providers (services/artisan)
+ * - admin: Platform administrators
  */
 
 import { useState, useEffect } from "react";
@@ -10,6 +17,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
 export type AppRole = "user" | "agent" | "merchant" | "admin";
+
+// Valid roles array for validation
+const VALID_ROLES: AppRole[] = ["user", "agent", "merchant", "admin"];
 
 /**
  * Hook to get current user's role
@@ -31,48 +41,40 @@ export function useUserRole() {
       }
 
       try {
-        // Check admin first (fastest check)
-        const { data: adminData } = await supabase
-          .from("admins")
-          .select("id")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (isCancelled) return;
-
-        if (adminData) {
-          setRole("admin");
-          setLoading(false);
-          return;
-        }
-
-        // Get profile
+        // Get profile - user_role is the ONLY source of truth for permissions
         const { data: profile } = await supabase
           .from("profiles")
-          .select("user_role, advertiser_type")
+          .select("user_role")
           .eq("id", user.id)
           .maybeSingle();
 
         if (isCancelled) return;
 
         if (profile) {
-          // Map to app role
-          if (profile.user_role === 'commercial_advertiser') {
-            setRole('merchant');
-          } else if (profile.user_role === 'real_estate_advertiser') {
-            const advertiserType = profile.advertiser_type;
-            if (advertiserType === 'broker') {
-              setRole('agent');
-            } else if (advertiserType === 'agency') {
-              setRole('merchant');
-            } else {
-              setRole('user');
-            }
+          // Direct mapping - user_role is canonical
+          const role = profile.user_role as AppRole;
+          
+          // Validate role is one of our expected values
+          if (VALID_ROLES.includes(role)) {
+            setRole(role);
           } else {
+            // Invalid role, default to user
+            console.warn(`[useUserRole] Invalid user_role: ${role}, defaulting to user`);
             setRole('user');
           }
         } else {
-          setRole('user'); // Default
+          // No profile found, try to ensure it exists
+          try {
+            const { data, error } = await supabase.rpc('ensure_profile_exists');
+            if (error) {
+              console.error("[useUserRole] Error ensuring profile exists:", error);
+            }
+            // Default to user role
+            setRole('user');
+          } catch (ensureError) {
+            console.error("[useUserRole] Error calling ensure_profile_exists:", ensureError);
+            setRole('user'); // Safe default
+          }
         }
       } catch (error) {
         console.error("[useUserRole] Error fetching role:", error);

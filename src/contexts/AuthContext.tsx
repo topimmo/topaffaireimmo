@@ -44,11 +44,6 @@ import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js
 import { logger, createCorrelatedLogger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/utils'
 
-/**
- * Timeout for initial auth hydration.
- * If session restoration takes longer than this, we retry once and then mark as hydrated.
- */
-export const AUTH_HYDRATION_TIMEOUT_MS = 4000;
 
 /**
  * Authentication context value type.
