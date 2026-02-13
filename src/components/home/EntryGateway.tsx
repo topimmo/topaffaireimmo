@@ -60,17 +60,7 @@ export default function EntryGateway() {
   return (
     <section
       className={cn(
-        "py-20 md:py-28 bg-gradient-to-b from-muted/30 via-background to-muted/20",
-        isRTL && "rtl"
-      )}
-    >
-      <div className="container max-w-6xl">
-        {/* Section Header - Premium Typography */}
-        <div className="text-center max-w-2xl mx-auto mb-16 md:mb-20">
-          <h2 className="section-title mb-4 animate-in fade-in slide-in-from-bottom-3 duration-700">
-            {copy.headline}
-          </h2>
-          <p className="section-subtitle animate-in fade-in slide-in-from-bottom-3 duration-700 delay-150">
+
             {copy.subheadline}
           </p>
         </div>
@@ -89,26 +79,21 @@ export default function EntryGateway() {
         >
           {GATEWAY_CATEGORIES.map((category, index) => {
             const Icon = category.icon;
+            // Map index to specific delay classes for Tailwind
+            const delayClasses = ['', 'delay-100', 'delay-200', 'delay-300'];
+            const delayClass = delayClasses[index] || 'delay-300';
             return (
               <button
                 key={category.id}
                 onClick={() => navigate(category.link)}
                 className={cn(
-                  "group relative overflow-hidden rounded-2xl",
-                  "border border-border/40 shadow-lg hover:shadow-2xl",
-                  "bg-card hover:bg-gradient-to-br",
-                  category.bgGradient,
-                  "p-10 md:p-12 text-start transition-all duration-500",
-                  "hover:-translate-y-2 hover:border-border/60 hover:scale-[1.02]",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2",
-                  "animate-in fade-in slide-in-from-bottom-4",
-                  index === 0 ? "duration-700" : "duration-700 delay-300"
+
                 )}
               >
                 {/* Icon - Larger & more prominent */}
                 <div
                   className={cn(
-                    "w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center mb-8",
+
                     category.iconBg,
                     "group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-md"
                   )}
@@ -124,7 +109,7 @@ export default function EntryGateway() {
                 {/* Content - Enhanced Typography */}
                 <h3
                   className={cn(
-                    "font-display text-2xl md:text-3xl font-bold mb-4 tracking-tight",
+
                     "text-foreground group-hover:text-foreground"
                   )}
                 >
@@ -134,35 +119,7 @@ export default function EntryGateway() {
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
 
-                {/* CTA - Premium style */}
-                <div
-                  className={cn(
-                    "inline-flex items-center gap-2 font-semibold text-base",
-                    category.accentColor,
-                    "group-hover:gap-3 transition-all duration-300"
-                  )}
-                >
-                  <span>{copy.explore}</span>
-                  <ArrowRight
-                    className={cn(
-                      "w-5 h-5 transition-transform duration-300",
-                      isRTL
-                        ? "rotate-180 group-hover:-translate-x-1"
-                        : "group-hover:translate-x-1"
-                    )}
-                  />
-                </div>
 
-                {/* Decorative Corner - Subtle accent */}
-                <div
-                  className={cn(
-                    "absolute -bottom-16 -right-16 w-48 h-48 rounded-full opacity-8",
-                    category.accentColor === "text-primary"
-                      ? "bg-primary"
-                      : "bg-secondary",
-                    "group-hover:opacity-15 group-hover:scale-125 transition-all duration-500"
-                  )}
-                />
               </button>
             );
           })}
