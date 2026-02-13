@@ -81,7 +81,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId: NodeJS.Timeout | undefined = undefined;
+    const timeoutIds: NodeJS.Timeout[] = [];
     
     const handleAuthCallback = async () => {
       try {
@@ -91,7 +91,7 @@ export default function AuthCallback() {
         console.log('  - Stored redirect preference:', peekPostAuthRedirect() || 'none');
 
         // Set a global timeout for the entire callback process
-        timeoutId = setTimeout(() => {
+        const callbackTimeoutId = setTimeout(() => {
           if (cancelled) return;
           console.error('❌ Auth callback timeout - taking too long');
           setStatus('error');
@@ -99,10 +99,12 @@ export default function AuthCallback() {
             ? 'انتهت مهلة التأكيد. يرجى المحاولة مرة أخرى.'
             : 'La confirmation a expiré. Veuillez réessayer.';
           setMessage(timeoutMsg);
-          setTimeout(() => {
+          const redirectTimeoutId = setTimeout(() => {
             if (!cancelled) navigate('/login');
           }, REDIRECT_DELAY_SHORT_MS);
+          timeoutIds.push(redirectTimeoutId);
         }, CALLBACK_TIMEOUT_MS);
+        timeoutIds.push(callbackTimeoutId);
 
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -132,15 +134,15 @@ export default function AuthCallback() {
         // Check for errors in the URL
         if (error) {
           console.error('❌ Auth callback error:', error, errorDescription);
-          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
           if (cancelled) return;
           setStatus('error');
           setMessage(errorDescription || error);
           
           // Redirect to login after delay
-          setTimeout(() => {
+          const redirectTimeoutId = setTimeout(() => {
             if (!cancelled) navigate('/login');
           }, REDIRECT_DELAY_LONG_MS);
+          timeoutIds.push(redirectTimeoutId);
           return;
         }
 
@@ -148,7 +150,6 @@ export default function AuthCallback() {
         // show a helpful message instead of attempting the exchange
         if (!navigator.onLine && (code || accessToken)) {
           console.warn('⚠️ User is offline, cannot complete authentication');
-          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
           if (cancelled) return;
           setStatus('error');
           const offlineMsg = isRTL
@@ -157,9 +158,10 @@ export default function AuthCallback() {
           setMessage(offlineMsg);
           
           // Redirect to login after delay
-          setTimeout(() => {
+          const redirectTimeoutId = setTimeout(() => {
             if (!cancelled) navigate('/login');
           }, REDIRECT_DELAY_LONG_MS);
+          timeoutIds.push(redirectTimeoutId);
           return;
         }
 
@@ -171,7 +173,6 @@ export default function AuthCallback() {
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
-            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             if (!cancelled) navigate('/login?err=oauth', { replace: true });
             return;
           }
@@ -189,12 +190,10 @@ export default function AuthCallback() {
 
           if (!finalSession) {
             console.error('❌ Session not available after exchange');
-            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             if (!cancelled) navigate('/login?err=oauth', { replace: true });
             return;
           }
 
-          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on success
           if (cancelled) return;
           setStatus('success');
           const successMsg = isRTL
@@ -205,9 +204,10 @@ export default function AuthCallback() {
           const storedRedirect = consumePostAuthRedirect();
           const redirectPath = storedRedirect || '/dashboard';
           
-          setTimeout(() => {
+          const redirectTimeoutId = setTimeout(() => {
             if (!cancelled) navigate(redirectPath, { replace: true });
           }, REDIRECT_DELAY_SHORT_MS);
+          timeoutIds.push(redirectTimeoutId);
           return;
         }
 
@@ -223,7 +223,6 @@ export default function AuthCallback() {
           
           if (sessionError) {
             console.error('❌ Error getting session:', sessionError);
-            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             if (cancelled) return;
             setStatus('error');
             const failMsg = isRTL
@@ -231,9 +230,10 @@ export default function AuthCallback() {
               : 'Failed to confirm email. Please try again.';
             setMessage(failMsg);
             
-            setTimeout(() => {
+            const redirectTimeoutId = setTimeout(() => {
               if (!cancelled) navigate('/login');
             }, REDIRECT_DELAY_LONG_MS);
+            timeoutIds.push(redirectTimeoutId);
             return;
           }
 
@@ -242,7 +242,6 @@ export default function AuthCallback() {
             console.log('  - User ID:', session.user.id);
             console.log('  - User Email:', session.user.email);
             
-            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on success
             if (cancelled) return;
             setStatus('success');
             const successMsg = isRTL
@@ -255,21 +254,22 @@ export default function AuthCallback() {
             const redirectPath = storedRedirect || (await getRedirectPath(session.user.id));
             console.log('  - Redirect destination:', redirectPath);
             
-            setTimeout(() => {
+            const redirectTimeoutId = setTimeout(() => {
               if (!cancelled) navigate(redirectPath);
             }, REDIRECT_DELAY_SHORT_MS);
+            timeoutIds.push(redirectTimeoutId);
           } else {
             console.warn('⚠️ No session found after confirmation');
-            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             if (cancelled) return;
             setStatus('error');
             const noSessionMsg = isRTL
               ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
               : 'Could not create session. Please log in.';
             setMessage(noSessionMsg);
-            setTimeout(() => {
+            const redirectTimeoutId = setTimeout(() => {
               if (!cancelled) navigate('/login');
             }, REDIRECT_DELAY_LONG_MS);
+            timeoutIds.push(redirectTimeoutId);
           }
         } else if (accessToken && refreshToken) {
           // Direct token-based auth (legacy or alternative flow)
@@ -283,20 +283,19 @@ export default function AuthCallback() {
           
           if (sessionError || !session) {
             console.error('❌ Error getting session:', sessionError);
-            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             if (cancelled) return;
             setStatus('error');
             const noSessionMsg = isRTL
               ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
               : 'Could not create session. Please log in.';
             setMessage(noSessionMsg);
-            setTimeout(() => {
+            const redirectTimeoutId = setTimeout(() => {
               if (!cancelled) navigate('/login');
             }, REDIRECT_DELAY_LONG_MS);
+            timeoutIds.push(redirectTimeoutId);
             return;
           }
           
-          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on success
           if (cancelled) return;
           setStatus('success');
           const successMsg = isRTL
@@ -312,26 +311,26 @@ export default function AuthCallback() {
           const redirectPath = storedRedirect || (await getRedirectPath(session.user.id));
           console.log('  - Redirect destination:', redirectPath);
           
-          setTimeout(() => {
+          const redirectTimeoutId = setTimeout(() => {
             if (!cancelled) navigate(redirectPath);
           }, REDIRECT_DELAY_SHORT_MS);
+          timeoutIds.push(redirectTimeoutId);
         } else {
           // No tokens found - might be a direct navigation to this page
           console.log('ℹ️ No auth tokens in URL, redirecting to login');
-          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
           if (cancelled) return;
           setStatus('error');
           const noDataMsg = isRTL
             ? 'لم يتم العثور على بيانات المصادقة.'
             : 'No authentication data found.';
           setMessage(noDataMsg);
-          setTimeout(() => {
+          const redirectTimeoutId = setTimeout(() => {
             if (!cancelled) navigate('/login');
           }, REDIRECT_DELAY_SHORT_MS);
+          timeoutIds.push(redirectTimeoutId);
         }
       } catch (err) {
         console.error('❌ Exception in auth callback:', err);
-        if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on error
         if (cancelled) return;
         setStatus('error');
         const errorMsg = isRTL
@@ -339,21 +338,21 @@ export default function AuthCallback() {
           : 'An unexpected error occurred. Please try logging in.';
         setMessage(errorMsg);
         
-        setTimeout(() => {
+        const redirectTimeoutId = setTimeout(() => {
           if (!cancelled) navigate('/login');
         }, REDIRECT_DELAY_LONG_MS);
+        timeoutIds.push(redirectTimeoutId);
       } finally {
-        // Always clear timeout when function completes
-        if (timeoutId !== undefined) clearTimeout(timeoutId);
+        // Cleanup is handled in the useEffect cleanup function
       }
     };
 
-    handleAuthCallback();
+    void handleAuthCallback();
     
-    // Cleanup timeout on unmount
+    // Cleanup all timeouts on unmount
     return () => {
       cancelled = true;
-      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      timeoutIds.forEach(id => clearTimeout(id));
     };
   }, [navigate]); // Removed isRTL from dependencies to prevent re-running on language change
 
