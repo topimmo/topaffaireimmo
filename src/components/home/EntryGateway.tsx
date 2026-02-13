@@ -90,7 +90,8 @@ export default function EntryGateway() {
           {GATEWAY_CATEGORIES.map((category, index) => {
             const Icon = category.icon;
             // Map index to specific delay classes for Tailwind
-            const delayClass = index === 0 ? '' : index === 1 ? 'delay-100' : index === 2 ? 'delay-200' : 'delay-300';
+            const delayClasses = ['', 'delay-100', 'delay-200', 'delay-300'];
+            const delayClass = delayClasses[index] || 'delay-300';
             return (
               <button
                 key={category.id}
