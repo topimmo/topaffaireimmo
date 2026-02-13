@@ -72,6 +72,7 @@ const ArtisanOnboarding = lazy(() => import("./pages/artisan/ArtisanOnboarding")
 const ArtisanDashboard = lazy(() => import("./pages/artisan/ArtisanDashboard"));
 const ArtisanServices = lazy(() => import("./pages/artisan/ArtisanServices"));
 const ArtisanRequests = lazy(() => import("./pages/artisan/ArtisanRequests"));
+const ArtisanProfileEdit = lazy(() => import("./pages/artisan/ArtisanProfileEdit"));
 
 // Artisan Pages (new - clean architecture)
 const ArtisanOnboardingNew = lazy(() => import("./features/artisans/ui/pages/ArtisanOnboardingRefactored"));
@@ -186,6 +187,7 @@ function App() {
             {/* Artisan Onboarding - Public but requires auth (handled in component) */}
             <Route path="/artisan/onboarding" element={<ArtisanOnboardingNew />} />
             <Route path="/artisan/pending" element={<ArtisanPending />} />
+            <Route path="/artisan/profile/edit" element={<ArtisanProfileEdit />} />
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
