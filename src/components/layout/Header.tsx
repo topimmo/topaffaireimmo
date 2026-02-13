@@ -86,7 +86,7 @@ export default function Header() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 shadow-sm hover:shadow-md">
+
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
                     {user?.email?.split('@')[0] || 'User'}
@@ -123,10 +123,7 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild className="hover:scale-105 transition-transform duration-300">
-                <Link to="/login">{t('nav.login')}</Link>
-              </Button>
-              <Button size="sm" asChild className="shadow-md hover:shadow-lg" variant="outline">
+
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
                   {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
@@ -219,7 +216,7 @@ export default function Header() {
                     {t('nav.login')}
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="mt-2">
+
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
                     {isRTL ? 'نشر إعلان' : 'Publier une annonce'}

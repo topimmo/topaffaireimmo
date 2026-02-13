@@ -314,7 +314,22 @@ export default function AuthPage() {
   };
 
   return (
-
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/5 p-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="max-w-md w-full">
+        <div className="bg-white rounded-3xl border border-border/40 p-10 md:p-12 shadow-2xl ring-1 ring-black/5 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
+          {/* Header - Premium Branding */}
+          <div className="text-center mb-12">
+            <Link to="/" className="inline-flex items-center gap-2.5 mb-10 group transition-all duration-300 hover:scale-105">
+              <Building2 className="h-9 w-9 text-primary group-hover:rotate-6 transition-transform duration-300" />
+              <span className="font-display text-2xl font-bold tracking-tight">
+                TopAffaire<span className="text-primary">Immo</span>
+              </span>
+            </Link>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4 tracking-tight">
+              {step === 'phone' ? t('auth.enterPhoneTitle') : t('auth.verifyPhoneTitle')}
+            </h1>
+            {step === 'verify' && phone && (
+              <p className="text-sm text-muted-foreground text-center mt-2 font-medium">
                 {t('auth.sentTo')} <span className="font-semibold text-foreground">{maskPhoneNumber(phone)}</span>
               </p>
             )}
@@ -324,13 +339,13 @@ export default function AuthPage() {
           {step === 'phone' && (
             <form onSubmit={handleRequestOTP} className="space-y-7">
               {error && (
-main
+                <div className="bg-destructive/10 border-2 border-destructive/20 text-destructive px-5 py-4 rounded-xl text-sm font-semibold shadow-md">
                   {error}
                 </div>
               )}
 
               {successMessage && (
-
+                <div className="p-4 rounded-xl bg-green-50 text-green-600 text-sm text-center border border-green-200 animate-in fade-in slide-in-from-top-2">
                   {successMessage}
                 </div>
               )}
@@ -341,21 +356,24 @@ main
                 </Label>
                 <div className="relative">
                   <Phone
-
+                    className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors duration-300`}
                   />
                   <Input
                     id="phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-
+                    className={`${isRTL ? 'pr-12' : 'pl-12'} h-14 text-lg shadow-sm rounded-xl border-2 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20`}
                     placeholder={t('auth.phonePlaceholder')}
                     required
                     disabled={loading}
                     autoFocus
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">{t('auth.phoneHint')}</p>
+              </div>
 
+              <Button type="submit" disabled={loading} className="w-full h-14 text-base font-semibold shadow-lg hover:shadow-xl rounded-xl">
                 {loading ? (
                   <>
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />
@@ -366,7 +384,13 @@ main
                 )}
               </Button>
 
-
+              {/* Divider */}
+              <div className="relative my-10">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t-2 border-border/40"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-4 text-muted-foreground font-semibold tracking-wide">{t('auth.or')}</span>
                 </div>
               </div>
 
@@ -376,7 +400,7 @@ main
                 variant="outline"
                 onClick={handleGoogleLogin}
                 disabled={loading}
-
+                className="w-full h-14 text-base font-semibold shadow-md hover:shadow-lg rounded-xl border-2"
               >
                 <svg className={`h-6 w-6 ${isRTL ? 'ml-3' : 'mr-3'}`} viewBox="0 0 24 24">
                   <path
@@ -410,18 +434,18 @@ main
           {step === 'verify' && (
             <form onSubmit={handleVerifyOTP} className="space-y-7">
               {error && (
-
+                <div className="bg-destructive/10 border-2 border-destructive/20 text-destructive px-5 py-4 rounded-xl text-sm font-semibold shadow-md">
                   {error}
                 </div>
               )}
 
               {successMessage && (
-
+                <div className="p-4 rounded-xl bg-green-50 text-green-600 text-sm text-center border border-green-200 animate-in fade-in slide-in-from-top-2">
                   {successMessage}
                 </div>
               )}
 
-
+              <div className="space-y-4">
                 <Label htmlFor="otp" className="text-base font-semibold text-center block">
                   {t('auth.otpCode')}
                 </Label>
@@ -433,6 +457,12 @@ main
                     disabled={loading}
                   >
                     <InputOTPGroup className="gap-3">
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
@@ -442,7 +472,7 @@ main
               <Button 
                 type="submit" 
                 disabled={loading || otpCode.length !== 6} 
-
+                className="w-full h-14 text-base font-semibold shadow-lg hover:shadow-xl rounded-xl"
               >
                 {loading ? (
                   <>
@@ -457,7 +487,8 @@ main
               {/* Resend Code */}
               <div className="text-center">
                 {resendCooldown > 0 ? (
-
+                  <p className="text-sm text-muted-foreground">
+                    {t('auth.resendIn')} <span className="font-semibold text-primary">{resendCooldown}</span> {t('auth.seconds')}
                   </p>
                 ) : (
                   <Button
@@ -465,7 +496,7 @@ main
                     variant="link"
                     onClick={handleResendOTP}
                     disabled={loading}
-
+                    className="text-sm font-semibold"
                   >
                     {t('auth.resendCode')}
                   </Button>
@@ -478,7 +509,7 @@ main
                 variant="outline"
                 onClick={handleBackToPhone}
                 disabled={loading}
-
+                className="w-full border-2 shadow-sm hover:shadow-md rounded-xl h-12"
               >
                 <ArrowLeft className={`h-5 w-5 ${isRTL ? 'rotate-180 ml-2' : 'mr-2'}`} />
                 {t('auth.changePhone')}
