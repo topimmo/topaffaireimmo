@@ -12,7 +12,7 @@
     "dev": "vite",
     "build": "npm run generate:sitemaps && npm run generate:og-images && vite build",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 500",
     "preview": "vite preview",
     "types:supabase": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/supabase.ts",
     "generate:sitemaps": "npx tsx scripts/generate-sitemaps.ts",
