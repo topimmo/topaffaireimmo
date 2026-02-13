@@ -52,9 +52,9 @@ async function testDatabaseConnectivity(): Promise<{ errors: string[]; warnings:
   }
   
   try {
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging (reduced to 2s for faster startup)
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Database connectivity test timeout')), 5000)
+      setTimeout(() => reject(new Error('Database connectivity test timeout')), 2000)
     })
     
     const testPromise = supabase.from('cities').select('id').limit(1)
@@ -100,9 +100,9 @@ async function validateStorageBuckets(): Promise<{ errors: string[]; warnings: s
   ]
   
   try {
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging (reduced to 2s for faster startup)
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Storage bucket validation timeout')), 5000)
+      setTimeout(() => reject(new Error('Storage bucket validation timeout')), 2000)
     })
     
     const bucketsPromise = supabase.storage.listBuckets()

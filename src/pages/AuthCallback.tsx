@@ -99,12 +99,6 @@ export default function AuthCallback() {
             ? 'انتهت مهلة التأكيد. يرجى المحاولة مرة أخرى.'
             : 'La confirmation a expiré. Veuillez réessayer.';
           setMessage(timeoutMsg);
-          const redirectTimeoutId = setTimeout(() => {
-            if (!cancelled) navigate('/login');
-          }, REDIRECT_DELAY_SHORT_MS);
-          timeoutIds.push(redirectTimeoutId);
-        }, CALLBACK_TIMEOUT_MS);
-        timeoutIds.push(callbackTimeoutId);
 
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
