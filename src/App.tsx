@@ -132,6 +132,7 @@ function App() {
     let hasCompleted = false;
 
     // Add a timeout to prevent indefinite blocking
+    // Reduced to 3 seconds for faster app startup
     const timeout = setTimeout(() => {
       if (!hasCompleted) {
         console.warn("⚠️ Startup validation timeout - proceeding anyway");
@@ -139,7 +140,7 @@ function App() {
         setValidationComplete(true);
         setValidationFailed(true);
       }
-    }, 10000); // 10 second timeout
+    }, 3000); // 3 second timeout for better UX
 
     runStartupValidation()
       .then((result) => {

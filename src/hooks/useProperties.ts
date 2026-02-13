@@ -413,6 +413,7 @@ export function useMyProperties() {
         console.log(`🔍 [useMyProperties] Fetching properties for user: ${user.id}`);
         
         // Filter by created_by OR owner_id to show all user's listings
+        // Limit to 200 properties to prevent performance issues
         const { data, error } = await supabase
           .from('properties')
           .select(`
@@ -420,7 +421,8 @@ export function useMyProperties() {
             city:cities(id, name_fr, name_ar)
           `)
           .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(200);
 
         if (isCancelled) return;
 
