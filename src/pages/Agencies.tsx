@@ -46,7 +46,6 @@ export default function Agencies() {
 
   useEffect(() => {
     fetchAgencies();
-     
   }, []);
 
   const fetchAgencies = async () => {

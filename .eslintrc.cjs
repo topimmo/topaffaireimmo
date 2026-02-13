@@ -23,11 +23,8 @@ module.exports = {
     '@typescript-eslint/no-require-imports': 'warn',
     '@typescript-eslint/no-unused-expressions': 'warn',
     'react/react-in-jsx-scope': 'off', // Not needed in React 17+
-    'react-hooks/rules-of-hooks': 'warn', // Demote to warning for now
-    'react-hooks/exhaustive-deps': 'warn', // Demote to warning for now  
-    'react-hooks/set-state-in-effect': 'off', // Disable for pre-existing code
-    'react-hooks/immutability': 'off', // Disable for pre-existing code
-    'react-hooks/purity': 'off', // Disable - Math.random() in useMemo is acceptable
+    'react-hooks/rules-of-hooks': 'warn', // Demote to warning
+    'react-hooks/exhaustive-deps': 'warn', // Demote to warning
     'no-useless-escape': 'warn',
     'prefer-const': 'warn',
   },
