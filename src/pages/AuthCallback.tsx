@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { isValidUuid } from '@/lib/utils';
 
 // Timeout constants for consistency
-const SESSION_WAIT_MS = 1000;
-const REDIRECT_DELAY_SHORT_MS = 2000;
-const REDIRECT_DELAY_LONG_MS = 3000;
+const SESSION_WAIT_MS = 500; // Reduced from 1000ms
+const REDIRECT_DELAY_SHORT_MS = 1500; // Reduced from 2000ms
+const REDIRECT_DELAY_LONG_MS = 2500; // Reduced from 3000ms
+const CALLBACK_TIMEOUT_MS = 8000; // Maximum time for entire callback process
 const POST_AUTH_REDIRECT_KEY = 'post_auth_redirect';
 
 const peekPostAuthRedirect = (): string | null => {
@@ -79,24 +80,25 @@ export default function AuthCallback() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined = undefined;
+    
     const handleAuthCallback = async () => {
       try {
         console.log('🔐 Auth callback triggered');
         console.log('  - Current URL:', window.location.href);
         console.log('  - Online status:', navigator.onLine);
-        console.log('  - User agent:', navigator.userAgent);
         console.log('  - Stored redirect preference:', peekPostAuthRedirect() || 'none');
-        const { data: initialSession, error: initialSessionError } = await supabase.auth.getSession();
-        console.log('  - Session on arrival:', {
-          hasSession: !!initialSession?.session,
-          error: initialSessionError?.message,
-        });
 
-        const { data: initialUser, error: initialUserError } = await supabase.auth.getUser();
-        console.log('  - User on arrival:', {
-          hasUser: !!initialUser?.user,
-          error: initialUserError?.message,
-        });
+        // Set a global timeout for the entire callback process
+        timeoutId = setTimeout(() => {
+          console.error('❌ Auth callback timeout - taking too long');
+          setStatus('error');
+          const timeoutMsg = isRTL
+            ? 'انتهت مهلة التأكيد. يرجى المحاولة مرة أخرى.'
+            : 'La confirmation a expiré. Veuillez réessayer.';
+          setMessage(timeoutMsg);
+          setTimeout(() => navigate('/login'), REDIRECT_DELAY_SHORT_MS);
+        }, CALLBACK_TIMEOUT_MS);
 
         // Check both hash and query params for auth data
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -126,6 +128,7 @@ export default function AuthCallback() {
         // Check for errors in the URL
         if (error) {
           console.error('❌ Auth callback error:', error, errorDescription);
+          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
           setStatus('error');
           setMessage(errorDescription || error);
           
@@ -138,6 +141,7 @@ export default function AuthCallback() {
         // show a helpful message instead of attempting the exchange
         if (!navigator.onLine && (code || accessToken)) {
           console.warn('⚠️ User is offline, cannot complete authentication');
+          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
           setStatus('error');
           const offlineMsg = isRTL
             ? 'لا يوجد اتصال بالإنترنت. يرجى الاتصال بالإنترنت للمتابعة.'
@@ -157,26 +161,30 @@ export default function AuthCallback() {
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
+            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             navigate('/login?err=oauth', { replace: true });
             return;
           }
 
           let finalSession = null;
-          for (let attempt = 0; attempt < 10; attempt++) {
+          // Reduced polling - check 5 times with 200ms delay (1 second total)
+          for (let attempt = 0; attempt < 5; attempt++) {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
               finalSession = session;
               break;
             }
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 200));
           }
 
           if (!finalSession) {
             console.error('❌ Session not available after exchange');
+            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             navigate('/login?err=oauth', { replace: true });
             return;
           }
 
+          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on success
           setStatus('success');
           const successMsg = isRTL
             ? 'تم التوثيق بنجاح! جاري إعادة التوجيه...'
@@ -204,6 +212,7 @@ export default function AuthCallback() {
           
           if (sessionError) {
             console.error('❌ Error getting session:', sessionError);
+            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             setStatus('error');
             const failMsg = isRTL
               ? 'فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى.'
@@ -219,6 +228,7 @@ export default function AuthCallback() {
             console.log('  - User ID:', session.user.id);
             console.log('  - User Email:', session.user.email);
             
+            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on success
             setStatus('success');
             const successMsg = isRTL
               ? 'تم تأكيد البريد الإلكتروني بنجاح! جاري إعادة التوجيه...'
@@ -235,6 +245,7 @@ export default function AuthCallback() {
             }, REDIRECT_DELAY_SHORT_MS);
           } else {
             console.warn('⚠️ No session found after confirmation');
+            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             setStatus('error');
             const noSessionMsg = isRTL
               ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
@@ -254,6 +265,7 @@ export default function AuthCallback() {
           
           if (sessionError || !session) {
             console.error('❌ Error getting session:', sessionError);
+            if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
             setStatus('error');
             const noSessionMsg = isRTL
               ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
@@ -263,6 +275,7 @@ export default function AuthCallback() {
             return;
           }
           
+          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on success
           setStatus('success');
           const successMsg = isRTL
             ? 'تم التوثيق بنجاح! جاري إعادة التوجيه...'
@@ -283,6 +296,7 @@ export default function AuthCallback() {
         } else {
           // No tokens found - might be a direct navigation to this page
           console.log('ℹ️ No auth tokens in URL, redirecting to login');
+          if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout before redirect
           setStatus('error');
           const noDataMsg = isRTL
             ? 'لم يتم العثور على بيانات المصادقة.'
@@ -292,6 +306,7 @@ export default function AuthCallback() {
         }
       } catch (err) {
         console.error('❌ Exception in auth callback:', err);
+        if (timeoutId !== undefined) clearTimeout(timeoutId); // Clear timeout on error
         setStatus('error');
         const errorMsg = isRTL
           ? 'حدث خطأ غير متوقع. يرجى تسجيل الدخول.'
@@ -299,11 +314,19 @@ export default function AuthCallback() {
         setMessage(errorMsg);
         
         setTimeout(() => navigate('/login'), REDIRECT_DELAY_LONG_MS);
+      } finally {
+        // Always clear timeout when function completes
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
       }
     };
 
     handleAuthCallback();
-  }, [navigate]);
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    };
+  }, [navigate]); // Removed isRTL from dependencies to prevent re-running on language change
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
