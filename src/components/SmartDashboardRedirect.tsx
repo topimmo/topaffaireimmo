@@ -1,9 +1,9 @@
 /**
  * Smart Dashboard Redirect
  * 
- * Redirects /dashboard to the appropriate dashboard based on user role:
- * - user → /dashboard (stays on this page)
- * - agent → /agent
+ * Redirects /dashboard to the appropriate location based on user role:
+ * - user (default role) → /select-role (choose immobilier or services)
+ * - agent → /agent (or stay on /dashboard)
  * - merchant → /merchant
  * - admin → /admin
  */
@@ -32,20 +32,22 @@ export default function SmartDashboardRedirect() {
   // Determine target path based on role
   let targetPath: string | null = null;
   
-  if (role === 'admin') {
+  if (role === 'user') {
+    // Default role - user needs to select their path
+    targetPath = '/select-role';
+  } else if (role === 'admin') {
     targetPath = '/admin';
   } else if (role === 'merchant') {
     targetPath = '/merchant';
   } else if (role === 'agent') {
     targetPath = '/agent';
   }
-  // user role stays on /dashboard (targetPath = null)
 
   // Prevent infinite redirect loop
   if (targetPath && location.pathname !== targetPath) {
     return <Navigate to={targetPath} replace />;
   }
 
-  // If user role or already on correct path, don't redirect
+  // If already on correct path, don't redirect
   return null;
 }
