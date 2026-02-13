@@ -50,25 +50,43 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
         isScrolled
-
+          ? "h-16 bg-background/98 backdrop-blur-md shadow-lg border-b-2 border-border/60"
+          : "h-18 bg-background/95 backdrop-blur-sm shadow-md",
+        isRTL ? "rtl" : "ltr"
+      )}
+    >
+      <div className="container h-full flex items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 group transition-all duration-300 hover:scale-105">
+          <Building2 className="h-7 w-7 text-primary group-hover:rotate-6 transition-transform duration-300" />
+          <span className="font-display text-lg font-semibold text-foreground">
             TopAffaire<span className="text-primary">Immo</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6">
           <Link
             to="/buy"
-
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
+          >
+            {isRTL ? 'عقارات' : 'Immobilier'}
+          </Link>
+          <Link
+            to="/services"
+            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
+          >
+            {t('nav.services')}
+          </Link>
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-3">
           <LanguageSwitcher />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-
+                <Button variant="outline" size="sm" className="gap-2 shadow-sm hover:shadow-md">
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
                     {user?.email?.split('@')[0] || 'User'}
@@ -105,7 +123,10 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-
+              <Button variant="ghost" size="sm" asChild className="hover:scale-105 transition-transform duration-300">
+                <Link to="/login">{t('nav.login')}</Link>
+              </Button>
+              <Button size="sm" asChild className="shadow-md hover:shadow-lg" variant="outline">
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
                   {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
@@ -122,7 +143,7 @@ export default function Header() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-3">
+        <div className="md:hidden flex items-center gap-2">
           <LanguageSwitcher />
           <button
             className="p-2 hover:bg-muted rounded-lg transition-all duration-300"
@@ -139,17 +160,18 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-md border-b-2 shadow-xl animate-in slide-in-from-top-4 duration-300">
+          <nav className="container py-6 flex flex-col gap-4">
             <Link
               to="/buy"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
+              className="text-sm font-medium py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-
+              {isRTL ? 'عقارات' : 'Immobilier'}
             </Link>
             <Link
               to="/services"
-              className="text-sm font-semibold py-2 hover:text-primary transition-colors"
+              className="text-sm font-medium py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('nav.services')}
@@ -171,14 +193,20 @@ export default function Header() {
                 </Button>
                 {isAdmin && (
                   <Link
-
+                    to="/admin"
+                    className="text-sm font-medium py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {t('admin.title')}
+                  </Link>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {
                     handleSignOut();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="mt-2 shadow-md hover:shadow-lg font-semibold"
+                  className="mt-2"
                 >
                   <LogOut className="h-4 w-4" />
                   {t('nav.logout')}
@@ -186,11 +214,12 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Button variant="outline" asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
+                <Button variant="outline" asChild className="mt-2">
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                     {t('nav.login')}
                   </Link>
                 </Button>
+                <Button asChild variant="outline" className="mt-2">
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
                     {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
