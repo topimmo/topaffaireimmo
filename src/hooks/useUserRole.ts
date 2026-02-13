@@ -18,6 +18,9 @@ import { supabase } from "@/lib/supabase";
 
 export type AppRole = "user" | "agent" | "merchant" | "admin";
 
+// Valid roles array for validation
+const VALID_ROLES: AppRole[] = ["user", "agent", "merchant", "admin"];
+
 /**
  * Hook to get current user's role
  * Fetches once and caches the result
@@ -52,7 +55,7 @@ export function useUserRole() {
           const role = profile.user_role as AppRole;
           
           // Validate role is one of our expected values
-          if (['user', 'agent', 'merchant', 'admin'].includes(role)) {
+          if (VALID_ROLES.includes(role)) {
             setRole(role);
           } else {
             // Invalid role, default to user

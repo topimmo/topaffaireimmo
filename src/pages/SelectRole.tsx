@@ -132,7 +132,7 @@ export default function SelectRole() {
 
       // Redirect based on role
       if (role === "agent") {
-        navigate("/dashboard");
+        navigate("/agent");
       } else if (role === "merchant") {
         navigate("/artisan/onboarding");
       }
@@ -243,7 +243,7 @@ export default function SelectRole() {
               {/* Proprietaire */}
               <button
                 onClick={() => handleImmoTypeChoice("proprietaire")}
-                disabled={loading || announcerType === "agence"}
+                disabled={loading}
                 className={cn(
                   "group relative overflow-hidden rounded-xl",
                   "border border-border/40 shadow hover:shadow-lg",
@@ -262,7 +262,7 @@ export default function SelectRole() {
               {/* Courtier */}
               <button
                 onClick={() => handleImmoTypeChoice("courtier")}
-                disabled={loading || announcerType === "agence"}
+                disabled={loading}
                 className={cn(
                   "group relative overflow-hidden rounded-xl",
                   "border border-border/40 shadow hover:shadow-lg",

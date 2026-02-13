@@ -81,7 +81,8 @@ export default function RequireRoleSelection({
   ];
 
   const isPublicPage = publicPagesAllowedForUserRole.some(
-    (page) => location.pathname === page || location.pathname.startsWith(page + '/')
+    (page) => location.pathname === page || 
+    (location.pathname.startsWith(page + '/') && page !== '/')
   );
 
   // Only redirect to role selection if:

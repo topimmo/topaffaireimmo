@@ -62,6 +62,7 @@ END $$;
 -- =====================================================
 
 -- Migrate from old role values to new canonical roles
+-- Only update rows that need migration
 UPDATE public.profiles
 SET user_role = CASE
   -- Preserve admin
@@ -78,8 +79,7 @@ SET user_role = CASE
   -- Default to user for any other cases
   ELSE 'user'
 END
-WHERE user_role IN ('real_estate_advertiser', 'commercial_advertiser')
-   OR user_role NOT IN ('user', 'agent', 'merchant', 'admin');
+WHERE user_role IN ('real_estate_advertiser', 'commercial_advertiser');
 
 -- Ensure announcer_type uses French values for real estate users
 UPDATE public.profiles
@@ -232,6 +232,11 @@ BEGIN
   -- Users can only set their role once from 'user' to another role
   IF current_role != 'user' AND current_role != p_role THEN
     RAISE EXCEPTION 'Cannot change role from % to %. Contact admin.', current_role, p_role;
+  END IF;
+  
+  -- If role is already set to the target, skip update (no-op)
+  IF current_role = p_role THEN
+    RETURN false; -- No change made
   END IF;
   
   -- Validate announcer_type is only set for agent role
