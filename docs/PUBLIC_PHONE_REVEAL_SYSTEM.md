@@ -105,7 +105,7 @@ import PublicRevealPhoneButton from '@/components/PublicRevealPhoneButton';
 - IP addresses are **hashed (SHA-256)** before storage
 - User agents are **hashed (SHA-256)** before storage
 - Original IP/UA never stored in database
-- Salt: 'topaffaire_salt_2024' (should be moved to environment variable in production)
+- Salt: Configurable via `PHONE_REVEAL_HASH_SALT` environment variable (fallback: 'topaffaire_default_salt_change_in_production' for dev only)
 
 ### 3. Data Access Control
 - Phone numbers **NOT** accessible via public select queries

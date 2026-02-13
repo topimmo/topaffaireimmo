@@ -98,7 +98,7 @@ CREATE POLICY "Admins can read reveal events"
 CREATE OR REPLACE FUNCTION public.hash_ip_address(ip_address TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
-IMMUTABLE
+STABLE
 AS $$
 DECLARE
   v_salt TEXT;
@@ -127,7 +127,7 @@ COMMENT ON FUNCTION public.hash_ip_address IS
 CREATE OR REPLACE FUNCTION public.hash_user_agent(user_agent TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
-IMMUTABLE
+STABLE
 AS $$
 DECLARE
   v_salt TEXT;
