@@ -34,6 +34,7 @@ import { MOROCCO_CITIES, slugify } from "@/lib/seo";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/config/site";
 import { trackPropertyView, trackContactClick } from "@/lib/lead-tracking";
+import PublicRevealPhoneButton from "@/components/PublicRevealPhoneButton";
 
 // ✅ Helper functions to safely handle null/undefined values
 const safeLower = (v?: string | null): string => (v ?? "").toLowerCase();
@@ -730,81 +731,24 @@ export default function PropertyDetails() {
                 </div>
 
                 <div className="space-y-3">
-                  {shouldShowPhone && phone && (
-                    <Button 
-                      className="w-full gap-2" 
-                      size="lg" 
-                      asChild 
-                      onClick={() => {
-                        if (id && phone) {
-                          trackContactClick(id, 'phone').catch(err => {
-                            console.warn('Failed to track phone click:', err);
-                          });
-                        }
-                      }}
-                    >
-                      <a href={`tel:${phone}`}>
-                        <Phone className="h-5 w-5" />
-                        Call Now
-                      </a>
-                    </Button>
-                  )}
-
-                  {shouldShowWhatsapp && whatsapp && (
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2 text-green-600 border-green-600 hover:bg-green-50"
-                      size="lg"
-                      asChild
-                      onClick={() => {
-                        if (id && whatsapp) {
-                          trackContactClick(id, 'whatsapp').catch(err => {
-                            console.warn('Failed to track whatsapp click:', err);
-                          });
-                        }
-                      }}
-                    >
-                      <a
-                        href={formatWhatsAppLink(whatsapp)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <MessageCircle className="h-5 w-5" />
-                        WhatsApp
-                      </a>
-                    </Button>
+                  {/* Public Phone Reveal Button - Works for anonymous visitors */}
+                  {id && (
+                    <PublicRevealPhoneButton
+                      entityType="listing"
+                      entityId={id}
+                      entityName={title}
+                      source="immobilier"
+                      maskedPhone={phone || undefined}
+                    />
                   )}
                   
-                  {shouldShowEmail && email && (
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2"
-                      size="lg"
-                      asChild
-                      onClick={() => {
-                        if (id && email) {
-                          trackContactClick(id, 'email').catch(err => {
-                            console.warn('Failed to track email click:', err);
-                          });
-                        }
-                      }}
-                    >
-                      <a href={`mailto:${email}`}>
-                        <Mail className="h-5 w-5" />
-                        Email
-                      </a>
-                    </Button>
-                  )}
-                  
-                  {!shouldShowPhone && !shouldShowWhatsapp && !shouldShowEmail && (
+                  {!id && (
                     <div className="space-y-2">
                       <Button className="w-full gap-2" size="lg" disabled>
-                        تواصل عبر المنصة
+                        Contact non disponible
                       </Button>
                       <p className="text-xs text-muted-foreground text-center">
-                        {isOwner 
-                          ? "Activez au moins un moyen de contact dans vos paramètres"
-                          : "L'annonceur n'a pas partagé ses coordonnées"}
+                        Identifiant de l'annonce invalide
                       </p>
                     </div>
                   )}
