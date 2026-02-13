@@ -464,12 +464,13 @@ export default function AuthPage() {
                     disabled={loading}
                   >
                     <InputOTPGroup className="gap-3">
-                      <InputOTPSlot index={0} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" />
-                      <InputOTPSlot index={1} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" />
-                      <InputOTPSlot index={2} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" />
-                      <InputOTPSlot index={3} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" />
-                      <InputOTPSlot index={4} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" />
-                      <InputOTPSlot index={5} className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" />
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <InputOTPSlot 
+                          key={index}
+                          index={index} 
+                          className="h-16 w-14 text-xl border-2 rounded-xl shadow-sm hover:shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
+                        />
+                      ))}
                     </InputOTPGroup>
                   </InputOTP>
                 </div>

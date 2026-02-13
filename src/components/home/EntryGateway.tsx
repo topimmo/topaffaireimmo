@@ -89,6 +89,8 @@ export default function EntryGateway() {
         >
           {GATEWAY_CATEGORIES.map((category, index) => {
             const Icon = category.icon;
+            // Map index to specific delay classes for Tailwind
+            const delayClass = index === 0 ? '' : index === 1 ? 'delay-100' : index === 2 ? 'delay-200' : 'delay-300';
             return (
               <button
                 key={category.id}
@@ -98,7 +100,7 @@ export default function EntryGateway() {
                   category.bgGradient,
                   "hover:border-border hover:shadow-2xl hover:scale-[1.02] transition-all duration-500",
                   "animate-in fade-in slide-in-from-bottom-8 duration-700",
-                  `delay-[${index * 100}ms]`
+                  delayClass
                 )}
               >
                 {/* Icon - Larger & more prominent */}
