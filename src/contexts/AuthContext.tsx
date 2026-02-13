@@ -5,7 +5,7 @@ import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js
 import { logger, createCorrelatedLogger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/utils'
 
-export const AUTH_HYDRATION_TIMEOUT_MS = 4000;
+export const AUTH_HYDRATION_TIMEOUT_MS = 2000; // Reduced from 4000ms for faster startup
 
 interface AuthContextType {
   user: User | null
