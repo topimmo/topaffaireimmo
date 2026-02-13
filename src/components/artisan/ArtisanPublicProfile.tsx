@@ -72,7 +72,9 @@ export default function ArtisanPublicProfile({
           <h2 className="mt-4 text-2xl font-bold text-foreground flex items-center gap-2">
             {profile.business_name}
             {profile.is_verified && (
-              <CheckCircle className="h-5 w-5 text-blue-500" title={isRTL ? 'مُفعّل' : 'Vérifié'} />
+              <span title={isRTL ? 'مُفعّل' : 'Vérifié'}>
+                <CheckCircle className="h-5 w-5 text-blue-500" />
+              </span>
             )}
           </h2>
 
