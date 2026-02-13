@@ -153,9 +153,9 @@ export default function Advertising() {
     fetchProfile();
   }, [user]);
 
-  // Redirect real estate advertisers away from commercial advertising
+  // Redirect non-merchant users away from commercial advertising
   useEffect(() => {
-    if (!authLoading && !profileLoading && profile && profile.user_role === 'real_estate_advertiser') {
+    if (!authLoading && !profileLoading && profile && profile.user_role !== 'merchant' && profile.user_role !== 'admin') {
       navigate('/dashboard');
     }
   }, [authLoading, profileLoading, profile, navigate]);
