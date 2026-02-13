@@ -87,6 +87,8 @@ export default function SearchResults() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 24;
 
   // ✅ IMPORTANT: Select value must NEVER be ""
   const [selectedType, setSelectedType] = useState<string>(initialType);
@@ -152,17 +154,8 @@ export default function SearchResults() {
         // Always order by created_at by default for consistent results
         q = q.order("created_at", { ascending: false });
 
-        const { data, error } = await q.limit(200);
-
-        console.log(`✅ [SearchResults] Fetched ${data?.length || 0} properties`);
-        if (data && data.length > 0) {
-          const statusCounts = data.reduce((acc, prop) => {
-            const status = prop.status || 'unknown';
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          console.log('📊 [SearchResults] Status distribution:', statusCounts);
-        }
+        // Reduce initial fetch to 50 items for better performance
+        const { data, error } = await q.limit(50);
 
         if (error) {
           setError(error.message);
@@ -290,6 +283,19 @@ export default function SearchResults() {
       };
     });
   }, [sortedRows, language]);
+
+  // Paginate the properties
+  const totalPages = Math.ceil(properties.length / ITEMS_PER_PAGE);
+  const paginatedProperties = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return properties.slice(startIndex, endIndex);
+  }, [properties, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCity, selectedType, priceRange, sortBy]);
 
   const clearFilters = () => {
     setSelectedType("all-types");
@@ -478,7 +484,7 @@ export default function SearchResults() {
                 : "grid-cols-1"
             )}
           >
-            {properties.map((property, i) => (
+            {paginatedProperties.map((property, i) => (
               <div key={property.id}>
                 <PropertyCard property={property} />
 
@@ -494,6 +500,29 @@ export default function SearchResults() {
             <p className="text-muted-foreground text-lg">No properties match your criteria.</p>
             <Button onClick={clearFilters} className="mt-4">
               Clear Filters
+            </Button>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {properties.length > ITEMS_PER_PAGE && (
+          <div className="flex justify-center items-center gap-2 mt-8">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="px-4 py-2 text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
             </Button>
           </div>
         )}

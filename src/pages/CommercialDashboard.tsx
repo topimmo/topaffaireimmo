@@ -320,8 +320,8 @@ export default function CommercialDashboard() {
     if (!authLoading && !profileLoading && !user) {
       navigate('/login', { state: { from: '/commercial-dashboard' } });
     }
-    // Redirect real estate advertisers to their dashboard
-    if (!authLoading && !profileLoading && profile && profile.user_role === 'real_estate_advertiser') {
+    // Redirect non-merchant users to their dashboard
+    if (!authLoading && !profileLoading && profile && profile.user_role !== 'merchant' && profile.user_role !== 'admin') {
       navigate('/dashboard');
     }
   }, [user, authLoading, profileLoading, navigate, profile]);
@@ -488,8 +488,8 @@ export default function CommercialDashboard() {
     return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-MA');
   };
 
-  // Check if user is a commercial advertiser
-  const isCommercialAdvertiser = profile?.user_role === 'commercial_advertiser' || profile?.user_role === 'admin';
+  // Check if user is a merchant or admin
+  const isCommercialAdvertiser = profile?.user_role === 'merchant' || profile?.user_role === 'admin';
 
   if (authLoading || profileLoading || loading) {
     return (

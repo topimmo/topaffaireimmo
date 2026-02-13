@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -42,6 +42,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { t, isRTL } = useLanguage();
   const { signOut, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { notifications, unreadCount, refresh } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -128,14 +129,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = async () => {
     await signOut();
-    window.location.href = '/';
+    navigate('/', { replace: true });
   };
 
   const handleNotificationClick = async (notificationId: string, link?: string | null) => {
     await markNotificationAsRead(notificationId);
     refresh();
     if (link) {
-      window.location.href = link;
+      navigate(link);
     }
   };
 
