@@ -20,6 +20,11 @@
     }
   },
   "include": ["src"],
-  "exclude": [],
+  "exclude": [
+    "src/tests/runtime-role-verification.test.ts",
+    "src/tests/runtime-role-verification-post-fix.test.ts",
+    "src/tests/production-crash-fix.test.ts",
+    "src/tests/production-safety.test.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

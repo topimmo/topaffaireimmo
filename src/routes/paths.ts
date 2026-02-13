@@ -111,7 +111,7 @@ export function getRoleRedirect(role: 'user' | 'agent' | 'merchant' | 'admin'): 
  * Check if a path is a public route (doesn't require authentication)
  */
 export function isPublicRoute(path: string): boolean {
-  const publicPaths = [
+  const publicPaths: string[] = [
     ROUTES.HOME,
     ROUTES.SEARCH,
     ROUTES.BUY,

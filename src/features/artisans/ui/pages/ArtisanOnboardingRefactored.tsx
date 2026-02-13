@@ -56,7 +56,7 @@ interface Neighborhood {
 
 function ArtisanOnboardingContent() {
   const { isRTL } = useLanguage();
-  const { user, profile, profileReady, refreshProfile } = useAuth();
+  const { user, profileReady, refreshSession } = useAuth();
   const navigate = useNavigate();
 
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
@@ -246,8 +246,8 @@ function ArtisanOnboardingContent() {
 
       toast.success(isRTL ? 'تم تقديم طلبك بنجاح!' : 'Votre demande a été soumise avec succès !');
 
-      // Refresh profile to get updated artisan profile
-      await refreshProfile();
+      // Refresh session to get updated artisan profile
+      await refreshSession();
 
       // Redirect to pending page
       navigate('/artisan/pending');

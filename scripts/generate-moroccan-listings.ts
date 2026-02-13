@@ -455,7 +455,7 @@ function generateListings(): Listing[] {
   // Generate 200 listings
   for (let i = 0; i < TOTAL_LISTINGS; i++) {
     const advertiserType = shuffledAdvertisers[i];
-    let categoryType = shuffledCategories[i];
+    const categoryType = shuffledCategories[i];
     
     // Determine if this should be from a southern city (60/200 = 30%)
     const isSouthern = i < 60;

@@ -94,7 +94,7 @@ export default function AdminAgencies() {
 
       // Fetch listing counts for each agency
       const agencyIds = agenciesData.map((a) => a.id).filter((id) => isValidUuid(id));
-      let listingCounts: Record<string, number> = {};
+      const listingCounts: Record<string, number> = {};
 
       if (agencyIds.length > 0) {
         const { data: listingsData } = await supabase
