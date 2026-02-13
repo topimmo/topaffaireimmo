@@ -50,7 +50,14 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
         isScrolled
-
+          ? "bg-background/98 backdrop-blur-xl shadow-xl border-b-2"
+          : "bg-gradient-to-b from-black/40 to-transparent"
+      )}
+    >
+      <div className="container h-20 flex items-center justify-between gap-4">
+        <Link to="/" className="flex items-center gap-3 group">
+          <Building2 className="h-8 w-8 text-primary drop-shadow-lg transition-transform group-hover:scale-110 duration-300" />
+          <span className="font-display text-2xl font-bold text-foreground drop-shadow-md transition-all group-hover:text-primary duration-300">
             TopAffaire<span className="text-primary">Immo</span>
           </span>
         </Link>
@@ -59,7 +66,16 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-8">
           <Link
             to="/buy"
-
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            {isRTL ? 'عقارات' : 'Immobilier'}
+          </Link>
+          <Link
+            to="/services"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            {t('nav.services')}
+          </Link>
         </nav>
 
         {/* Desktop Actions */}
@@ -68,7 +84,7 @@ export default function Header() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-
+                <Button variant="outline" size="sm" className="shadow-md hover:shadow-lg">
                   <User className="h-4 w-4" />
                   <span className="max-w-[100px] truncate">
                     {user?.email?.split('@')[0] || 'User'}
@@ -105,7 +121,7 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-
+              <Button variant="outline" size="sm" asChild className="shadow-md hover:shadow-lg font-semibold">
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
                   {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
@@ -139,13 +155,14 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-md border-b-2 shadow-xl animate-in slide-in-from-top-4 duration-300">
+          <nav className="container py-6 flex flex-col gap-4">
             <Link
               to="/buy"
               className="text-sm font-semibold py-2 hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-
+              {isRTL ? 'عقارات' : 'Immobilier'}
             </Link>
             <Link
               to="/services"
@@ -171,7 +188,14 @@ export default function Header() {
                 </Button>
                 {isAdmin && (
                   <Link
-
+                    to="/admin"
+                    className="text-sm font-medium py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <ShieldCheck className="h-4 w-4 inline-block mr-2" />
+                    {t('admin.title')}
+                  </Link>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -191,6 +215,7 @@ export default function Header() {
                     {t('nav.login')}
                   </Link>
                 </Button>
+                <Button variant="outline" asChild className="mt-2 shadow-md hover:shadow-lg font-semibold">
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
                     {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
