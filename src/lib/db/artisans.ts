@@ -57,16 +57,18 @@ export async function getArtisanProfile(
     return null;
   }
 
-  // Calculate average rating
-  const avgRating = data.reviews && data.reviews.length > 0
+  // Calculate average rating - check if reviews is an array
+  const avgRating = Array.isArray(data.reviews) && data.reviews.length > 0
     ? data.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / data.reviews.length
     : 0;
 
   return {
     ...data,
-    neighborhoods: data.neighborhoods.map((n: any) => n.neighborhood).filter(Boolean),
+    neighborhoods: Array.isArray(data.neighborhoods) 
+      ? data.neighborhoods.map((n: any) => n.neighborhood).filter(Boolean)
+      : [],
     avg_rating: avgRating,
-    total_reviews: data.reviews?.length || 0,
+    total_reviews: Array.isArray(data.reviews) ? data.reviews.length : 0,
   } as ArtisanProfileWithRelations;
 }
 
