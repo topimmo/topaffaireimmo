@@ -1,3 +1,42 @@
+/**
+ * @fileoverview Authentication Context Provider
+ * 
+ * SINGLE SOURCE OF TRUTH for authentication in the TopAffaireImmo application.
+ * 
+ * This module provides:
+ * - AuthProvider: React context provider that manages auth state
+ * - useAuth: Hook to access auth state and methods from any component
+ * - Session management with automatic refresh
+ * - Profile synchronization with database
+ * 
+ * Key Features:
+ * - Production-safe: Never crashes on network errors or missing config
+ * - Single implementation: No duplicate providers
+ * - Auto-hydration: Restores session on page load
+ * - Profile creation: Ensures profile exists in database for every user
+ * - Type-safe: Full TypeScript coverage
+ * 
+ * Usage:
+ * ```tsx
+ * // In main.tsx
+ * <AuthProvider>
+ *   <App />
+ * </AuthProvider>
+ * 
+ * // In any component
+ * function MyComponent() {
+ *   const { user, loading, signIn, signOut } = useAuth();
+ *   
+ *   if (loading) return <Spinner />;
+ *   if (!user) return <LoginPrompt />;
+ *   
+ *   return <div>Welcome, {user.email}!</div>;
+ * }
+ * ```
+ * 
+ * @see {@link /docs/AUTH_ARCHITECTURE.md} for complete documentation
+ */
+
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
@@ -5,8 +44,19 @@ import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js
 import { logger, createCorrelatedLogger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/utils'
 
-export const AUTH_HYDRATION_TIMEOUT_MS = 2000; // Reduced from 4000ms for faster startup
 
+/**
+ * Authentication context value type.
+ * 
+ * @property {User | null} user - Current authenticated user (from Supabase Auth)
+ * @property {Session | null} session - Current auth session with tokens
+ * @property {boolean} loading - True while checking/restoring session (hydration)
+ * @property {boolean} profileReady - True when user profile exists in database
+ * @property {Function} signUp - Create new user account
+ * @property {Function} signIn - Sign in existing user
+ * @property {Function} signOut - Sign out current user
+ * @property {Function} refreshSession - Manually refresh the session token
+ */
 interface AuthContextType {
   user: User | null
   session: Session | null
@@ -18,6 +68,12 @@ interface AuthContextType {
   refreshSession: () => Promise<{ error: AuthError | null }>
 }
 
+/**
+ * React Context for authentication state.
+ * 
+ * IMPORTANT: Do NOT use this directly! Use the `useAuth()` hook instead.
+ * Direct context usage will not provide the runtime safety checks.
+ */
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -365,6 +421,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+/**
+ * Hook to access authentication state and methods.
+ * 
+ * MUST be used within a component wrapped by `<AuthProvider>`.
+ * 
+ * @returns {AuthContextType} Auth state and methods
+ * 
+ * @throws {Error} If called outside AuthProvider
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { user, loading, signIn, signOut } = useAuth();
+ *   
+ *   if (loading) {
+ *     return <LoadingSpinner />;
+ *   }
+ *   
+ *   if (!user) {
+ *     return <LoginPrompt onLogin={signIn} />;
+ *   }
+ *   
+ *   return (
+ *     <div>
+ *       <p>Welcome, {user.email}!</p>
+ *       <button onClick={signOut}>Sign Out</button>
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * State Properties:
+ * - `user`: Current authenticated user (null if not logged in)
+ * - `session`: Current auth session with tokens (null if not logged in)
+ * - `loading`: True during initial hydration (checking for existing session)
+ * - `profileReady`: True when user profile verified in database
+ * 
+ * Methods:
+ * - `signUp(email, password)`: Create new account
+ * - `signIn(email, password)`: Sign in existing user
+ * - `signOut()`: Sign out current user
+ * - `refreshSession()`: Manually refresh auth token
+ * 
+ * @see {@link /docs/AUTH_ARCHITECTURE.md} for complete documentation
+ */
 export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {
