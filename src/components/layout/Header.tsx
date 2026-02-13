@@ -21,6 +21,7 @@ import {
   LogOut,
   LayoutDashboard,
   ShieldCheck,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -69,25 +70,13 @@ export default function Header() {
             to="/buy"
             className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
-            {t('nav.buy')}
-          </Link>
-          <Link
-            to="/rent"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
-          >
-            {t('nav.rent')}
+            {isRTL ? 'عقارات' : 'Immobilier'}
           </Link>
           <Link
             to="/services"
             className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
           >
             {t('nav.services')}
-          </Link>
-          <Link
-            to="/agencies"
-            className="text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 hover:scale-105"
-          >
-            {t('nav.agencies')}
           </Link>
         </nav>
 
@@ -139,10 +128,16 @@ export default function Header() {
               <Button variant="ghost" size="sm" asChild className="hover:scale-105 transition-transform duration-300">
                 <Link to="/login">{t('nav.login')}</Link>
               </Button>
-              <Button size="sm" asChild className="shadow-md hover:shadow-lg">
+              <Button size="sm" asChild className="shadow-md hover:shadow-lg" variant="outline">
                 <Link to="/register">
                   <Plus className="h-4 w-4" />
-                  {isRTL ? 'نشر إعلان مجاني' : 'Publier gratuitement'}
+                  {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
+                </Link>
+              </Button>
+              <Button size="sm" asChild className="shadow-md hover:shadow-lg">
+                <Link to="/artisan/onboarding">
+                  <UserPlus className="h-4 w-4" />
+                  {isRTL ? 'أصبح مزود خدمة' : 'Devenir prestataire'}
                 </Link>
               </Button>
             </>
@@ -174,28 +169,7 @@ export default function Header() {
               className="text-sm font-medium py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              {t('nav.buy')}
-            </Link>
-            <Link
-              to="/rent"
-              className="text-sm font-medium py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t('nav.rent')}
-            </Link>
-            <Link
-              to="/agencies"
-              className="text-sm font-medium py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t('nav.agencies')}
-            </Link>
-            <Link
-              to="/advertise"
-              className="text-sm font-medium py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t('nav.advertise')}
+              {isRTL ? 'عقارات' : 'Immobilier'}
             </Link>
             <Link
               to="/services"
@@ -249,10 +223,16 @@ export default function Header() {
                     {t('nav.login')}
                   </Link>
                 </Button>
-                <Button asChild>
+                <Button asChild variant="outline" className="mt-2">
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Plus className="h-4 w-4" />
-                    {t('nav.register')}
+                    {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
+                  </Link>
+                </Button>
+                <Button asChild className="mt-2">
+                  <Link to="/artisan/onboarding" onClick={() => setIsMobileMenuOpen(false)}>
+                    <UserPlus className="h-4 w-4" />
+                    {isRTL ? 'أصبح مزود خدمة' : 'Devenir prestataire'}
                   </Link>
                 </Button>
               </>
