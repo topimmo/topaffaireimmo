@@ -1,6 +1,12 @@
 /**
  * Role mapping utilities for the TopAffaireImmo application
- * Provides consistent mapping between announcer types and user roles
+ * 
+ * IMPORTANT: announcer_type is for DISPLAY and METADATA only.
+ * ALL permissions and route guards use profiles.user_role ONLY.
+ * 
+ * Provides consistent mapping for UI display purposes:
+ * - announcer_type: Descriptive field for real estate agents
+ * - user_role: The ONLY field used for permissions/routing
  */
 
 export type AnnouncerType = 'proprietaire' | 'courtier' | 'agence';
