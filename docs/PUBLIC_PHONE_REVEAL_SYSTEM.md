@@ -241,6 +241,23 @@ supabase functions list
 Ensure these are set in Supabase dashboard:
 - `SUPABASE_URL` - Auto-configured
 - `SUPABASE_SERVICE_ROLE_KEY` - Auto-configured (keep secret!)
+- **`PHONE_REVEAL_HASH_SALT`** - **CRITICAL: Must be set in production!**
+
+**Setting the Hash Salt** (IMPORTANT for security):
+```bash
+# Option 1: Via Supabase Dashboard (Recommended)
+# Settings -> Vault -> New Secret
+# Name: PHONE_REVEAL_HASH_SALT
+# Value: <generate strong random salt>
+
+# Option 2: Via SQL (Alternative)
+ALTER DATABASE postgres SET app.phone_reveal_hash_salt = 'your-strong-random-salt';
+
+# Generate a strong salt (example)
+openssl rand -hex 32
+```
+
+**Note**: The migration includes a fallback salt for development, but this MUST be overridden in production for security.
 
 ### 4. Frontend Build
 No special configuration needed. The component uses existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.

@@ -86,21 +86,39 @@ CREATE POLICY "Admins can read reveal events"
 -- =====================================================
 -- 3. HELPER FUNCTION: Hash IP Address
 -- =====================================================
+-- 
+-- IMPORTANT: In production, set the hash salt via Supabase secrets:
+--   1. In Supabase Dashboard: Settings -> Vault -> New Secret
+--      Name: PHONE_REVEAL_HASH_SALT
+--      Value: your-strong-random-salt-value
+--   2. Or via ALTER DATABASE/ROLE SET command:
+--      ALTER DATABASE postgres SET app.phone_reveal_hash_salt = 'your-salt';
+-- =====================================================
 
 CREATE OR REPLACE FUNCTION public.hash_ip_address(ip_address TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 IMMUTABLE
 AS $$
+DECLARE
+  v_salt TEXT;
 BEGIN
+  -- Get salt from environment or use default for development
+  -- IMPORTANT: In production, set PHONE_REVEAL_HASH_SALT in Supabase secrets
+  v_salt := current_setting('app.phone_reveal_hash_salt', true);
+  IF v_salt IS NULL OR v_salt = '' THEN
+    -- Fallback for development/testing only
+    -- SECURITY: This should be overridden in production via ALTER DATABASE/ROLE SET
+    v_salt := 'topaffaire_default_salt_change_in_production';
+  END IF;
+  
   -- Use SHA-256 hashing for privacy
-  -- Add a salt from environment (in production, use a secret)
-  RETURN encode(digest(ip_address || 'topaffaire_salt_2024', 'sha256'), 'hex');
+  RETURN encode(digest(ip_address || v_salt, 'sha256'), 'hex');
 END;
 $$;
 
 COMMENT ON FUNCTION public.hash_ip_address IS 
-  'Hashes IP address using SHA-256 for privacy-safe storage';
+  'Hashes IP address using SHA-256 for privacy-safe storage. Uses app.phone_reveal_hash_salt setting or fallback.';
 
 -- =====================================================
 -- 4. HELPER FUNCTION: Hash User Agent
@@ -111,14 +129,24 @@ RETURNS TEXT
 LANGUAGE plpgsql
 IMMUTABLE
 AS $$
+DECLARE
+  v_salt TEXT;
 BEGIN
+  -- Get salt from environment or use default for development
+  -- IMPORTANT: In production, set PHONE_REVEAL_HASH_SALT in Supabase secrets
+  v_salt := current_setting('app.phone_reveal_hash_salt', true);
+  IF v_salt IS NULL OR v_salt = '' THEN
+    -- Fallback for development/testing only
+    v_salt := 'topaffaire_default_salt_change_in_production';
+  END IF;
+  
   -- Use SHA-256 hashing for privacy
-  RETURN encode(digest(user_agent || 'topaffaire_salt_2024', 'sha256'), 'hex');
+  RETURN encode(digest(user_agent || v_salt, 'sha256'), 'hex');
 END;
 $$;
 
 COMMENT ON FUNCTION public.hash_user_agent IS 
-  'Hashes user agent string using SHA-256 for privacy-safe storage';
+  'Hashes user agent string using SHA-256 for privacy-safe storage. Uses app.phone_reveal_hash_salt setting or fallback.';
 
 -- =====================================================
 -- 5. HELPER FUNCTION: Check Rate Limit
@@ -150,7 +178,7 @@ BEGIN
   FROM public.phone_reveal_events
   WHERE ip_hash = p_ip_hash
     AND user_agent_hash = p_user_agent_hash
-    AND created_at > NOW() - (p_time_window_seconds || ' seconds')::INTERVAL
+    AND created_at > NOW() - make_interval(secs => p_time_window_seconds)
     AND success = TRUE;
 
   -- Check if exceeded max requests
