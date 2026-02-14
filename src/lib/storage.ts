@@ -256,7 +256,7 @@ export async function getSignedUrl(
 }
 
 /**
- * Upload property images
+ * Upload property images and register them in property_images table
  */
 export async function uploadPropertyImages(
   files: File[], 
@@ -264,7 +264,38 @@ export async function uploadPropertyImages(
   propertyId?: string
 ): Promise<UploadResult[]> {
   const folder = propertyId || 'temp';
-  return uploadFiles('property-images', files, userId, folder);
+  const results = await uploadFiles('property-images', files, userId, folder);
+  
+  // If we have a propertyId and successful uploads, register them in property_images table
+  if (propertyId && propertyId !== 'temp') {
+    const successfulUploads = results.filter(r => !r.error && r.path);
+    
+    if (successfulUploads.length > 0) {
+      try {
+        // Insert into property_images table for proper access control
+        const propertyImageEntries = successfulUploads.map((upload, index) => ({
+          property_id: propertyId,
+          image_path: upload.path,
+          image_order: index,
+        }));
+        
+        const { error: insertError } = await supabase
+          .from('property_images')
+          .insert(propertyImageEntries);
+        
+        if (insertError) {
+          console.warn('[Storage] Failed to register images in property_images table:', insertError.message);
+          console.warn('[Storage] Images are uploaded but may not be accessible until property is approved');
+        } else {
+          console.log(`[Storage] Successfully registered ${successfulUploads.length} images in property_images table`);
+        }
+      } catch (err) {
+        console.warn('[Storage] Error registering images:', err instanceof Error ? err.message : 'Unknown error');
+      }
+    }
+  }
+  
+  return results;
 }
 
 /**
