@@ -90,10 +90,13 @@ export default function AdminServiceRequests() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedArtisan, setSelectedArtisan] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     if (statusFilter === 'all') {
@@ -106,7 +109,18 @@ export default function AdminServiceRequests() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch requests with related data
+      // Fetch total count
+      const { count, error: countError } = await supabase
+        .from('requests')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) throw countError;
+      setTotalCount(count || 0);
+
+      // Fetch requests with related data (paginated)
+      const from = currentPage * pageSize;
+      const to = from + pageSize - 1;
+      
       const { data: requestsData, error: requestsError } = await supabase
         .from('requests')
         .select(`
@@ -115,18 +129,21 @@ export default function AdminServiceRequests() {
           cities (name_fr, name_ar),
           profiles!requests_client_id_fkey (full_name, email)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (requestsError) throw requestsError;
       setRequests(requestsData || []);
 
-      // Fetch verified artisans
+      // Fetch verified artisans (limited to 200 most recent)
+      // Note: For better UX with many artisans, consider implementing search/autocomplete
       const { data: artisansData, error: artisansError } = await supabase
         .from('artisan_profiles')
         .select('id, user_id, business_name, is_verified, is_active')
         .eq('is_verified', true)
         .eq('is_active', true)
-        .order('business_name', { ascending: true });
+        .order('business_name', { ascending: true })
+        .limit(200);
 
       if (artisansError) throw artisansError;
       setArtisans(artisansData || []);
@@ -358,6 +375,35 @@ export default function AdminServiceRequests() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {!loading && filteredRequests.length > 0 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  {isRTL
+                    ? `عرض ${currentPage * pageSize + 1}-${Math.min((currentPage + 1) * pageSize, totalCount)} من ${totalCount}`
+                    : `Showing ${currentPage * pageSize + 1}-${Math.min((currentPage + 1) * pageSize, totalCount)} of ${totalCount}`}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                    disabled={currentPage === 0}
+                  >
+                    {isRTL ? 'السابق' : 'Previous'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    disabled={(currentPage + 1) * pageSize >= totalCount}
+                  >
+                    {isRTL ? 'التالي' : 'Next'}
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

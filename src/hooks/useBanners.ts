@@ -219,7 +219,8 @@ export function useMyBannerRequests() {
       .from('banner_requests')
       .select(`*, slot:banner_slots(*)`)
       .eq('advertiser_id', user.id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (error) setError(error.message);
     setRequests((data as BannerWithSlot[]) || []);
@@ -255,7 +256,7 @@ export function useAllBannerRequests(status?: string) {
 
     if (status && status !== 'all') query = query.eq('status', status);
 
-    const { data, error } = await query;
+    const { data, error } = await query.limit(200);
 
     if (error) setError(error.message);
     setRequests((data as BannerWithSlot[]) || []);
