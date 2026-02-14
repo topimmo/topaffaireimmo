@@ -69,14 +69,12 @@ export default function ArtisanProfileEdit() {
   });
 
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
+  const [retryKey, setRetryKey] = useState(0);
 
   const handleRetry = () => {
-    // Force a re-fetch by toggling loading state
-    setLoading(true);
+    // Trigger a re-fetch by updating the retry key
+    setRetryKey(prev => prev + 1);
     setLoadingError(null);
-    // The useEffect will re-run because we're changing the loading state
-    // But we need to trigger fetchData again, so let's use a key state
-    window.location.reload();
   };
 
   // Redirect to login if not authenticated
@@ -183,7 +181,7 @@ export default function ArtisanProfileEdit() {
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [user, isRTL, navigate]);
+  }, [user, isRTL, navigate, retryKey]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({

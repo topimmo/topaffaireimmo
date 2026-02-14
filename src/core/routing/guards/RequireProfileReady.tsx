@@ -22,6 +22,12 @@ export function RequireProfileReady({ children }: RequireProfileReadyProps) {
   const { profileReady, loading } = useAuth();
   const navigate = useNavigate();
   const [timedOut, setTimedOut] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+
+  const handleRetry = () => {
+    setTimedOut(false);
+    setRetryKey(prev => prev + 1);
+  };
 
   // Set timeout to prevent infinite loading
   useEffect(() => {
@@ -38,7 +44,7 @@ export function RequireProfileReady({ children }: RequireProfileReadyProps) {
     }, PROFILE_READY_TIMEOUT_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [profileReady]);
+  }, [profileReady, retryKey]);
 
   // Show timeout error with retry option
   if (timedOut) {
@@ -60,7 +66,7 @@ export function RequireProfileReady({ children }: RequireProfileReadyProps) {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <Button onClick={() => window.location.reload()} className="w-full">
+              <Button onClick={handleRetry} className="w-full">
                 Réessayer
               </Button>
               <Button
