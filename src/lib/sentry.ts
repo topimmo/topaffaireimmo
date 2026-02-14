@@ -5,7 +5,6 @@
  */
 
 import * as Sentry from '@sentry/react';
-import { BrowserTracing } from '@sentry/react';
 
 /**
  * Initialize Sentry for error tracking
@@ -31,14 +30,7 @@ export function initializeSentry(): void {
       
       // Performance Monitoring
       integrations: [
-        new BrowserTracing({
-          // Set sampling rate for performance monitoring
-          tracePropagationTargets: [
-            'localhost',
-            /^https:\/\/.*\.supabase\.co\/rest\/v1/,
-            /^https:\/\/.*topaffaireimmo\.com/
-          ],
-        }),
+        Sentry.browserTracingIntegration(),
       ],
 
       // Set sample rates
