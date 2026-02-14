@@ -11,7 +11,8 @@ const SESSION_WAIT_MS = 500; // Reduced from 1000ms
 const REDIRECT_DELAY_SHORT_MS = 1500; // Reduced from 2000ms
 const REDIRECT_DELAY_LONG_MS = 2500; // Reduced from 3000ms
 const CALLBACK_TIMEOUT_MS = 8000; // Maximum time for entire callback process
-const MAX_RETRY_ATTEMPTS = 2; // Maximum retry attempts for session creation
+const SESSION_POLL_ATTEMPTS = 5; // Maximum polling attempts for session creation
+const SESSION_POLL_DELAY_MS = 200; // Delay between session polling attempts
 const POST_AUTH_REDIRECT_KEY = 'post_auth_redirect';
 
 // Error detection patterns
@@ -101,16 +102,16 @@ function isTokenExpiredError(error: any): boolean {
 
 /**
  * Poll for session with retry logic
- * Tries up to maxAttempts times with delay between attempts
+ * Tries up to SESSION_POLL_ATTEMPTS times with SESSION_POLL_DELAY_MS between attempts
  */
-async function pollForSession(maxAttempts: number = 5, delayMs: number = 200): Promise<any> {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+async function pollForSession(): Promise<any> {
+  for (let attempt = 0; attempt < SESSION_POLL_ATTEMPTS; attempt++) {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       return session;
     }
-    if (attempt < maxAttempts - 1) {
-      await new Promise(resolve => setTimeout(resolve, delayMs));
+    if (attempt < SESSION_POLL_ATTEMPTS - 1) {
+      await new Promise(resolve => setTimeout(resolve, SESSION_POLL_DELAY_MS));
     }
   }
   return null;
@@ -259,8 +260,8 @@ export default function AuthCallback() {
 
           setLoadingMessage(isRTL ? 'جاري التحقق من جلستك...' : 'Vérification de votre session...');
           
-          // Use polling helper with 5 attempts
-          const finalSession = await pollForSession(5, 200);
+          // Use polling helper
+          const finalSession = await pollForSession();
 
           if (!finalSession) {
             console.error('❌ Session not available after exchange');
@@ -532,15 +533,16 @@ export default function AuthCallback() {
                   onClick={handleResendEmail} 
                   disabled={isResending}
                   className="w-full"
+                  aria-label={isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
                 >
                   {isResending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                       {isRTL ? 'جاري الإرسال...' : 'Envoi en cours...'}
                     </>
                   ) : (
                     <>
-                      <Mail className="w-4 h-4 mr-2" />
+                      <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
                       {isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
                     </>
                   )}
@@ -568,15 +570,16 @@ export default function AuthCallback() {
                   onClick={handleResendEmail} 
                   disabled={isResending}
                   className="w-full"
+                  aria-label={isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
                 >
                   {isResending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                       {isRTL ? 'جاري الإرسال...' : 'Envoi en cours...'}
                     </>
                   ) : (
                     <>
-                      <Mail className="w-4 h-4 mr-2" />
+                      <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
                       {isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
                     </>
                   )}
