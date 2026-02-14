@@ -149,19 +149,19 @@ export default function HeroSearch() {
           </p>
         </div>
 
-        {/* Search Form - Premium Glass Design */}
+        {/* Search Form - Premium Glass Design with Glassmorphism */}
         <form
           onSubmit={handleSearch}
-          className="bg-white/98 backdrop-blur-xl rounded-2xl p-7 md:p-10 shadow-2xl max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300 border border-white/50 ring-1 ring-black/5"
+          className="bg-white/95 backdrop-blur-2xl rounded-2xl p-6 md:p-10 shadow-premium-xl max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300 border border-white/60 ring-1 ring-black/5"
         >
           {/* Transaction Type Tabs - Premium Styling */}
-          <div className="flex gap-3 mb-8">
+          <div className="flex gap-3 mb-6 md:mb-8">
             <button
               type="button"
               onClick={() => setTransactionType("sale")}
-              className={`flex-1 px-6 py-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
+              className={`flex-1 px-4 md:px-6 py-3 md:py-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 transactionType === "sale"
-                  ? "bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]"
+                  ? "bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]"
                   : "bg-muted/80 text-foreground/70 hover:bg-muted hover:shadow-sm"
               }`}
             >
@@ -170,9 +170,9 @@ export default function HeroSearch() {
             <button
               type="button"
               onClick={() => setTransactionType("rent")}
-              className={`flex-1 px-6 py-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
+              className={`flex-1 px-4 md:px-6 py-3 md:py-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 transactionType === "rent"
-                  ? "bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]"
+                  ? "bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-[1.02]"
                   : "bg-muted/80 text-foreground/70 hover:bg-muted hover:shadow-sm"
               }`}
             >
@@ -180,13 +180,13 @@ export default function HeroSearch() {
             </button>
           </div>
 
-          {/* Search Fields - Premium Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Search Fields - Premium Inputs with improved spacing */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
             {/* City */}
             <div className="relative">
               <MapPin className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10`} />
               <Select value={city} onValueChange={setCity}>
-                <SelectTrigger className={`${isRTL ? 'pr-11' : 'pl-11'} h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}>
+                <SelectTrigger className={`${isRTL ? 'pr-11' : 'pl-11'} h-12 md:h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}>
                   <SelectValue placeholder={t('hero.selectCity')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -203,7 +203,7 @@ export default function HeroSearch() {
             <div className="relative">
               <Home className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10`} />
               <Select value={propertyType} onValueChange={setPropertyType}>
-                <SelectTrigger className={`${isRTL ? 'pr-11' : 'pl-11'} h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}>
+                <SelectTrigger className={`${isRTL ? 'pr-11' : 'pl-11'} h-12 md:h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}>
                   <SelectValue placeholder={t('hero.propertyType')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,15 +229,15 @@ export default function HeroSearch() {
                 placeholder={t('hero.maxPrice')}
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className={`${isRTL ? 'pr-12' : 'pl-12'} h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}
+                className={`${isRTL ? 'pr-12' : 'pl-12'} h-12 md:h-14 bg-background/80 border-2 border-border/50 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm hover:shadow-md hover:border-border`}
               />
             </div>
 
-            {/* Search Button - Premium CTA */}
+            {/* Search Button - Premium CTA - Full width on mobile */}
             <Button
               type="submit"
               size="lg"
-              className="h-14 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all rounded-xl"
+              className="h-12 md:h-14 w-full text-base font-semibold bg-gradient-to-r from-primary to-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 transition-all rounded-xl hover:scale-[1.02]"
             >
               <Search className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
               {t('hero.search')}

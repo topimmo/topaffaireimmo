@@ -135,61 +135,71 @@ export default function Services() {
   }, [categories]);
 
   return (
-    <section className={`pt-28 pb-16 bg-muted/20 ${isRTL ? "rtl" : "ltr"}`}>
+    <section className={`pt-28 pb-16 bg-gradient-to-b from-muted/30 to-background ${isRTL ? "rtl" : "ltr"}`}>
       <div className="container px-4 md:px-6">
         {/* Page Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3 mb-12">
-          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4 animate-fade-up">
+            <span className="text-2xl">🛠️</span>
+          </div>
+          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold animate-fade-up">
             {isRTL ? "خدمات" : "Services"}
           </p>
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground animate-fade-up">
             {copy.pageTitle}
           </h1>
-          <p className="text-muted-foreground text-base md:text-lg">
+          <p className="text-muted-foreground text-base md:text-lg animate-fade-up">
             {copy.pageSubtitle}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 text-sm text-destructive text-center">
+          <div className="mb-6 text-sm text-destructive text-center bg-destructive/10 border border-destructive/20 rounded-xl p-4">
             {copy.error}
           </div>
         )}
 
-        {/* BLOCK 1: Top Services */}
-        <div className="mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
+        {/* BLOCK 1: Top Services - Enhanced Cards */}
+        <div className="mb-16">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+            <span className="inline-block w-1 h-6 bg-primary rounded-full" />
             {copy.topServicesTitle}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
-            {topCategories.map((category) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {topCategories.map((category, index) => {
               const Icon = category.icon;
               return (
                 <Link
                   key={category.id}
                   to={`/services/${category.slug}`}
                   className={`
-                    group rounded-xl border bg-white shadow-sm hover:shadow-lg transition-all
-                    p-5 md:p-6 flex flex-col gap-4 hover:-translate-y-1
+                    group rounded-2xl border-2 border-border/50 bg-white hover:border-primary/50 
+                    shadow-premium hover:shadow-premium-lg transition-all duration-300
+                    p-6 md:p-8 flex flex-col gap-5 hover-lift-strong
                     bg-gradient-to-br ${category.gradient}
+                    animate-fade-up
                   `}
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="p-3 rounded-xl bg-white/90 shadow-sm">
-                      <Icon className="h-7 w-7 text-primary" />
+                  <div className="flex items-start justify-between">
+                    <div className="p-4 rounded-xl bg-white/90 shadow-md group-hover:shadow-lg transition-all group-hover:scale-110 duration-300">
+                      <Icon className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <ChevronRight className={`h-5 w-5 text-primary group-hover:translate-x-0.5 transition-transform ${isRTL ? "rotate-180" : ""}`} />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg md:text-xl text-foreground mb-1">
+                    <h3 className="font-semibold text-lg md:text-xl text-foreground mb-2 group-hover:text-primary transition-colors">
                       {isRTL ? category.nameAr : category.nameFr}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                       {isRTL ? category.descriptionAr : category.descriptionFr}
                     </p>
                   </div>
-                  <div className="flex items-center text-sm font-medium text-primary group-hover:translate-x-1 transition-transform">
+                  <div className="flex items-center text-sm font-medium text-primary mt-auto">
                     {copy.explore}
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    <ChevronRight className={`h-4 w-4 ${isRTL ? "mr-1 rotate-180" : "ml-1"} group-hover:translate-x-1 transition-transform`} />
                   </div>
                 </Link>
               );
@@ -197,34 +207,38 @@ export default function Services() {
           </div>
         </div>
 
-        {/* BLOCK 2: All Other Services */}
+        {/* BLOCK 2: All Other Services - Compact Grid */}
         {otherCategories.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
+          <div className="mb-16">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+              <span className="inline-block w-1 h-6 bg-secondary rounded-full" />
               {copy.allServicesTitle}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {otherCategories.map((category) => {
+              {otherCategories.map((category, index) => {
                 const Icon = category.icon;
                 return (
                   <Link
                     key={category.id}
                     to={`/services/${category.slug}`}
                     className={`
-                      group rounded-lg border bg-white shadow-sm hover:shadow-md transition-all
-                      p-4 flex flex-col gap-3 hover:-translate-y-0.5
+                      group rounded-xl border border-border/50 bg-white hover:border-primary/50
+                      shadow-sm hover:shadow-md transition-all duration-300
+                      p-4 md:p-5 flex flex-col gap-3 hover-lift
                       bg-gradient-to-br ${category.gradient}
+                      animate-fade-up
                     `}
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-white/80 shadow-sm">
+                      <div className="p-2.5 rounded-lg bg-white/80 shadow-sm group-hover:shadow transition-all group-hover:scale-105 duration-300 flex-shrink-0">
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
-                      <h3 className="font-medium text-sm md:text-base text-foreground line-clamp-1">
+                      <h3 className="font-medium text-sm md:text-base text-foreground line-clamp-1 group-hover:text-primary transition-colors flex-1">
                         {isRTL ? category.nameAr : category.nameFr}
                       </h3>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                       {isRTL ? category.descriptionAr : category.descriptionFr}
                     </p>
                   </Link>
@@ -234,19 +248,23 @@ export default function Services() {
           </div>
         )}
 
-        {/* BLOCK 3: Artisan CTA */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl p-6 md:p-10 text-center">
-          <div className="max-w-xl mx-auto space-y-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-2">
-              <UserPlus className="h-7 w-7 text-primary" />
+        {/* BLOCK 3: Artisan CTA - Enhanced Design */}
+        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 rounded-2xl p-8 md:p-12 text-center shadow-premium-lg border border-primary/10">
+          <div className="max-w-xl mx-auto space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-2 animate-fade-up">
+              <UserPlus className="h-8 w-8 text-primary" />
             </div>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground animate-fade-up">
               {copy.ctaTitle}
             </h2>
-            <p className="text-muted-foreground text-base md:text-lg">
+            <p className="text-muted-foreground text-base md:text-lg animate-fade-up">
               {copy.ctaSubtitle}
             </p>
-            <Button asChild size="lg" className="mt-4">
+            <Button 
+              asChild 
+              size="lg" 
+              className="mt-6 bg-gradient-to-r from-primary to-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 transition-all rounded-xl hover:scale-[1.02] text-base font-semibold px-8 animate-fade-up"
+            >
               <Link to="/register?type=artisan">{copy.ctaButton}</Link>
             </Button>
           </div>
@@ -258,7 +276,7 @@ export default function Services() {
             {Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={idx}
-                className="h-28 rounded-xl border border-dashed border-muted bg-white/60 animate-pulse"
+                className="h-32 rounded-xl border border-dashed border-muted bg-white/60 animate-pulse shadow-sm"
               />
             ))}
           </div>
