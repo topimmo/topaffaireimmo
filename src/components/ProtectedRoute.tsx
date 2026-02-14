@@ -13,7 +13,7 @@ export default function ProtectedRoute({
   children,
   allowedRoles,
 }: ProtectedRouteProps) {
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading, profileReady } = useAuth();
   const { role: userRole, loading: roleLoading } = useUserRole();
   const location = useLocation();
 
@@ -26,7 +26,8 @@ export default function ProtectedRoute({
     return <>{children}</>;
   }
 
-  if (authLoading || roleLoading) {
+  // Wait for both auth and profile to be ready
+  if (authLoading || roleLoading || (user && !profileReady)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />

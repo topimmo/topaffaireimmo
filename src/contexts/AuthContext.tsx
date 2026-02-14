@@ -8,10 +8,14 @@ import { setUserContext, clearUserContext } from '@/lib/sentry'
 
 export const AUTH_HYDRATION_TIMEOUT_MS = 2000; // Reduced from 4000ms for faster startup
 
+// Auth states for clarity
+export type AuthState = 'loading' | 'authenticated' | 'unauthenticated';
+
 interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  authState: AuthState
   profileReady: boolean
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
@@ -25,12 +29,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [authState, setAuthState] = useState<AuthState>('loading')
   const [profileReady, setProfileReady] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const lastPathRef = useRef(location.pathname)
   const hasHydratedRef = useRef(false)
   const isInitializingRef = useRef(false)
+  const authStateChangeCountRef = useRef(0) // Track auth state changes to prevent loops
+  
   const markHydrated = useCallback(() => {
     if (hasHydratedRef.current) {
       return
@@ -143,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setSession(session);
         setUser(session.user);
+        setAuthState('authenticated');
         
         // Set Sentry user context for error tracking
         setUserContext({
@@ -158,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setSession(null);
         setUser(null);
+        setAuthState('unauthenticated');
         setProfileReady(false);
         clearUserContext(); // Clear Sentry user context
         markHydrated();
@@ -170,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       log.error('Exception during auth initialization', exception);
       setSession(null);
       setUser(null);
+      setAuthState('unauthenticated');
       setProfileReady(false);
       markHydrated();
     } finally {
@@ -208,25 +218,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       const log = createCorrelatedLogger('AuthContext:onAuthStateChange');
+      
+      // Prevent excessive state changes that could cause loops
+      authStateChangeCountRef.current++;
+      const changeCount = authStateChangeCountRef.current;
+      
+      if (changeCount > 10) {
+        log.warn('Too many auth state changes detected - possible loop. Skipping update.', { event, changeCount });
+        return;
+      }
 
       log.info(`Auth state changed: ${event}`, { 
         hasSession: !!session,
         userId: session?.user?.id,
-        path: lastPathRef.current
+        path: lastPathRef.current,
+        changeCount
       });
 
       setSession(session);
       setUser(session?.user ?? null);
-
+      
       if (session?.user) {
+        setAuthState('authenticated');
         // Wait for profile to be ready before marking as hydrated
         const profileExists = await ensureProfileExists(session.user, log);
         setProfileReady(profileExists);
       } else {
+        setAuthState('unauthenticated');
         setProfileReady(false);
       }
 
       markHydrated();
+      
+      // Reset counter after successful state change
+      setTimeout(() => {
+        authStateChangeCountRef.current = Math.max(0, authStateChangeCountRef.current - 1);
+      }, 1000);
     });
 
     return () => {
@@ -371,7 +398,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, profileReady, signUp, signIn, signOut, refreshSession }}>
+    <AuthContext.Provider value={{ user, session, loading, authState, profileReady, signUp, signIn, signOut, refreshSession }}>
       {children}
     </AuthContext.Provider>
   )
