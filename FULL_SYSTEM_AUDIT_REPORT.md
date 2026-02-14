@@ -37,7 +37,7 @@
 TopAffaireImmo is a **production-ready**, bilingual (French/Arabic) real estate platform for Morocco with integrated home services marketplace. The platform implements enterprise-grade security with Row-Level Security (RLS), comprehensive monitoring, and a sophisticated role-based access control system.
 
 ### Key Metrics
-- **11+ database tables** with RLS protection
+- **40+ database tables** (12+ with RLS protection)
 - **4 user roles** (user, agent, merchant, admin)
 - **50+ routes** (public + protected)
 - **4 storage buckets** for files
