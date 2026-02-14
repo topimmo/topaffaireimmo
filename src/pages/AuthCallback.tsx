@@ -146,6 +146,7 @@ export default function AuthCallback() {
   const [message, setMessage] = useState('');
   const [canResendEmail, setCanResendEmail] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('Confirmation en cours...');
   const [showContactSupport, setShowContactSupport] = useState(false);
 
@@ -487,6 +488,19 @@ export default function AuthCallback() {
         : 'Email de confirmation envoyé. Veuillez vérifier votre boîte de réception.';
       setMessage(successMsg);
       setCanResendEmail(false);
+      
+      // Start 30-second cooldown
+      setResendCooldown(30);
+      const cooldownInterval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(cooldownInterval);
+            setCanResendEmail(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } else {
       const errorMsg = isRTL
         ? 'فشل في إرسال البريد الإلكتروني. يرجى المحاولة مرة أخرى لاحقًا.'
@@ -526,12 +540,17 @@ export default function AuthCallback() {
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               {isRTL ? 'انتهت الصلاحية' : 'Lien expiré'}
             </h2>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <p className="text-gray-600 mb-2">{message}</p>
+            <p className="text-sm text-gray-500 mb-6">
+              {isRTL
+                ? 'تحقق من مجلد البريد العشوائي إذا لزم الأمر'
+                : 'Vérifiez votre dossier spam si nécessaire'}
+            </p>
             <div className="space-y-3">
               {canResendEmail && (
                 <Button 
                   onClick={handleResendEmail} 
-                  disabled={isResending}
+                  disabled={isResending || resendCooldown > 0}
                   className="w-full"
                   aria-label={isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
                 >
@@ -540,10 +559,17 @@ export default function AuthCallback() {
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                       {isRTL ? 'جاري الإرسال...' : 'Envoi en cours...'}
                     </>
+                  ) : resendCooldown > 0 ? (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
+                      {isRTL
+                        ? `إعادة الإرسال خلال ${resendCooldown}ث`
+                        : `Renvoyer dans ${resendCooldown}s`}
+                    </>
                   ) : (
                     <>
                       <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
-                      {isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
+                      {isRTL ? '🔁 إعادة إرسال بريد التأكيد' : '🔁 Renvoyer l\'email de confirmation'}
                     </>
                   )}
                 </Button>
@@ -563,12 +589,19 @@ export default function AuthCallback() {
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               {isRTL ? 'خطأ' : 'Erreur'}
             </h2>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <p className="text-gray-600 mb-2">{message}</p>
+            {canResendEmail && (
+              <p className="text-sm text-gray-500 mb-6">
+                {isRTL
+                  ? 'تحقق من مجلد البريد العشوائي إذا لزم الأمر'
+                  : 'Vérifiez votre dossier spam si nécessaire'}
+              </p>
+            )}
             <div className="space-y-3">
               {canResendEmail && (
                 <Button 
                   onClick={handleResendEmail} 
-                  disabled={isResending}
+                  disabled={isResending || resendCooldown > 0}
                   className="w-full"
                   aria-label={isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
                 >
@@ -577,10 +610,17 @@ export default function AuthCallback() {
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                       {isRTL ? 'جاري الإرسال...' : 'Envoi en cours...'}
                     </>
+                  ) : resendCooldown > 0 ? (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
+                      {isRTL
+                        ? `إعادة الإرسال خلال ${resendCooldown}ث`
+                        : `Renvoyer dans ${resendCooldown}s`}
+                    </>
                   ) : (
                     <>
                       <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
-                      {isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
+                      {isRTL ? '🔁 إعادة إرسال بريد التأكيد' : '🔁 Renvoyer l\'email de confirmation'}
                     </>
                   )}
                 </Button>

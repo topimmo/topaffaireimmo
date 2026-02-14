@@ -159,6 +159,10 @@ export default function ServiceCategoryPage() {
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
               {isRTL ? category.nameAr : category.nameFr}
             </h1>
+            {/* Coming Soon Badge */}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium border border-blue-200">
+              {isRTL ? "⏳ قريباً" : "⏳ Bientôt disponible"}
+            </span>
             <span className="text-xs text-muted-foreground">#{category.slug}</span>
           </div>
           <p className="text-muted-foreground text-base md:text-lg max-w-3xl">
@@ -176,21 +180,21 @@ export default function ServiceCategoryPage() {
         <div className="rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 p-8 text-center">
           <div className="max-w-2xl mx-auto space-y-4">
             <h2 className="text-2xl font-semibold text-blue-900">
-              {isRTL ? "الخدمة قيد التطوير" : "Service en cours d'ouverture"}
+              {isRTL ? "🚧 الخدمة قيد التطوير" : "🚧 Service en cours d'ouverture"}
             </h2>
             <p className="text-blue-800">
               {isRTL 
-                ? "نحن نعمل على جلب أفضل مزودي الخدمات في هذه الفئة. سيتم إعلامك عند توفر الخدمة."
-                : "Nous travaillons à rassembler les meilleurs prestataires dans cette catégorie. Vous serez informé dès que le service sera disponible."}
+                ? "قريباً — سنوصلك بمزودي الخدمات بمجرد توفرهم."
+                : "Bientôt disponible — nous vous mettrons en relation dès que les prestataires seront disponibles."}
             </p>
             
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Link
-                to={`/contact?service=${encodeURIComponent(category.slug)}`}
+                to={`/contact?service=${encodeURIComponent(category.slug)}&notify=true`}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
               >
-                {isRTL ? "طلب عرض أسعار" : "Demander un devis"}
+                {isRTL ? "🔔 أعلمني عند التوفر" : "🔔 M'avertir quand disponible"}
               </Link>
               <Link
                 to="/artisan/onboarding"
@@ -199,6 +203,11 @@ export default function ServiceCategoryPage() {
                 {isRTL ? "هل أنت مزود خدمة؟ انضم إلينا" : "Êtes-vous prestataire ? Rejoignez-nous"}
               </Link>
             </div>
+            <p className="text-sm text-blue-700 mt-4">
+              {isRTL
+                ? "💡 نصيحة: يمكنك أيضاً استكشاف الخدمات المتاحة حالياً"
+                : "💡 Astuce : Vous pouvez également explorer les services actuellement disponibles"}
+            </p>
           </div>
         </div>
 
