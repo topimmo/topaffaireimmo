@@ -7,6 +7,10 @@ import { getSiteUrl } from '@/lib/utils'
 import { setUserContext, clearUserContext } from '@/lib/sentry'
 
 export const AUTH_HYDRATION_TIMEOUT_MS = 2000; // Reduced from 4000ms for faster startup
+const MAX_AUTH_STATE_CHANGES = 10; // Maximum auth state changes before loop detection
+const AUTH_STATE_CHANGE_RESET_DELAY_MS = 1000; // Delay before resetting state change counter
+const SESSION_REFRESH_RETRY_BASE_DELAY_MS = 1000; // Base delay for session refresh retries
+const MAX_SESSION_REFRESH_RETRIES = 2; // Maximum retry attempts for session refresh
 
 // Auth states for clarity
 export type AuthState = 'loading' | 'authenticated' | 'unauthenticated';
@@ -223,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authStateChangeCountRef.current++;
       const changeCount = authStateChangeCountRef.current;
       
-      if (changeCount > 10) {
+      if (changeCount > MAX_AUTH_STATE_CHANGES) {
         log.warn('Too many auth state changes detected - possible loop. Skipping update.', { event, changeCount });
         return;
       }
@@ -267,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Reset counter after successful state change
       setTimeout(() => {
         authStateChangeCountRef.current = Math.max(0, authStateChangeCountRef.current - 1);
-      }, 1000);
+      }, AUTH_STATE_CHANGE_RESET_DELAY_MS);
     });
 
     return () => {
@@ -398,10 +402,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         log.error('Session refresh failed', error);
         
-        // If network error and we have retries left, retry
-        if (isNetworkError(error) && retryCount < 2) {
-          log.info('Network error detected, retrying...', { retryCount });
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+        // If network error and we have retries left, retry with exponential backoff
+        if (isNetworkError(error) && retryCount < MAX_SESSION_REFRESH_RETRIES) {
+          const backoffDelay = SESSION_REFRESH_RETRY_BASE_DELAY_MS * (retryCount + 1);
+          log.info('Network error detected, retrying...', { retryCount, backoffDelay });
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
           return refreshSession(retryCount + 1);
         }
         

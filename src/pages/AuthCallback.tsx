@@ -14,6 +14,10 @@ const CALLBACK_TIMEOUT_MS = 8000; // Maximum time for entire callback process
 const MAX_RETRY_ATTEMPTS = 2; // Maximum retry attempts for session creation
 const POST_AUTH_REDIRECT_KEY = 'post_auth_redirect';
 
+// Error detection patterns
+const TOKEN_ERROR_KEYWORDS = ['expired', 'invalid token', 'token not found', 'otp_expired'];
+const EXPIRED_KEYWORDS = ['expired', 'expir'];
+
 const peekPostAuthRedirect = (): string | null => {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem(POST_AUTH_REDIRECT_KEY);
@@ -76,17 +80,40 @@ async function getRedirectPath(userId: string): Promise<string> {
 
 /**
  * Check if error indicates an expired or invalid token
+ * Only matches specific error patterns to avoid false positives
  */
 function isTokenExpiredError(error: any): boolean {
   if (!error) return false;
-  const errorMessage = error.message?.toLowerCase() || String(error).toLowerCase();
+  
+  const errorMessage = error.message?.toLowerCase() || '';
+  
+  // Check for specific expired/invalid patterns
+  const isExpired = EXPIRED_KEYWORDS.some(keyword => errorMessage.includes(keyword));
+  const isInvalidToken = TOKEN_ERROR_KEYWORDS.some(keyword => errorMessage === keyword || errorMessage.includes(keyword));
+  
   return (
-    errorMessage.includes('expired') ||
-    errorMessage.includes('invalid') ||
-    errorMessage.includes('token') ||
+    isExpired ||
+    isInvalidToken ||
     error.status === 401 ||
     error.code === 'otp_expired'
   );
+}
+
+/**
+ * Poll for session with retry logic
+ * Tries up to maxAttempts times with delay between attempts
+ */
+async function pollForSession(maxAttempts: number = 5, delayMs: number = 200): Promise<any> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      return session;
+    }
+    if (attempt < maxAttempts - 1) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  return null;
 }
 
 /**
@@ -116,7 +143,6 @@ export default function AuthCallback() {
   const { isRTL } = useLanguage();
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading');
   const [message, setMessage] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
   const [canResendEmail, setCanResendEmail] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Confirmation en cours...');
@@ -233,38 +259,19 @@ export default function AuthCallback() {
 
           setLoadingMessage(isRTL ? 'جاري التحقق من جلستك...' : 'Vérification de votre session...');
           
-          let finalSession = null;
-          // Reduced polling - check 5 times with 200ms delay (1 second total)
-          for (let attempt = 0; attempt < 5; attempt++) {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-              finalSession = session;
-              break;
-            }
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
+          // Use polling helper with 5 attempts
+          const finalSession = await pollForSession(5, 200);
 
           if (!finalSession) {
             console.error('❌ Session not available after exchange');
             
-            // Retry logic
-            if (retryCount < MAX_RETRY_ATTEMPTS) {
-              console.log(`🔄 Retrying session creation (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`);
-              setRetryCount(retryCount + 1);
-              setLoadingMessage(isRTL ? 'إعادة المحاولة...' : 'Nouvelle tentative...');
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              // Trigger re-render to retry
-              return;
-            }
-            
-            // Max retries reached
             if (!cancelled) {
               setStatus('error');
               setCanResendEmail(true);
-              setShowContactSupport(true); // Show contact support after max retries
+              setShowContactSupport(true);
               const failMsg = isRTL
-                ? 'فشل في إنشاء الجلسة بعد عدة محاولات. يرجى المحاولة مرة أخرى.'
-                : 'Échec de la création de session après plusieurs tentatives. Veuillez réessayer.';
+                ? 'فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.'
+                : 'Échec de la création de session. Veuillez réessayer.';
               setMessage(failMsg);
             }
             return;
@@ -355,16 +362,6 @@ export default function AuthCallback() {
             timeoutIds.push(redirectTimeoutId);
           } else {
             console.warn('⚠️ No session found after confirmation');
-            
-            // Retry logic
-            if (retryCount < MAX_RETRY_ATTEMPTS) {
-              console.log(`🔄 Retrying session verification (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`);
-              setRetryCount(retryCount + 1);
-              setLoadingMessage(isRTL ? 'إعادة المحاولة...' : 'Nouvelle tentative...');
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              // Trigger re-render to retry
-              return;
-            }
             
             if (cancelled) return;
             setStatus('error');
@@ -461,7 +458,7 @@ export default function AuthCallback() {
       cancelled = true;
       timeoutIds.forEach(id => clearTimeout(id));
     };
-  }, [navigate, isRTL, retryCount]); // Added retryCount to trigger retry
+  }, [navigate, isRTL]); // Removed retryCount since retry logic is now internal
 
   // Handler for resending confirmation email
   const handleResendEmail = async () => {
@@ -509,13 +506,6 @@ export default function AuthCallback() {
             <p className="text-gray-600">
               {loadingMessage}
             </p>
-            {retryCount > 0 && (
-              <p className="text-sm text-gray-500 mt-2">
-                {isRTL 
-                  ? `المحاولة ${retryCount} من ${MAX_RETRY_ATTEMPTS}`
-                  : `Tentative ${retryCount} sur ${MAX_RETRY_ATTEMPTS}`}
-              </p>
-            )}
           </div>
         )}
 
