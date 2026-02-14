@@ -16,6 +16,8 @@ export interface PropertyFilters {
   status?: string;
   featured?: boolean;
   owner_id?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface PropertyWithRelations extends Partial<Omit<Property, 'title_fr' | 'title_ar' | 'status' | 'city' | 'neighborhood'>> {
@@ -58,6 +60,10 @@ export function useProperties(filters?: PropertyFilters) {
     }, 10000); // 10 second timeout
 
     try {
+      // Default pagination values to prevent unbounded queries
+      const page = filters?.page ?? 1;
+      const limit = filters?.limit ?? 50;
+
       let query = supabase
         .from('properties')
         .select(`
@@ -116,6 +122,9 @@ export function useProperties(filters?: PropertyFilters) {
       }
 
       query = query.order('created_at', { ascending: false });
+
+      // Apply pagination using range for efficient queries
+      query = query.range((page - 1) * limit, page * limit - 1);
 
       const { data, error: fetchError, count: totalCount } = await query;
 
@@ -380,9 +389,10 @@ export function useLatestProperties(limit = 12) {
   return { properties, loading };
 }
 
-export function useMyProperties() {
+export function useMyProperties(page = 1, limit = 50) {
   const [properties, setProperties] = useState<PropertyWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     let isCancelled = false;
@@ -410,33 +420,36 @@ export function useMyProperties() {
           return;
         }
 
-        console.log(`🔍 [useMyProperties] Fetching properties for user: ${user.id}`);
+        console.log(`🔍 [useMyProperties] Fetching properties for user: ${user.id} (page: ${page}, limit: ${limit})`);
         
         // Filter by created_by OR owner_id to show all user's listings
-        // Limit to 200 properties to prevent performance issues
-        const { data, error } = await supabase
+        // Use pagination to prevent performance issues with large datasets
+        const { data, error, count: totalCount } = await supabase
           .from('properties')
           .select(`
             *,
             city:cities(id, name_fr, name_ar)
-          `)
+          `, { count: 'exact' })
           .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
           .order('created_at', { ascending: false })
-          .limit(200);
+          .range((page - 1) * limit, page * limit - 1);
 
         if (isCancelled) return;
 
         if (error) {
           console.error('❌ [useMyProperties] Error loading user properties:', error);
           setProperties([]);
+          setCount(0);
         } else {
-          console.log(`✅ [useMyProperties] Fetched ${data?.length || 0} properties`);
+          console.log(`✅ [useMyProperties] Fetched ${data?.length || 0} properties (total: ${totalCount || 0})`);
           setProperties(data as PropertyWithRelations[] || []);
+          setCount(totalCount || 0);
         }
       } catch (error) {
         if (isCancelled) return;
         console.error('❌ [useMyProperties] Exception loading user properties:', error);
         setProperties([]);
+        setCount(0);
       } finally {
         clearTimeout(loadingTimeout);
         if (!isCancelled && !hasCompleted) {
@@ -452,7 +465,7 @@ export function useMyProperties() {
       isCancelled = true;
       clearTimeout(loadingTimeout);
     };
-  }, []);
+  }, [page, limit]);
 
-  return { properties, loading };
+  return { properties, loading, count };
 }
