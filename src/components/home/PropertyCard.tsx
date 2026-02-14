@@ -62,6 +62,7 @@ export default function PropertyCard({
         "group block",
         className
       )}
+      aria-label={`${displayTitle} - ${displayCity}${displayNeighborhood ? ', ' + displayNeighborhood : ''} - ${formatPrice(property.price)} MAD`}
     >
       <Card className={cn(
         "overflow-hidden transition-all duration-300 rounded-xl hover-lift-strong",
@@ -136,6 +137,7 @@ export default function PropertyCard({
             e.preventDefault();
             e.stopPropagation();
           }}
+          aria-label={isRTL ? 'إضافة إلى المفضلة' : 'Ajouter aux favoris'}
           className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-md h-10 w-10 group`}
         >
           <Heart className="h-4 w-4 text-foreground/70 group-hover:text-red-500 group-hover:fill-red-500 transition-all duration-300 group-hover:scale-110" />
