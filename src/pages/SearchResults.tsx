@@ -89,9 +89,8 @@ export default function SearchResults() {
   const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Performance optimization: Reduced from 200 to 50 initial items with pagination
-  // Future consideration: Implement infinite scroll for better mobile UX
-  const ITEMS_PER_PAGE = 24;
+  // Backend pagination configuration - fetch results page by page
+  const ITEMS_PER_PAGE = 50;
 
   // ✅ IMPORTANT: Select value must NEVER be ""
   const [selectedType, setSelectedType] = useState<string>(initialType);
@@ -100,6 +99,7 @@ export default function SearchResults() {
 
   const [loading, setLoading] = useState(true);
   const [dbRows, setDbRows] = useState<DbProperty[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // ✅ keep state synced if URL changes (back/forward navigation)
@@ -108,7 +108,7 @@ export default function SearchResults() {
     setSelectedCity(initialCity);
   }, [initialType, initialCity]);
 
-  // ✅ fetch from Supabase
+  // ✅ fetch from Supabase with backend pagination
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -135,7 +135,8 @@ export default function SearchResults() {
               featured,
               city:cities(name_fr, name_ar),
               neighborhood:neighborhoods(name_fr, name_ar)
-            `
+            `,
+            { count: 'exact' }
           )
           // Only show published properties on public search page
           .eq("status", "published")
@@ -157,25 +158,33 @@ export default function SearchResults() {
         // Always order by created_at by default for consistent results
         q = q.order("created_at", { ascending: false });
 
-        // Reduce initial fetch to 50 items for better performance
-        const { data, error } = await q.limit(50);
+        // Apply backend pagination using range
+        const from = (currentPage - 1) * ITEMS_PER_PAGE;
+        const to = from + ITEMS_PER_PAGE - 1;
+        q = q.range(from, to);
+
+        const { data, error, count } = await q;
 
         if (error) {
           setError(error.message);
           setDbRows([]);
+          setTotalCount(0);
         } else {
           setDbRows((data as DbProperty[]) || []);
+          setTotalCount(count || 0);
+          console.log(`✅ [SearchResults] Fetched ${data?.length || 0} properties (page ${currentPage}, total: ${count || 0})`);
         }
       } catch (e: any) {
         setError(e?.message || "Unexpected error");
         setDbRows([]);
+        setTotalCount(0);
       }
 
       setLoading(false);
     };
 
     fetchData();
-   }, [selectedType, ownerIdFilter]);
+   }, [selectedType, ownerIdFilter, currentPage]);
   
   // Track search results view when filters change
   useEffect(() => {
@@ -287,15 +296,10 @@ export default function SearchResults() {
     });
   }, [sortedRows, language]);
 
-  // Paginate the properties
-  const totalPages = Math.ceil(properties.length / ITEMS_PER_PAGE);
-  const paginatedProperties = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return properties.slice(startIndex, endIndex);
-  }, [properties, currentPage]);
+  // Calculate total pages based on total count from backend
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change (but not when page changes)
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCity, selectedType, priceRange, sortBy]);
@@ -370,7 +374,7 @@ export default function SearchResults() {
           ) : error ? (
             <p className="text-red-600 text-sm">Error: {error}</p>
           ) : (
-            <p className="text-muted-foreground">{properties.length} properties found</p>
+            <p className="text-muted-foreground">{totalCount} properties found</p>
           )}
         </div>
 
@@ -487,7 +491,7 @@ export default function SearchResults() {
                 : "grid-cols-1"
             )}
           >
-            {paginatedProperties.map((property, i) => (
+            {properties.map((property, i) => (
               <div key={property.id}>
                 <PropertyCard property={property} />
 
@@ -508,7 +512,7 @@ export default function SearchResults() {
         )}
 
         {/* Pagination Controls */}
-        {properties.length > ITEMS_PER_PAGE && (
+        {totalCount > ITEMS_PER_PAGE && (
           <div className="flex justify-center items-center gap-2 mt-8">
             <Button
               variant="outline"

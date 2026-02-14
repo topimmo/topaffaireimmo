@@ -84,6 +84,8 @@ export default function PropertyTypeNeighborhoodPage() {
     // neighborhood_id: neighborhoodData.id, // SEO data has string ID, need numeric
     // Only show published properties on public city/neighborhood pages
     status: 'published',
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
   };
 
   if (propertyTypeData) {
