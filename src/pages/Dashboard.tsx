@@ -74,8 +74,12 @@ export default function Dashboard() {
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Timeout constant for data fetching
+  const DATA_FETCH_TIMEOUT_MS = 10000; // 10 seconds
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -99,31 +103,61 @@ export default function Dashboard() {
 
     console.log(`🔍 [Dashboard] Fetching properties for user: ${user.id}`);
     setLoading(true);
-    const { data, error } = await supabase
-      .from('properties')
-      .select(`
-        id,
-        transaction_type,
-        property_type,
-        title_fr,
-        title_ar,
-        price,
-        status,
-        images,
-        created_at,
-        city:cities(name_fr, name_ar)
-      `)
-      // Filter by created_by OR owner_id to show all user's listings
-      .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
-      .order('created_at', { ascending: false });
+    setLoadingError(null);
 
-    if (!error && data) {
-      console.log(`✅ [Dashboard] Fetched ${data.length} properties for user`);
-      setProperties(data as unknown as Property[]);
-    } else if (error) {
-      console.error('❌ [Dashboard] Error fetching properties:', error);
+    // Set up timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.error('❌ [Dashboard] Properties fetch timeout exceeded');
+      setLoading(false);
+      setLoadingError(
+        isRTL
+          ? 'انتهت مهلة تحميل الإعلانات. يرجى المحاولة مرة أخرى.'
+          : 'Le chargement des annonces a expiré. Veuillez réessayer.'
+      );
+    }, DATA_FETCH_TIMEOUT_MS);
+
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          transaction_type,
+          property_type,
+          title_fr,
+          title_ar,
+          price,
+          status,
+          images,
+          created_at,
+          city:cities(name_fr, name_ar)
+        `)
+        // Filter by created_by OR owner_id to show all user's listings
+        .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        console.log(`✅ [Dashboard] Fetched ${data.length} properties for user`);
+        setProperties(data as unknown as Property[]);
+        setLoadingError(null);
+      } else if (error) {
+        console.error('❌ [Dashboard] Error fetching properties:', error);
+        setLoadingError(
+          isRTL
+            ? 'خطأ في تحميل الإعلانات'
+            : 'Erreur lors du chargement des annonces'
+        );
+      }
+    } catch (err) {
+      console.error('❌ [Dashboard] Exception fetching properties:', err);
+      setLoadingError(
+        isRTL
+          ? 'حدث خطأ غير متوقع'
+          : 'Une erreur inattendue s\'est produite'
+      );
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async () => {
@@ -236,7 +270,25 @@ export default function Dashboard() {
           {/* Listings */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <div className="text-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  {isRTL ? 'جاري تحميل الإعلانات...' : 'Chargement des annonces...'}
+                </p>
+              </div>
+            </div>
+          ) : loadingError ? (
+            <div className="bg-white rounded-2xl border p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-destructive" />
+              </div>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-2">
+                {isRTL ? 'خطأ في التحميل' : 'Erreur de chargement'}
+              </h2>
+              <p className="text-muted-foreground mb-6">{loadingError}</p>
+              <Button onClick={fetchProperties}>
+                {isRTL ? 'إعادة المحاولة' : 'Réessayer'}
+              </Button>
             </div>
           ) : properties.length === 0 ? (
             <div className="bg-white rounded-2xl border p-12 text-center">

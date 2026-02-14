@@ -17,9 +17,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import AvatarUpload from '@/components/artisan/AvatarUpload';
 import MultiServiceSelector from '@/components/artisan/MultiServiceSelector';
+
+// Timeout constant for profile loading
+const PROFILE_LOAD_TIMEOUT_MS = 8000; // 8 seconds max
 
 interface ArtisanProfile {
   id: string;
@@ -51,6 +54,7 @@ export default function ArtisanProfileEdit() {
   const [profile, setProfile] = useState<ArtisanProfile | null>(null);
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Form state
@@ -65,6 +69,13 @@ export default function ArtisanProfileEdit() {
   });
 
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
+  const [retryKey, setRetryKey] = useState(0);
+
+  const handleRetry = () => {
+    // Trigger a re-fetch by updating the retry key
+    setRetryKey(prev => prev + 1);
+    setLoadingError(null);
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -73,12 +84,29 @@ export default function ArtisanProfileEdit() {
     }
   }, [user, authLoading, navigate]);
 
-  // Load profile and cities
+  // Load profile and cities with timeout protection
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let cancelled = false;
+
     const fetchData = async () => {
       if (!user) return;
 
       setLoading(true);
+      setLoadingError(null);
+
+      // Set a timeout to prevent infinite loading
+      timeoutId = setTimeout(() => {
+        if (!cancelled && loading) {
+          console.error('Profile loading timeout exceeded');
+          setLoading(false);
+          setLoadingError(
+            isRTL
+              ? 'انتهت مهلة تحميل الملف الشخصي. يرجى المحاولة مرة أخرى.'
+              : 'Le chargement du profil a expiré. Veuillez réessayer.'
+          );
+        }
+      }, PROFILE_LOAD_TIMEOUT_MS);
 
       try {
         // Fetch artisan profile
@@ -88,7 +116,12 @@ export default function ArtisanProfileEdit() {
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (profileError) throw profileError;
+        if (cancelled) return;
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          throw new Error(profileError.message || 'Failed to load profile');
+        }
 
         if (!profileData) {
           toast.error(isRTL ? 'الملف الشخصي غير موجود' : 'Profil non trouvé');
@@ -114,19 +147,41 @@ export default function ArtisanProfileEdit() {
           .eq('is_active', true)
           .order('name_fr', { ascending: true });
 
-        if (citiesError) throw citiesError;
+        if (cancelled) return;
+
+        if (citiesError) {
+          console.error('Error fetching cities:', citiesError);
+          throw new Error(citiesError.message || 'Failed to load cities');
+        }
 
         setCities(citiesData || []);
+        setLoadingError(null);
       } catch (err) {
+        if (cancelled) return;
         console.error('Error fetching data:', err);
-        toast.error(isRTL ? 'خطأ في تحميل البيانات' : 'Erreur de chargement');
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : isRTL
+            ? 'خطأ في تحميل البيانات'
+            : 'Erreur de chargement';
+        setLoadingError(errorMessage);
+        toast.error(errorMessage);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          clearTimeout(timeoutId);
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
-  }, [user, isRTL, navigate]);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [user, isRTL, navigate, retryKey]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
@@ -190,7 +245,55 @@ export default function ArtisanProfileEdit() {
       <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
         <Header />
         <main className="flex-1 flex items-center justify-center pt-24 pb-16">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <div className="text-center space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">
+              {isRTL ? 'جاري تحميل الملف الشخصي...' : 'Chargement du profil...'}
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state with retry and go back options
+  if (loadingError) {
+    return (
+      <div className={`min-h-screen flex flex-col bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
+        <Header />
+        <main className="flex-1 flex items-center justify-center pt-24 pb-16">
+          <Card className="max-w-md w-full mx-4">
+            <CardContent className="pt-6 text-center space-y-6">
+              <div className="flex justify-center">
+                <div className="rounded-full bg-destructive/10 p-3">
+                  <AlertCircle className="h-10 w-10 text-destructive" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold">
+                  {isRTL ? 'تعذر تحميل الملف الشخصي' : 'Impossible de charger le profil'}
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  {loadingError}
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button onClick={handleRetry} className="w-full">
+                  <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+                  {isRTL ? 'إعادة المحاولة' : 'Réessayer'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/dashboard/artisan')}
+                  className="w-full"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                  {isRTL ? 'العودة' : 'Retour'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>
