@@ -46,6 +46,9 @@ supabase/migrations/env.*
 supabase/migrations/.env
 supabase/migrations/.env.*
 
+# Supabase temp files
+supabase/.temp/
+
 # Compiled JavaScript files from TypeScript
 src/**/*.js
 !src/**/*.config.js
