@@ -200,15 +200,17 @@ function sanitizeData(data: any): any {
  * Sanitize string to remove sensitive patterns
  */
 function sanitizeString(str: string): string {
-  // Remove JWT tokens
-  str = str.replace(/eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*/g, '[JWT_REDACTED]');
+  // Remove JWT tokens (more specific pattern)
+  str = str.replace(/eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/g, '[JWT_REDACTED]');
   
-  // Remove API keys (common patterns)
-  str = str.replace(/sk-[a-zA-Z0-9]{32,}/g, '[API_KEY_REDACTED]');
-  str = str.replace(/[a-zA-Z0-9]{32,64}/g, match => {
-    // Only redact if it looks like a key/token (all lowercase or uppercase)
-    if (match === match.toLowerCase() || match === match.toUpperCase()) {
-      return '[KEY_REDACTED]';
+  // Remove API keys with common prefixes (sk-, pk-, etc.)
+  str = str.replace(/\b(sk|pk|api|key)[-_][a-zA-Z0-9]{20,}/gi, '[API_KEY_REDACTED]');
+  
+  // Remove UUID-like patterns in sensitive contexts (auth tokens, session ids)
+  str = str.replace(/\b[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\b/gi, match => {
+    // Only redact if it appears in a suspicious context
+    if (str.toLowerCase().includes('token') || str.toLowerCase().includes('session')) {
+      return '[UUID_REDACTED]';
     }
     return match;
   });

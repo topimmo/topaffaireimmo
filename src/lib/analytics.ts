@@ -82,9 +82,13 @@ export async function trackEvent(
  */
 function sanitizeMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
   const sanitized: Record<string, unknown> = {};
+  // Block both camelCase and snake_case variants of sensitive fields
   const blockedFields = [
-    'email', 'phone', 'name', 'address', 'user_id', 'userId',
-    'password', 'token', 'session', 'ip', 'location'
+    'email', 'phone', 'name', 'address',
+    'user_id', 'userId',
+    'session_id', 'sessionId',
+    'ip_address', 'ipAddress',
+    'password', 'token', 'ip', 'location'
   ];
 
   for (const [key, value] of Object.entries(metadata)) {

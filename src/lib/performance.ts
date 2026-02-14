@@ -240,12 +240,12 @@ export function monitorWebVitals(): void {
   // Largest Contentful Paint (LCP)
   const lcpObserver = new PerformanceObserver((list) => {
     const entries = list.getEntries();
-    const lastEntry = entries[entries.length - 1] as PerformanceEntry;
+    const finalLcpEntry = entries[entries.length - 1] as PerformanceEntry;
     
     trackPerformance({
       type: 'page_load',
       name: 'LCP',
-      duration: Math.round(lastEntry.startTime),
+      duration: Math.round(finalLcpEntry.startTime),
       metadata: { metric: 'largest-contentful-paint' }
     }).catch(() => {});
   });

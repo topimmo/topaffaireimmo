@@ -41,7 +41,7 @@ COMMENT ON TABLE public.system_logs IS
 -- =====================================================
 -- 2. PERFORMANCE METRICS TABLE
 -- =====================================================
--- Track slow queries, API latency, and performance issues
+-- Track slow operations, API latency, and performance issues
 
 CREATE TABLE IF NOT EXISTS public.performance_metrics (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -59,7 +59,7 @@ CREATE INDEX IF NOT EXISTS idx_performance_metrics_type ON public.performance_me
 CREATE INDEX IF NOT EXISTS idx_performance_metrics_duration ON public.performance_metrics(duration_ms DESC);
 CREATE INDEX IF NOT EXISTS idx_performance_metrics_created_at ON public.performance_metrics(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_performance_metrics_slow ON public.performance_metrics(metric_type, duration_ms) 
-  WHERE duration_ms > 500; -- Slow queries (>500ms)
+  WHERE duration_ms > 500; -- Slow operations (>500ms)
 
 COMMENT ON TABLE public.performance_metrics IS 
   'Performance monitoring metrics for queries, APIs, and page loads';
