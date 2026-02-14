@@ -64,9 +64,9 @@ export default function PropertyCard({
       )}
     >
       <Card className={cn(
-        "overflow-hidden hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300 rounded-xl",
+        "overflow-hidden transition-all duration-300 rounded-xl hover-lift-strong",
         // Premium card styling
-        isPremiumTier && "ring-2 ring-amber-400/40 hover:ring-amber-400/60 shadow-lg shadow-amber-500/10",
+        isPremiumTier && "ring-2 ring-amber-400/40 hover:ring-amber-400/60 shadow-premium-lg shadow-amber-500/10",
         property.isPremium && "bg-gradient-to-br from-card via-card to-amber-50/30 dark:to-amber-900/10",
         property.sponsored && "bg-gradient-to-br from-card via-card to-blue-50/30 dark:to-blue-900/10"
       )}>
@@ -83,10 +83,10 @@ export default function PropertyCard({
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {/* Premium gradient overlay */}
+        {/* Enhanced gradient overlay for better text readability */}
         <div className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent",
-          isPremiumTier && "from-black/60 via-amber-900/5"
+          "absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent",
+          isPremiumTier && "from-black/70 via-amber-900/10"
         )} />
 
         {/* Premium glow effect */}
@@ -128,7 +128,7 @@ export default function PropertyCard({
           </Badge>
         </div>
 
-        {/* Favorite Button */}
+        {/* Favorite Button - Animated Heart */}
         <Button
           variant="ghost"
           size="icon"
@@ -136,21 +136,22 @@ export default function PropertyCard({
             e.preventDefault();
             e.stopPropagation();
           }}
-          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-md h-10 w-10`}
+          className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-md h-10 w-10 group`}
         >
-          <Heart className="h-4 w-4 text-foreground/70 hover:text-primary transition-colors" />
+          <Heart className="h-4 w-4 text-foreground/70 group-hover:text-red-500 group-hover:fill-red-500 transition-all duration-300 group-hover:scale-110" />
         </Button>
 
-        {/* Price - Premium display */}
-        <div className={`absolute bottom-3 ${isRTL ? 'right-3' : 'left-3'}`}>
+        {/* Enhanced Price Display - Stronger Typography */}
+        <div className={`absolute bottom-4 ${isRTL ? 'right-4' : 'left-4'}`}>
           <p className={cn(
-            "font-mono-price text-xl md:text-2xl font-bold text-white drop-shadow-lg",
-            isPremiumTier && "drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)]"
+            "font-mono-price font-bold text-white drop-shadow-lg",
+            size === "large" ? "text-2xl md:text-3xl" : "text-xl md:text-2xl",
+            isPremiumTier && "drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]"
           )}>
             {formatPrice(property.price)}{" "}
-            <span className="text-sm font-medium opacity-90">MAD</span>
+            <span className="text-base font-semibold opacity-95">MAD</span>
             {property.priceType === "rent" && (
-              <span className="text-sm font-medium opacity-90">{t('property.perMonth')}</span>
+              <span className="text-sm font-medium opacity-90 block md:inline md:ml-1">{t('property.perMonth')}</span>
             )}
           </p>
         </div>
