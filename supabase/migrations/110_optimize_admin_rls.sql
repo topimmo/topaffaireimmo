@@ -30,8 +30,8 @@ COMMENT ON FUNCTION public.is_admin IS
   'Performance-optimized admin check. Returns TRUE if current user is admin. 
    Uses STABLE for query caching within transaction.';
 
--- Grant execute to all authenticated users
-GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, anon;
+-- Grant execute to authenticated users only
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 -- =====================================================
 -- 2. CREATE ADMIN USER ID GETTER (Optional Helper)
@@ -56,7 +56,8 @@ COMMENT ON FUNCTION public.current_admin_id IS
   'Returns current user ID if they are an admin, NULL otherwise.
    Performance-optimized with STABLE caching.';
 
-GRANT EXECUTE ON FUNCTION public.current_admin_id() TO authenticated, anon;
+-- Grant execute to authenticated users only
+GRANT EXECUTE ON FUNCTION public.current_admin_id() TO authenticated;
 
 -- =====================================================
 -- 3. UPDATE REQUESTS TABLE RLS POLICIES

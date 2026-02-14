@@ -135,14 +135,15 @@ export default function AdminServiceRequests() {
       if (requestsError) throw requestsError;
       setRequests(requestsData || []);
 
-      // Fetch verified artisans (limited to 100 most recent)
+      // Fetch verified artisans (limited to 200 most recent)
+      // Note: For better UX with many artisans, consider implementing search/autocomplete
       const { data: artisansData, error: artisansError } = await supabase
         .from('artisan_profiles')
         .select('id, user_id, business_name, is_verified, is_active')
         .eq('is_verified', true)
         .eq('is_active', true)
         .order('business_name', { ascending: true })
-        .limit(100);
+        .limit(200);
 
       if (artisansError) throw artisansError;
       setArtisans(artisansData || []);
