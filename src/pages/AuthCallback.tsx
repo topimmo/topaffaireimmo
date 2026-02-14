@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -149,6 +149,7 @@ export default function AuthCallback() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('Confirmation en cours...');
   const [showContactSupport, setShowContactSupport] = useState(false);
+  const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -459,6 +460,10 @@ export default function AuthCallback() {
     return () => {
       cancelled = true;
       timeoutIds.forEach(id => clearTimeout(id));
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+        cooldownIntervalRef.current = null;
+      }
     };
   }, [navigate, isRTL]); // Removed retryCount since retry logic is now internal
 
@@ -489,12 +494,20 @@ export default function AuthCallback() {
       setMessage(successMsg);
       setCanResendEmail(false);
       
+      // Clear any existing cooldown interval
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+      }
+      
       // Start 30-second cooldown
       setResendCooldown(30);
-      const cooldownInterval = setInterval(() => {
+      cooldownIntervalRef.current = setInterval(() => {
         setResendCooldown((prev) => {
           if (prev <= 1) {
-            clearInterval(cooldownInterval);
+            if (cooldownIntervalRef.current) {
+              clearInterval(cooldownIntervalRef.current);
+              cooldownIntervalRef.current = null;
+            }
             setCanResendEmail(true);
             return 0;
           }

@@ -282,7 +282,7 @@ export default function ArtisanProfileEdit() {
               </div>
               <div className="flex flex-col gap-3">
                 <Button onClick={handleRetry} className="w-full">
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
                   {isRTL ? 'إعادة المحاولة' : 'Réessayer'}
                 </Button>
                 <Button
@@ -290,7 +290,7 @@ export default function ArtisanProfileEdit() {
                   onClick={() => navigate('/dashboard/artisan')}
                   className="w-full"
                 >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                   {isRTL ? 'العودة' : 'Retour'}
                 </Button>
               </div>

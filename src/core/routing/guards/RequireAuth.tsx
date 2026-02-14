@@ -4,7 +4,7 @@
  */
 
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ interface RequireAuthProps {
 export function RequireAuth({ children, redirectTo = '/login' }: RequireAuthProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [timedOut, setTimedOut] = useState(false);
 
   // Set timeout to prevent infinite loading
@@ -65,7 +66,7 @@ export function RequireAuth({ children, redirectTo = '/login' }: RequireAuthProp
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.location.href = redirectTo}
+                onClick={() => navigate(redirectTo)}
                 className="w-full"
               >
                 Retour à la connexion

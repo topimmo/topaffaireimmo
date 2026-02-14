@@ -5,6 +5,7 @@
  */
 
 import { ReactNode, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ interface RequireProfileReadyProps {
 
 export function RequireProfileReady({ children }: RequireProfileReadyProps) {
   const { profileReady, loading } = useAuth();
+  const navigate = useNavigate();
   const [timedOut, setTimedOut] = useState(false);
 
   // Set timeout to prevent infinite loading
@@ -63,7 +65,7 @@ export function RequireProfileReady({ children }: RequireProfileReadyProps) {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => navigate('/dashboard')}
                 className="w-full"
               >
                 Retour au tableau de bord

@@ -135,8 +135,6 @@ export default function Dashboard() {
         .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
-      clearTimeout(timeoutId);
-
       if (!error && data) {
         console.log(`✅ [Dashboard] Fetched ${data.length} properties for user`);
         setProperties(data as unknown as Property[]);
