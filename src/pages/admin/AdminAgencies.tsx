@@ -72,12 +72,13 @@ export default function AdminAgencies() {
     setLoading(true);
 
     try {
-      // Fetch agencies from profiles
+      // Fetch agencies from profiles (limited to 500)
       const { data: agenciesData, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, phone, agency_name, agency_license, created_at')
         .eq('advertiser_type', 'agency')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (error) {
         console.error('Error fetching agencies:', error);

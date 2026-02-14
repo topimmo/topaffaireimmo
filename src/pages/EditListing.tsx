@@ -143,7 +143,7 @@ export default function EditListing() {
   };
 
   const fetchNeighborhoods = async () => {
-    const { data } = await supabase.from('neighborhoods').select('*');
+    const { data } = await supabase.from('neighborhoods').select('*').limit(1000);
     if (data) setNeighborhoods(data);
   };
 

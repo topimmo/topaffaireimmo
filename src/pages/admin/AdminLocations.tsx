@@ -69,11 +69,12 @@ export default function AdminLocations() {
 
     try {
       const [citiesResult, neighborhoodsResult] = await Promise.all([
-        supabase.from('cities').select('*').order('name_en'),
+        supabase.from('cities').select('*').order('name_en').limit(200),
         supabase
           .from('neighborhoods')
           .select('*, city:cities(name_en, name_fr, name_ar)')
-          .order('name_en'),
+          .order('name_en')
+          .limit(1000),
       ]);
 
       if (citiesResult.data) setCities(citiesResult.data);
