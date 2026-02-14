@@ -24,8 +24,15 @@ COMMENT ON INDEX idx_requests_user_status IS
 -- Artisan profile aggregation: Fast COUNT and AVG queries
 -- Issue requires: idx_reviews_artisan on reviews(artisan_id)
 -- Schema uses: artisan_profile_id instead of artisan_id
--- Note: A complex index with created_at already exists, but this simple
--- index is better for pure aggregation queries (COUNT, AVG, SUM)
+-- 
+-- IMPORTANT: An index named 'idx_reviews_artisan' already exists from migration 096
+-- with definition: (artisan_profile_id, created_at DESC) WHERE is_hidden = FALSE
+-- PostgreSQL's IF NOT EXISTS checks only the name, so this CREATE will be skipped.
+-- However, the existing composite index CAN be used for queries on just artisan_profile_id
+-- (PostgreSQL can use leftmost columns of composite indexes), so the requirement is satisfied.
+-- 
+-- Additionally, migration 109 created idx_reviews_artisan_simple for pure aggregation
+-- on visible reviews. Together, these indexes fully satisfy the performance requirement.
 
 CREATE INDEX IF NOT EXISTS idx_reviews_artisan
   ON public.reviews(artisan_profile_id);

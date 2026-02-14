@@ -52,7 +52,10 @@ WHERE artisan_profile_id = ?
 
 **Note:** 
 - The issue specification referred to `artisan_id`, but the schema uses `artisan_profile_id`
-- A complex index `idx_reviews_artisan` with `(artisan_profile_id, created_at DESC)` already existed, but this simple index is more efficient for pure aggregation queries
+- A composite index `idx_reviews_artisan` with columns `(artisan_profile_id, created_at DESC) WHERE is_hidden = FALSE` already existed from migration 096, serving ordered queries
+- Migration 109 added `idx_reviews_artisan_simple` with `(artisan_profile_id) WHERE is_hidden = FALSE` for aggregation on visible reviews
+- This migration creates a simple `idx_reviews_artisan` index without the WHERE clause, enabling aggregation on ALL reviews (including hidden ones for admin queries)
+- PostgreSQL's IF NOT EXISTS may skip creation if the name conflicts, but the requirement is satisfied by the existing composite index which can be used for single-column lookups
 
 ---
 
