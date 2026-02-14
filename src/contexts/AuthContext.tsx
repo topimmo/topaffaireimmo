@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js'
 import { logger, createCorrelatedLogger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/utils'
+import { setUserContext, clearUserContext } from '@/lib/sentry'
 
 export const AUTH_HYDRATION_TIMEOUT_MS = 2000; // Reduced from 4000ms for faster startup
 
@@ -143,6 +144,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session.user);
         
+        // Set Sentry user context for error tracking
+        setUserContext({
+          id: session.user.id,
+          email: session.user.email,
+          role: session.user.user_metadata?.role,
+        });
+        
         // Wait for profile to be ready before marking as hydrated
         const profileExists = await ensureProfileExists(session.user, log);
         setProfileReady(profileExists);
@@ -151,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         setUser(null);
         setProfileReady(false);
+        clearUserContext(); // Clear Sentry user context
         markHydrated();
       }
 
@@ -318,6 +327,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear local state immediately
       setSession(null);
       setUser(null);
+      
+      // Clear Sentry user context
+      clearUserContext();
       
       log.info('Sign out successful');
     } catch (exception) {

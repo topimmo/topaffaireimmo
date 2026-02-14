@@ -125,6 +125,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: Activity,
       current: location.pathname === '/admin/diagnostics',
     },
+    {
+      name: isRTL ? 'المراقبة' : 'Monitoring',
+      href: '/admin/monitoring',
+      icon: Activity,
+      current: location.pathname === '/admin/monitoring',
+    },
   ];
 
   const handleLogout = async () => {

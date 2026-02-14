@@ -9,6 +9,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { setupGlobalErrorHandlers, checkForStaleAuthToken } from "./lib/globalErrorHandlers";
 import { runBootHealthCheck, reportHealthCheckFailure } from "./lib/bootHealthCheck";
 import { hasEnv, isProd, getBaseUrl } from "./lib/env";
+import { initializeSentry } from "./lib/sentry";
+import { initializeAnalytics } from "./lib/analytics";
+import { monitorWebVitals } from "./lib/performance";
 
 /**
  * CRITICAL: Synchronous environment validation BEFORE React renders
@@ -81,12 +84,23 @@ try {
 
 if (envValidation.valid) {
   try {
+    // CRITICAL: Initialize Sentry FIRST to catch all errors
+    initializeSentry();
+
     // CRITICAL: Setup global error handlers BEFORE React renders
     // This catches unhandled promise rejections that ErrorBoundary can't catch
     setupGlobalErrorHandlers();
 
     // Check for stale auth tokens (e.g., after deployment with cache issues)
     checkForStaleAuthToken();
+
+    // Initialize analytics tracking (privacy-safe)
+    initializeAnalytics();
+
+    // Monitor Web Vitals for performance tracking
+    if (isProd()) {
+      monitorWebVitals();
+    }
 
     // PRODUCTION SAFETY: Run boot health check (non-blocking)
     // This detects network/API issues early and reports them

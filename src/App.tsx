@@ -66,6 +66,7 @@ const AdminServiceCategories = lazy(() => import("./pages/admin/AdminServiceCate
 const AdminServiceSubcategories = lazy(() => import("./pages/admin/AdminServiceSubcategories"));
 const AdminServiceRequests = lazy(() => import("./pages/admin/AdminServiceRequests"));
 const AdminArtisans = lazy(() => import("./pages/admin/AdminArtisans"));
+const AdminMonitoring = lazy(() => import("./pages/admin/AdminMonitoring"));
 
 // Artisan Pages (old)
 const ArtisanOnboarding = lazy(() => import("./pages/artisan/ArtisanOnboarding"));
@@ -541,6 +542,14 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminArtisans />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/monitoring"
+            element={
+              <AdminProtectedRoute>
+                <AdminMonitoring />
               </AdminProtectedRoute>
             }
           />
