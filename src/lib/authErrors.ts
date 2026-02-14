@@ -92,6 +92,36 @@ const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     ar: 'عنوان البريد الإلكتروني هذا غير مصرح به'
   },
   
+  // Token/Session errors
+  'token expired': {
+    fr: 'Le lien de confirmation a expiré. Veuillez demander un nouveau lien.',
+    ar: 'انتهت صلاحية رابط التأكيد. يرجى طلب رابط جديد.'
+  },
+  'expired': {
+    fr: 'Le lien de confirmation a expiré. Veuillez demander un nouveau lien.',
+    ar: 'انتهت صلاحية رابط التأكيد. يرجى طلب رابط جديد.'
+  },
+  'invalid token': {
+    fr: 'Le lien de confirmation n\'est pas valide. Veuillez demander un nouveau lien.',
+    ar: 'رابط التأكيد غير صالح. يرجى طلب رابط جديد.'
+  },
+  'token not found': {
+    fr: 'Le lien de confirmation n\'est pas valide. Veuillez demander un nouveau lien.',
+    ar: 'رابط التأكيد غير صالح. يرجى طلب رابط جديد.'
+  },
+  'otp_expired': {
+    fr: 'Le code de confirmation a expiré. Veuillez demander un nouveau code.',
+    ar: 'انتهت صلاحية رمز التأكيد. يرجى طلب رمز جديد.'
+  },
+  'session not found': {
+    fr: 'Session expirée. Veuillez vous reconnecter.',
+    ar: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.'
+  },
+  'refresh token not found': {
+    fr: 'Session expirée. Veuillez vous reconnecter.',
+    ar: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.'
+  },
+  
   // Redirect/URL errors
   'redirect': {
     fr: 'URL de redirection non autorisée. Contactez le support.',

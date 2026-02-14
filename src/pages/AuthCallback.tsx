@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isValidUuid } from '@/lib/utils';
 
@@ -11,7 +11,13 @@ const SESSION_WAIT_MS = 500; // Reduced from 1000ms
 const REDIRECT_DELAY_SHORT_MS = 1500; // Reduced from 2000ms
 const REDIRECT_DELAY_LONG_MS = 2500; // Reduced from 3000ms
 const CALLBACK_TIMEOUT_MS = 8000; // Maximum time for entire callback process
+const SESSION_POLL_ATTEMPTS = 5; // Maximum polling attempts for session creation
+const SESSION_POLL_DELAY_MS = 200; // Delay between session polling attempts
 const POST_AUTH_REDIRECT_KEY = 'post_auth_redirect';
+
+// Error detection patterns
+const TOKEN_ERROR_KEYWORDS = ['expired', 'invalid token', 'token not found', 'otp_expired'];
+const EXPIRED_KEYWORDS = ['expired', 'expir'];
 
 const peekPostAuthRedirect = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -73,11 +79,75 @@ async function getRedirectPath(userId: string): Promise<string> {
   }
 }
 
+/**
+ * Check if error indicates an expired or invalid token
+ * Only matches specific error patterns to avoid false positives
+ */
+function isTokenExpiredError(error: any): boolean {
+  if (!error) return false;
+  
+  const errorMessage = error.message?.toLowerCase() || '';
+  
+  // Check for specific expired/invalid patterns
+  const isExpired = EXPIRED_KEYWORDS.some(keyword => errorMessage.includes(keyword));
+  const isInvalidToken = TOKEN_ERROR_KEYWORDS.some(keyword => errorMessage === keyword || errorMessage.includes(keyword));
+  
+  return (
+    isExpired ||
+    isInvalidToken ||
+    error.status === 401 ||
+    error.code === 'otp_expired'
+  );
+}
+
+/**
+ * Poll for session with retry logic
+ * Tries up to SESSION_POLL_ATTEMPTS times with SESSION_POLL_DELAY_MS between attempts
+ */
+async function pollForSession(): Promise<any> {
+  for (let attempt = 0; attempt < SESSION_POLL_ATTEMPTS; attempt++) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      return session;
+    }
+    if (attempt < SESSION_POLL_ATTEMPTS - 1) {
+      await new Promise(resolve => setTimeout(resolve, SESSION_POLL_DELAY_MS));
+    }
+  }
+  return null;
+}
+
+/**
+ * Resend confirmation email to user
+ */
+async function resendConfirmationEmail(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+    });
+    
+    if (error) {
+      console.error('Failed to resend confirmation email:', error);
+      return { success: false, error: error.message };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error('Exception resending confirmation email:', err);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { isRTL } = useLanguage();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading');
   const [message, setMessage] = useState('');
+  const [canResendEmail, setCanResendEmail] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Confirmation en cours...');
+  const [showContactSupport, setShowContactSupport] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,40 +231,59 @@ export default function AuthCallback() {
           return;
         }
 
-        // PKCE flow: Exchange code for session
+        // PKCE flow: Exchange code for session with retry logic
         if (code) {
           console.log('🔑 PKCE flow detected - exchanging code for session');
+          setLoadingMessage(isRTL ? 'جاري إنشاء جلستك...' : 'Création de votre session...');
           
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
           
           if (exchangeError) {
             console.error('❌ Error exchanging code for session:', exchangeError);
+            
+            // Check if token is expired
+            if (isTokenExpiredError(exchangeError)) {
+              if (cancelled) return;
+              setStatus('expired');
+              setCanResendEmail(true);
+              const expiredMsg = isRTL
+                ? 'انتهت صلاحية رابط التأكيد. يرجى طلب رابط جديد.'
+                : 'Le lien de confirmation a expiré. Veuillez demander un nouveau lien.';
+              setMessage(expiredMsg);
+              return;
+            }
+            
+            // Generic error
             if (!cancelled) navigate('/login?err=oauth', { replace: true });
             return;
           }
 
-          let finalSession = null;
-          // Reduced polling - check 5 times with 200ms delay (1 second total)
-          for (let attempt = 0; attempt < 5; attempt++) {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-              finalSession = session;
-              break;
-            }
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
+          setLoadingMessage(isRTL ? 'جاري التحقق من جلستك...' : 'Vérification de votre session...');
+          
+          // Use polling helper
+          const finalSession = await pollForSession();
 
           if (!finalSession) {
             console.error('❌ Session not available after exchange');
-            if (!cancelled) navigate('/login?err=oauth', { replace: true });
+            
+            if (!cancelled) {
+              setStatus('error');
+              setCanResendEmail(true);
+              setShowContactSupport(true);
+              const failMsg = isRTL
+                ? 'فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.'
+                : 'Échec de la création de session. Veuillez réessayer.';
+              setMessage(failMsg);
+            }
             return;
           }
 
           if (cancelled) return;
+          setLoadingMessage(isRTL ? 'جاري إعادة التوجيه...' : 'Redirection...');
           setStatus('success');
           const successMsg = isRTL
             ? 'تم التوثيق بنجاح! جاري إعادة التوجيه...'
-            : 'Authentication successful! Redirecting...';
+            : 'Authentication réussie ! Redirection...';
           setMessage(successMsg);
 
           const storedRedirect = consumePostAuthRedirect();
@@ -210,20 +299,37 @@ export default function AuthCallback() {
         // Hash-based flow: Session auto-created by Supabase detectSessionInUrl
         if (type === 'signup' || type === 'recovery' || type === 'invite') {
           console.log(`✅ Email confirmation type: ${type} (hash-based flow)`);
+          setLoadingMessage(isRTL ? 'جاري تأكيد بريدك الإلكتروني...' : 'Confirmation de votre email...');
           
           // Wait a moment for Supabase to process the session
           await new Promise(resolve => setTimeout(resolve, SESSION_WAIT_MS));
 
+          setLoadingMessage(isRTL ? 'جاري إنشاء جلستك...' : 'Création de votre session...');
+          
           // Get the current session to verify it was created
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (sessionError) {
             console.error('❌ Error getting session:', sessionError);
+            
+            // Check if token is expired
+            if (isTokenExpiredError(sessionError)) {
+              if (cancelled) return;
+              setStatus('expired');
+              setCanResendEmail(true);
+              const expiredMsg = isRTL
+                ? 'انتهت صلاحية رابط التأكيد. يرجى طلب رابط جديد.'
+                : 'Le lien de confirmation a expiré. Veuillez demander un nouveau lien.';
+              setMessage(expiredMsg);
+              return;
+            }
+            
             if (cancelled) return;
             setStatus('error');
+            setCanResendEmail(true);
             const failMsg = isRTL
               ? 'فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى.'
-              : 'Failed to confirm email. Please try again.';
+              : 'Échec de la confirmation de l\'email. Veuillez réessayer.';
             setMessage(failMsg);
             
             const redirectTimeoutId = setTimeout(() => {
@@ -239,10 +345,11 @@ export default function AuthCallback() {
             console.log('  - User Email:', session.user.email);
             
             if (cancelled) return;
+            setLoadingMessage(isRTL ? 'جاري إعادة التوجيه...' : 'Redirection...');
             setStatus('success');
             const successMsg = isRTL
               ? 'تم تأكيد البريد الإلكتروني بنجاح! جاري إعادة التوجيه...'
-              : 'Email confirmed successfully! Redirecting...';
+              : 'Email confirmé avec succès ! Redirection...';
             setMessage(successMsg);
 
             // Get redirect path based on admin status
@@ -256,11 +363,13 @@ export default function AuthCallback() {
             timeoutIds.push(redirectTimeoutId);
           } else {
             console.warn('⚠️ No session found after confirmation');
+            
             if (cancelled) return;
             setStatus('error');
+            setCanResendEmail(true);
             const noSessionMsg = isRTL
               ? 'تعذر إنشاء الجلسة. يرجى تسجيل الدخول.'
-              : 'Could not create session. Please log in.';
+              : 'Impossible de créer la session. Veuillez vous connecter.';
             setMessage(noSessionMsg);
             const redirectTimeoutId = setTimeout(() => {
               if (!cancelled) navigate('/login');
@@ -350,7 +459,41 @@ export default function AuthCallback() {
       cancelled = true;
       timeoutIds.forEach(id => clearTimeout(id));
     };
-  }, [navigate]); // Removed isRTL from dependencies to prevent re-running on language change
+  }, [navigate, isRTL]); // Removed retryCount since retry logic is now internal
+
+  // Handler for resending confirmation email
+  const handleResendEmail = async () => {
+    setIsResending(true);
+    
+    // Try to get email from URL params or session
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const email = hashParams.get('email');
+    
+    if (!email) {
+      const errorMsg = isRTL
+        ? 'لم يتم العثور على البريد الإلكتروني. يرجى تسجيل الدخول مرة أخرى.'
+        : 'Email introuvable. Veuillez vous connecter à nouveau.';
+      setMessage(errorMsg);
+      setIsResending(false);
+      return;
+    }
+    
+    const result = await resendConfirmationEmail(email);
+    setIsResending(false);
+    
+    if (result.success) {
+      const successMsg = isRTL
+        ? 'تم إرسال بريد التأكيد الإلكتروني. يرجى التحقق من صندوق الوارد الخاص بك.'
+        : 'Email de confirmation envoyé. Veuillez vérifier votre boîte de réception.';
+      setMessage(successMsg);
+      setCanResendEmail(false);
+    } else {
+      const errorMsg = isRTL
+        ? 'فشل في إرسال البريد الإلكتروني. يرجى المحاولة مرة أخرى لاحقًا.'
+        : 'Échec de l\'envoi de l\'email. Veuillez réessayer plus tard.';
+      setMessage(errorMsg);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -359,10 +502,10 @@ export default function AuthCallback() {
           <div className="text-center">
             <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Confirmation en cours...
+              {isRTL ? 'جاري التأكيد...' : 'Confirmation en cours...'}
             </h2>
             <p className="text-gray-600">
-              Veuillez patienter pendant que nous confirmons votre compte
+              {loadingMessage}
             </p>
           </div>
         )}
@@ -371,9 +514,46 @@ export default function AuthCallback() {
           <div className="text-center">
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Succès!
+              {isRTL ? 'نجح!' : 'Succès !'}
             </h2>
             <p className="text-gray-600">{message}</p>
+          </div>
+        )}
+
+        {status === 'expired' && (
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-orange-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              {isRTL ? 'انتهت الصلاحية' : 'Lien expiré'}
+            </h2>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <div className="space-y-3">
+              {canResendEmail && (
+                <Button 
+                  onClick={handleResendEmail} 
+                  disabled={isResending}
+                  className="w-full"
+                  aria-label={isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                      {isRTL ? 'جاري الإرسال...' : 'Envoi en cours...'}
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
+                      {isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
+                    </>
+                  )}
+                </Button>
+              )}
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/login">
+                  {isRTL ? 'العودة إلى تسجيل الدخول' : 'Retour à la connexion'}
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
 
@@ -385,11 +565,38 @@ export default function AuthCallback() {
             </h2>
             <p className="text-gray-600 mb-6">{message}</p>
             <div className="space-y-3">
-              <Button asChild className="w-full">
+              {canResendEmail && (
+                <Button 
+                  onClick={handleResendEmail} 
+                  disabled={isResending}
+                  className="w-full"
+                  aria-label={isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                      {isRTL ? 'جاري الإرسال...' : 'Envoi en cours...'}
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
+                      {isRTL ? 'إعادة إرسال بريد التأكيد' : 'Renvoyer l\'email de confirmation'}
+                    </>
+                  )}
+                </Button>
+              )}
+              <Button asChild variant="outline" className="w-full">
                 <Link to="/login">
-                  {isRTL ? 'طلب رابط تأكيد جديد' : 'Demander un nouveau lien de confirmation'}
+                  {isRTL ? 'العودة إلى تسجيل الدخول' : 'Retour à la connexion'}
                 </Link>
               </Button>
+              {showContactSupport && (
+                <Button asChild variant="ghost" className="w-full">
+                  <Link to="/contact">
+                    {isRTL ? 'الاتصال بالدعم' : 'Contacter le support'}
+                  </Link>
+                </Button>
+              )}
               <p className="text-sm text-gray-500">
                 {isRTL 
                   ? 'أو جاري إعادة التوجيه إلى صفحة تسجيل الدخول...'
