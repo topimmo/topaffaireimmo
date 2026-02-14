@@ -1,9 +1,10 @@
 import HeroSearch from "@/components/home/HeroSearch";
 import EntryGateway from "@/components/home/EntryGateway";
 import FeaturedProperties from "@/components/home/FeaturedProperties";
+import FeaturedArtisans from "@/components/home/FeaturedArtisans";
+import ArtisanCTA from "@/components/home/ArtisanCTA";
 import LatestListings from "@/components/home/LatestListings";
 import PropertyCategories from "@/components/home/PropertyCategories";
-import PremiumCityGrid from "@/components/home/PremiumCityGrid";
 import TrustBadges from "@/components/home/TrustBadges";
 import AdBanner from "@/components/home/AdBanner";
 import PromoBanner from "@/components/PromoBanner";
@@ -58,6 +59,12 @@ function Home() {
         {/* Featured properties */}
         <FeaturedProperties />
 
+        {/* Featured Artisans - New Section */}
+        <FeaturedArtisans />
+
+        {/* Artisan CTA - Conversion Focus */}
+        <ArtisanCTA />
+
         {/* Ad banner (home middle) - Ad Zone */}
         <div className="ad-zone-wrapper">
           <AdBanner page="home" position="home-middle" className="py-10 md:py-12" />
@@ -73,9 +80,6 @@ function Home() {
 
         {/* Property Categories */}
         <PropertyCategories />
-
-        {/* Explore by City - Premium Grid */}
-        <PremiumCityGrid />
 
         {/* Trust Badges - Before Footer */}
         <TrustBadges />
