@@ -2,7 +2,10 @@
  * Logger Utility
  * Provides structured logging with correlation IDs and log levels
  * Supports debug/info/warn/error levels with automatic formatting
+ * Now includes database persistence for production monitoring
  */
+
+import { supabase } from './supabase';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -97,11 +100,14 @@ class Logger {
   private minLevel: LogLevel;
   private logs: LogEntry[] = [];
   private maxStoredLogs = 100; // Keep last 100 logs in memory
+  private dbPersistenceEnabled: boolean;
 
   constructor() {
     this.isDevelopment = import.meta.env.DEV;
     this.isProduction = import.meta.env.PROD;
     this.minLevel = this.isDevelopment ? 'debug' : 'info';
+    // Enable DB persistence in production for warn/error logs only
+    this.dbPersistenceEnabled = this.isProduction;
   }
 
   /**
@@ -149,6 +155,39 @@ class Logger {
   }
 
   /**
+   * Persist log to database (for production monitoring)
+   * Only persists warn/error logs to avoid overwhelming the database
+   */
+  private async persistToDatabase(entry: LogEntry): Promise<void> {
+    // Only persist warn/error in production
+    if (!this.dbPersistenceEnabled || (entry.level !== 'warn' && entry.level !== 'error')) {
+      return;
+    }
+
+    try {
+      if (!supabase) {
+        return; // Silently skip if Supabase not configured
+      }
+
+      // Call the RPC function to log the event
+      await supabase.rpc('log_system_event', {
+        p_level: entry.level,
+        p_category: entry.category,
+        p_message: entry.message,
+        p_metadata: entry.data ? JSON.parse(JSON.stringify(entry.data)) : {},
+        p_correlation_id: entry.correlationId || null,
+        p_url: typeof window !== 'undefined' ? window.location.href : null,
+        p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      });
+    } catch (error) {
+      // Never let DB logging crash the app - fail silently
+      if (this.isDevelopment) {
+        console.debug('[Logger] Failed to persist to database:', error);
+      }
+    }
+  }
+
+  /**
    * Core logging method
    */
   private log(
@@ -176,6 +215,11 @@ class Logger {
 
     // Store in memory
     this.storeLog(entry);
+
+    // Persist to database (async, fire-and-forget)
+    this.persistToDatabase(entry).catch(() => {
+      // Silently ignore DB persistence errors
+    });
 
     // Console output
     const formattedMessage = this.formatLogEntry(entry);
