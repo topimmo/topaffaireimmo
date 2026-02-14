@@ -186,8 +186,8 @@ export default function EmptyState({
               className="rounded-xl gap-2 hover:scale-[1.02] transition-transform"
             >
               {isRTL 
-                ? (config as any).secondaryActionLabelAr 
-                : (config as any).secondaryActionLabelFr}
+                ? (type === "no-properties" ? "عرض جميع العقارات" : type === "no-services" ? "عرض جميع الحرفيين" : "العودة إلى الصفحة الرئيسية")
+                : (type === "no-properties" ? "Voir toutes les propriétés" : type === "no-services" ? "Voir tous les artisans" : "Retour à l'accueil")}
               <ArrowRight className={cn("h-4 w-4", isRTL && "rotate-180")} />
             </Button>
           )}
