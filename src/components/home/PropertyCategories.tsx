@@ -238,10 +238,17 @@ export default function PropertyCategories() {
   };
 
   return (
-    <section className={`py-20 md:py-24 bg-background ${isRTL ? "rtl" : "ltr"}`}>
-      <div className="container max-w-7xl mx-auto">
+    <section className={`relative py-20 md:py-24 bg-gradient-to-b from-background via-muted/20 to-background overflow-hidden ${isRTL ? "rtl" : "ltr"}`}>
+      {/* Decorative parallax background shapes */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary/3 rounded-full blur-3xl" />
+      </div>
+
+      <div className="container max-w-7xl mx-auto relative z-10">
         {/* Section Title - Premium Typography */}
-        <div className="text-center mb-12 md:mb-14">
+        <div className="text-center mb-12 md:mb-14 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <h2 className="section-title mb-3">
             {isRTL ? "تصفح حسب نوع العقار" : "Parcourir par Catégorie"}
           </h2>
@@ -256,27 +263,35 @@ export default function PropertyCategories() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 md:gap-6">
           {categories.map((category, index) => {
             const Icon = category.icon;
+            const delayClasses = ['', 'delay-75', 'delay-150', 'delay-200', 'delay-300', 'delay-[350ms]'];
+            const delayClass = delayClasses[index % delayClasses.length] || '';
+            
             return (
               <Card
                 key={category.id}
-                className="group relative overflow-hidden p-6 hover:cursor-pointer transition-all duration-300 text-start hover:-translate-y-1.5 hover:shadow-xl border border-border/50 hover:border-primary/30 rounded-xl animate-in fade-in slide-in-from-bottom-4"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className={`group relative overflow-hidden p-6 hover:cursor-pointer text-start border border-border/50 hover:border-primary/30 rounded-xl bg-card/50 backdrop-blur-sm transition-all duration-500 ease-out hover:scale-[1.05] hover:-translate-y-2 hover:shadow-2xl animate-in fade-in slide-in-from-bottom-6 duration-700 ${delayClass}`}
                 onClick={() => handleCategoryClick(category.link)}
               >
-                {/* Icon - Premium sizing */}
-                <div className="mb-4">
-                  <div className={`inline-flex p-3 rounded-xl ${category.gradient} shadow-sm group-hover:shadow-md transition-shadow duration-300`}>
-                    <Icon className={`h-6 w-6 ${category.iconColor}`} />
+                {/* Gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                
+                {/* Icon - Premium sizing with animation */}
+                <div className="relative mb-4">
+                  <div className={`inline-flex p-3 rounded-xl ${category.gradient} shadow-sm group-hover:shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                    <Icon className={`h-6 w-6 ${category.iconColor} group-hover:scale-110 transition-transform duration-300`} />
                   </div>
                 </div>
 
                 {/* Content - Enhanced typography */}
-                <h3 className="font-semibold text-base mb-1.5 text-foreground group-hover:text-primary transition-colors tracking-tight">
+                <h3 className="relative font-semibold text-base mb-1.5 text-foreground group-hover:text-primary transition-colors tracking-tight">
                   {isRTL ? category.nameAr : category.nameFr}
                 </h3>
-                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                <p className="relative text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {isRTL ? category.descriptionAr : category.descriptionFr}
                 </p>
+
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
               </Card>
             );
           })}

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFeaturedArtisans } from "@/hooks/useArtisans";
@@ -6,12 +6,44 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronLeft, ChevronRight, Sparkles, Star, MapPin, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Star, MapPin, CheckCircle2, Clock, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Animated star rating component
+function AnimatedStarRating({ rating }: { rating: number }) {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, index) => {
+        const isFull = index < fullStars;
+        const isHalf = index === fullStars && hasHalfStar;
+        
+        return (
+          <div key={index} className="relative">
+            <Star 
+              className={cn(
+                "h-4 w-4 transition-all duration-300",
+                isFull ? "fill-amber-400 text-amber-400 scale-110" : "text-muted-foreground/30"
+              )}
+            />
+            {isHalf && (
+              <div className="absolute inset-0 overflow-hidden w-1/2">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function FeaturedArtisans() {
   const { t, isRTL, language } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   
   const { artisans, loading } = useFeaturedArtisans(6);
 
@@ -131,27 +163,38 @@ export default function FeaturedArtisans() {
             return (
               <Card
                 key={artisan.id}
+                onMouseEnter={() => setHoveredCard(artisan.id)}
+                onMouseLeave={() => setHoveredCard(null)}
                 className={cn(
-                  "overflow-hidden bg-card border border-border/50 transition-all duration-300 rounded-xl hover-lift-strong",
+                  "group overflow-hidden bg-card border border-border/50 rounded-xl relative",
+                  "transition-all duration-500 ease-out",
+                  "hover:shadow-2xl hover:scale-[1.03] hover:border-primary/30 hover:-translate-y-1",
                   artisans.length > 3 && "flex-shrink-0 w-[320px] md:w-[340px] snap-start"
                 )}
               >
-                <div className="p-6 space-y-4">
-                  {/* Top Row: Avatar + Verified Badge */}
+                {/* Gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                
+                <div className="relative p-6 space-y-4">
+                  {/* Top Row: Avatar + Verified Badge + Availability */}
                   <div className="flex items-start gap-4">
-                    <Avatar className="h-16 w-16 ring-2 ring-primary/20">
-                      <AvatarImage 
-                        src={artisan.avatar_url} 
-                        alt={artisan.business_name}
-                        loading="lazy"
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar className="h-16 w-16 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300 group-hover:scale-110">
+                        <AvatarImage 
+                          src={artisan.avatar_url} 
+                          alt={artisan.business_name}
+                          loading="lazy"
+                        />
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Availability indicator */}
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-card shadow-sm animate-pulse" />
+                    </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-display font-bold text-lg text-foreground line-clamp-1">
+                      <h3 className="font-display font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-300">
                         {artisan.business_name}
                       </h3>
                       {artisan.is_verified && (
@@ -165,19 +208,25 @@ export default function FeaturedArtisans() {
                     </div>
 
                     {artisan.is_boosted && (
-                      <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1">
-                        <Sparkles className="h-3 w-3" />
+                      <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 shadow-lg">
+                        <Sparkles className="h-3 w-3 animate-pulse" />
                         {isRTL ? 'مميز' : 'Premium'}
                       </Badge>
                     )}
                   </div>
 
-                  {/* Category Badge */}
-                  {categoryName && (
-                    <Badge variant="secondary" className="font-medium">
-                      {categoryName}
+                  {/* Availability Badge */}
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 gap-1.5 font-medium">
+                      <Clock className="h-3.5 w-3.5" />
+                      {isRTL ? 'متاح الآن' : 'Disponible maintenant'}
                     </Badge>
-                  )}
+                    {categoryName && (
+                      <Badge variant="outline" className="font-medium">
+                        {categoryName}
+                      </Badge>
+                    )}
+                  </div>
 
                   {/* Services/Subcategories */}
                   {subcategories.length > 0 && (
@@ -186,7 +235,7 @@ export default function FeaturedArtisans() {
                         <Badge 
                           key={service.service_subcategory.id}
                           variant="outline" 
-                          className="text-xs"
+                          className="text-xs hover:bg-primary/5 transition-colors"
                         >
                           {language === 'ar' 
                             ? service.service_subcategory.name_ar 
@@ -196,33 +245,46 @@ export default function FeaturedArtisans() {
                     </div>
                   )}
 
-                  {/* Rating & Jobs (if available) */}
+                  {/* Rating & Jobs with animated stars */}
                   {(rating > 0 || completedJobs > 0) && (
-                    <div className="flex items-center gap-4 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-4 pt-3 border-t border-border/50">
                       {rating > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                          <span className="text-sm font-medium">{rating.toFixed(1)}</span>
+                        <div className="flex items-center gap-2">
+                          <AnimatedStarRating rating={rating} />
+                          <span className="text-sm font-bold text-foreground">{rating.toFixed(1)}</span>
                         </div>
                       )}
                       {completedJobs > 0 && (
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <span>{completedJobs}</span>
+                          <span className="font-semibold text-foreground">{completedJobs}</span>
                           <span>{isRTL ? 'مهام' : 'missions'}</span>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* CTA Button */}
-                  <Link to={`/artisan/${artisan.id}`} className="block">
-                    <Button 
-                      className="w-full rounded-xl transition-all hover:scale-[1.02]"
-                      variant="default"
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <Link to={`/artisan/${artisan.id}`} className="flex-1">
+                      <Button 
+                        className="w-full rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-md hover:shadow-lg"
+                        variant="default"
+                      >
+                        {isRTL ? 'عرض الملف الشخصي' : 'Voir le profil'}
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-xl transition-all duration-300 hover:scale-[1.02] hover:bg-primary/5 hover:border-primary/50"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // Quick contact action - could open a modal
+                      }}
                     >
-                      {isRTL ? 'عرض الملف الشخصي' : 'Voir le profil'}
+                      <MessageCircle className="h-4 w-4" />
                     </Button>
-                  </Link>
+                  </div>
                 </div>
               </Card>
             );
