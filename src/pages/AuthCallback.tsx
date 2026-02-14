@@ -120,6 +120,7 @@ export default function AuthCallback() {
   const [canResendEmail, setCanResendEmail] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Confirmation en cours...');
+  const [showContactSupport, setShowContactSupport] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -260,6 +261,7 @@ export default function AuthCallback() {
             if (!cancelled) {
               setStatus('error');
               setCanResendEmail(true);
+              setShowContactSupport(true); // Show contact support after max retries
               const failMsg = isRTL
                 ? 'فشل في إنشاء الجلسة بعد عدة محاولات. يرجى المحاولة مرة أخرى.'
                 : 'Échec de la création de session après plusieurs tentatives. Veuillez réessayer.';
@@ -595,6 +597,13 @@ export default function AuthCallback() {
                   {isRTL ? 'العودة إلى تسجيل الدخول' : 'Retour à la connexion'}
                 </Link>
               </Button>
+              {showContactSupport && (
+                <Button asChild variant="ghost" className="w-full">
+                  <Link to="/contact">
+                    {isRTL ? 'الاتصال بالدعم' : 'Contacter le support'}
+                  </Link>
+                </Button>
+              )}
               <p className="text-sm text-gray-500">
                 {isRTL 
                   ? 'أو جاري إعادة التوجيه إلى صفحة تسجيل الدخول...'

@@ -234,18 +234,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         path: lastPathRef.current,
         changeCount
       });
+      
+      // Handle TOKEN_REFRESHED event to prevent loops
+      if (event === 'TOKEN_REFRESHED') {
+        log.info('Token refreshed automatically by Supabase');
+      }
 
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         setAuthState('authenticated');
+        
+        // Set Sentry user context for error tracking
+        setUserContext({
+          id: session.user.id,
+          email: session.user.email,
+          role: session.user.user_metadata?.role,
+        });
+        
         // Wait for profile to be ready before marking as hydrated
         const profileExists = await ensureProfileExists(session.user, log);
         setProfileReady(profileExists);
       } else {
         setAuthState('unauthenticated');
         setProfileReady(false);
+        clearUserContext();
       }
 
       markHydrated();
@@ -365,9 +379,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   /**
-   * Manually refresh the session
+   * Manually refresh the session with retry logic
    */
-  const refreshSession = async (): Promise<{ error: AuthError | null }> => {
+  const refreshSession = async (retryCount = 0): Promise<{ error: AuthError | null }> => {
     const log = createCorrelatedLogger('AuthContext:refreshSession');
     
     if (!isSupabaseConfigured) {
@@ -376,18 +390,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     }
 
-    log.info('Refreshing session');
+    log.info('Refreshing session', { retryCount });
 
     try {
       const { data: { session }, error } = await supabase.auth.refreshSession();
       
       if (error) {
         log.error('Session refresh failed', error);
+        
+        // If network error and we have retries left, retry
+        if (isNetworkError(error) && retryCount < 2) {
+          log.info('Network error detected, retrying...', { retryCount });
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+          return refreshSession(retryCount + 1);
+        }
+        
         return { error };
       }
       
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        setAuthState('authenticated');
+        setUserContext({
+          id: session.user.id,
+          email: session.user.email,
+          role: session.user.user_metadata?.role,
+        });
+      } else {
+        setAuthState('unauthenticated');
+        clearUserContext();
+      }
       
       log.info('Session refreshed successfully', { userId: session?.user?.id });
       return { error: null };
