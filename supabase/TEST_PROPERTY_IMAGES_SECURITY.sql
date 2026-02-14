@@ -70,18 +70,21 @@ WHERE tgname = 'sync_property_images_trigger';
 -- ============================================
 -- TEST 6: Verify Helper Functions Exist
 -- ============================================
+-- Migration 052 created: can_access_property_image, validate_property_image_access
+-- Migration 108 created: sync_property_images, get_image_access_status
 SELECT 
   CASE 
-    WHEN COUNT(*) = 3 THEN '✅ PASS: All helper functions exist'
-    ELSE '❌ FAIL: Missing helper functions (found ' || COUNT(*)::text || ' of 3)'
+    WHEN COUNT(*) = 4 THEN '✅ PASS: All helper functions exist'
+    ELSE '❌ FAIL: Missing helper functions (found ' || COUNT(*)::text || ' of 4)'
   END as test_functions_exist
 FROM pg_proc p
 JOIN pg_namespace n ON p.pronamespace = n.oid
 WHERE n.nspname = 'public'
   AND p.proname IN (
-    'can_access_property_image',
-    'validate_property_image_access',
-    'get_image_access_status'
+    'can_access_property_image',        -- From migration 052
+    'validate_property_image_access',   -- From migration 052
+    'sync_property_images',              -- From migration 108
+    'get_image_access_status'           -- From migration 108
   );
 
 -- ============================================
