@@ -45,10 +45,6 @@ interface FilterState {
 }
 
 function FilterSidebar({ categories, cities, filters, onFilterChange, onReset, onApply }: FilterSidebarProps) {
-  const handleCategoryChange = (categoryId: string) => {
-    onFilterChange('selectedCategory', filters.selectedCategory === categoryId ? '' : categoryId);
-  };
-
   return (
     <div className="space-y-6">
       {/* Services */}
@@ -60,7 +56,7 @@ function FilterSidebar({ categories, cities, filters, onFilterChange, onReset, o
               <Checkbox 
                 id={category.id}
                 checked={filters.selectedCategory === category.id}
-                onCheckedChange={() => handleCategoryChange(category.id)}
+                onCheckedChange={(checked) => onFilterChange('selectedCategory', checked ? category.id : '')}
               />
               <label
                 htmlFor={category.id}

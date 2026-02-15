@@ -111,7 +111,13 @@ export default function ArtisanDetailPage() {
   const rating = artisan.profiles?.rating || 0;
   const completedJobs = artisan.profiles?.completed_jobs || 0;
   const avatarUrl = artisan.profiles?.avatar_url || '';
-  const initials = artisan.business_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const initials = artisan.business_name
+    .split(' ')
+    .filter(word => word.length > 0)
+    .map(word => word[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'AR';
 
   return (
     <div className="min-h-screen bg-[#0A1F2E]">

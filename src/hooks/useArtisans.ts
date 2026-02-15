@@ -9,7 +9,7 @@ export interface ArtisanProfile {
   description_ar?: string;
   phone: string;
   whatsapp?: string;
-  cities?: number[];
+  cities?: number[]; // Array of city IDs from the database
   is_verified: boolean;
   is_boosted: boolean;
   created_at: string;
