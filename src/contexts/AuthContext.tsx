@@ -15,6 +15,7 @@ interface AuthContextType {
   role: UserRole | null;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signInWithOAuth: (provider: 'google' | 'facebook') => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string, fullName: string, role: UserRole) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
@@ -120,6 +121,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
     } catch (error) {
       console.error('[Auth] Sign in error:', error);
+      return { error: error as AuthError };
+    }
+  };
+
+  // Sign in with OAuth (Google/Facebook)
+  const signInWithOAuth = async (provider: 'google' | 'facebook') => {
+    if (!supabase) {
+      console.error('[Auth] OAuth Error: Supabase not configured');
+      return { error: new Error('Supabase not configured') as AuthError };
+    }
+
+    try {
+      // CRITICAL: Use redirect mode (NOT popup) for better mobile/desktop compatibility
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          // Dynamic redirect based on current origin (not hardcoded)
+          redirectTo: `${window.location.origin}/auth/callback`,
+          // Force account selection for better UX
+          queryParams: {
+            prompt: 'select_account'
+          }
+        }
+      });
+
+      if (error) {
+        console.error(`[Auth] ${provider} OAuth Error:`, error.message);
+        return { error };
+      }
+
+      // Note: User will be redirected to OAuth provider, then back to /auth/callback
+      // The actual session will be established in the callback handler
+      return { error: null };
+    } catch (error) {
+      console.error(`[Auth] ${provider} OAuth Exception:`, error);
       return { error: error as AuthError };
     }
   };
@@ -237,6 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: (profile?.user_role as UserRole) || null,
     isAdmin: profile?.is_admin === true || profile?.user_role === 'admin',
     signIn,
+    signInWithOAuth,
     signUp,
     signOut,
     resetPassword,
