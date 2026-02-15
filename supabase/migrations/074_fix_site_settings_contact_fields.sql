@@ -23,7 +23,7 @@ WHERE key IN ('contact_phone', 'contact_whatsapp');
 
 -- Step 2: Upsert contact_email with proper JSONB format
 -- Using to_jsonb() to convert text to JSONB properly
-INSERT INTO public.site_settings (key, value, category, is_public, description)
+INSERT INTO public.site_settings (key, value, category, is_public, description_fr)
 VALUES (
   'contact_email',
   to_jsonb('contact@topaffaireimmo.com'::text),
@@ -36,7 +36,7 @@ DO UPDATE SET
   value = to_jsonb('contact@topaffaireimmo.com'::text),
   category = 'contact',
   is_public = true,
-  description = 'Contact email address for the website',
+  description_fr = 'Contact email address for the website',
   updated_at = now();
 
 COMMIT;
