@@ -216,7 +216,7 @@ export function useArtisan(id: string) {
           // Transform the data
           setArtisan({
             ...data,
-            service_category: data.service_categories,
+            service_category: data.service_categories as any,
             profiles: data.profiles?.[0] || undefined,
           });
         }

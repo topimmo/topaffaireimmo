@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout, SidebarItem } from '@/components/shared/DashboardLayout';
 import { StatCard, MiniChart } from '@/components/shared/DashboardWidgets';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -16,9 +16,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   LayoutDashboard, User, Wrench, Clock, Users, Star, BarChart3, Bell, Settings,
   Eye, Phone, TrendingUp, Calendar, Search, ChevronDown, Camera, X, Save, Loader2,
-  MessageSquare, BadgeCheck
+  MessageSquare, BadgeCheck, AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  useArtisanStats,
+  useArtisanRequests,
+  useArtisanReviews,
+  useArtisanProfile,
+  useServiceCategories,
+  useServiceSubcategories,
+  useArtisanServices,
+} from '@/hooks/useArtisanDashboard';
+import { toast } from 'sonner';
 
 const sidebarItems: SidebarItem[] = [
   { icon: <LayoutDashboard className="h-4 w-4" />, label: 'Vue d\'ensemble', id: 'overview' },
@@ -34,21 +45,50 @@ const sidebarItems: SidebarItem[] = [
 
 // Overview Section
 function OverviewSection() {
-  const recentLeads = [
-    { name: 'Ahmed B.', service: 'Plomberie', time: 'Il y a 2h', status: 'new' as const },
-    { name: 'Sara M.', service: 'Sanitaire', time: 'Il y a 5h', status: 'contacted' as const },
-    { name: 'Khalid R.', service: 'Chauffage', time: 'Hier', status: 'closed' as const },
-    { name: 'Fatima Z.', service: 'Plomberie', time: 'Il y a 2j', status: 'new' as const },
-  ];
+  const { stats, loading: statsLoading } = useArtisanStats();
+  const { requests, loading: requestsLoading } = useArtisanRequests();
+  const recentRequests = requests.slice(0, 5);
+
+  if (statsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Card key={i} className="bg-[#1B2F3C] border-[#2A3F4C]">
+              <CardContent className="p-6">
+                <Skeleton className="h-12 w-full bg-gray-700" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Eye className="h-5 w-5 text-[#0FC2C0]" />} label="Vues du profil" value="1,247" change={12} />
-        <StatCard icon={<Phone className="h-5 w-5 text-[#0FC2C0]" />} label="Clics contacts" value="89" change={8} />
-        <StatCard icon={<TrendingUp className="h-5 w-5 text-[#0FC2C0]" />} label="Taux de conversion" value="7.1%" change={-2} />
-        <StatCard icon={<Star className="h-5 w-5 text-[#0FC2C0]" />} label="Note moyenne" value="4.9" change={0.1} changeLabel="ce mois" />
+        <StatCard 
+          icon={<Users className="h-5 w-5 text-[#0FC2C0]" />} 
+          label="Demandes totales" 
+          value={stats?.totalRequests?.toString() || '0'} 
+        />
+        <StatCard 
+          icon={<Clock className="h-5 w-5 text-amber-400" />} 
+          label="En attente" 
+          value={stats?.pendingRequests?.toString() || '0'} 
+        />
+        <StatCard 
+          icon={<Star className="h-5 w-5 text-[#0FC2C0]" />} 
+          label="Note moyenne" 
+          value={stats?.averageRating?.toFixed(1) || '0.0'} 
+        />
+        <StatCard 
+          icon={<BadgeCheck className="h-5 w-5 text-green-400" />} 
+          label="Missions complétées" 
+          value={stats?.completedJobs?.toString() || '0'} 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -68,34 +108,47 @@ function OverviewSection() {
         {/* Recent Leads */}
         <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white text-lg">Leads récents</CardTitle>
+            <CardTitle className="text-white text-lg">Demandes récentes</CardTitle>
             <Button variant="ghost" size="sm" className="text-[#0FC2C0] text-xs">Voir tout</Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentLeads.map((lead, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-[#0A1F2E]">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#0FC2C0]/20 flex items-center justify-center text-[#0FC2C0] font-bold text-sm">
-                    {lead.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">{lead.name}</p>
-                    <p className="text-xs text-gray-400">{lead.service}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <Badge className={cn(
-                    'text-xs',
-                    lead.status === 'new' && 'bg-blue-500/20 text-blue-400',
-                    lead.status === 'contacted' && 'bg-amber-500/20 text-amber-400',
-                    lead.status === 'closed' && 'bg-green-500/20 text-green-400',
-                  )}>
-                    {lead.status === 'new' ? 'Nouveau' : lead.status === 'contacted' ? 'Contacté' : 'Fermé'}
-                  </Badge>
-                  <p className="text-xs text-gray-500 mt-1">{lead.time}</p>
-                </div>
+            {requestsLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full bg-gray-700" />)}
               </div>
-            ))}
+            ) : recentRequests.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Aucune demande pour le moment</p>
+              </div>
+            ) : (
+              recentRequests.map((request) => (
+                <div key={request.id} className="flex items-center justify-between p-3 rounded-lg bg-[#0A1F2E]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#0FC2C0]/20 flex items-center justify-center text-[#0FC2C0] font-bold text-sm">
+                      {request.client_name?.charAt(0) || 'C'}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">{request.client_name || 'Client'}</p>
+                      <p className="text-xs text-gray-400">{request.service_name || 'Service'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Badge className={cn(
+                      'text-xs',
+                      request.status === 'pending' && 'bg-blue-500/20 text-blue-400',
+                      request.status === 'contacted' && 'bg-amber-500/20 text-amber-400',
+                      request.status === 'completed' && 'bg-green-500/20 text-green-400',
+                    )}>
+                      {request.status === 'pending' ? 'Nouveau' : request.status === 'contacted' ? 'Contacté' : request.status}
+                    </Badge>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(request.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
@@ -105,35 +158,61 @@ function OverviewSection() {
 
 // Leads Section
 function LeadsSection() {
-  const leads = [
-    { id: '1', name: 'Ahmed Benali', email: 'ahmed@email.com', phone: '+212 6 12 34 56 78', service: 'Plomberie', date: '2024-01-15', status: 'new' },
-    { id: '2', name: 'Sara Mousaoui', email: 'sara@email.com', phone: '+212 6 98 76 54 32', service: 'Sanitaire', date: '2024-01-14', status: 'contacted' },
-    { id: '3', name: 'Khalid Rachidi', email: 'khalid@email.com', phone: '+212 6 11 22 33 44', service: 'Chauffage', date: '2024-01-13', status: 'closed' },
-    { id: '4', name: 'Fatima Zahra', email: 'fatima@email.com', phone: '+212 6 55 66 77 88', service: 'Plomberie', date: '2024-01-12', status: 'new' },
-    { id: '5', name: 'Omar Benjelloun', email: 'omar@email.com', phone: '+212 6 44 33 22 11', service: 'Sanitaire', date: '2024-01-11', status: 'contacted' },
-  ];
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const { requests, loading, error, updateRequestStatus } = useArtisanRequests(
+    statusFilter === 'all' ? undefined : statusFilter
+  );
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  const handleStatusChange = async (requestId: string, newStatus: string) => {
+    setUpdating(requestId);
+    const result = await updateRequestStatus(requestId, newStatus);
+    setUpdating(null);
+    
+    if (result.success) {
+      toast.success('Statut mis à jour');
+    } else {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-full bg-gray-700" />
+        <Skeleton className="h-96 w-full bg-gray-700" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
+        <CardContent className="p-12 text-center">
+          <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-400">Erreur lors du chargement des demandes</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white">Leads</h2>
-          <p className="text-sm text-gray-400">{leads.length} contacts reçus</p>
+          <h2 className="text-xl font-bold text-white">Demandes</h2>
+          <p className="text-sm text-gray-400">{requests.length} contacts reçus</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input placeholder="Rechercher..." className="pl-9 bg-[#1B2F3C] border-[#2A3F4C] text-white w-48" />
-          </div>
-          <Select defaultValue="all">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-36 bg-[#1B2F3C] border-[#2A3F4C] text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
               <SelectItem value="all" className="text-white">Tous</SelectItem>
-              <SelectItem value="new" className="text-white">Nouveaux</SelectItem>
+              <SelectItem value="pending" className="text-white">En attente</SelectItem>
               <SelectItem value="contacted" className="text-white">Contactés</SelectItem>
-              <SelectItem value="closed" className="text-white">Fermés</SelectItem>
+              <SelectItem value="completed" className="text-white">Terminés</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -152,46 +231,53 @@ function LeadsSection() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2A3F4C]">
-              {leads.map(lead => (
-                <tr key={lead.id} className="hover:bg-[#0A1F2E]/50">
-                  <td className="p-4">
-                    <p className="font-medium text-white text-sm">{lead.name}</p>
-                    <p className="text-xs text-gray-400 md:hidden">{lead.phone}</p>
-                  </td>
-                  <td className="p-4 hidden md:table-cell">
-                    <p className="text-sm text-gray-300">{lead.phone}</p>
-                    <p className="text-xs text-gray-400">{lead.email}</p>
-                  </td>
-                  <td className="p-4">
-                    <Badge variant="outline" className="bg-[#0FC2C0]/10 border-[#0FC2C0]/30 text-[#0FC2C0] text-xs">
-                      {lead.service}
-                    </Badge>
-                  </td>
-                  <td className="p-4 hidden sm:table-cell text-sm text-gray-400">{lead.date}</td>
-                  <td className="p-4">
-                    <Select defaultValue={lead.status}>
-                      <SelectTrigger className="w-28 h-8 bg-transparent border-[#2A3F4C] text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
-                        <SelectItem value="new" className="text-blue-400 text-xs">Nouveau</SelectItem>
-                        <SelectItem value="contacted" className="text-amber-400 text-xs">Contacté</SelectItem>
-                        <SelectItem value="closed" className="text-green-400 text-xs">Fermé</SelectItem>
-                      </SelectContent>
-                    </Select>
+              {requests.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-gray-400">
+                    <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Aucune demande pour le moment</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                requests.map(request => (
+                  <tr key={request.id} className="hover:bg-[#0A1F2E]/50">
+                    <td className="p-4">
+                      <p className="font-medium text-white text-sm">{request.client_name || 'Client'}</p>
+                      <p className="text-xs text-gray-400 md:hidden">{request.client_phone}</p>
+                    </td>
+                    <td className="p-4 hidden md:table-cell">
+                      <p className="text-sm text-gray-300">{request.client_phone || 'N/A'}</p>
+                    </td>
+                    <td className="p-4">
+                      <Badge variant="outline" className="bg-[#0FC2C0]/10 border-[#0FC2C0]/30 text-[#0FC2C0] text-xs">
+                        {request.service_name || 'Service'}
+                      </Badge>
+                    </td>
+                    <td className="p-4 hidden sm:table-cell text-sm text-gray-400">
+                      {new Date(request.created_at).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="p-4">
+                      <Select
+                        value={request.status}
+                        onValueChange={(value) => handleStatusChange(request.id, value)}
+                        disabled={updating === request.id}
+                      >
+                        <SelectTrigger className="w-32 h-8 bg-transparent border-[#2A3F4C] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
+                          <SelectItem value="pending" className="text-blue-400 text-xs">En attente</SelectItem>
+                          <SelectItem value="contacted" className="text-amber-400 text-xs">Contacté</SelectItem>
+                          <SelectItem value="completed" className="text-green-400 text-xs">Terminé</SelectItem>
+                          <SelectItem value="cancelled" className="text-red-400 text-xs">Annulé</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-        </div>
-        {/* Pagination */}
-        <div className="flex items-center justify-between p-4 border-t border-[#2A3F4C]">
-          <p className="text-xs text-gray-400">Page 1 sur 3</p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="border-[#2A3F4C] text-gray-300 h-8">Précédent</Button>
-            <Button variant="outline" size="sm" className="border-[#2A3F4C] text-gray-300 h-8">Suivant</Button>
-          </div>
         </div>
       </Card>
     </div>
@@ -200,24 +286,59 @@ function LeadsSection() {
 
 // Profile Section
 function ProfileSection() {
-  const [selectedServices, setSelectedServices] = useState(['Plomberie', 'Sanitaire', 'Chauffage']);
-  const allServices = ['Plomberie', 'Électricité', 'Peinture', 'Menuiserie', 'Sanitaire', 'Chauffage', 'Carrelage', 'Jardinage', 'Serrurerie', 'Climatisation'];
-  const maxServices = 5;
+  const { profile, loading, updateProfile } = useArtisanProfile();
+  const [businessName, setBusinessName] = useState('');
+  const [description, setDescription] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const toggleService = (service: string) => {
-    if (selectedServices.includes(service)) {
-      setSelectedServices(prev => prev.filter(s => s !== service));
-    } else if (selectedServices.length < maxServices) {
-      setSelectedServices(prev => [...prev, service]);
+  useEffect(() => {
+    if (profile) {
+      setBusinessName(profile.business_name || '');
+      setDescription(profile.description_fr || '');
+      setPhone(profile.phone || '');
+      setWhatsapp(profile.whatsapp || '');
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const result = await updateProfile({
+      business_name: businessName,
+      description_fr: description,
+      phone,
+      whatsapp,
+    });
+    setSaving(false);
+
+    if (result.success) {
+      toast.success('Profil mis à jour avec succès');
+    } else {
+      toast.error('Erreur lors de la mise à jour');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <Skeleton className="h-12 w-full bg-gray-700" />
+        <Skeleton className="h-64 w-full bg-gray-700" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Éditer le profil</h2>
-        <Button className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
-          <Save className="h-4 w-4 mr-2" />Enregistrer
+        <Button 
+          className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          Enregistrer
         </Button>
       </div>
 
@@ -227,18 +348,24 @@ function ProfileSection() {
           <div className="flex items-center gap-6">
             <div className="relative">
               <Avatar className="h-24 w-24 ring-2 ring-[#0FC2C0]">
-                <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" />
-                <AvatarFallback className="bg-[#0FC2C0] text-white text-2xl">MA</AvatarFallback>
+                <AvatarImage src={profile?.avatar_url} />
+                <AvatarFallback className="bg-[#0FC2C0] text-white text-2xl">
+                  {profile?.business_name?.charAt(0) || 'A'}
+                </AvatarFallback>
               </Avatar>
               <button className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#0FC2C0] text-white hover:bg-[#0DA9A7]">
                 <Camera className="h-4 w-4" />
               </button>
             </div>
             <div>
-              <h3 className="font-semibold text-white text-lg">Mohamed El Alami</h3>
+              <h3 className="font-semibold text-white text-lg">{profile?.business_name || 'Artisan'}</h3>
               <div className="flex items-center gap-2 mt-1">
-                <BadgeCheck className="h-4 w-4 text-[#0FC2C0]" />
-                <span className="text-sm text-[#0FC2C0]">Profil vérifié</span>
+                {profile?.is_verified && (
+                  <>
+                    <BadgeCheck className="h-4 w-4 text-[#0FC2C0]" />
+                    <span className="text-sm text-[#0FC2C0]">Profil vérifié</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -249,28 +376,103 @@ function ProfileSection() {
       <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
         <CardHeader><CardTitle className="text-white text-lg">Informations</CardTitle></CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-gray-300 text-sm">Nom de l'entreprise</Label>
+            <Input 
+              value={businessName} 
+              onChange={(e) => setBusinessName(e.target.value)}
+              className="bg-[#0A1F2E] border-[#2A3F4C] text-white" 
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-gray-300 text-sm">Nom complet</Label>
-              <Input defaultValue="Mohamed El Alami" className="bg-[#0A1F2E] border-[#2A3F4C] text-white" />
+              <Label className="text-gray-300 text-sm">Téléphone</Label>
+              <Input 
+                value={phone} 
+                onChange={(e) => setPhone(e.target.value)}
+                className="bg-[#0A1F2E] border-[#2A3F4C] text-white" 
+              />
             </div>
             <div className="space-y-2">
-              <Label className="text-gray-300 text-sm">Années d'expérience</Label>
-              <Input type="number" defaultValue="12" className="bg-[#0A1F2E] border-[#2A3F4C] text-white" />
+              <Label className="text-gray-300 text-sm">WhatsApp</Label>
+              <Input 
+                value={whatsapp} 
+                onChange={(e) => setWhatsapp(e.target.value)}
+                className="bg-[#0A1F2E] border-[#2A3F4C] text-white" 
+              />
             </div>
           </div>
           <div className="space-y-2">
             <Label className="text-gray-300 text-sm">Description</Label>
-            <Textarea defaultValue="Plombier professionnel avec plus de 12 ans d'expérience. Spécialisé dans les installations sanitaires et le chauffage central." rows={4} className="bg-[#0A1F2E] border-[#2A3F4C] text-white" />
+            <Textarea 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4} 
+              className="bg-[#0A1F2E] border-[#2A3F4C] text-white" 
+            />
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
 
-      {/* Services */}
+// Services Section
+function ServicesSection() {
+  const { subcategories, loading: subcategoriesLoading } = useServiceSubcategories();
+  const { services, loading: servicesLoading, updateServices } = useArtisanServices();
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const maxServices = 5;
+
+  useEffect(() => {
+    if (!servicesLoading) {
+      setSelectedServices(services);
+    }
+  }, [services, servicesLoading]);
+
+  const toggleService = (serviceId: string) => {
+    if (selectedServices.includes(serviceId)) {
+      setSelectedServices(prev => prev.filter(s => s !== serviceId));
+    } else if (selectedServices.length < maxServices) {
+      setSelectedServices(prev => [...prev, serviceId]);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const result = await updateServices(selectedServices);
+    setSaving(false);
+
+    if (result.success) {
+      toast.success('Services mis à jour');
+    } else {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  if (servicesLoading || subcategoriesLoading) {
+    return <Skeleton className="h-64 w-full bg-gray-700" />;
+  }
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-white">Mes Services</h2>
+        <Button
+          className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          Enregistrer
+        </Button>
+      </div>
+
       <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white text-lg">Services</CardTitle>
+            <CardTitle className="text-white text-lg">Sélectionnez vos services</CardTitle>
             <span className={cn(
               'text-xs font-medium px-2 py-1 rounded-full',
               selectedServices.length >= maxServices
@@ -283,13 +485,13 @@ function ProfileSection() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {allServices.map(service => {
-              const selected = selectedServices.includes(service);
+            {subcategories.map(subcategory => {
+              const selected = selectedServices.includes(subcategory.id);
               const disabled = !selected && selectedServices.length >= maxServices;
               return (
                 <button
-                  key={service}
-                  onClick={() => toggleService(service)}
+                  key={subcategory.id}
+                  onClick={() => toggleService(subcategory.id)}
                   disabled={disabled}
                   className={cn(
                     'px-3 py-1.5 rounded-full text-sm transition-all border',
@@ -301,11 +503,14 @@ function ProfileSection() {
                   )}
                 >
                   {selected && <X className="h-3 w-3 inline mr-1" />}
-                  {service}
+                  {subcategory.name_fr}
                 </button>
               );
             })}
           </div>
+          {subcategories.length === 0 && (
+            <p className="text-center text-gray-400 py-8">Aucun service disponible</p>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -314,12 +519,15 @@ function ProfileSection() {
 
 // Reviews Section
 function ReviewsSection() {
-  const reviews = [
-    { name: 'Ahmed B.', rating: 5, comment: 'Excellent travail, rapide et professionnel !', date: '15 Jan 2024', verified: true },
-    { name: 'Sara M.', rating: 4, comment: 'Très bon service. Je recommande.', date: '12 Jan 2024', verified: true },
-    { name: 'Khalid R.', rating: 5, comment: 'Travail impeccable, merci beaucoup !', date: '10 Jan 2024', verified: false },
-    { name: 'Fatima Z.', rating: 5, comment: 'Ponctuel et efficace, je referai appel à ses services.', date: '8 Jan 2024', verified: true },
-  ];
+  const { reviews, loading } = useArtisanReviews();
+  const { stats } = useArtisanStats();
+
+  if (loading) {
+    return <Skeleton className="h-96 w-full bg-gray-700" />;
+  }
+
+  const avgRating = stats?.averageRating || 0;
+  const totalReviews = reviews.length;
 
   return (
     <div className="space-y-6">
@@ -330,18 +538,18 @@ function ReviewsSection() {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="text-center">
-              <p className="text-5xl font-bold text-white">4.9</p>
+              <p className="text-5xl font-bold text-white">{avgRating.toFixed(1)}</p>
               <div className="flex items-center gap-1 mt-2">
                 {[1, 2, 3, 4, 5].map(i => (
-                  <Star key={i} className={cn('h-5 w-5', i <= 4 ? 'fill-amber-400 text-amber-400' : 'fill-amber-400 text-amber-400')} />
+                  <Star key={i} className={cn('h-5 w-5', i <= Math.round(avgRating) ? 'fill-amber-400 text-amber-400' : 'text-gray-600')} />
                 ))}
               </div>
-              <p className="text-sm text-gray-400 mt-1">127 avis</p>
+              <p className="text-sm text-gray-400 mt-1">{totalReviews} avis</p>
             </div>
             <div className="flex-1 space-y-2">
               {[5, 4, 3, 2, 1].map(rating => {
-                const counts: Record<number, number> = { 5: 95, 4: 22, 3: 8, 2: 1, 1: 1 };
-                const pct = Math.round((counts[rating] / 127) * 100);
+                const count = reviews.filter(r => r.rating === rating).length;
+                const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
                 return (
                   <div key={rating} className="flex items-center gap-3">
                     <span className="text-sm text-gray-400 w-3">{rating}</span>
@@ -349,7 +557,7 @@ function ReviewsSection() {
                     <div className="flex-1 h-2 bg-[#0A1F2E] rounded-full overflow-hidden">
                       <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-xs text-gray-400 w-8 text-right">{counts[rating]}</span>
+                    <span className="text-xs text-gray-400 w-8 text-right">{count}</span>
                   </div>
                 );
               })}
@@ -360,32 +568,51 @@ function ReviewsSection() {
 
       {/* Reviews List */}
       <div className="space-y-4">
-        {reviews.map((review, i) => (
-          <Card key={i} className="bg-[#1B2F3C] border-[#2A3F4C]">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#0FC2C0]/20 flex items-center justify-center text-[#0FC2C0] font-bold">
-                    {review.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-white text-sm">{review.name}</p>
-                      {review.verified && <Badge className="bg-green-500/20 text-green-400 text-[10px]">Vérifié</Badge>}
-                    </div>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} className={cn('h-3 w-3', s <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-600')} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <span className="text-xs text-gray-500">{review.date}</span>
-              </div>
-              <p className="text-sm text-gray-300">{review.comment}</p>
+        {reviews.length === 0 ? (
+          <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
+            <CardContent className="p-12 text-center text-gray-400">
+              <Star className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Aucun avis pour le moment</p>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          reviews.map((review) => (
+            <Card key={review.id} className="bg-[#1B2F3C] border-[#2A3F4C]">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#0FC2C0]/20 flex items-center justify-center text-[#0FC2C0] font-bold">
+                      {review.client_name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-white text-sm">{review.client_name}</p>
+                        {review.is_verified && (
+                          <Badge className="bg-green-500/20 text-green-400 text-[10px]">Vérifié</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star key={s} className={cn('h-3 w-3', s <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-600')} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {new Date(review.created_at).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-300">{review.review_text}</p>
+                {review.artisan_response && (
+                  <div className="mt-3 p-3 bg-[#0A1F2E] rounded-lg border-l-2 border-[#0FC2C0]">
+                    <p className="text-xs text-[#0FC2C0] font-medium mb-1">Votre réponse</p>
+                    <p className="text-sm text-gray-300">{review.artisan_response}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
@@ -512,11 +739,13 @@ function AvailabilitySection() {
 
 export default function ArtisanDashboardPage() {
   const [activeItem, setActiveItem] = useState('overview');
+  const { user, profile } = useAuth();
 
   const renderContent = () => {
     switch (activeItem) {
       case 'overview': return <OverviewSection />;
       case 'profile': return <ProfileSection />;
+      case 'services': return <ServicesSection />;
       case 'leads': return <LeadsSection />;
       case 'reviews': return <ReviewsSection />;
       case 'analytics': return <AnalyticsSection />;
@@ -531,8 +760,8 @@ export default function ArtisanDashboardPage() {
       sidebarItems={sidebarItems}
       activeItem={activeItem}
       onItemChange={setActiveItem}
-      userName="Mohamed El Alami"
-      userRole="Artisan vérifié"
+      userName={profile?.full_name || user?.email || 'Artisan'}
+      userRole="Artisan"
     >
       {renderContent()}
     </DashboardLayout>
