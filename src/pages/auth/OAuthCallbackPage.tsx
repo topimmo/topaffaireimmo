@@ -65,8 +65,10 @@ export default function OAuthCallbackPage() {
           provider: session.user.app_metadata.provider
         });
 
-        // Wait a moment for profile to load in AuthContext
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Small delay to allow AuthContext to process the session
+        // This is safer than a fixed timeout - the AuthContext subscription
+        // will handle the session update, we just give it a moment
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         // Redirect to home page (or dashboard based on role)
         // The AuthContext will handle profile loading

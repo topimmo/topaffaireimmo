@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     if (!supabase) {
-      return { error: new Error('Supabase not configured') as AuthError };
+      return { error: { message: 'Supabase not configured', status: 500 } as AuthError };
     }
 
     try {
@@ -121,7 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
     } catch (error) {
       console.error('[Auth] Sign in error:', error);
-      return { error: error as AuthError };
+      // Create a properly structured AuthError
+      return { 
+        error: { 
+          message: error instanceof Error ? error.message : 'Unknown error', 
+          status: 500 
+        } as AuthError 
+      };
     }
   };
 
@@ -129,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithOAuth = async (provider: 'google' | 'facebook') => {
     if (!supabase) {
       console.error('[Auth] OAuth Error: Supabase not configured');
-      return { error: new Error('Supabase not configured') as AuthError };
+      return { error: { message: 'Supabase not configured', status: 500 } as AuthError };
     }
 
     try {
@@ -156,14 +162,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
     } catch (error) {
       console.error(`[Auth] ${provider} OAuth Exception:`, error);
-      return { error: error as AuthError };
+      return { 
+        error: { 
+          message: error instanceof Error ? error.message : 'Unknown error', 
+          status: 500 
+        } as AuthError 
+      };
     }
   };
 
   // Sign up with email and password
   const signUp = async (email: string, password: string, fullName: string, role: UserRole) => {
     if (!supabase) {
-      return { error: new Error('Supabase not configured') as AuthError };
+      return { error: { message: 'Supabase not configured', status: 500 } as AuthError };
     }
 
     try {
@@ -211,7 +222,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: null };
     } catch (error) {
       console.error('[Auth] Sign up error:', error);
-      return { error: error as AuthError };
+      return { 
+        error: { 
+          message: error instanceof Error ? error.message : 'Unknown error', 
+          status: 500 
+        } as AuthError 
+      };
     }
   };
 
@@ -232,7 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Reset password
   const resetPassword = async (email: string) => {
     if (!supabase) {
-      return { error: new Error('Supabase not configured') as AuthError };
+      return { error: { message: 'Supabase not configured', status: 500 } as AuthError };
     }
 
     try {
@@ -243,14 +259,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     } catch (error) {
       console.error('[Auth] Reset password error:', error);
-      return { error: error as AuthError };
+      return { 
+        error: { 
+          message: error instanceof Error ? error.message : 'Unknown error', 
+          status: 500 
+        } as AuthError 
+      };
     }
   };
 
   // Update password
   const updatePassword = async (newPassword: string) => {
     if (!supabase) {
-      return { error: new Error('Supabase not configured') as AuthError };
+      return { error: { message: 'Supabase not configured', status: 500 } as AuthError };
     }
 
     try {
@@ -261,7 +282,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     } catch (error) {
       console.error('[Auth] Update password error:', error);
-      return { error: error as AuthError };
+      return { 
+        error: { 
+          message: error instanceof Error ? error.message : 'Unknown error', 
+          status: 500 
+        } as AuthError 
+      };
     }
   };
 
