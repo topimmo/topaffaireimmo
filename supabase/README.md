@@ -2,6 +2,14 @@
 
 This folder contains all database migrations, functions, and templates for TopAffaireImmo.
 
+## 📚 Complete Documentation
+
+- **[Backend Documentation](./BACKEND_DOCUMENTATION.md)** - Complete API reference, RPC functions, usage examples
+- **[Security Policies](./SECURITY_POLICIES.md)** - RLS policies, role permissions, security best practices
+- **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** - Step-by-step production deployment
+- **[Edge Functions](./functions/README.md)** - Edge function documentation
+- **[Validation Script](./VALIDATION_SCRIPT.sql)** - Verify backend setup
+
 ## Quick Start
 
 ```bash
@@ -13,6 +21,9 @@ supabase link --project-ref YOUR_PROJECT_ID
 
 # Run all migrations
 supabase db push
+
+# Validate setup
+# Run VALIDATION_SCRIPT.sql in Supabase SQL Editor
 ```
 
 ## Folder Structure
