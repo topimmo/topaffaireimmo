@@ -1,0 +1,221 @@
+.otp-auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.otp-auth-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.otp-auth-card h1 {
+  color: #667eea;
+  margin: 0 0 10px 0;
+  font-size: 28px;
+}
+
+.otp-auth-card h2 {
+  color: #333;
+  margin: 0 0 10px 0;
+  font-size: 24px;
+}
+
+.otp-auth-card p {
+  color: #666;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.phone-input-group,
+.otp-input-group {
+  margin-bottom: 16px;
+}
+
+.phone-input,
+.otp-input {
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  text-align: center;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.phone-input:focus,
+.otp-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.otp-input {
+  font-size: 32px;
+  letter-spacing: 8px;
+  font-weight: bold;
+}
+
+.hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-link {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.btn-link {
+  background: transparent;
+  color: #667eea;
+  padding: 8px;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.info-box {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 24px;
+  font-size: 14px;
+}
+
+.info-box strong {
+  color: #333;
+}
+
+/* Success State */
+.otp-auth-card.success {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.otp-auth-card.success h2,
+.otp-auth-card.success p {
+  color: white;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: white;
+  color: #28a745;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  margin: 0 auto 20px;
+}
+
+.user-info {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 16px;
+  border-radius: 8px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.user-info p {
+  margin: 8px 0;
+  color: white;
+}
+
+.token-display {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 16px;
+  border-radius: 8px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.token-display p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: white;
+}
+
+.token-display code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px;
+  border-radius: 4px;
+  display: block;
+  color: white;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .otp-auth-card {
+    padding: 24px;
+  }
+
+  .otp-auth-card h1 {
+    font-size: 24px;
+  }
+
+  .otp-auth-card h2 {
+    font-size: 20px;
+  }
+}
