@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout, SidebarItem } from '@/components/shared/DashboardLayout';
 import { StatCard, MiniChart } from '@/components/shared/DashboardWidgets';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { uploadArtisanAvatar, validateFile } from '@/lib/storage';
 import {
   useArtisanStats,
   useArtisanRequests,
@@ -287,11 +288,14 @@ function LeadsSection() {
 // Profile Section
 function ProfileSection() {
   const { profile, loading, updateProfile } = useArtisanProfile();
+  const { user } = useAuth();
   const [businessName, setBusinessName] = useState('');
   const [description, setDescription] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile) {
@@ -301,6 +305,56 @@ function ProfileSection() {
       setWhatsapp(profile.whatsapp || '');
     }
   }, [profile]);
+
+  const handleAvatarClick = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file
+    const validation = validateFile(file, {
+      maxSize: 2 * 1024 * 1024, // 2MB
+      allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    });
+
+    if (!validation.valid) {
+      toast.error(validation.error || 'Fichier non valide');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const result = await uploadArtisanAvatar(file, user.id);
+      
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      // Update profile with new avatar URL
+      const updateResult = await updateProfile({
+        avatar_url: result.url,
+      });
+
+      if (updateResult.success) {
+        toast.success('Photo de profil mise à jour avec succès');
+      } else {
+        toast.error('Erreur lors de la mise à jour de la photo');
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      toast.error('Erreur lors du téléchargement de la photo');
+    } finally {
+      setUploadingAvatar(false);
+      // Reset input
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -353,8 +407,24 @@ function ProfileSection() {
                   {profile?.business_name?.charAt(0) || 'A'}
                 </AvatarFallback>
               </Avatar>
-              <button className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#0FC2C0] text-white hover:bg-[#0DA9A7]">
-                <Camera className="h-4 w-4" />
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <button 
+                onClick={handleAvatarClick}
+                disabled={uploadingAvatar}
+                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#0FC2C0] text-white hover:bg-[#0DA9A7] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                type="button"
+              >
+                {uploadingAvatar ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
               </button>
             </div>
             <div>
