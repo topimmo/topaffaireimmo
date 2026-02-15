@@ -707,7 +707,7 @@ VALUES
     'Maximum visibility for 14 days',
     179.00,
     14,
-    ["Featured badge", "Priority in search results", "Top of category", "4x more visibility", "Social media promotion"]'::jsonb,
+    '["Featured badge", "Priority in search results", "Top of category", "4x more visibility", "Social media promotion"]'::jsonb,
     2
   ),
   (
