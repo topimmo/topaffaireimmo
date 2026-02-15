@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useMemo } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { PropertyCard } from '@/components/cards/PropertyCard';
@@ -14,85 +14,9 @@ import { SlidersHorizontal, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AdSlot } from '@/components/shared/AdSlot';
 import { EmptyState } from '@/components/shared/EmptyState';
-
-const mockProperties = [
-  {
-    id: '1',
-    title: 'Appartement moderne avec vue mer',
-    price: 2500000,
-    location: 'Ain Diab, Casablanca',
-    type: 'Appartement',
-    status: 'sale' as const,
-    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',
-    bedrooms: 3,
-    bathrooms: 2,
-    surface: 140,
-    isBoosted: true,
-    views: 1247,
-  },
-  {
-    id: '2',
-    title: 'Villa de luxe avec piscine',
-    price: 8500000,
-    location: 'Palmeraie, Marrakech',
-    type: 'Villa',
-    status: 'sale' as const,
-    image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
-    bedrooms: 5,
-    bathrooms: 4,
-    surface: 420,
-    isBoosted: true,
-    views: 2156,
-  },
-  {
-    id: '3',
-    title: 'Studio meublé centre-ville',
-    price: 4500,
-    location: 'Agdal, Rabat',
-    type: 'Studio',
-    status: 'rent' as const,
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
-    surface: 45,
-    views: 823,
-  },
-  {
-    id: '4',
-    title: 'Penthouse avec terrasse',
-    price: 15000,
-    location: 'Maarif, Casablanca',
-    type: 'Penthouse',
-    status: 'rent' as const,
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
-    bedrooms: 4,
-    bathrooms: 3,
-    surface: 250,
-    views: 1534,
-  },
-  {
-    id: '5',
-    title: 'Appartement familial spacieux',
-    price: 1800000,
-    location: 'Guéliz, Marrakech',
-    type: 'Appartement',
-    status: 'sale' as const,
-    image: 'https://images.unsplash.com/photo-1502672260066-6bc054ba9c75?w=800&q=80',
-    bedrooms: 4,
-    bathrooms: 2,
-    surface: 180,
-    views: 945,
-  },
-  {
-    id: '6',
-    title: 'Bureau moderne centre affaires',
-    price: 12000,
-    location: 'CFC, Casablanca',
-    type: 'Bureau',
-    status: 'rent' as const,
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
-    surface: 95,
-    views: 673,
-  },
-];
+import { useProperties } from '@/hooks/useProperties';
+import { useCities, usePropertyTypes } from '@/hooks/useReferenceData';
+import type { PropertyFilters } from '@/hooks/useProperties';
 
 function PropertyListingSkeleton() {
   return (
@@ -108,9 +32,34 @@ function PropertyListingSkeleton() {
   );
 }
 
-function FilterSidebar() {
-  const [budget, setBudget] = useState([0, 10000000]);
-  const [surface, setSurface] = useState([0, 500]);
+interface FilterSidebarProps {
+  filters: PropertyFilters;
+  onFilterChange: (filters: PropertyFilters) => void;
+  onReset: () => void;
+}
+
+function FilterSidebar({ filters, onFilterChange, onReset }: FilterSidebarProps) {
+  const { cities } = useCities();
+  const { propertyTypes } = usePropertyTypes();
+  
+  const [budget, setBudget] = useState([filters.min_price || 0, filters.max_price || 10000000]);
+  const [surface, setSurface] = useState([filters.min_area || 0, filters.max_area || 500]);
+
+  const handleApply = () => {
+    onFilterChange({
+      ...filters,
+      min_price: budget[0] > 0 ? budget[0] : undefined,
+      max_price: budget[1] < 10000000 ? budget[1] : undefined,
+      min_area: surface[0] > 0 ? surface[0] : undefined,
+      max_area: surface[1] < 500 ? surface[1] : undefined,
+    });
+  };
+
+  const handleReset = () => {
+    setBudget([0, 10000000]);
+    setSurface([0, 500]);
+    onReset();
+  };
 
   return (
     <div className="space-y-6">
@@ -119,11 +68,29 @@ function FilterSidebar() {
         <Label className="text-white font-semibold">Type de transaction</Label>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
-            <Checkbox id="sale" />
+            <Checkbox
+              id="sale"
+              checked={filters.transaction_type === 'sale'}
+              onCheckedChange={(checked) => {
+                onFilterChange({
+                  ...filters,
+                  transaction_type: checked ? 'sale' : undefined,
+                });
+              }}
+            />
             <label htmlFor="sale" className="text-sm text-gray-300 cursor-pointer">Vente</label>
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox id="rent" />
+            <Checkbox
+              id="rent"
+              checked={filters.transaction_type === 'rent'}
+              onCheckedChange={(checked) => {
+                onFilterChange({
+                  ...filters,
+                  transaction_type: checked ? 'rent' : undefined,
+                });
+              }}
+            />
             <label htmlFor="rent" className="text-sm text-gray-300 cursor-pointer">Location</label>
           </div>
         </div>
@@ -132,16 +99,25 @@ function FilterSidebar() {
       {/* Property Type */}
       <div className="space-y-3">
         <Label className="text-white font-semibold">Type de bien</Label>
-        <Select>
+        <Select
+          value={filters.property_type || ''}
+          onValueChange={(value) => {
+            onFilterChange({
+              ...filters,
+              property_type: value || undefined,
+            });
+          }}
+        >
           <SelectTrigger className="bg-[#1B2F3C] border-[#2A3F4C] text-white">
             <SelectValue placeholder="Tous les types" />
           </SelectTrigger>
           <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
-            <SelectItem value="appartement" className="text-white">Appartement</SelectItem>
-            <SelectItem value="villa" className="text-white">Villa</SelectItem>
-            <SelectItem value="studio" className="text-white">Studio</SelectItem>
-            <SelectItem value="terrain" className="text-white">Terrain</SelectItem>
-            <SelectItem value="commerce" className="text-white">Commerce</SelectItem>
+            <SelectItem value="" className="text-white">Tous les types</SelectItem>
+            {propertyTypes.map((type) => (
+              <SelectItem key={type.id} value={type.code} className="text-white">
+                {type.name_fr}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -212,7 +188,15 @@ function FilterSidebar() {
             <Button
               key={num}
               variant="outline"
-              className="border-[#2A3F4C] text-gray-300 hover:bg-[#0FC2C0] hover:text-white hover:border-[#0FC2C0]"
+              className={`border-[#2A3F4C] text-gray-300 hover:bg-[#0FC2C0] hover:text-white hover:border-[#0FC2C0] ${
+                filters.bedrooms === num ? 'bg-[#0FC2C0] text-white border-[#0FC2C0]' : ''
+              }`}
+              onClick={() => {
+                onFilterChange({
+                  ...filters,
+                  bedrooms: filters.bedrooms === num ? undefined : num,
+                });
+              }}
             >
               {num}+
             </Button>
@@ -223,16 +207,25 @@ function FilterSidebar() {
       {/* Location */}
       <div className="space-y-3">
         <Label className="text-white font-semibold">Ville</Label>
-        <Select>
+        <Select
+          value={filters.city_id?.toString() || ''}
+          onValueChange={(value) => {
+            onFilterChange({
+              ...filters,
+              city_id: value ? Number(value) : undefined,
+            });
+          }}
+        >
           <SelectTrigger className="bg-[#1B2F3C] border-[#2A3F4C] text-white">
             <SelectValue placeholder="Toutes les villes" />
           </SelectTrigger>
           <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
-            <SelectItem value="casablanca" className="text-white">Casablanca</SelectItem>
-            <SelectItem value="rabat" className="text-white">Rabat</SelectItem>
-            <SelectItem value="marrakech" className="text-white">Marrakech</SelectItem>
-            <SelectItem value="fes" className="text-white">Fès</SelectItem>
-            <SelectItem value="tanger" className="text-white">Tanger</SelectItem>
+            <SelectItem value="" className="text-white">Toutes les villes</SelectItem>
+            {cities.map((city) => (
+              <SelectItem key={city.id} value={city.id.toString()} className="text-white">
+                {city.name_fr}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -242,10 +235,14 @@ function FilterSidebar() {
         <Button
           variant="outline"
           className="flex-1 border-[#2A3F4C] text-gray-300 hover:bg-[#0A1F2E] hover:text-white"
+          onClick={handleReset}
         >
           Réinitialiser
         </Button>
-        <Button className="flex-1 bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
+        <Button
+          className="flex-1 bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white"
+          onClick={handleApply}
+        >
           Appliquer
         </Button>
       </div>
@@ -254,7 +251,64 @@ function FilterSidebar() {
 }
 
 export default function PropertiesPage() {
-  const [isLoading] = useState(false);
+  const [filters, setFilters] = useState<PropertyFilters>({
+    page: 1,
+    limit: 12,
+  });
+  const [sortBy, setSortBy] = useState('recent');
+
+  // Fetch properties with current filters
+  const { properties, loading, error, count } = useProperties(filters);
+
+  // Transform properties to match PropertyCard format
+  const transformedProperties = useMemo(() => {
+    return properties.map((property) => {
+      const cityName = property.city?.name_fr || '';
+      const neighborhoodName = property.neighborhood?.name_fr || '';
+      const location = neighborhoodName
+        ? `${neighborhoodName}, ${cityName}`
+        : cityName;
+
+      // Get first image from images array or use a placeholder
+      const image = property.images?.[0] || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80';
+
+      return {
+        id: property.id || '',
+        title: property.title_fr || 'Sans titre',
+        price: property.price || 0,
+        location,
+        type: property.property_type || 'Bien',
+        status: (property.transaction_type || 'sale') as 'sale' | 'rent',
+        image,
+        bedrooms: property.bedrooms || undefined,
+        bathrooms: property.bathrooms || undefined,
+        surface: property.area || 0,
+        isBoosted: property.featured || false,
+        views: property.views_count || 0,
+      };
+    });
+  }, [properties]);
+
+  const handleFilterChange = (newFilters: PropertyFilters) => {
+    setFilters({ ...newFilters, page: 1 }); // Reset to page 1 on filter change
+  };
+
+  const handleReset = () => {
+    setFilters({ page: 1, limit: 12 });
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters({ ...filters, page });
+  };
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    // Note: Sorting is not yet implemented in the backend, 
+    // but we keep the UI for future implementation
+  };
+
+  const totalPages = Math.ceil(count / (filters.limit || 12));
+  const currentPage = filters.page || 1;
 
   return (
     <div className="min-h-screen bg-[#0A1F2E]">
@@ -265,7 +319,7 @@ export default function PropertiesPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Propriétés disponibles</h1>
-            <p className="text-gray-400">{mockProperties.length} résultats trouvés</p>
+            <p className="text-gray-400">{count} résultats trouvés</p>
           </div>
 
           {/* Mobile Filter */}
@@ -281,13 +335,17 @@ export default function PropertiesPage() {
                 <SheetTitle className="text-white">Filtres</SheetTitle>
               </SheetHeader>
               <ScrollArea className="h-[calc(100vh-100px)] mt-6">
-                <FilterSidebar />
+                <FilterSidebar 
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  onReset={handleReset}
+                />
               </ScrollArea>
             </SheetContent>
           </Sheet>
 
           {/* Sort */}
-          <Select defaultValue="recent">
+          <Select value={sortBy} onValueChange={handleSortChange}>
             <SelectTrigger className="hidden lg:flex w-48 bg-[#1B2F3C] border-[#2A3F4C] text-white">
               <SelectValue />
             </SelectTrigger>
@@ -306,31 +364,52 @@ export default function PropertiesPage() {
             <div className="sticky top-24 bg-[#1B2F3C] rounded-xl p-6 border border-[#2A3F4C]">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white">Filtres</h2>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-gray-400 hover:text-white"
+                  onClick={handleReset}
+                >
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              <FilterSidebar />
+              <FilterSidebar 
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onReset={handleReset}
+              />
             </div>
           </aside>
 
           {/* Properties Grid */}
           <div className="flex-1">
-            {isLoading ? (
+            {loading ? (
               <PropertyListingSkeleton />
+            ) : error ? (
+              <EmptyState
+                variant="server-error"
+                title="Erreur de chargement"
+                description={error}
+              />
+            ) : transformedProperties.length === 0 ? (
+              <EmptyState
+                variant="no-results"
+                title="Aucune propriété trouvée"
+                description="Essayez de modifier vos critères de recherche"
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {mockProperties.map((property, index) => (
+                {transformedProperties.map((property, index) => (
                   <Fragment key={property.id}>
                     <PropertyCard {...property} />
                     {/* In-feed ad every 6 cards on desktop */}
-                    {(index + 1) % 6 === 0 && index !== mockProperties.length - 1 && (
+                    {(index + 1) % 6 === 0 && index !== transformedProperties.length - 1 && (
                       <div className="hidden md:block col-span-full">
                         <AdSlot variant="infeed" slotId={`properties-infeed-${index}`} />
                       </div>
                     )}
                     {/* In-feed ad every 4 cards on mobile */}
-                    {(index + 1) % 4 === 0 && index !== mockProperties.length - 1 && (
+                    {(index + 1) % 4 === 0 && index !== transformedProperties.length - 1 && (
                       <div className="md:hidden col-span-full">
                         <AdSlot variant="infeed" slotId={`properties-infeed-mobile-${index}`} />
                       </div>
@@ -341,25 +420,39 @@ export default function PropertiesPage() {
             )}
 
             {/* Pagination */}
-            {!isLoading && (
+            {!loading && !error && transformedProperties.length > 0 && totalPages > 1 && (
               <div className="flex justify-center gap-2 mt-12">
-                <Button variant="outline" className="border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]">
+                <Button
+                  variant="outline"
+                  className="border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
                   Précédent
                 </Button>
-                {[1, 2, 3, 4].map((page) => (
-                  <Button
-                    key={page}
-                    variant={page === 1 ? 'default' : 'outline'}
-                    className={
-                      page === 1
-                        ? 'bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white'
-                        : 'border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]'
-                    }
-                  >
-                    {page}
-                  </Button>
-                ))}
-                <Button variant="outline" className="border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]">
+                {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <Button
+                      key={page}
+                      variant={page === currentPage ? 'default' : 'outline'}
+                      className={
+                        page === currentPage
+                          ? 'bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white'
+                          : 'border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]'
+                      }
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+                <Button
+                  variant="outline"
+                  className="border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
                   Suivant
                 </Button>
               </div>

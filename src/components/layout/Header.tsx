@@ -1,4 +1,4 @@
-import { Bell, Menu, Search, User, Home, Wrench, LayoutDashboard, LogIn, X } from 'lucide-react';
+import { Bell, Menu, Search, User, Home, Wrench, LayoutDashboard, LogIn, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -12,19 +12,33 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Header() {
-  const [isAuthenticated] = useState(false);
+  const { user, role, isAdmin, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const getDashboardLink = () => {
+    if (isAdmin) return '/dashboard/admin';
+    if (role === 'artisan') return '/dashboard/artisan';
+    if (role === 'advertiser') return '/dashboard/advertiser';
+    return '/dashboard/advertiser'; // default
+  };
 
   const navLinks = [
     { to: '/properties', label: 'Propriétés', icon: <Home className="h-4 w-4" /> },
@@ -82,7 +96,7 @@ export function Header() {
           <NotificationBell />
 
           {/* User Menu */}
-          {isAuthenticated ? (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-gray-300 hover:text-[#0FC2C0] hover:bg-[#1B2F3C]">
@@ -92,19 +106,25 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56 bg-[#1B2F3C] border-[#2A3F4C]">
                 <DropdownMenuLabel className="text-white">Mon Compte</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[#2A3F4C]" />
-                <Link to="/dashboard/advertiser">
+                <Link to={getDashboardLink()}>
                   <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white cursor-pointer">
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
                     Tableau de bord
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white">
-                  Mes annonces
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white">
-                  Paramètres
-                </DropdownMenuItem>
+                {role === 'advertiser' && (
+                  <Link to="/dashboard/advertiser?tab=listings">
+                    <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white cursor-pointer">
+                      Mes annonces
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuSeparator className="bg-[#2A3F4C]" />
-                <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white">
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="text-red-400 focus:bg-[#0A1F2E] focus:text-red-400 cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
                   Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -163,16 +183,34 @@ export function Header() {
                     </Link>
                   ))}
                   <div className="h-px bg-[#2A3F4C] my-4" />
-                  <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Tableaux de bord</p>
-                  <Link to="/dashboard/advertiser" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
-                    <LayoutDashboard className="h-4 w-4" />Espace annonceur
-                  </Link>
-                  <Link to="/dashboard/artisan" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
-                    <Wrench className="h-4 w-4" />Espace artisan
-                  </Link>
-                  <Link to="/dashboard/admin" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
-                    <User className="h-4 w-4" />Administration
-                  </Link>
+                  
+                  {user ? (
+                    <>
+                      <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Mon espace</p>
+                      <Link to={getDashboardLink()} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Tableau de bord
+                      </Link>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-red-400 hover:bg-[#1B2F3C]"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Déconnexion
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Connexion</p>
+                      <Link to="/login" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
+                        <LogIn className="h-4 w-4" />
+                        Se connecter
+                      </Link>
+                      <Link to="/register" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm bg-[#0FC2C0]/15 text-[#0FC2C0] font-medium">
+                        Créer un compte
+                      </Link>
+                    </>
+                  )}
                 </nav>
 
                 {/* Mobile Auth */}

@@ -8,103 +8,480 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Shield, Home, Users, FileText, Activity, BarChart3, Bell, Settings,
   Eye, CheckCircle, XCircle, Clock, Search, AlertTriangle, Info, Ban,
   Server, Database, Zap, HardDrive, Cpu, Globe, ChevronRight, BadgeCheck,
-  Filter, RefreshCw
+  Filter, RefreshCw, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  useAdminStats,
+  usePendingProperties,
+  useUnverifiedArtisans,
+  useUsers,
+  useAuditLogs,
+} from '@/hooks/useAdminDashboard';
+import { toast } from 'sonner';
 
 const sidebarItems: SidebarItem[] = [
-  { icon: <Shield className="h-4 w-4" />, label: 'Modération', id: 'moderation', badge: 12 },
-  { icon: <Home className="h-4 w-4" />, label: 'Propriétés', id: 'properties', badge: 5 },
-  { icon: <BadgeCheck className="h-4 w-4" />, label: 'Vérification artisans', id: 'artisans', badge: 3 },
+  { icon: <BarChart3 className="h-4 w-4" />, label: 'Vue d\'ensemble', id: 'overview' },
+  { icon: <Home className="h-4 w-4" />, label: 'Propriétés', id: 'properties' },
+  { icon: <BadgeCheck className="h-4 w-4" />, label: 'Artisans', id: 'artisans' },
   { icon: <Users className="h-4 w-4" />, label: 'Utilisateurs', id: 'users' },
   { icon: <FileText className="h-4 w-4" />, label: 'Logs', id: 'logs' },
-  { icon: <BarChart3 className="h-4 w-4" />, label: 'Performance', id: 'performance' },
   { icon: <Activity className="h-4 w-4" />, label: 'Audit Trail', id: 'audit' },
-  { icon: <Bell className="h-4 w-4" />, label: 'Notifications', id: 'notifications' },
-  { icon: <Server className="h-4 w-4" />, label: 'Santé système', id: 'health' },
 ];
 
-// Moderation Queue
-function ModerationSection() {
-  const items = [
-    { id: '1', type: 'property', title: 'Appartement Casablanca', author: 'Ahmed B.', date: '15 Jan', status: 'pending' as const },
-    { id: '2', type: 'property', title: 'Villa Marrakech', author: 'Sara M.', date: '14 Jan', status: 'pending' as const },
-    { id: '3', type: 'artisan', title: 'Profil: Khalid R.', author: 'Khalid R.', date: '14 Jan', status: 'pending' as const },
-    { id: '4', type: 'property', title: 'Studio Rabat', author: 'Fatima Z.', date: '13 Jan', status: 'pending' as const },
-    { id: '5', type: 'artisan', title: 'Profil: Omar B.', author: 'Omar B.', date: '13 Jan', status: 'pending' as const },
-    { id: '6', type: 'property', title: 'Local commercial Tanger', author: 'Youssef T.', date: '12 Jan', status: 'pending' as const },
-  ];
+// Overview Section
+function OverviewSection() {
+  const { stats, loading } = useAdminStats();
 
-  const [statuses, setStatuses] = useState<Record<string, string>>(
-    Object.fromEntries(items.map(i => [i.id, i.status]))
-  );
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Card key={i} className="bg-[#1B2F3C] border-[#2A3F4C]">
+              <CardContent className="p-6">
+                <Skeleton className="h-12 w-full bg-gray-700" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <StatCard icon={<Clock className="h-5 w-5 text-amber-400" />} label="En attente" value="12" />
-        <StatCard icon={<CheckCircle className="h-5 w-5 text-green-400" />} label="Approuvés (mois)" value="87" />
-        <StatCard icon={<XCircle className="h-5 w-5 text-red-400" />} label="Rejetés (mois)" value="14" />
-        <StatCard icon={<Eye className="h-5 w-5 text-[#0FC2C0]" />} label="Total soumissions" value="113" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard 
+          icon={<Users className="h-5 w-5 text-[#0FC2C0]" />} 
+          label="Total Utilisateurs" 
+          value={stats?.totalUsers?.toString() || '0'} 
+        />
+        <StatCard 
+          icon={<Home className="h-5 w-5 text-blue-400" />} 
+          label="Propriétés" 
+          value={stats?.totalProperties?.toString() || '0'} 
+        />
+        <StatCard 
+          icon={<Clock className="h-5 w-5 text-amber-400" />} 
+          label="En attente" 
+          value={stats?.pendingProperties?.toString() || '0'} 
+        />
+        <StatCard 
+          icon={<BadgeCheck className="h-5 w-5 text-purple-400" />} 
+          label="Artisans" 
+          value={stats?.totalArtisans?.toString() || '0'} 
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
+          <CardHeader>
+            <CardTitle className="text-white text-lg">Propriétés par statut</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-[#0A1F2E]">
+              <span className="text-sm text-gray-300">En attente de validation</span>
+              <Badge className="bg-amber-500/20 text-amber-400">{stats?.pendingProperties || 0}</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-[#0A1F2E]">
+              <span className="text-sm text-gray-300">Approuvées</span>
+              <Badge className="bg-green-500/20 text-green-400">{stats?.approvedProperties || 0}</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
+          <CardHeader>
+            <CardTitle className="text-white text-lg">Artisans</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-[#0A1F2E]">
+              <span className="text-sm text-gray-300">Non vérifiés</span>
+              <Badge className="bg-amber-500/20 text-amber-400">{stats?.unverifiedArtisans || 0}</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-[#0A1F2E]">
+              <span className="text-sm text-gray-300">Total artisans</span>
+              <Badge className="bg-purple-500/20 text-purple-400">{stats?.totalArtisans || 0}</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Properties Moderation Section
+function PropertiesSection() {
+  const { properties, loading, error, approveProperty, rejectProperty } = usePendingProperties();
+  const [processing, setProcessing] = useState<string | null>(null);
+
+  const handleApprove = async (propertyId: string) => {
+    setProcessing(propertyId);
+    const result = await approveProperty(propertyId);
+    setProcessing(null);
+    
+    if (result.success) {
+      toast.success('Propriété approuvée');
+    } else {
+      toast.error('Erreur lors de l\'approbation');
+    }
+  };
+
+  const handleReject = async (propertyId: string) => {
+    setProcessing(propertyId);
+    const result = await rejectProperty(propertyId);
+    setProcessing(null);
+    
+    if (result.success) {
+      toast.success('Propriété rejetée');
+    } else {
+      toast.error('Erreur lors du rejet');
+    }
+  };
+
+  if (loading) {
+    return <Skeleton className="h-96 w-full bg-gray-700" />;
+  }
+
+  if (error) {
+    return (
+      <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
+        <CardContent className="p-12 text-center">
+          <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-400">Erreur lors du chargement</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">Modération des propriétés</h2>
+          <p className="text-sm text-gray-400">{properties.length} propriétés en attente</p>
+        </div>
       </div>
 
       <Card className="bg-[#1B2F3C] border-[#2A3F4C] overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-white text-lg">File d'attente de modération</CardTitle>
-          <div className="flex items-center gap-2">
-            <Select defaultValue="all">
-              <SelectTrigger className="w-32 h-8 bg-transparent border-[#2A3F4C] text-xs text-white"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
-                <SelectItem value="all" className="text-white">Tous</SelectItem>
-                <SelectItem value="property" className="text-white">Propriétés</SelectItem>
-                <SelectItem value="artisan" className="text-white">Artisans</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#2A3F4C]">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4">Élément</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden sm:table-cell">Auteur</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden md:table-cell">Type</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4">Titre</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden md:table-cell">Auteur</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden sm:table-cell">Ville</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4">Date</th>
+                <th className="text-right text-xs font-medium text-gray-400 uppercase p-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#2A3F4C]">
+              {properties.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-gray-400">
+                    <Home className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Aucune propriété en attente</p>
+                  </td>
+                </tr>
+              ) : (
+                properties.map(property => (
+                  <tr key={property.id} className="hover:bg-[#0A1F2E]/50">
+                    <td className="p-4">
+                      <p className="font-medium text-white text-sm">{property.title}</p>
+                      <p className="text-xs text-gray-400 md:hidden">{property.author_name}</p>
+                    </td>
+                    <td className="p-4 hidden md:table-cell text-sm text-gray-300">
+                      {property.author_name || 'N/A'}
+                    </td>
+                    <td className="p-4 hidden sm:table-cell text-sm text-gray-400">
+                      {property.city || 'N/A'}
+                    </td>
+                    <td className="p-4 text-sm text-gray-400">
+                      {new Date(property.created_at).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleApprove(property.id)}
+                          disabled={processing === property.id}
+                          className="bg-green-600 hover:bg-green-700 text-white h-7 text-xs"
+                        >
+                          {processing === property.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <>
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Approuver
+                            </>
+                          )}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleReject(property.id)}
+                          disabled={processing === property.id}
+                          variant="outline" 
+                          className="border-red-500/50 text-red-400 hover:bg-red-500/10 h-7 text-xs"
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Rejeter
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// Artisans Verification Section
+function ArtisansSection() {
+  const { artisans, loading, error, verifyArtisan, rejectArtisan } = useUnverifiedArtisans();
+  const [processing, setProcessing] = useState<string | null>(null);
+
+  const handleVerify = async (artisanId: string) => {
+    setProcessing(artisanId);
+    const result = await verifyArtisan(artisanId);
+    setProcessing(null);
+    
+    if (result.success) {
+      toast.success('Artisan vérifié');
+    } else {
+      toast.error('Erreur lors de la vérification');
+    }
+  };
+
+  const handleReject = async (artisanId: string) => {
+    setProcessing(artisanId);
+    const result = await rejectArtisan(artisanId);
+    setProcessing(null);
+    
+    if (result.success) {
+      toast.success('Artisan rejeté');
+    } else {
+      toast.error('Erreur lors du rejet');
+    }
+  };
+
+  if (loading) {
+    return <Skeleton className="h-96 w-full bg-gray-700" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">Vérification des artisans</h2>
+          <p className="text-sm text-gray-400">{artisans.length} artisans en attente</p>
+        </div>
+      </div>
+
+      <Card className="bg-[#1B2F3C] border-[#2A3F4C] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#2A3F4C]">
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4">Nom</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden md:table-cell">Téléphone</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden sm:table-cell">Catégorie</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4">Date</th>
+                <th className="text-right text-xs font-medium text-gray-400 uppercase p-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#2A3F4C]">
+              {artisans.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-gray-400">
+                    <BadgeCheck className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Aucun artisan en attente</p>
+                  </td>
+                </tr>
+              ) : (
+                artisans.map(artisan => (
+                  <tr key={artisan.id} className="hover:bg-[#0A1F2E]/50">
+                    <td className="p-4">
+                      <p className="font-medium text-white text-sm">{artisan.business_name}</p>
+                      <p className="text-xs text-gray-400 md:hidden">{artisan.phone}</p>
+                    </td>
+                    <td className="p-4 hidden md:table-cell text-sm text-gray-300">
+                      {artisan.phone}
+                    </td>
+                    <td className="p-4 hidden sm:table-cell">
+                      <Badge variant="outline" className="bg-purple-500/10 border-purple-500/30 text-purple-400 text-xs">
+                        {artisan.service_category || 'N/A'}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-sm text-gray-400">
+                      {new Date(artisan.created_at).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleVerify(artisan.id)}
+                          disabled={processing === artisan.id}
+                          className="bg-green-600 hover:bg-green-700 text-white h-7 text-xs"
+                        >
+                          {processing === artisan.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <>
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Vérifier
+                            </>
+                          )}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleReject(artisan.id)}
+                          disabled={processing === artisan.id}
+                          variant="outline" 
+                          className="border-red-500/50 text-red-400 hover:bg-red-500/10 h-7 text-xs"
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Rejeter
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// Users Management Section
+function UsersSection() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const { users, loading, updateUserRole, toggleUserStatus } = useUsers(searchTerm);
+  const [processing, setProcessing] = useState<string | null>(null);
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    setProcessing(userId);
+    const result = await updateUserRole(userId, newRole);
+    setProcessing(null);
+    
+    if (result.success) {
+      toast.success('Rôle mis à jour');
+    } else {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  const handleToggleStatus = async (userId: string) => {
+    setProcessing(userId);
+    const result = await toggleUserStatus(userId);
+    setProcessing(null);
+    
+    if (result.success) {
+      toast.success('Statut mis à jour');
+    } else {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  if (loading) {
+    return <Skeleton className="h-96 w-full bg-gray-700" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-white">Gestion des utilisateurs</h2>
+          <p className="text-sm text-gray-400">{users.length} utilisateurs</p>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Input 
+            placeholder="Rechercher..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-[#1B2F3C] border-[#2A3F4C] text-white w-64" 
+          />
+        </div>
+      </div>
+
+      <Card className="bg-[#1B2F3C] border-[#2A3F4C] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#2A3F4C]">
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4">Utilisateur</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden sm:table-cell">Rôle</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase p-4 hidden md:table-cell">Inscrit le</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase p-4">Statut</th>
                 <th className="text-right text-xs font-medium text-gray-400 uppercase p-4">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2A3F4C]">
-              {items.map(item => (
-                <tr key={item.id} className="hover:bg-[#0A1F2E]/50">
+              {users.map(user => (
+                <tr key={user.id} className="hover:bg-[#0A1F2E]/50">
                   <td className="p-4">
-                    <p className="font-medium text-white text-sm">{item.title}</p>
-                    <p className="text-xs text-gray-500 sm:hidden">{item.author}</p>
+                    <p className="font-medium text-white text-sm">{user.full_name || 'N/A'}</p>
+                    <p className="text-xs text-gray-400">{user.email}</p>
                   </td>
-                  <td className="p-4 text-sm text-gray-300 hidden sm:table-cell">{item.author}</td>
-                  <td className="p-4 hidden md:table-cell">
-                    <Badge className={cn('text-xs', item.type === 'property' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400')}>
-                      {item.type === 'property' ? 'Propriété' : 'Artisan'}
+                  <td className="p-4 hidden sm:table-cell">
+                    <Select
+                      value={user.user_role}
+                      onValueChange={(value) => handleRoleChange(user.id, value)}
+                      disabled={processing === user.id}
+                    >
+                      <SelectTrigger className="w-32 h-8 bg-transparent border-[#2A3F4C] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
+                        <SelectItem value="user" className="text-white text-xs">User</SelectItem>
+                        <SelectItem value="artisan" className="text-purple-400 text-xs">Artisan</SelectItem>
+                        <SelectItem value="advertiser" className="text-blue-400 text-xs">Advertiser</SelectItem>
+                        <SelectItem value="admin" className="text-red-400 text-xs">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="p-4 hidden md:table-cell text-sm text-gray-400">
+                    {new Date(user.created_at).toLocaleDateString('fr-FR')}
+                  </td>
+                  <td className="p-4">
+                    <Badge className={cn(
+                      'text-xs',
+                      user.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                    )}>
+                      {user.is_active ? 'Actif' : 'Banni'}
                     </Badge>
                   </td>
                   <td className="p-4">
-                    <StatusBadge status={statuses[item.id] as any || 'pending'} />
-                  </td>
-                  <td className="p-4">
                     <div className="flex items-center justify-end gap-2">
-                      {statuses[item.id] === 'pending' && (
-                        <>
-                          <Button size="sm" onClick={() => setStatuses(p => ({ ...p, [item.id]: 'approved' }))} className="bg-green-600 hover:bg-green-700 text-white h-7 text-xs">
-                            <CheckCircle className="h-3 w-3 mr-1" />Approuver
-                          </Button>
-                          <Button size="sm" onClick={() => setStatuses(p => ({ ...p, [item.id]: 'rejected' }))} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10 h-7 text-xs">
-                            <XCircle className="h-3 w-3 mr-1" />Rejeter
-                          </Button>
-                        </>
-                      )}
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleToggleStatus(user.id)}
+                        disabled={processing === user.id}
+                        variant="outline"
+                        className={cn(
+                          'h-7 text-xs',
+                          user.is_active 
+                            ? 'border-red-500/50 text-red-400 hover:bg-red-500/10'
+                            : 'border-green-500/50 text-green-400 hover:bg-green-500/10'
+                        )}
+                      >
+                        {user.is_active ? <Ban className="h-3 w-3 mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />}
+                        {user.is_active ? 'Bannir' : 'Activer'}
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -190,183 +567,104 @@ function LogsSection() {
   );
 }
 
-// Performance Monitor
-function PerformanceSection() {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold text-white">Moniteur de performance</h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Cpu className="h-5 w-5 text-[#0FC2C0]" />} label="Temps réponse API" value="142ms" change={-8} changeLabel="vs hier" />
-        <StatCard icon={<Globe className="h-5 w-5 text-[#0FC2C0]" />} label="Temps chargement page" value="1.2s" change={-5} changeLabel="vs hier" />
-        <StatCard icon={<AlertTriangle className="h-5 w-5 text-amber-400" />} label="Taux d'erreur" value="0.3%" change={0.1} changeLabel="vs hier" />
-        <StatCard icon={<Users className="h-5 w-5 text-[#0FC2C0]" />} label="Utilisateurs actifs" value="1,247" change={12} />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
-          <CardHeader><CardTitle className="text-white text-lg">Temps de réponse</CardTitle></CardHeader>
-          <CardContent>
-            <MiniChart data={[150, 135, 160, 140, 130, 145, 155, 120, 140, 130, 125, 142]} height={160} />
-          </CardContent>
-        </Card>
-        <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
-          <CardHeader><CardTitle className="text-white text-lg">Taux d'erreur</CardTitle></CardHeader>
-          <CardContent>
-            <MiniChart data={[0.5, 0.3, 0.8, 0.2, 0.4, 0.3, 0.6, 0.2, 0.3, 0.1, 0.4, 0.3]} color="#D32F2F" height={160} />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
 // Audit Trail
 function AuditSection() {
-  const events = [
-    { time: '14:23', action: 'Création annonce', user: 'Ahmed B.', entity: 'Propriété #104', type: 'create' },
-    { time: '14:18', action: 'Approbation', user: 'Admin', entity: 'Propriété #103', type: 'approve' },
-    { time: '14:15', action: 'Connexion', user: 'Sara M.', entity: 'Session', type: 'login' },
-    { time: '14:10', action: 'Modification profil', user: 'Khalid R.', entity: 'Artisan #45', type: 'edit' },
-    { time: '14:05', action: 'Rejet', user: 'Admin', entity: 'Propriété #99', type: 'reject' },
-    { time: '14:00', action: 'Inscription', user: 'Fatima Z.', entity: 'Utilisateur #312', type: 'create' },
-    { time: '13:55', action: 'Paiement boost', user: 'Omar B.', entity: 'Propriété #87', type: 'payment' },
-    { time: '13:50', action: 'Suppression', user: 'Admin', entity: 'Propriété #65', type: 'delete' },
-  ];
+  const [actionFilter, setActionFilter] = useState<string | undefined>();
+  const { logs, loading } = useAuditLogs({ action: actionFilter });
 
   const actionColors: Record<string, string> = {
     create: 'bg-blue-500/20 text-blue-400',
     approve: 'bg-green-500/20 text-green-400',
     reject: 'bg-red-500/20 text-red-400',
-    edit: 'bg-amber-500/20 text-amber-400',
-    login: 'bg-[#0FC2C0]/20 text-[#0FC2C0]',
+    update: 'bg-amber-500/20 text-amber-400',
     delete: 'bg-red-500/20 text-red-400',
-    payment: 'bg-purple-500/20 text-purple-400',
+    ban: 'bg-red-500/20 text-red-400',
+    unban: 'bg-green-500/20 text-green-400',
   };
+
+  if (loading) {
+    return <Skeleton className="h-96 w-full bg-gray-700" />;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Piste d'audit</h2>
-        <Select defaultValue="all">
+        <Select value={actionFilter || 'all'} onValueChange={(v) => setActionFilter(v === 'all' ? undefined : v)}>
           <SelectTrigger className="w-36 bg-[#1B2F3C] border-[#2A3F4C] text-white"><SelectValue /></SelectTrigger>
           <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
             <SelectItem value="all" className="text-white">Tous les types</SelectItem>
             <SelectItem value="create" className="text-white">Créations</SelectItem>
             <SelectItem value="approve" className="text-white">Approbations</SelectItem>
             <SelectItem value="reject" className="text-white">Rejets</SelectItem>
-            <SelectItem value="edit" className="text-white">Modifications</SelectItem>
+            <SelectItem value="update" className="text-white">Modifications</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
         <CardContent className="p-6">
-          <div className="relative">
-            <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-[#2A3F4C]" />
-            <div className="space-y-6">
-              {events.map((event, i) => (
-                <div key={i} className="flex gap-4 relative">
-                  <div className="w-9 h-9 rounded-full bg-[#0A1F2E] border-2 border-[#2A3F4C] flex items-center justify-center flex-shrink-0 z-10">
-                    <div className={cn('w-3 h-3 rounded-full', event.type === 'create' ? 'bg-blue-400' : event.type === 'approve' ? 'bg-green-400' : event.type === 'reject' || event.type === 'delete' ? 'bg-red-400' : event.type === 'payment' ? 'bg-purple-400' : 'bg-[#0FC2C0]')} />
-                  </div>
-                  <div className="flex-1 pt-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={cn('text-xs', actionColors[event.type])}>{event.action}</Badge>
-                      <span className="text-sm text-white font-medium">{event.user}</span>
-                      <span className="text-xs text-gray-500">→</span>
-                      <span className="text-sm text-gray-400">{event.entity}</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{event.time}</p>
-                  </div>
-                </div>
-              ))}
+          {logs.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Aucun log pour le moment</p>
             </div>
-          </div>
+          ) : (
+            <div className="relative">
+              <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-[#2A3F4C]" />
+              <div className="space-y-6">
+                {logs.map((log) => {
+                  const actionColor = actionColors[log.action] || 'bg-[#0FC2C0]/20 text-[#0FC2C0]';
+                  const dotColor = 
+                    log.action === 'create' ? 'bg-blue-400' : 
+                    log.action === 'approve' ? 'bg-green-400' : 
+                    log.action === 'reject' || log.action === 'delete' || log.action === 'ban' ? 'bg-red-400' : 
+                    'bg-[#0FC2C0]';
+                  
+                  return (
+                    <div key={log.id} className="flex gap-4 relative">
+                      <div className="w-9 h-9 rounded-full bg-[#0A1F2E] border-2 border-[#2A3F4C] flex items-center justify-center flex-shrink-0 z-10">
+                        <div className={cn('w-3 h-3 rounded-full', dotColor)} />
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className={cn('text-xs', actionColor)}>{log.action}</Badge>
+                          <span className="text-sm text-white font-medium">{log.admin_name}</span>
+                          <span className="text-xs text-gray-500">→</span>
+                          <span className="text-sm text-gray-400">{log.entity_type}</span>
+                          {log.entity_id && (
+                            <span className="text-xs text-gray-500 font-mono">#{log.entity_id.slice(0, 8)}</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(log.created_at).toLocaleString('fr-FR')}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
 
-// System Health
-function SystemHealthSection() {
-  const services = [
-    { name: 'Base de données', icon: <Database className="h-5 w-5" />, status: 'healthy', uptime: '99.99%', latency: '12ms' },
-    { name: 'Stockage', icon: <HardDrive className="h-5 w-5" />, status: 'healthy', uptime: '99.95%', latency: '45ms' },
-    { name: 'Authentification', icon: <Shield className="h-5 w-5" />, status: 'warning', uptime: '99.8%', latency: '89ms' },
-    { name: 'Edge Functions', icon: <Zap className="h-5 w-5" />, status: 'healthy', uptime: '99.97%', latency: '23ms' },
-    { name: 'CDN', icon: <Globe className="h-5 w-5" />, status: 'healthy', uptime: '100%', latency: '8ms' },
-    { name: 'Email Service', icon: <Server className="h-5 w-5" />, status: 'error', uptime: '95.2%', latency: '—' },
-  ];
-
-  const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-    healthy: { label: 'Opérationnel', color: 'text-green-400', bg: 'bg-green-500' },
-    warning: { label: 'Dégradé', color: 'text-amber-400', bg: 'bg-amber-500' },
-    error: { label: 'En panne', color: 'text-red-400', bg: 'bg-red-500' },
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Santé du système</h2>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10">
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-sm text-green-400 font-medium">Système opérationnel</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {services.map(service => {
-          const config = statusConfig[service.status];
-          return (
-            <Card key={service.name} className={cn(
-              'bg-[#1B2F3C] border-[#2A3F4C]',
-              service.status === 'error' && 'border-red-500/30'
-            )}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={cn('p-2 rounded-lg', service.status === 'healthy' ? 'bg-green-500/15 text-green-400' : service.status === 'warning' ? 'bg-amber-500/15 text-amber-400' : 'bg-red-500/15 text-red-400')}>
-                      {service.icon}
-                    </div>
-                    <div>
-                      <p className="font-medium text-white text-sm">{service.name}</p>
-                      <p className={cn('text-xs font-medium', config.color)}>{config.label}</p>
-                    </div>
-                  </div>
-                  <div className={cn('w-3 h-3 rounded-full', config.bg, service.status !== 'error' && 'animate-pulse')} />
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="bg-[#0A1F2E] rounded-lg p-2">
-                    <p className="text-xs text-gray-500">Uptime</p>
-                    <p className="font-medium text-white">{service.uptime}</p>
-                  </div>
-                  <div className="bg-[#0A1F2E] rounded-lg p-2">
-                    <p className="text-xs text-gray-500">Latence</p>
-                    <p className="font-medium text-white">{service.latency}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function AdminDashboardPage() {
-  const [activeItem, setActiveItem] = useState('moderation');
+  const [activeItem, setActiveItem] = useState('overview');
+  const { user, profile } = useAuth();
 
   const renderContent = () => {
     switch (activeItem) {
-      case 'moderation': return <ModerationSection />;
+      case 'overview': return <OverviewSection />;
+      case 'properties': return <PropertiesSection />;
+      case 'artisans': return <ArtisansSection />;
+      case 'users': return <UsersSection />;
       case 'logs': return <LogsSection />;
-      case 'performance': return <PerformanceSection />;
       case 'audit': return <AuditSection />;
-      case 'health': return <SystemHealthSection />;
-      default: return <ModerationSection />;
+      default: return <OverviewSection />;
     }
   };
 
@@ -376,8 +674,8 @@ export default function AdminDashboardPage() {
       sidebarItems={sidebarItems}
       activeItem={activeItem}
       onItemChange={setActiveItem}
-      userName="Administrateur"
-      userRole="Super Admin"
+      userName={profile?.full_name || user?.email || 'Admin'}
+      userRole="Administrateur"
     >
       {renderContent()}
     </DashboardLayout>

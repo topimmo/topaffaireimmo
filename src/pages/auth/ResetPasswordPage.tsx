@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eye, EyeOff, Lock, Loader2, Check } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Eye, EyeOff, Lock, Loader2, Check, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,8 +15,11 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const { updatePassword } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!password) errs.password = 'Le mot de passe est requis';
@@ -23,8 +27,26 @@ export default function ResetPasswordPage() {
     if (password !== confirm) errs.confirm = 'Les mots de passe ne correspondent pas';
     setErrors(errs);
     if (Object.keys(errs).length) return;
+    
     setIsLoading(true);
-    setTimeout(() => { setIsLoading(false); setSuccess(true); }, 1500);
+
+    try {
+      const { error } = await updatePassword(password);
+      
+      if (error) {
+        setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
+        setIsLoading(false);
+        return;
+      }
+      
+      setSuccess(true);
+      // Redirect to login after 2 seconds
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err) {
+      console.error('Update password error:', err);
+      setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -62,6 +84,12 @@ export default function ResetPasswordPage() {
                   <p className="text-gray-400 text-sm">Choisissez un nouveau mot de passe sécurisé</p>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {errors.general && (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start space-x-2">
+                      <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-400">{errors.general}</p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label className="text-gray-300 text-sm">Nouveau mot de passe</Label>
                     <div className="relative">

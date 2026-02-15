@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./components/home";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 // Lazy load pages
 const PropertiesPage = lazy(() => import("./pages/PropertiesPage"));
@@ -54,9 +55,30 @@ function App() {
         <Route path="/email-confirmation" element={<EmailConfirmationPage />} />
 
         {/* Dashboards */}
-        <Route path="/dashboard/artisan" element={<ArtisanDashboardPage />} />
-        <Route path="/dashboard/advertiser" element={<AdvertiserDashboardPage />} />
-        <Route path="/dashboard/admin" element={<AdminDashboardPage />} />
+        <Route 
+          path="/dashboard/artisan" 
+          element={
+            <ProtectedRoute allowedRoles={['artisan', 'admin']}>
+              <ArtisanDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/advertiser" 
+          element={
+            <ProtectedRoute allowedRoles={['advertiser', 'admin']}>
+              <AdvertiserDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/admin" 
+          element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Error */}
         <Route path="/500" element={<ServerErrorPage />} />
