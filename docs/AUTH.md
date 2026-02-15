@@ -1,21 +1,25 @@
 # Authentication Documentation
 
-## Overview
+This document describes the authentication system used in TopAffaireImmo.
 
-TopAffaireImmo uses a dual authentication system:
-1. **Phone OTP (SMS)** - Vonage Verify API
-2. **Google OAuth 2.0** - Google Sign-In
-
-Email-based authentication has been removed to streamline the user experience.
+---
 
 ## Table of Contents
-- [Phone OTP Authentication](#phone-otp-authentication)
-- [Google OAuth Authentication](#google-oauth-authentication)
-- [Environment Variables](#environment-variables)
-- [Google Cloud Console Setup](#google-cloud-console-setup)
-- [Testing Checklist](#testing-checklist)
-- [Production Deployment](#production-deployment)
-- [Security Considerations](#security-considerations)
+1. [Overview](#overview)
+2. [Phone OTP Authentication](#phone-otp-authentication)
+3. [Google OAuth Authentication (Supabase)](#google-oauth-authentication-supabase)
+4. [Environment Variables](#environment-variables)
+5. [Deployment](#deployment)
+
+---
+
+## Overview
+
+TopAffaireImmo supports two authentication methods:
+1. **Phone OTP** - SMS-based verification using Vonage Verify API
+2. **Google OAuth** - Social login via Supabase OAuth
+
+Both methods create user profiles in the database and establish authenticated sessions.
 
 ---
 
@@ -23,11 +27,11 @@ Email-based authentication has been removed to streamline the user experience.
 
 ### Flow
 1. User enters phone number
-2. System validates format (Moroccan phone numbers: +212XXXXXXXXX, 06XXXXXXXX, 07XXXXXXXX)
+2. System validates format (Moroccan phone numbers)
 3. Backend calls Vonage Verify API to send SMS with OTP code
 4. User enters 6-digit code
 5. Backend verifies code with Vonage
-6. JWT token issued and stored in localStorage
+6. JWT token issued and stored
 
 ### Endpoints
 - `POST /api/auth/otp/start` - Initiate OTP verification
@@ -38,268 +42,243 @@ Email-based authentication has been removed to streamline the user experience.
 - **Failed attempts**: 5 attempts before 15-minute lockout
 - **OTP expiry**: 5 minutes
 
-### Frontend
-- **UI**: `/src/pages/AuthPage.tsx`
-- **2-step flow**: Phone input → OTP verification
-- **Bilingual**: French and Arabic with RTL support
-- **Persistence**: localStorage for refresh safety
-
 ---
 
-## Google OAuth Authentication
+## Google OAuth Authentication (Supabase)
+
+### Overview
+Google OAuth is implemented using **Supabase's built-in OAuth provider**. This provides:
+- Secure OAuth 2.0 flow with PKCE
+- Automatic session management
+- No custom backend code needed
+- Mobile and desktop compatibility
 
 ### Flow
-1. User clicks "Se connecter avec Google" / "الدخول عبر Google"
-2. Browser redirects to `/api/auth/google/start`
-3. Backend generates PKCE parameters (state + code_verifier + code_challenge)
-4. Stores state in memory with 10-minute TTL
-5. Redirects to Google authorization URL
-6. User authenticates with Google
-7. Google redirects to `/api/auth/google/callback` with authorization code
-8. Backend validates state, exchanges code for tokens
-9. Backend fetches user info from Google
-10. Backend creates/updates user in database
-11. JWT token issued and returned via URL hash
-12. Frontend extracts token and completes login
+1. User clicks "Sign in with Google" button
+2. Frontend calls `supabase.auth.signInWithOAuth({ provider: 'google' })`
+3. Browser redirects to Google authorization page
+4. User authenticates with Google
+5. Google redirects back to `/auth/callback`
+6. Supabase automatically exchanges code for tokens
+7. Frontend calls `getSession()` to retrieve session
+8. User is redirected to home page
+9. AuthContext loads user profile
 
-### Endpoints
-- `GET /api/auth/google/start` - Initiate OAuth flow
-- `GET /api/auth/google/callback` - Handle OAuth callback
+### Implementation
+
+**AuthContext (`src/contexts/AuthContext.tsx`):**
+```typescript
+const signInWithOAuth = async (provider: 'google' | 'facebook') => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+      queryParams: { prompt: 'select_account' }
+    }
+  });
+  return { error };
+};
+```
+
+**Callback Page (`src/pages/auth/OAuthCallbackPage.tsx`):**
+```typescript
+const { data: { session }, error } = await supabase.auth.getSession();
+if (session) {
+  navigate('/'); // Success
+} else {
+  navigate('/login'); // Error
+}
+```
 
 ### Security Features
-- **PKCE**: Code challenge prevents authorization code interception
-- **State parameter**: CSRF protection
-- **In-memory state store**: 10-minute TTL, automatic cleanup
-- **Rate limiting**: 30 requests per minute per IP
-
-### User Upsert Logic
-- **Existing user (by email)**: Update `google_id`, `full_name` if empty
-- **New user**: Create auth user + profile with `google_id`, `email`, `full_name`
-
-### Database Schema
-```sql
-ALTER TABLE profiles ADD COLUMN google_id TEXT;
-CREATE INDEX idx_profiles_google_id ON profiles(google_id);
-```
+- **PKCE Flow**: Automatic via Supabase
+- **State Validation**: Handled by Supabase
+- **CSRF Protection**: Built into Supabase OAuth
+- **Rate Limiting**: Managed by Supabase infrastructure
+- **No credentials in frontend**: All OAuth secrets stored in Supabase Dashboard
 
 ---
 
 ## Environment Variables
 
-### Required for Phone OTP
+### Required for All Authentication
+
 ```env
-VONAGE_API_KEY=your_vonage_api_key_here
-VONAGE_API_SECRET=your_vonage_api_secret_here
+# Supabase Configuration (REQUIRED)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Required for Phone OTP
+
+```env
+# Vonage Verify API
+VONAGE_API_KEY=your_vonage_api_key
+VONAGE_API_SECRET=your_vonage_api_secret
 VONAGE_FROM=TopAffaire
-JWT_SECRET=your_strong_random_jwt_secret_here
+
+# JWT Secret for signing tokens
+JWT_SECRET=your_strong_random_jwt_secret
+
+# Supabase Service Role Key (server-side only)
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 ```
 
-### Required for Google OAuth
+### Google OAuth Configuration
+
+**Google OAuth is configured in Supabase Dashboard, NOT via environment variables.**
+
+1. Go to [Supabase Dashboard](https://app.supabase.com)
+2. Navigate to Authentication → Providers
+3. Enable "Google" provider
+4. Add your Google Client ID and Client Secret from Google Cloud Console
+5. Configure Site URL and Redirect URLs (see Deployment section)
+
+---
+
+## Deployment
+
+### Supabase Dashboard Configuration
+
+#### 1. Enable Google Provider
+1. Go to [Supabase Dashboard](https://app.supabase.com)
+2. Select your project
+3. Navigate to **Authentication → Providers**
+4. Find "Google" and click **Enable**
+5. Enter your Google OAuth credentials:
+   - **Client ID** (from Google Cloud Console)
+   - **Client Secret** (from Google Cloud Console)
+6. Click **Save**
+
+#### 2. Configure Site URL
+Navigate to: **Authentication → URL Configuration → Site URL**
+
+```
+Production: https://topaffaireimmo.com
+Development: http://localhost:5173
+```
+
+#### 3. Configure Redirect URLs
+Navigate to: **Authentication → URL Configuration → Redirect URLs**
+
+Add both production and development URLs:
+```
+https://topaffaireimmo.com/auth/callback
+https://www.topaffaireimmo.com/auth/callback
+http://localhost:5173/auth/callback
+```
+
+### Google Cloud Console Setup
+
+#### Step 1: Create OAuth Client
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Navigate to **APIs & Services → Credentials**
+3. Click **Create Credentials → OAuth client ID**
+4. Select **Web application**
+
+#### Step 2: Configure OAuth Client
+5. Set **Application type**: Web application
+6. Add **Authorized JavaScript origins**:
+   - `https://topaffaireimmo.com`
+   - `https://www.topaffaireimmo.com`
+   - `http://localhost:5173` (for development)
+
+7. Add **Authorized redirect URIs**:
+   - Get your Supabase callback URL from Dashboard (format: `https://[project-id].supabase.co/auth/v1/callback`)
+   - Example: `https://abcdefghijklmno.supabase.co/auth/v1/callback`
+
+8. Click **Create**
+9. Copy **Client ID** and **Client Secret**
+10. Paste into Supabase Dashboard Google provider settings
+
+#### Step 3: Configure OAuth Consent Screen
+1. Navigate to **APIs & Services → OAuth consent screen**
+2. Configure your app information
+3. Add scopes: `openid`, `email`, `profile`
+4. Add test users during development
+5. Publish app when ready for production
+
+### Production Environment Variables
+
+Set these in your deployment platform (Vercel, Netlify, etc.):
+
 ```env
-GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_REDIRECT_URI=http://localhost:5173/api/auth/google/callback
-```
+# Supabase (REQUIRED - Frontend)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-### Production Values
-```env
-# Production redirect URI
-GOOGLE_REDIRECT_URI=https://www.topaffaireimmo.com/api/auth/google/callback
-```
-
----
-
-## Google Cloud Console Setup
-
-### Step 1: Create Project
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project (or select existing)
-3. Enable **Google+ API** (or **Google Identity** service)
-
-### Step 2: Configure OAuth Consent Screen
-1. Navigate to **APIs & Services** → **OAuth consent screen**
-2. Select **External** user type
-3. Fill in required fields:
-   - **App name**: TopAffaireImmo
-   - **User support email**: contact@topaffaireimmo.com
-   - **Developer contact email**: dev@topaffaireimmo.com
-4. Add scopes:
-   - `openid`
-   - `email`
-   - `profile`
-5. Add test users (for testing mode):
-   - Add developer email addresses
-   - Test users can sign in before app is published
-
-### Step 3: Create OAuth Client
-1. Navigate to **APIs & Services** → **Credentials**
-2. Click **Create Credentials** → **OAuth client ID**
-3. Select **Web application**
-4. Configure:
-   - **Name**: TopAffaireImmo Web Client
-   - **Authorized JavaScript origins**:
-     - `https://www.topaffaireimmo.com`
-     - `http://localhost:5173` (for development)
-   - **Authorized redirect URIs**:
-     - `https://www.topaffaireimmo.com/api/auth/google/callback`
-     - `http://localhost:5173/api/auth/google/callback`
-5. Click **Create**
-6. Copy **Client ID** and **Client Secret**
-
-### Step 4: Publishing (Optional)
-- In testing mode, only test users can sign in
-- To allow all users:
-  1. Go to **OAuth consent screen**
-  2. Click **Publish App**
-  3. For basic scopes (openid, email, profile), no verification required
-  4. For sensitive/restricted scopes, Google verification needed
-
----
-
-## Testing Checklist
-
-### Phone OTP Testing
-- [ ] Enter valid Moroccan phone number → OTP sent
-- [ ] Enter invalid phone format → Error shown
-- [ ] Submit correct OTP → Login successful, redirected
-- [ ] Submit wrong OTP → Error shown, attempts counted
-- [ ] 5 failed attempts → Account locked for 15 minutes
-- [ ] Resend OTP → New code sent, 30-second cooldown
-- [ ] Rate limit: 3 requests per hour enforced
-- [ ] Refresh page during OTP step → State restored from localStorage
-- [ ] Test French UI labels
-- [ ] Test Arabic UI labels with RTL layout
-
-### Google OAuth Testing
-- [ ] Click "Se connecter avec Google" → Redirects to Google
-- [ ] Cancel on Google page → Returns with error
-- [ ] Complete Google sign-in with new email → User created, logged in
-- [ ] Complete Google sign-in with existing email → User updated, logged in
-- [ ] Test with unverified email → Error shown
-- [ ] Test rate limiting (30 req/min per IP)
-- [ ] Refresh during OAuth flow → State expires correctly
-- [ ] Test French button label
-- [ ] Test Arabic button label with RTL
-
-### Integration Testing
-- [ ] Phone OTP login → Dashboard accessible
-- [ ] Google OAuth login → Dashboard accessible
-- [ ] Logout → Token removed
-- [ ] Access protected route → Redirects to auth
-- [ ] Login → Redirects to original destination
-
----
-
-## Production Deployment
-
-### Vercel Environment Variables
-Set these in Vercel project settings:
-
-```
-# Phone OTP
-VONAGE_API_KEY=<your_production_key>
-VONAGE_API_SECRET=<your_production_secret>
+# Phone OTP (Server-side only)
+VONAGE_API_KEY=<your_production_api_key>
+VONAGE_API_SECRET=<your_production_api_secret>
 VONAGE_FROM=TopAffaire
 JWT_SECRET=<strong_random_secret>
-
-# Google OAuth
-GOOGLE_CLIENT_ID=<your_production_client_id>
-GOOGLE_CLIENT_SECRET=<your_production_client_secret>
-GOOGLE_REDIRECT_URI=https://www.topaffaireimmo.com/api/auth/google/callback
-
-# Supabase
-VITE_SUPABASE_URL=<your_supabase_url>
-VITE_SUPABASE_ANON_KEY=<your_anon_key>
 SUPABASE_SERVICE_ROLE_KEY=<your_service_role_key>
+
+# Note: Google OAuth credentials are configured in Supabase Dashboard
+# No additional environment variables needed for OAuth
 ```
 
-### Google Cloud Console Production Config
-1. Add production redirect URI:
-   - `https://www.topaffaireimmo.com/api/auth/google/callback`
-2. Add production JavaScript origin:
-   - `https://www.topaffaireimmo.com`
-3. Keep localhost URIs for testing
+---
 
-### Database Migration
-Run the migration to add `google_id` field:
-```bash
-# Via Supabase CLI
-supabase db push
+## Testing
 
-# Or manually in Supabase SQL Editor
--- Run: supabase/migrations/087_add_google_oauth_support.sql
-```
+### Local Development
+1. Set environment variables in `.env`
+2. Start development server: `npm run dev`
+3. Test Google OAuth: Click "Sign in with Google"
+4. Should redirect to Google, then back to `/auth/callback`
+5. Verify session in browser console
+
+### Production Testing
+1. Deploy to production environment
+2. Configure Supabase production URLs
+3. Test OAuth flow on production domain
+4. Verify session persistence across page refreshes
+5. Test on mobile devices
 
 ---
 
 ## Security Considerations
 
-### What We Do
-✅ PKCE flow prevents authorization code interception  
-✅ State parameter prevents CSRF attacks  
-✅ In-memory state store with TTL (10 min)  
-✅ Rate limiting on all endpoints  
-✅ Minimal logging (no tokens, codes, or secrets)  
-✅ JWT tokens with expiration (7 days)  
-✅ Email verification check (Google verified emails only)  
-✅ Secure token storage (localStorage)  
-✅ No secrets in frontend code  
+### OAuth Security
+- ✅ PKCE flow prevents code interception
+- ✅ State parameter prevents CSRF attacks
+- ✅ Secrets stored in Supabase (not in code)
+- ✅ HTTPS required in production
+- ✅ Rate limiting via Supabase infrastructure
 
 ### Best Practices
-- Never log tokens, codes, or secrets
-- Only log high-level errors with request IDs
-- Rotate JWT_SECRET periodically
-- Monitor rate limit violations
-- Keep Google Client Secret secure (server-side only)
-- Use HTTPS in production
-- Set secure cookie flags if using cookie-based auth
-
-### Potential Improvements
-- Add refresh token rotation for long-lived sessions
-- Implement device fingerprinting for fraud detection
-- Add 2FA option for high-security accounts
-- Store tokens in httpOnly cookies instead of localStorage
-- Add session management (view/revoke active sessions)
-- Implement account linking (multiple auth methods per user)
+- Never commit `.env` files
+- Use strong, random JWT secrets
+- Rotate secrets periodically
+- Monitor authentication logs
+- Keep Supabase SDK updated
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+### Google OAuth Not Working
+1. Check Supabase Dashboard → Google provider is enabled
+2. Verify Client ID and Secret are correct
+3. Check redirect URLs match exactly (including trailing slashes)
+4. Verify Site URL is set correctly
+5. Check browser console for errors
 
-**Phone OTP not sending**
-- Check Vonage account balance
-- Verify VONAGE_API_KEY and VONAGE_API_SECRET
-- Check phone number format (must be E.164)
-- Review Vonage dashboard for errors
+### Redirect Loop
+- Ensure `/auth/callback` route exists
+- Verify `getSession()` is called correctly
+- Check AuthContext is properly initialized
 
-**Google OAuth redirect mismatch**
-- Ensure GOOGLE_REDIRECT_URI exactly matches Google Console
-- Check for trailing slashes
-- Verify protocol (http vs https)
-
-**State validation failed**
-- State expired (>10 min)
-- Browser blocked cookies/storage
-- Multiple tabs causing race condition
-
-**User creation failed**
-- Check Supabase RLS policies
-- Verify SUPABASE_SERVICE_ROLE_KEY
-- Check profiles table schema has required fields
-
-**JWT verification failed**
-- JWT_SECRET mismatch between environments
-- Token expired (>7 days)
-- Token tampered with
+### Session Not Persisting
+- Verify localStorage is enabled
+- Check Supabase client configuration
+- Ensure cookies are not blocked
 
 ---
 
-## Support
+## References
 
-For issues or questions:
-- Email: dev@topaffaireimmo.com
-- Documentation: `/docs/`
-- Code: `/api/auth/`, `/src/pages/AuthPage.tsx`
+- [Supabase OAuth Documentation](https://supabase.com/docs/guides/auth/social-login)
+- [Google OAuth 2.0 Guide](https://developers.google.com/identity/protocols/oauth2)
+- [Vonage Verify API](https://developer.vonage.com/verify/overview)
