@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ArtisanCard } from '@/components/cards/ArtisanCard';
@@ -9,105 +9,68 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { SlidersHorizontal, X, Star } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SlidersHorizontal, X, Star, Search } from 'lucide-react';
+import { useArtisans, type ArtisanFilters, type ArtisanProfile } from '@/hooks/useArtisans';
+import { supabase } from '@/lib/supabase';
+import { Link } from 'react-router-dom';
 
-const mockArtisans = [
-  {
-    id: '1',
-    name: 'Mohamed El Alami',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
-    services: ['Plomberie', 'Sanitaire', 'Chauffage'],
-    location: 'Casablanca et environs',
-    rating: 4.9,
-    reviewCount: 127,
-    isVerified: true,
-    isAvailable: true,
-    yearsExperience: 12,
-  },
-  {
-    id: '2',
-    name: 'Rachid Benjelloun',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
-    services: ['Électricité', 'Domotique', 'Alarmes'],
-    location: 'Rabat - Salé',
-    rating: 4.8,
-    reviewCount: 93,
-    isVerified: true,
-    isAvailable: false,
-    yearsExperience: 15,
-  },
-  {
-    id: '3',
-    name: 'Youssef Tahiri',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
-    services: ['Peinture', 'Décoration', 'Revêtements'],
-    location: 'Marrakech',
-    rating: 4.7,
-    reviewCount: 84,
-    isVerified: true,
-    isAvailable: true,
-    yearsExperience: 8,
-  },
-  {
-    id: '4',
-    name: 'Hassan Berrada',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80',
-    services: ['Menuiserie', 'Ébénisterie', 'Agencement'],
-    location: 'Fès',
-    rating: 4.9,
-    reviewCount: 156,
-    isVerified: true,
-    isAvailable: true,
-    yearsExperience: 20,
-  },
-  {
-    id: '5',
-    name: 'Karim Idrissi',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
-    services: ['Jardinage', 'Paysagisme', 'Entretien'],
-    location: 'Tanger',
-    rating: 4.6,
-    reviewCount: 72,
-    isVerified: false,
-    isAvailable: true,
-    yearsExperience: 5,
-  },
-  {
-    id: '6',
-    name: 'Omar Bennani',
-    avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80',
-    services: ['Serrurerie', 'Dépannage', 'Installation'],
-    location: 'Casablanca',
-    rating: 4.8,
-    reviewCount: 98,
-    isVerified: true,
-    isAvailable: true,
-    yearsExperience: 10,
-  },
-];
+interface City {
+  id: number;
+  name_fr: string;
+}
 
-function FilterSidebar() {
+interface ServiceCategory {
+  id: string;
+  name_fr: string;
+  slug: string;
+}
+
+interface FilterSidebarProps {
+  categories: ServiceCategory[];
+  cities: City[];
+  filters: FilterState;
+  onFilterChange: (key: keyof FilterState, value: any) => void;
+  onReset: () => void;
+  onApply: () => void;
+}
+
+interface FilterState {
+  selectedCategories: string[];
+  selectedCity: string;
+  minRating: number | null;
+  availableOnly: boolean;
+  verifiedOnly: boolean;
+  searchTerm: string;
+}
+
+function FilterSidebar({ categories, cities, filters, onFilterChange, onReset, onApply }: FilterSidebarProps) {
+  const handleCategoryToggle = (categoryId: string) => {
+    const current = filters.selectedCategories;
+    const updated = current.includes(categoryId)
+      ? current.filter(id => id !== categoryId)
+      : [...current, categoryId];
+    onFilterChange('selectedCategories', updated);
+  };
+
   return (
     <div className="space-y-6">
       {/* Services */}
       <div className="space-y-3">
         <Label className="text-white font-semibold">Services</Label>
         <div className="space-y-2">
-          {[
-            'Plomberie',
-            'Électricité',
-            'Peinture',
-            'Menuiserie',
-            'Jardinage',
-            'Serrurerie',
-          ].map((service) => (
-            <div key={service} className="flex items-center space-x-2">
-              <Checkbox id={service.toLowerCase()} />
+          {categories.map((category) => (
+            <div key={category.id} className="flex items-center space-x-2">
+              <Checkbox 
+                id={category.id}
+                checked={filters.selectedCategories.includes(category.id)}
+                onCheckedChange={() => handleCategoryToggle(category.id)}
+              />
               <label
-                htmlFor={service.toLowerCase()}
+                htmlFor={category.id}
                 className="text-sm text-gray-300 cursor-pointer"
               >
-                {service}
+                {category.name_fr}
               </label>
             </div>
           ))}
@@ -117,16 +80,17 @@ function FilterSidebar() {
       {/* Location */}
       <div className="space-y-3">
         <Label className="text-white font-semibold">Zone d'intervention</Label>
-        <Select>
+        <Select value={filters.selectedCity} onValueChange={(val) => onFilterChange('selectedCity', val)}>
           <SelectTrigger className="bg-[#1B2F3C] border-[#2A3F4C] text-white">
             <SelectValue placeholder="Toutes les villes" />
           </SelectTrigger>
           <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
-            <SelectItem value="casablanca" className="text-white">Casablanca</SelectItem>
-            <SelectItem value="rabat" className="text-white">Rabat</SelectItem>
-            <SelectItem value="marrakech" className="text-white">Marrakech</SelectItem>
-            <SelectItem value="fes" className="text-white">Fès</SelectItem>
-            <SelectItem value="tanger" className="text-white">Tanger</SelectItem>
+            <SelectItem value="all" className="text-white">Toutes les villes</SelectItem>
+            {cities.map((city) => (
+              <SelectItem key={city.id} value={city.id.toString()} className="text-white">
+                {city.name_fr}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -137,7 +101,11 @@ function FilterSidebar() {
         <div className="space-y-2">
           {[5, 4, 3].map((rating) => (
             <div key={rating} className="flex items-center space-x-2">
-              <Checkbox id={`rating-${rating}`} />
+              <Checkbox 
+                id={`rating-${rating}`}
+                checked={filters.minRating === rating}
+                onCheckedChange={(checked) => onFilterChange('minRating', checked ? rating : null)}
+              />
               <label
                 htmlFor={`rating-${rating}`}
                 className="text-sm text-gray-300 cursor-pointer flex items-center gap-1"
@@ -152,25 +120,16 @@ function FilterSidebar() {
         </div>
       </div>
 
-      {/* Availability */}
-      <div className="space-y-3">
-        <Label className="text-white font-semibold">Disponibilité</Label>
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox id="available" />
-            <label htmlFor="available" className="text-sm text-gray-300 cursor-pointer">
-              Disponible maintenant
-            </label>
-          </div>
-        </div>
-      </div>
-
       {/* Verified */}
       <div className="space-y-3">
         <Label className="text-white font-semibold">Statut</Label>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
-            <Checkbox id="verified" />
+            <Checkbox 
+              id="verified"
+              checked={filters.verifiedOnly}
+              onCheckedChange={(checked) => onFilterChange('verifiedOnly', checked)}
+            />
             <label htmlFor="verified" className="text-sm text-gray-300 cursor-pointer">
               Profils vérifiés uniquement
             </label>
@@ -183,6 +142,8 @@ function FilterSidebar() {
         <Label className="text-white font-semibold">Rechercher par nom</Label>
         <Input
           placeholder="Nom de l'artisan..."
+          value={filters.searchTerm}
+          onChange={(e) => onFilterChange('searchTerm', e.target.value)}
           className="bg-[#1B2F3C] border-[#2A3F4C] text-white placeholder:text-gray-500"
         />
       </div>
@@ -191,11 +152,12 @@ function FilterSidebar() {
       <div className="flex gap-2 pt-4 border-t border-[#2A3F4C]">
         <Button
           variant="outline"
+          onClick={onReset}
           className="flex-1 border-[#2A3F4C] text-gray-300 hover:bg-[#0A1F2E] hover:text-white"
         >
           Réinitialiser
         </Button>
-        <Button className="flex-1 bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
+        <Button onClick={onApply} className="flex-1 bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
           Appliquer
         </Button>
       </div>
@@ -203,7 +165,112 @@ function FilterSidebar() {
   );
 }
 
+function ArtisanCardSkeleton() {
+  return (
+    <div className="bg-[#1B2F3C] border border-[#2A3F4C] rounded-xl p-5 space-y-4">
+      <div className="flex items-start gap-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-6 w-20" />
+      </div>
+      <Skeleton className="h-10 w-full" />
+    </div>
+  );
+}
+
+function transformArtisanToCardProps(artisan: ArtisanProfile) {
+  const services = artisan.artisan_services?.map(s => s.service_subcategory.name_fr) || [];
+  const rating = artisan.profiles?.rating || 0;
+  const reviewCount = artisan.profiles?.completed_jobs || 0;
+  
+  return {
+    id: artisan.id,
+    name: artisan.business_name,
+    avatar: artisan.profiles?.avatar_url || '',
+    services: services.length > 0 ? services : [artisan.service_category?.name_fr || 'Service'],
+    location: artisan.cities?.length ? `${artisan.cities.length} ville(s)` : 'Non spécifié',
+    rating,
+    reviewCount,
+    isVerified: artisan.is_verified,
+    isAvailable: true,
+    yearsExperience: undefined,
+  };
+}
+
 export default function ArtisansPage() {
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [filterState, setFilterState] = useState<FilterState>({
+    selectedCategories: [],
+    selectedCity: 'all',
+    minRating: null,
+    availableOnly: false,
+    verifiedOnly: false,
+    searchTerm: '',
+  });
+  const [appliedFilters, setAppliedFilters] = useState<ArtisanFilters>({});
+
+  const { artisans, loading, error } = useArtisans(appliedFilters);
+
+  // Fetch categories and cities
+  useEffect(() => {
+    const fetchData = async () => {
+      const [categoriesRes, citiesRes] = await Promise.all([
+        supabase.from('service_categories').select('id, name_fr, slug').order('name_fr'),
+        supabase.from('cities').select('id, name_fr').order('name_fr'),
+      ]);
+
+      if (categoriesRes.data) setCategories(categoriesRes.data);
+      if (citiesRes.data) setCities(citiesRes.data);
+    };
+    fetchData();
+  }, []);
+
+  const handleFilterChange = (key: keyof FilterState, value: any) => {
+    setFilterState(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleApply = () => {
+    const filters: ArtisanFilters = {};
+    
+    if (filterState.selectedCategories.length > 0) {
+      filters.serviceCategoryId = filterState.selectedCategories[0];
+    }
+    if (filterState.selectedCity !== 'all') {
+      filters.cityId = parseInt(filterState.selectedCity);
+    }
+    if (filterState.verifiedOnly) {
+      filters.isVerified = true;
+    }
+    if (filterState.minRating) {
+      filters.minRating = filterState.minRating;
+    }
+    if (filterState.searchTerm) {
+      filters.searchTerm = filterState.searchTerm;
+    }
+
+    setAppliedFilters(filters);
+  };
+
+  const handleReset = () => {
+    setFilterState({
+      selectedCategories: [],
+      selectedCity: 'all',
+      minRating: null,
+      availableOnly: false,
+      verifiedOnly: false,
+      searchTerm: '',
+    });
+    setAppliedFilters({});
+  };
+
   return (
     <div className="min-h-screen bg-[#0A1F2E]">
       <Header />
@@ -215,7 +282,9 @@ export default function ArtisansPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
               Artisans professionnels
             </h1>
-            <p className="text-gray-400">{mockArtisans.length} artisans trouvés</p>
+            <p className="text-gray-400">
+              {loading ? 'Chargement...' : `${artisans.length} artisan${artisans.length !== 1 ? 's' : ''} trouvé${artisans.length !== 1 ? 's' : ''}`}
+            </p>
           </div>
 
           {/* Mobile Filter */}
@@ -231,23 +300,17 @@ export default function ArtisansPage() {
                 <SheetTitle className="text-white">Filtres</SheetTitle>
               </SheetHeader>
               <ScrollArea className="h-[calc(100vh-100px)] mt-6">
-                <FilterSidebar />
+                <FilterSidebar
+                  categories={categories}
+                  cities={cities}
+                  filters={filterState}
+                  onFilterChange={handleFilterChange}
+                  onReset={handleReset}
+                  onApply={handleApply}
+                />
               </ScrollArea>
             </SheetContent>
           </Sheet>
-
-          {/* Sort */}
-          <Select defaultValue="rating">
-            <SelectTrigger className="hidden lg:flex w-48 bg-[#1B2F3C] border-[#2A3F4C] text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
-              <SelectItem value="rating" className="text-white">Meilleure note</SelectItem>
-              <SelectItem value="reviews" className="text-white">Plus d'avis</SelectItem>
-              <SelectItem value="experience" className="text-white">Plus d'expérience</SelectItem>
-              <SelectItem value="recent" className="text-white">Plus récent</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="flex gap-8">
@@ -256,44 +319,54 @@ export default function ArtisansPage() {
             <div className="sticky top-24 bg-[#1B2F3C] rounded-xl p-6 border border-[#2A3F4C]">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white">Filtres</h2>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                  <X className="h-5 w-5" />
-                </Button>
               </div>
-              <FilterSidebar />
+              <FilterSidebar
+                categories={categories}
+                cities={cities}
+                filters={filterState}
+                onFilterChange={handleFilterChange}
+                onReset={handleReset}
+                onApply={handleApply}
+              />
             </div>
           </aside>
 
           {/* Artisans Grid */}
           <div className="flex-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {mockArtisans.map((artisan) => (
-                <ArtisanCard key={artisan.id} {...artisan} />
-              ))}
-            </div>
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+                <p className="text-red-400">Erreur: {error}</p>
+              </div>
+            )}
 
-            {/* Pagination */}
-            <div className="flex justify-center gap-2 mt-12">
-              <Button variant="outline" className="border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]">
-                Précédent
-              </Button>
-              {[1, 2, 3].map((page) => (
-                <Button
-                  key={page}
-                  variant={page === 1 ? 'default' : 'outline'}
-                  className={
-                    page === 1
-                      ? 'bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white'
-                      : 'border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]'
-                  }
-                >
-                  {page}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ArtisanCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : artisans.length === 0 ? (
+              <div className="text-center py-12">
+                <Search className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Aucun artisan trouvé
+                </h3>
+                <p className="text-gray-400 mb-6">
+                  Essayez de modifier vos critères de recherche
+                </p>
+                <Button onClick={handleReset} className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
+                  Réinitialiser les filtres
                 </Button>
-              ))}
-              <Button variant="outline" className="border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C]">
-                Suivant
-              </Button>
-            </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {artisans.map((artisan) => (
+                  <Link key={artisan.id} to={`/artisans/${artisan.id}`}>
+                    <ArtisanCard {...transformArtisanToCardProps(artisan)} />
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
