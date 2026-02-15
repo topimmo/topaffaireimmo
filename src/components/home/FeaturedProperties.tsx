@@ -1,186 +1,101 @@
-import { useRef, useMemo } from "react";
-import { useLanguage } from "@/contexts/LanguageContext";
-import PropertyCard, { Property } from "./PropertyCard";
-import PropertyCardSkeleton from "./PropertyCardSkeleton";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
-import { useFeaturedProperties } from "@/hooks/useProperties";
-import { supabase } from "@/lib/supabase";
+import { PropertyCard } from '@/components/cards/PropertyCard';
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-// Helper to get public image URL
-function getPublicImageUrl(pathOrUrl: string) {
-  if (!pathOrUrl) return "";
-  if (pathOrUrl.startsWith("http")) return pathOrUrl;
-  return supabase.storage.from("property-images").getPublicUrl(pathOrUrl).data.publicUrl;
-}
+const featuredProperties = [
+  {
+    id: '1',
+    title: 'Appartement moderne avec vue mer',
+    price: 2500000,
+    location: 'Ain Diab, Casablanca',
+    type: 'Appartement',
+    status: 'sale' as const,
+    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',
+    bedrooms: 3,
+    bathrooms: 2,
+    surface: 140,
+    isBoosted: true,
+    views: 1247,
+  },
+  {
+    id: '2',
+    title: 'Villa de luxe avec piscine',
+    price: 8500000,
+    location: 'Palmeraie, Marrakech',
+    type: 'Villa',
+    status: 'sale' as const,
+    image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
+    bedrooms: 5,
+    bathrooms: 4,
+    surface: 420,
+    isBoosted: true,
+    views: 2156,
+  },
+  {
+    id: '3',
+    title: 'Studio meublé centre-ville',
+    price: 4500,
+    location: 'Agdal, Rabat',
+    type: 'Studio',
+    status: 'rent' as const,
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+    surface: 45,
+    views: 823,
+  },
+  {
+    id: '4',
+    title: 'Penthouse avec terrasse',
+    price: 15000,
+    location: 'Maarif, Casablanca',
+    type: 'Penthouse',
+    status: 'rent' as const,
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+    bedrooms: 4,
+    bathrooms: 3,
+    surface: 250,
+    views: 1534,
+  },
+];
 
-export default function FeaturedProperties() {
-  const { t, isRTL, language } = useLanguage();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Fetch real featured properties from database
-  const { properties: dbProperties, loading } = useFeaturedProperties(6);
-  
-  // Map database properties to PropertyCard format
-  const featuredProperties: Property[] = useMemo(() => {
-    return dbProperties.map((prop) => {
-      const firstImg = prop.images?.[0] || "";
-      const image = firstImg
-        ? getPublicImageUrl(firstImg)
-        : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
-
-      return {
-        id: prop.id,
-        title: language === "ar" ? prop.title_ar || prop.title_fr || "Annonce" : prop.title_fr || prop.title_ar || "Annonce",
-        titleAr: prop.title_ar || undefined,
-        price: prop.price || 0,
-        priceType: (prop.transaction_type as "sale" | "rent") || "sale",
-        type: prop.property_type || "Property",
-        city: language === "ar" ? prop.city?.name_ar || prop.city?.name_fr || "" : prop.city?.name_fr || prop.city?.name_ar || "",
-        cityAr: prop.city?.name_ar || undefined,
-        address: prop.address || (language === "ar" ? prop.neighborhood?.name_ar : prop.neighborhood?.name_fr) || "",
-        bedrooms: prop.bedrooms || undefined,
-        bathrooms: prop.bathrooms || undefined,
-        area: prop.area || undefined,
-        image,
-        featured: prop.featured || false,
-        isPremium: true, // Featured properties are always premium
-      };
-    });
-  }, [dbProperties, language]);
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 400;
-      const actualDirection = isRTL 
-        ? (direction === "left" ? "right" : "left") 
-        : direction;
-      scrollContainerRef.current.scrollBy({
-        left: actualDirection === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
-  
-  // Show loading state with skeleton cards
-  if (loading) {
-    const skeletonCount = 4;
-    
-    return (
-      <section className={`py-20 md:py-24 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-        <div className="container max-w-7xl mx-auto">
-          {/* Section Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-            <div>
-              <div className="flex items-center gap-2.5 mb-3">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <span className="section-label text-primary">
-                  {isRTL ? 'مختارة لك' : 'Sélectionné pour vous'}
-                </span>
-              </div>
-              <h2 className="section-title">
-                {t('featured.title')}
-              </h2>
-              <p className="section-subtitle max-w-xl">
-                {t('featured.subtitle')}
-              </p>
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                disabled
-                className="rounded-full h-11 w-11 border-2"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled
-                className="rounded-full h-11 w-11 border-2"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Skeleton Carousel */}
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-            {Array.from({ length: skeletonCount }).map((_, index) => (
-              <div
-                key={index}
-                className="flex-shrink-0 w-[300px] md:w-[340px] snap-start"
-              >
-                <PropertyCardSkeleton size="large" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-  
-  // Always render section - never empty (fallback to dummy properties handled in hook)
-
+export function FeaturedProperties() {
   return (
-    <section className={`py-20 md:py-24 bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="container max-w-7xl mx-auto">
-        {/* Section Header - Premium Typography */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <span className="section-label text-primary">
-                {isRTL ? 'مختارة لك' : 'Sélectionné pour vous'}
-              </span>
-            </div>
-            <h2 className="section-title">
-              {t('featured.title')}
+    <section className="py-16 md:py-24 bg-gradient-to-b from-[#0D2838] to-[#0A1F2E]">
+      <div className="container mx-auto px-4 md:px-8">
+        {/* Header */}
+        <div className="flex items-end justify-between mb-12">
+          <div className="max-w-2xl">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Propriétés en vedette
             </h2>
-            <p className="section-subtitle max-w-xl">
-              {t('featured.subtitle')}
+            <p className="text-lg text-gray-300">
+              Découvrez une sélection de biens immobiliers premium
             </p>
           </div>
-
-          {/* Navigation Buttons - Premium */}
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scroll("left")}
-              className="rounded-full h-11 w-11 border-2 hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-md transition-all duration-300"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scroll("right")}
-              className="rounded-full h-11 w-11 border-2 hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-md transition-all duration-300"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            className="hidden md:flex border-[#0FC2C0] text-[#0FC2C0] hover:bg-[#0FC2C0] hover:text-white"
+          >
+            Voir tout
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
         </div>
 
-        {/* Carousel - Premium spacing */}
-        <div
-          ref={scrollContainerRef}
-          className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {featuredProperties.map((property, index) => (
-            <div
-              key={property.id}
-              className="flex-shrink-0 w-[300px] md:w-[340px] snap-start animate-in fade-in slide-in-from-right-4 duration-500"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <PropertyCard property={property} size="large" />
-            </div>
+        {/* Properties Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {featuredProperties.map((property) => (
+            <PropertyCard key={property.id} {...property} />
           ))}
+        </div>
+
+        {/* Mobile CTA */}
+        <div className="mt-8 text-center md:hidden">
+          <Button
+            variant="outline"
+            className="border-[#0FC2C0] text-[#0FC2C0] hover:bg-[#0FC2C0] hover:text-white"
+          >
+            Voir toutes les propriétés
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
         </div>
       </div>
     </section>
