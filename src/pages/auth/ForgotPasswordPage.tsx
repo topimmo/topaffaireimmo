@@ -3,21 +3,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mail, Loader2, ArrowLeft, Check } from 'lucide-react';
+import { Mail, Loader2, ArrowLeft, Check, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  
+  const { resetPassword } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) { setError('L\'email est requis'); return; }
     if (!/\S+@\S+\.\S+/.test(email)) { setError('Email invalide'); return; }
+    
     setIsLoading(true);
-    setTimeout(() => { setIsLoading(false); setSent(true); }, 1500);
+    setError('');
+
+    try {
+      const { error } = await resetPassword(email);
+      
+      if (error) {
+        setError('Une erreur est survenue. Veuillez réessayer.');
+        setIsLoading(false);
+        return;
+      }
+      
+      setSent(true);
+    } catch (err) {
+      console.error('Reset password error:', err);
+      setError('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
