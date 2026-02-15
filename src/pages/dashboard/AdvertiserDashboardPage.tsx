@@ -237,7 +237,12 @@ function ListingsSection() {
                           <Edit className="h-3 w-3 mr-1" />Éditer
                         </Button>
                         {!isBoosted && listing.status === 'published' && (
-                          <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white h-8" disabled>
+                          <Button 
+                            size="sm" 
+                            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white h-8" 
+                            disabled
+                            title="Fonctionnalité bientôt disponible"
+                          >
                             <Zap className="h-3 w-3 mr-1" />Booster
                           </Button>
                         )}

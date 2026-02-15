@@ -78,6 +78,8 @@ export function useDashboardStats() {
 
         const conversionRate = totalViews > 0 ? (totalLeads / totalViews) * 100 : 0;
 
+        // Note: This is a basic conversion rate (leads/views).
+        // Consider using unique visitors instead of total views for more accurate metrics.
         setStats({
           totalProperties: propertiesCount || 0,
           totalViews,

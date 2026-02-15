@@ -44,7 +44,8 @@ export function useAnalytics(days: number = 30) {
         }
 
         const startDate = new Date();
-        startDate.setDate(startDate.getDate() - days);
+        // Using UTC to ensure consistent date handling across timezones
+        startDate.setUTCDate(startDate.getUTCDate() - days);
         const startDateStr = startDate.toISOString();
 
         // Fetch views over time

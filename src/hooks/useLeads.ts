@@ -84,12 +84,20 @@ export function useLeads(filters?: LeadsFilters) {
 
   const updateLeadStatus = async (leadId: string, status: string) => {
     try {
+      const updates: any = { status };
+      
+      // Only set contacted_at on the first time status changes to 'contacted'
+      if (status === 'contacted') {
+        // Check if contacted_at is already set
+        const lead = leads.find(l => l.id === leadId);
+        if (lead && !lead.contacted_at) {
+          updates.contacted_at = new Date().toISOString();
+        }
+      }
+
       const { error } = await supabase
         .from('property_leads')
-        .update({ 
-          status,
-          contacted_at: status === 'contacted' ? new Date().toISOString() : undefined
-        })
+        .update(updates)
         .eq('id', leadId);
 
       if (error) throw error;
