@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const benefits = [
   'Publication illimitée d\'annonces',
@@ -9,6 +10,8 @@ const benefits = [
 ];
 
 export function CTASection() {
+  const navigate = useNavigate();
+
   return (
     <section className="py-16 md:py-24 bg-gradient-to-br from-[#0A1F2E] via-[#0D2838] to-[#0A1F2E] relative overflow-hidden">
       {/* Background Effects */}
@@ -47,6 +50,7 @@ export function CTASection() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button
                   size="lg"
+                  onClick={() => navigate('/register')}
                   className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white font-semibold px-8 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
                 >
                   Commencer gratuitement
@@ -55,6 +59,7 @@ export function CTASection() {
                 <Button
                   size="lg"
                   variant="outline"
+                  onClick={() => navigate('/properties')}
                   className="border-[#0FC2C0] text-[#0FC2C0] hover:bg-[#0FC2C0] hover:text-white font-semibold px-8"
                 >
                   En savoir plus

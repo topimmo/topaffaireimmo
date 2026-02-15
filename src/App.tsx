@@ -15,6 +15,7 @@ const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const EmailConfirmationPage = lazy(() => import("./pages/auth/EmailConfirmationPage"));
+const OAuthCallbackPage = lazy(() => import("./pages/auth/OAuthCallbackPage"));
 
 // Dashboards
 const ArtisanDashboardPage = lazy(() => import("./pages/dashboard/ArtisanDashboardPage"));
@@ -53,6 +54,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/email-confirmation" element={<EmailConfirmationPage />} />
+        <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
         {/* Dashboards */}
         <Route 

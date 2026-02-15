@@ -18,6 +18,21 @@ function getEnvVar(key: string): string | undefined {
 const supabaseUrl = getEnvVar('VITE_SUPABASE_URL')
 const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
 
+// PRODUCTION SAFETY: Log clear error if environment variables are missing
+// Always log in production so missing config can be detected
+if (!supabaseUrl || !supabaseAnonKey) {
+  const isDev = import.meta.env.DEV;
+  const prefix = isDev ? '❌ CRITICAL' : '⚠️ WARNING';
+  
+  console.error(`${prefix}: Missing Supabase environment variables!`);
+  console.error('   VITE_SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
+  console.error('   VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ Set' : '❌ Missing');
+  
+  if (isDev) {
+    console.error('   Please set these in your .env file (see .env.example)');
+  }
+}
+
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 
 /**

@@ -3,9 +3,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export function SearchHero() {
   const [searchType, setSearchType] = useState<'properties' | 'artisans'>('properties');
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    if (searchType === 'properties') {
+      navigate(`/properties?search=${encodeURIComponent(searchQuery)}`);
+    } else {
+      navigate(`/artisans?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handlePopularSearch = (type: 'properties' | 'artisans', query: string) => {
+    if (type === 'properties') {
+      navigate(`/properties?search=${encodeURIComponent(query)}`);
+    } else {
+      navigate(`/artisans?search=${encodeURIComponent(query)}`);
+    }
+  };
 
   return (
     <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#0A1F2E] via-[#0D2838] to-[#0A1F2E] noise-texture">
@@ -89,12 +108,16 @@ export function SearchHero() {
                     <Input
                       placeholder={searchType === 'properties' ? 'Type de bien...' : 'Service recherché...'}
                       className="border-0 bg-transparent focus-visible:ring-0 p-0 text-gray-900 placeholder:text-gray-500"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     />
                   </div>
 
                   {/* Search Button */}
                   <Button
                     size="lg"
+                    onClick={handleSearch}
                     className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white font-semibold px-8 h-[52px] shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
                   >
                     <Search className="h-5 w-5 md:mr-2" />
@@ -108,11 +131,26 @@ export function SearchHero() {
           {/* Popular Searches */}
           <div className="flex flex-wrap justify-center gap-2 text-sm">
             <span className="text-gray-400">Recherches populaires:</span>
-            <button className="text-[#0FC2C0] hover:underline">Appartement Casablanca</button>
+            <button 
+              onClick={() => handlePopularSearch('properties', 'Casablanca')} 
+              className="text-[#0FC2C0] hover:underline"
+            >
+              Appartement Casablanca
+            </button>
             <span className="text-gray-600">•</span>
-            <button className="text-[#0FC2C0] hover:underline">Villa Marrakech</button>
+            <button 
+              onClick={() => handlePopularSearch('properties', 'Marrakech')} 
+              className="text-[#0FC2C0] hover:underline"
+            >
+              Villa Marrakech
+            </button>
             <span className="text-gray-600">•</span>
-            <button className="text-[#0FC2C0] hover:underline">Plombier Rabat</button>
+            <button 
+              onClick={() => handlePopularSearch('artisans', 'Plombier Rabat')} 
+              className="text-[#0FC2C0] hover:underline"
+            >
+              Plombier Rabat
+            </button>
           </div>
         </div>
       </div>
