@@ -1,105 +1,39 @@
-import HeroSearch from "@/components/home/HeroSearch";
-import EntryGateway from "@/components/home/EntryGateway";
-import StorytellingSection from "@/components/home/StorytellingSection";
-import FeaturedProperties from "@/components/home/FeaturedProperties";
-import SocialProofStrip from "@/components/home/SocialProofStrip";
-import FeaturedArtisans from "@/components/home/FeaturedArtisans";
-import ArtisanCTA from "@/components/home/ArtisanCTA";
-import LatestListings from "@/components/home/LatestListings";
-import PropertyCategories from "@/components/home/PropertyCategories";
-import TrustBadges from "@/components/home/TrustBadges";
-import AdBanner from "@/components/home/AdBanner";
-import PromoBanner from "@/components/PromoBanner";
-import StickyMobileCTA from "@/components/StickyMobileCTA";
-import SEO from "@/components/SEO";
-import { FAQ, getGeneralFAQ } from "@/components/FAQ";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { SITE_URL } from "@/config/site";
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { SearchHero } from '@/components/home/SearchHero';
+import { TrustMetrics } from '@/components/home/TrustMetrics';
+import { FeaturedProperties } from '@/components/home/FeaturedProperties';
+import { ServiceCategories } from '@/components/home/ServiceCategories';
+import { TopArtisans } from '@/components/home/TopArtisans';
+import { CTASection } from '@/components/home/CTASection';
+import { AdSlot } from '@/components/shared/AdSlot';
 
 function Home() {
-  const { t } = useLanguage();
-  // Structured data for home page
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "TopAffaireImmo - Immobilier au Maroc",
-    "description": "Découvrez les meilleures annonces immobilières au Maroc. Appartements, maisons, villas à vendre et à louer.",
-    "url": SITE_URL,
-    "inLanguage": ["fr-MA", "ar-MA"],
-    "about": {
-      "@type": "RealEstateAgent",
-      "name": "TopAffaireImmo",
-      "areaServed": {
-        "@type": "Country",
-        "name": "Morocco",
-        "alternateName": "المغرب"
-      }
-    }
-  };
-
   return (
-    <>
-      <SEO
-        title="TopAffaireImmo - Immobilier Maroc | Vente & Location"
-        description="Trouvez votre propriété idéale au Maroc : appartements, villas, maisons à vendre et à louer à Casablanca, Rabat, Marrakech. Annonces vérifiées."
-        keywords="immobilier maroc, appartement maroc, villa maroc, maison maroc, location maroc, vente maroc, casablanca, rabat, marrakech"
-        canonical="/"
-        ogImage={`${SITE_URL}/og-image.jpg`}
-        structuredData={structuredData}
-      />
-      <main className="flex-1">
-        {/* Hero Section with Search */}
-        <HeroSearch />
-
-        {/* Entry Gateway - Services / Real Estate */}
-        <EntryGateway />
-
-        {/* Storytelling Section - NEW: Mission & Vision */}
-        <StorytellingSection />
-
-        {/* Social Proof Strip - NEW: Animated Counters */}
-        <SocialProofStrip />
-
-        {/* Promo Banner (home-top) - Ad Zone */}
-        <div className="ad-zone-wrapper py-6 md:py-8">
-          <PromoBanner position="home-top" />
+    <div className="min-h-screen bg-[#0A1F2E]">
+      <Header />
+      <main>
+        <SearchHero />
+        {/* Post-Hero Ad Slot */}
+        <div className="container mx-auto px-4 md:px-8 py-4">
+          <AdSlot variant="banner" slotId="home-post-hero" />
         </div>
-
-        {/* Featured properties */}
+        <TrustMetrics />
         <FeaturedProperties />
-
-        {/* Featured Artisans - ENHANCED: Premium interactions */}
-        <FeaturedArtisans />
-
-        {/* Artisan CTA - Conversion Focus */}
-        <ArtisanCTA />
-
-        {/* Ad banner (home middle) - Ad Zone */}
-        <div className="ad-zone-wrapper">
-          <AdBanner page="home" position="home-middle" className="py-10 md:py-12" />
+        {/* Mid-Page Ad Slot */}
+        <div className="container mx-auto px-4 md:px-8 py-4">
+          <AdSlot variant="banner" slotId="home-mid-page" />
         </div>
-
-        {/* Promo Banner (home-middle) - Ad Zone */}
-        <div className="ad-zone-wrapper py-6 md:py-8">
-          <PromoBanner position="home-middle" />
+        <ServiceCategories />
+        <TopArtisans />
+        {/* Pre-Footer Ad Slot */}
+        <div className="container mx-auto px-4 md:px-8 py-4">
+          <AdSlot variant="banner" slotId="home-pre-footer" />
         </div>
-
-        {/* Latest listings */}
-        <LatestListings />
-
-        {/* Property Categories */}
-        <PropertyCategories />
-
-        {/* Trust Badges - Before Footer */}
-        <TrustBadges />
-
-        {/* FAQ Section with FAQPage Schema */}
-        <FAQ items={getGeneralFAQ(t)} className="bg-muted/30 py-20 md:py-24" />
+        <CTASection />
       </main>
-
-      {/* Sticky Mobile CTA - NEW: Mobile conversion */}
-      <StickyMobileCTA />
-    </>
+      <Footer />
+    </div>
   );
 }
 

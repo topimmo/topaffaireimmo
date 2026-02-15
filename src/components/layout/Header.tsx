@@ -1,234 +1,198 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAdmin } from "@/hooks/useAdmin";
-import { Button } from "@/components/ui/button";
+import { Bell, Menu, Search, User, Home, Wrench, LayoutDashboard, LogIn, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import LanguageSwitcher from "./LanguageSwitcher";
-import {
-  Menu,
-  X,
-  Plus,
-  Building2,
-  User,
-  LogOut,
-  LayoutDashboard,
-  ShieldCheck,
-  UserPlus,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dropdown-menu';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
-export default function Header() {
-  const { t, isRTL } = useLanguage();
-  const { user, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
-  const navigate = useNavigate();
-
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+export function Header() {
+  const [isAuthenticated] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
+  const navLinks = [
+    { to: '/properties', label: 'Propriétés', icon: <Home className="h-4 w-4" /> },
+    { to: '/artisans', label: 'Artisans', icon: <Wrench className="h-4 w-4" /> },
+  ];
 
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
-        isScrolled ? "bg-background/95 backdrop-blur-md shadow-lg" : "bg-transparent"
-      )}
-    >
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+    <header className={cn(
+      'sticky top-0 z-50 w-full border-b bg-[#0A1F2E]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0A1F2E]/80 transition-all duration-300',
+      scrolled && 'shadow-lg border-[#1B2F3C]'
+    )}>
+      <div className={cn(
+        'container mx-auto flex items-center justify-between px-4 md:px-8 transition-all duration-300',
+        scrolled ? 'h-14' : 'h-16'
+      )}>
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-1 font-bold text-xl hover:opacity-80 transition-opacity">
-          <Building2 className="h-6 w-6 text-primary" />
-          <span>TopAffaire<span className="text-primary">Immo</span></span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link
-            to="/buy"
-            className="text-sm font-medium transition-colors hover:text-primary"
-          >
-            {isRTL ? 'عقارات' : 'Immobilier'}
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0FC2C0] to-[#0A9D9B] flex items-center justify-center">
+              <span className="text-white font-bold text-lg">T</span>
+            </div>
+            <span className={cn(
+              'font-bold text-xl text-white transition-all',
+              scrolled ? 'hidden lg:inline-block' : 'hidden md:inline-block'
+            )}>
+              TopAffaire<span className="text-[#0FC2C0]">Immo</span>
+            </span>
           </Link>
-          <Link
-            to="/services"
-            className="text-sm font-medium transition-colors hover:text-primary"
-          >
-            {t('nav.services')}
-          </Link>
-        </nav>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-3">
-          <LanguageSwitcher />
-          {user ? (
+          {/* Navigation */}
+          <nav className="hidden lg:flex items-center gap-6">
+            {navLinks.map(link => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={cn(
+                  'text-sm font-medium transition-colors',
+                  location.pathname === link.to ? 'text-[#0FC2C0]' : 'text-gray-300 hover:text-[#0FC2C0]'
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {/* Right Side */}
+        <div className="flex items-center gap-2">
+          {/* Search - Desktop */}
+          <Button variant="ghost" size="icon" className="hidden md:flex text-gray-300 hover:text-[#0FC2C0] hover:bg-[#1B2F3C]">
+            <Search className="h-5 w-5" />
+          </Button>
+
+          {/* Notification Bell */}
+          <NotificationBell />
+
+          {/* User Menu */}
+          {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="shadow-md hover:shadow-lg">
-                  <User className="h-4 w-4" />
-                  <span className="max-w-[100px] truncate">
-                    {user?.email?.split('@')[0] || 'User'}
-                  </span>
+                <Button variant="ghost" size="icon" className="text-gray-300 hover:text-[#0FC2C0] hover:bg-[#1B2F3C]">
+                  <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 shadow-xl border-2">
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="flex items-center gap-2">
-                    <LayoutDashboard className="h-4 w-4" />
-                    {t('nav.dashboard')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/add-listing" className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t('nav.addListing')}
-                  </Link>
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin" className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4" />
-                      {t('admin.title')}
-                    </Link>
+              <DropdownMenuContent align="end" className="w-56 bg-[#1B2F3C] border-[#2A3F4C]">
+                <DropdownMenuLabel className="text-white">Mon Compte</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-[#2A3F4C]" />
+                <Link to="/dashboard/advertiser">
+                  <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white cursor-pointer">
+                    Tableau de bord
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {t('nav.logout')}
+                </Link>
+                <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white">
+                  Mes annonces
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white">
+                  Paramètres
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[#2A3F4C]" />
+                <DropdownMenuItem className="text-gray-300 focus:bg-[#0A1F2E] focus:text-white">
+                  Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <>
-              <Button variant="outline" size="sm" asChild className="shadow-md hover:shadow-lg font-semibold">
-                <Link to="/register">
-                  <Plus className="h-4 w-4" />
-                  {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
-                </Link>
-              </Button>
-              <Button size="sm" asChild className="shadow-md hover:shadow-lg">
-                <Link to="/artisan/onboarding">
-                  <UserPlus className="h-4 w-4" />
-                  {isRTL ? 'أصبح مزود خدمة' : 'Devenir prestataire'}
-                </Link>
-              </Button>
-            </>
+            <div className="hidden md:flex items-center gap-2">
+              <Link to="/login">
+                <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-[#1B2F3C]">
+                  Connexion
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white font-medium">
+                  Publier une annonce
+                </Button>
+              </Link>
+            </div>
           )}
-        </div>
 
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-2">
-          <LanguageSwitcher />
-          <button
-            className="p-2 hover:bg-muted rounded-lg transition-all duration-300"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
+          {/* Mobile Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden text-gray-300 hover:text-[#0FC2C0] hover:bg-[#1B2F3C]">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72 bg-[#0D1E2B] border-[#2A3F4C] p-0">
+              <div className="flex flex-col h-full">
+                {/* Mobile Header */}
+                <div className="p-4 border-b border-[#2A3F4C]">
+                  <Link to="/" className="flex items-center space-x-2">
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0FC2C0] to-[#0A9D9B] flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">T</span>
+                    </div>
+                    <span className="font-bold text-lg text-white">
+                      TopAffaire<span className="text-[#0FC2C0]">Immo</span>
+                    </span>
+                  </Link>
+                </div>
+
+                {/* Mobile Nav */}
+                <nav className="flex-1 p-4 space-y-1">
+                  {navLinks.map(link => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-all',
+                        location.pathname === link.to
+                          ? 'bg-[#0FC2C0]/15 text-[#0FC2C0] font-medium'
+                          : 'text-gray-400 hover:bg-[#1B2F3C] hover:text-white'
+                      )}
+                    >
+                      {link.icon}
+                      {link.label}
+                    </Link>
+                  ))}
+                  <div className="h-px bg-[#2A3F4C] my-4" />
+                  <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Tableaux de bord</p>
+                  <Link to="/dashboard/advertiser" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
+                    <LayoutDashboard className="h-4 w-4" />Espace annonceur
+                  </Link>
+                  <Link to="/dashboard/artisan" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
+                    <Wrench className="h-4 w-4" />Espace artisan
+                  </Link>
+                  <Link to="/dashboard/admin" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
+                    <User className="h-4 w-4" />Administration
+                  </Link>
+                </nav>
+
+                {/* Mobile Auth */}
+                <div className="p-4 border-t border-[#2A3F4C] space-y-2">
+                  <Link to="/login" className="block">
+                    <Button variant="outline" className="w-full border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C] hover:text-white">
+                      <LogIn className="h-4 w-4 mr-2" />Connexion
+                    </Button>
+                  </Link>
+                  <Link to="/register" className="block">
+                    <Button className="w-full bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
+                      Publier une annonce
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-md border-b-2 shadow-xl animate-in slide-in-from-top-4 duration-300">
-          <nav className="container py-6 flex flex-col gap-4">
-            <Link
-              to="/buy"
-              className="text-sm font-medium py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {isRTL ? 'عقارات' : 'Immobilier'}
-            </Link>
-            <Link
-              to="/services"
-              className="text-sm font-medium py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t('nav.services')}
-            </Link>
-            {user ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="text-sm font-medium py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {t('nav.dashboard')}
-                </Link>
-                <Button asChild className="mt-2">
-                  <Link to="/add-listing" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Plus className="h-4 w-4" />
-                    {t('nav.addListing')}
-                  </Link>
-                </Button>
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className="text-sm font-medium py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-
-                    {t('admin.title')}
-                  </Link>
-                )}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    handleSignOut();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="mt-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t('nav.logout')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" asChild className="mt-2">
-                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    {t('nav.login')}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild className="mt-2">
-                  <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Plus className="h-4 w-4" />
-                    {isRTL ? 'نشر إعلان' : 'Publier une annonce'}
-                  </Link>
-                </Button>
-                <Button asChild className="mt-2">
-                  <Link to="/artisan/onboarding" onClick={() => setIsMobileMenuOpen(false)}>
-                    <UserPlus className="h-4 w-4" />
-                    {isRTL ? 'أصبح مزود خدمة' : 'Devenir prestataire'}
-                  </Link>
-                </Button>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
     </header>
   );
 }
