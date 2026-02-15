@@ -36,7 +36,7 @@ interface FilterSidebarProps {
 }
 
 interface FilterState {
-  selectedCategories: string[];
+  selectedCategory: string;
   selectedCity: string;
   minRating: number | null;
   availableOnly: boolean;
@@ -45,12 +45,8 @@ interface FilterState {
 }
 
 function FilterSidebar({ categories, cities, filters, onFilterChange, onReset, onApply }: FilterSidebarProps) {
-  const handleCategoryToggle = (categoryId: string) => {
-    const current = filters.selectedCategories;
-    const updated = current.includes(categoryId)
-      ? current.filter(id => id !== categoryId)
-      : [...current, categoryId];
-    onFilterChange('selectedCategories', updated);
+  const handleCategoryChange = (categoryId: string) => {
+    onFilterChange('selectedCategory', filters.selectedCategory === categoryId ? '' : categoryId);
   };
 
   return (
@@ -63,8 +59,8 @@ function FilterSidebar({ categories, cities, filters, onFilterChange, onReset, o
             <div key={category.id} className="flex items-center space-x-2">
               <Checkbox 
                 id={category.id}
-                checked={filters.selectedCategories.includes(category.id)}
-                onCheckedChange={() => handleCategoryToggle(category.id)}
+                checked={filters.selectedCategory === category.id}
+                onCheckedChange={() => handleCategoryChange(category.id)}
               />
               <label
                 htmlFor={category.id}
@@ -208,7 +204,7 @@ export default function ArtisansPage() {
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [filterState, setFilterState] = useState<FilterState>({
-    selectedCategories: [],
+    selectedCategory: '',
     selectedCity: 'all',
     minRating: null,
     availableOnly: false,
@@ -240,8 +236,8 @@ export default function ArtisansPage() {
   const handleApply = () => {
     const filters: ArtisanFilters = {};
     
-    if (filterState.selectedCategories.length > 0) {
-      filters.serviceCategoryId = filterState.selectedCategories[0];
+    if (filterState.selectedCategory) {
+      filters.serviceCategoryId = filterState.selectedCategory;
     }
     if (filterState.selectedCity !== 'all') {
       filters.cityId = parseInt(filterState.selectedCity);
@@ -261,7 +257,7 @@ export default function ArtisansPage() {
 
   const handleReset = () => {
     setFilterState({
-      selectedCategories: [],
+      selectedCategory: '',
       selectedCity: 'all',
       minRating: null,
       availableOnly: false,
