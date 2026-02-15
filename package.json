@@ -24,6 +24,7 @@
     "fix:listings": "npx tsx scripts/quick-fix-listings.ts",
     "check:migrations": "npx tsx scripts/check-migrations.ts",
     "diagnose:supabase": "npx tsx scripts/diagnose-supabase.ts",
+    "diagnose:frontend": "node scripts/diagnose-frontend.cjs",
     "verify:ga4": "node scripts/verify-ga4.js",
     "verify:auth-fix": "node scripts/verify-auth-fix.js",
     "setup:storage-buckets": "node scripts/setup-storage-buckets.js"
