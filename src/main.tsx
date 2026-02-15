@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { hasEnv, isProd } from "./lib/env";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function validateEnvironmentSync(): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -70,7 +71,9 @@ if (envValidation.valid) {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
         <BrowserRouter basename={basename}>
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </BrowserRouter>
       </React.StrictMode>,
     );

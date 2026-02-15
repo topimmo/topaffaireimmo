@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2, Wrench, Home, Check } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2, Wrench, Home, Check, AlertCircle } from 'lucide-react';
+import { useAuth, UserRole } from '@/contexts/AuthContext';
 
-type AccountType = 'user' | 'artisan';
+type AccountType = 'user' | 'artisan' | 'advertiser';
 
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState<AccountType>('user');
@@ -16,6 +17,9 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [agreed, setAgreed] = useState(false);
+  
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -31,11 +35,38 @@ export default function RegisterPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 2000);
+    setErrors({});
+
+    try {
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        formData.name,
+        accountType as UserRole
+      );
+
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setErrors({ general: 'Cet email est déjà utilisé' });
+        } else {
+          setErrors({ general: error.message || 'Une erreur est survenue' });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Redirect to email confirmation page
+      navigate('/email-confirmation', { state: { email: formData.email } });
+    } catch (error) {
+      console.error('Registration error:', error);
+      setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
+      setIsLoading(false);
+    }
   };
 
   const updateField = (key: string, value: string) => {
@@ -85,42 +116,63 @@ export default function RegisterPage() {
             </div>
 
             {/* Account Type Toggle */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-3 gap-2 mb-6">
               <button
                 type="button"
                 onClick={() => setAccountType('user')}
                 className={cn(
-                  'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all',
+                  'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all',
                   accountType === 'user'
                     ? 'border-[#0FC2C0] bg-[#0FC2C0]/10 text-[#0FC2C0]'
                     : 'border-[#2A3F4C] text-gray-400 hover:border-gray-500'
                 )}
               >
-                <Home className="h-6 w-6" />
-                <div>
-                  <p className="text-sm font-medium">Utilisateur</p>
-                  <p className="text-xs text-gray-500">Acheteur / Agent</p>
+                <Home className="h-5 w-5" />
+                <div className="text-center">
+                  <p className="text-xs font-medium">Utilisateur</p>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setAccountType('artisan')}
                 className={cn(
-                  'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all',
+                  'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all',
                   accountType === 'artisan'
                     ? 'border-[#0FC2C0] bg-[#0FC2C0]/10 text-[#0FC2C0]'
                     : 'border-[#2A3F4C] text-gray-400 hover:border-gray-500'
                 )}
               >
-                <Wrench className="h-6 w-6" />
-                <div>
-                  <p className="text-sm font-medium">Artisan</p>
-                  <p className="text-xs text-gray-500">Professionnel</p>
+                <Wrench className="h-5 w-5" />
+                <div className="text-center">
+                  <p className="text-xs font-medium">Artisan</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAccountType('advertiser')}
+                className={cn(
+                  'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all',
+                  accountType === 'advertiser'
+                    ? 'border-[#0FC2C0] bg-[#0FC2C0]/10 text-[#0FC2C0]'
+                    : 'border-[#2A3F4C] text-gray-400 hover:border-gray-500'
+                )}
+              >
+                <Home className="h-5 w-5" />
+                <div className="text-center">
+                  <p className="text-xs font-medium">Annonceur</p>
                 </div>
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* General Error */}
+              {errors.general && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-400">{errors.general}</p>
+                </div>
+              )}
+
               {/* Name */}
               <div className="space-y-1.5">
                 <Label className="text-gray-300 text-sm">Nom complet</Label>
