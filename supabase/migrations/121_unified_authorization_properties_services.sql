@@ -276,7 +276,7 @@ CREATE INDEX IF NOT EXISTS idx_artisan_services_approved_at
 CREATE INDEX IF NOT EXISTS idx_artisan_services_moderated_at 
   ON public.artisan_services(moderated_at) WHERE moderated_at IS NOT NULL;
 
--- Drop invalid index if it exists (city column may not exist in production)
+-- Drop invalid index if it exists (city column does not exist in production)
 DROP INDEX IF EXISTS public.idx_artisan_services_status_city;
 
 -- Composite index for common queries (approved services by creation date)
