@@ -435,6 +435,11 @@ COMMENT ON FUNCTION public.protect_artisan_service_moderation IS
 -- PART 6: CREATE MODERATION RPC FUNCTIONS
 -- =====================================================
 
+-- NOTE: These functions check for the existence of notifications and admin_audit_logs tables
+--       before attempting to insert into them. This ensures the migration works even if those
+--       tables don't exist yet (though they should exist from earlier migrations).
+--       Future optimization: Consider creating a helper function to reduce code duplication.
+
 -- Approve artisan service
 CREATE OR REPLACE FUNCTION public.approve_artisan_service(service_id UUID)
 RETURNS BOOLEAN
@@ -650,7 +655,8 @@ GRANT EXECUTE ON FUNCTION public.submit_artisan_service_for_review(UUID) TO auth
 -- We need to migrate existing data to use the new status field
 -- Convert is_active=TRUE to status='approved' (backward compatible: assume active services were approved)
 -- Convert is_active=FALSE to status='inactive'
--- Set approved_at for previously active services
+-- NOTE: We set approved_at to created_at for migrated records, but leave approved_by as NULL
+--       to indicate these are legacy records that were migrated without full approval metadata
 
 UPDATE public.artisan_services
 SET status = CASE 
@@ -658,6 +664,8 @@ SET status = CASE
   WHEN is_active = FALSE THEN 'inactive'
   ELSE 'pending'
 END,
+-- For backward compatibility, set approved_at for previously active services
+-- approved_by remains NULL to indicate legacy data without full audit trail
 approved_at = CASE WHEN is_active = TRUE THEN created_at ELSE NULL END
 WHERE TRUE; -- Update all existing records to migrate from is_active to status
 
