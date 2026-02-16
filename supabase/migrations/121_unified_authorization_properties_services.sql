@@ -276,9 +276,12 @@ CREATE INDEX IF NOT EXISTS idx_artisan_services_approved_at
 CREATE INDEX IF NOT EXISTS idx_artisan_services_moderated_at 
   ON public.artisan_services(moderated_at) WHERE moderated_at IS NOT NULL;
 
--- Composite index for common queries (approved services in a city)
-CREATE INDEX IF NOT EXISTS idx_artisan_services_status_city 
-  ON public.artisan_services(status, city) WHERE status = 'approved';
+-- Drop invalid index if it exists (city column may not exist in production)
+DROP INDEX IF EXISTS public.idx_artisan_services_status_city;
+
+-- Composite index for common queries (approved services by creation date)
+CREATE INDEX IF NOT EXISTS idx_artisan_services_status_created 
+  ON public.artisan_services(status, created_at) WHERE status = 'approved';
 
 -- Composite index for admin moderation queue
 CREATE INDEX IF NOT EXISTS idx_artisan_services_pending 
@@ -493,8 +496,7 @@ BEGIN
       jsonb_build_object(
         'service_id', service_id, 
         'status', 'approved',
-        'category_id', v_service.category_id,
-        'city', v_service.city
+        'subcategory_id', v_service.subcategory_id
       )
     );
   END IF;
@@ -579,8 +581,7 @@ BEGIN
         'service_id', service_id, 
         'status', 'rejected',
         'reason', reason,
-        'category_id', v_service.category_id,
-        'city', v_service.city
+        'subcategory_id', v_service.subcategory_id
       )
     );
   END IF;
