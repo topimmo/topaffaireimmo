@@ -5,6 +5,8 @@ import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { hasEnv, isProd } from "./lib/env";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AuthDebugLogger } from "./components/AuthDebugLogger";
+import { initSessionManager } from "./lib/sessionManager";
 
 function validateEnvironmentSync(): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -68,10 +70,17 @@ if (envValidation.valid) {
       throw new Error('Root element not found');
     }
 
+    // Initialize session manager before rendering
+    initSessionManager().catch(error => {
+      console.error('[Main] Session manager initialization failed:', error);
+      // Continue anyway - session manager failure shouldn't block the app
+    });
+
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
         <BrowserRouter basename={basename}>
           <AuthProvider>
+            <AuthDebugLogger />
             <App />
           </AuthProvider>
         </BrowserRouter>

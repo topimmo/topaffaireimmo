@@ -189,12 +189,17 @@ export function usePendingProperties() {
       if (updateError) throw updateError;
 
       // Log the action
-      await supabase.from('admin_audit_logs').insert({
+      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
         admin_id: user.id,
         action: 'approve',
         entity_type: 'property',
         entity_id: propertyId,
       });
+
+      if (auditError) {
+        console.error('[approveProperty] Failed to log audit:', auditError);
+        // Continue - audit log failure shouldn't block the operation
+      }
 
       // Remove from local state
       setProperties(prev => prev.filter(p => p.id !== propertyId));
@@ -217,13 +222,18 @@ export function usePendingProperties() {
       if (updateError) throw updateError;
 
       // Log the action
-      await supabase.from('admin_audit_logs').insert({
+      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
         admin_id: user.id,
         action: 'reject',
         entity_type: 'property',
         entity_id: propertyId,
         metadata: { reason },
       });
+
+      if (auditError) {
+        console.error('[rejectProperty] Failed to log audit:', auditError);
+        // Continue - audit log failure shouldn't block the operation
+      }
 
       // Remove from local state
       setProperties(prev => prev.filter(p => p.id !== propertyId));
@@ -302,12 +312,17 @@ export function useUnverifiedArtisans() {
       if (updateError) throw updateError;
 
       // Log the action
-      await supabase.from('admin_audit_logs').insert({
+      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
         admin_id: user.id,
         action: 'approve',
         entity_type: 'artisan',
         entity_id: artisanId,
       });
+
+      if (auditError) {
+        console.error('[verifyArtisan] Failed to log audit:', auditError);
+        // Continue - audit log failure shouldn't block the operation
+      }
 
       // Remove from local state
       setArtisans(prev => prev.filter(a => a.id !== artisanId));
@@ -323,13 +338,18 @@ export function useUnverifiedArtisans() {
 
     try {
       // For now, just log the rejection (you might want to add a rejection status)
-      await supabase.from('admin_audit_logs').insert({
+      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
         admin_id: user.id,
         action: 'reject',
         entity_type: 'artisan',
         entity_id: artisanId,
         metadata: { reason },
       });
+
+      if (auditError) {
+        console.error('[rejectArtisan] Failed to log audit:', auditError);
+        // Continue - audit log failure shouldn't block the operation
+      }
 
       // Remove from local state
       setArtisans(prev => prev.filter(a => a.id !== artisanId));
@@ -391,13 +411,18 @@ export function useUsers(searchTerm?: string) {
       if (updateError) throw updateError;
 
       // Log the action
-      await supabase.from('admin_audit_logs').insert({
+      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
         admin_id: user.id,
         action: 'update',
         entity_type: 'user',
         entity_id: userId,
         metadata: { field: 'user_role', new_value: newRole },
       });
+
+      if (auditError) {
+        console.error('[updateUserRole] Failed to log audit:', auditError);
+        // Continue - audit log failure shouldn't block the operation
+      }
 
       setUsers(prev =>
         prev.map(u => (u.id === userId ? { ...u, user_role: newRole } : u))
@@ -426,12 +451,17 @@ export function useUsers(searchTerm?: string) {
       if (updateError) throw updateError;
 
       // Log the action
-      await supabase.from('admin_audit_logs').insert({
+      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
         admin_id: user.id,
         action: newStatus ? 'unban' : 'ban',
         entity_type: 'user',
         entity_id: userId,
       });
+
+      if (auditError) {
+        console.error('[toggleUserStatus] Failed to log audit:', auditError);
+        // Continue - audit log failure shouldn't block the operation
+      }
 
       setUsers(prev =>
         prev.map(u => (u.id === userId ? { ...u, is_active: newStatus } : u))
