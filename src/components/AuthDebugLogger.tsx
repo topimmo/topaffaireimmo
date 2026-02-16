@@ -13,10 +13,12 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/lib/supabase';
 
 export function AuthDebugLogger() {
-  const { user, profile, session, role, isAdmin, loading } = useAuth();
+  const { user, profile, session, role, loading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
 
   useEffect(() => {
     // Only log in development mode
@@ -24,6 +26,7 @@ export function AuthDebugLogger() {
 
     console.group('🔐 Auth State Debug');
     console.log('Loading:', loading);
+    console.log('Admin Loading:', adminLoading);
     console.log('User:', user ? {
       id: user.id,
       email: user.email,
@@ -43,9 +46,9 @@ export function AuthDebugLogger() {
       expires_in: session.expires_in,
     } : null);
     console.log('Role:', role);
-    console.log('Is Admin:', isAdmin);
+    console.log('Is Admin (from RPC):', isAdmin);
     console.groupEnd();
-  }, [user, profile, session, role, isAdmin, loading]);
+  }, [user, profile, session, role, isAdmin, loading, adminLoading]);
 
   useEffect(() => {
     if (!import.meta.env.DEV || !supabase) return;

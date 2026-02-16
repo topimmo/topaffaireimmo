@@ -15,9 +15,11 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/hooks/useAdmin';
 
 export function Header() {
-  const { user, role, isAdmin, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
