@@ -78,7 +78,7 @@ export function useAdminStats() {
         const { count: pendingProperties } = await supabase
           .from('properties')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending_review');
+          .eq('status', 'pending');
 
         // Get approved properties count
         const { count: approvedProperties } = await supabase
@@ -151,7 +151,7 @@ export function usePendingProperties() {
             email
           )
         `)
-        .eq('status', 'pending_review')
+        .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -181,25 +181,12 @@ export function usePendingProperties() {
     if (!user) return { success: false, error: 'Not authenticated' };
 
     try {
-      const { error: updateError } = await supabase
-        .from('properties')
-        .update({ status: 'approved' })
-        .eq('id', propertyId);
-
-      if (updateError) throw updateError;
-
-      // Log the action
-      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
-        admin_id: user.id,
-        action: 'approve',
-        entity_type: 'property',
-        entity_id: propertyId,
+      // Use RPC function for property approval (handles all moderation logic)
+      const { data, error: rpcError } = await supabase.rpc('approve_property', {
+        property_id: propertyId,
       });
 
-      if (auditError) {
-        console.error('[approveProperty] Failed to log audit:', auditError);
-        // Continue - audit log failure shouldn't block the operation
-      }
+      if (rpcError) throw rpcError;
 
       // Remove from local state
       setProperties(prev => prev.filter(p => p.id !== propertyId));
@@ -213,27 +200,22 @@ export function usePendingProperties() {
   const rejectProperty = async (propertyId: string, reason?: string) => {
     if (!user) return { success: false, error: 'Not authenticated' };
 
+    // Require rejection reason (min 10 characters as per RPC function)
+    if (!reason || reason.trim().length < 10) {
+      return { 
+        success: false, 
+        error: 'Rejection reason is required and must be at least 10 characters' 
+      };
+    }
+
     try {
-      const { error: updateError } = await supabase
-        .from('properties')
-        .update({ status: 'rejected' })
-        .eq('id', propertyId);
-
-      if (updateError) throw updateError;
-
-      // Log the action
-      const { error: auditError } = await supabase.from('admin_audit_logs').insert({
-        admin_id: user.id,
-        action: 'reject',
-        entity_type: 'property',
-        entity_id: propertyId,
-        metadata: { reason },
+      // Use RPC function for property rejection (handles all moderation logic)
+      const { data, error: rpcError } = await supabase.rpc('reject_property', {
+        property_id: propertyId,
+        reason: reason.trim(),
       });
 
-      if (auditError) {
-        console.error('[rejectProperty] Failed to log audit:', auditError);
-        // Continue - audit log failure shouldn't block the operation
-      }
+      if (rpcError) throw rpcError;
 
       // Remove from local state
       setProperties(prev => prev.filter(p => p.id !== propertyId));
