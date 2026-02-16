@@ -12,13 +12,13 @@ interface AdminState {
 
 /**
  * Hook to check if the current user is an admin
- * Checks profiles.user_role field (single source of truth for permissions)
+ * Checks public.admins table via is_admin() RPC (single source of truth)
  * 
  * Features:
  * - Checks admin status on mount and session changes
  * - Subscribes to auth state changes (login/logout/token refresh)
  * - Prevents state updates after unmount
- * - Uses profiles.user_role as the ONLY source of truth
+ * - Uses public.admins table (via RPC) as the ONLY source of truth
  * 
  * Returns { loading, isAdmin, role, error }
  */
@@ -64,12 +64,8 @@ export function useAdmin() {
       }
 
       try {
-        // Query profiles table for user_role (single source of truth)
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('user_role')
-          .eq('id', session.user.id)
-          .maybeSingle();
+        // Call is_admin() RPC function (single source of truth from public.admins table)
+        const { data, error } = await supabase.rpc('is_admin');
 
         if (isMountedRef.current) {
           if (error) {
@@ -82,12 +78,12 @@ export function useAdmin() {
               error: new Error(error.message),
             });
           } else {
-            // Check if user_role is 'admin'
-            const isAdmin = data?.user_role === 'admin';
+            // data is a boolean from the RPC
+            const isAdmin = data === true;
             setState({
               loading: false,
               isAdmin,
-              role: data?.user_role || null,
+              role: isAdmin ? 'admin' : null,
               error: null,
             });
           }

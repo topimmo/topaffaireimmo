@@ -13,6 +13,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   role: UserRole | null;
+  /** @deprecated Use useAdmin() hook instead. This will always return false. Admin status is now determined by public.admins table via RPC. */
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithOAuth: (provider: 'google' | 'facebook') => Promise<{ error: AuthError | null }>;
@@ -297,7 +298,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     loading,
     role: (profile?.user_role as UserRole) || null,
-    isAdmin: profile?.is_admin === true || profile?.user_role === 'admin',
+    // DEPRECATED: Use useAdmin() hook instead
+    // Admin status is now determined by public.admins table via is_admin() RPC
+    isAdmin: false,
     signIn,
     signInWithOAuth,
     signUp,

@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/hooks/useAdmin';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,8 +9,12 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false, allowedRoles }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, role } = useAuth();
+  const { user, loading: authLoading, role } = useAuth();
+  const { loading: adminLoading, isAdmin } = useAdmin();
   const location = useLocation();
+
+  // Combine loading states
+  const loading = authLoading || (requireAdmin && adminLoading);
 
   // Show loading state while checking auth
   if (loading) {
