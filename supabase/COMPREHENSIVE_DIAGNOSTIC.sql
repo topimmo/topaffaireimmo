@@ -266,7 +266,7 @@ SELECT
 FROM pg_proc p
 JOIN pg_namespace n ON p.pronamespace = n.oid
 WHERE n.nspname = 'public'
-  AND p.proname LIKE '%profile%' OR p.proname LIKE '%artisan%'
+  AND (p.proname LIKE '%profile%' OR p.proname LIKE '%artisan%')
 ORDER BY p.proname;
 
 \echo ''

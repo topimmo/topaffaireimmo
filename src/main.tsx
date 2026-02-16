@@ -71,9 +71,12 @@ if (envValidation.valid) {
     }
 
     // Initialize session manager before rendering
+    // Run in background - don't block app startup
+    // Session validation happens in AuthContext anyway
     initSessionManager().catch(error => {
       console.error('[Main] Session manager initialization failed:', error);
       // Continue anyway - session manager failure shouldn't block the app
+      // AuthContext will handle session validation independently
     });
 
     ReactDOM.createRoot(rootElement).render(

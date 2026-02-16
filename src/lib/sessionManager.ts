@@ -17,12 +17,24 @@ export function clearInvalidAuthTokens(): void {
     if (!window.localStorage) return;
 
     // Get the storage key from supabase config
+    // Supabase uses format: sb-<project-ref>-auth-token OR custom storageKey
+    // We use the same key as configured in supabase.ts
     const storageKey = 'topaffaireimmo-auth-token';
     
-    // Remove the auth token
-    window.localStorage.removeItem(storageKey);
+    // Also try to find Supabase's default keys (sb-*-auth-token pattern)
+    const allKeys = Object.keys(window.localStorage);
+    const supabaseKeys = allKeys.filter(key => 
+      key.includes('auth-token') || 
+      key.startsWith('sb-') ||
+      key === storageKey
+    );
     
-    console.log('[SessionManager] Cleared auth tokens from localStorage');
+    // Remove all auth-related keys
+    supabaseKeys.forEach(key => {
+      window.localStorage.removeItem(key);
+    });
+    
+    console.log('[SessionManager] Cleared auth tokens from localStorage:', supabaseKeys);
   } catch (error) {
     console.warn('[SessionManager] Failed to clear tokens:', error instanceof Error ? error.message : 'Unknown error');
   }

@@ -61,7 +61,7 @@ BEGIN
     SELECT 1 FROM information_schema.table_constraints
     WHERE table_name = 'properties'
     AND constraint_type = 'FOREIGN KEY'
-    AND constraint_name LIKE '%user%' OR constraint_name LIKE '%owner%'
+    AND (constraint_name LIKE '%user%' OR constraint_name LIKE '%owner%')
   ) THEN
     -- Determine which column exists (user_id or owner_id)
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'properties' AND column_name = 'user_id') THEN
