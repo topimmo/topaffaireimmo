@@ -284,13 +284,17 @@ export async function uploadPropertyImages(
           .insert(propertyImageEntries);
         
         if (insertError) {
-          console.warn('[Storage] Failed to register images in property_images table:', insertError.message);
-          console.warn('[Storage] Images are uploaded but may not be accessible until property is approved');
+          console.error('[Storage] CRITICAL: Failed to register images in property_images table:', insertError.message);
+          console.error('[Storage] Property ID:', propertyId);
+          console.error('[Storage] Images uploaded but NOT registered - this may cause access issues');
+          console.error('[Storage] Error details:', insertError);
+          // Images are uploaded but not registered - this is a serious issue that should be logged
         } else {
           console.log(`[Storage] Successfully registered ${successfulUploads.length} images in property_images table`);
         }
       } catch (err) {
-        console.warn('[Storage] Error registering images:', err instanceof Error ? err.message : 'Unknown error');
+        console.error('[Storage] CRITICAL: Exception registering images:', err instanceof Error ? err.message : 'Unknown error');
+        console.error('[Storage] Stack trace:', err);
       }
     }
   }
