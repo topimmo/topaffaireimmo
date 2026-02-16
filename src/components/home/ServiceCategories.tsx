@@ -1,4 +1,5 @@
 import { Wrench, Droplet, Zap, Hammer, Paintbrush, Key, Scissors, Truck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -89,6 +90,12 @@ function CategoryCard({ category }: CategoryCardProps) {
 }
 
 export function ServiceCategories() {
+  const navigate = useNavigate();
+
+  const handleViewAllServices = () => {
+    navigate('/artisans');
+  };
+
   return (
     <section className="py-16 md:py-24 bg-[#0D2838]">
       <div className="container mx-auto px-4 md:px-8">
@@ -111,7 +118,10 @@ export function ServiceCategories() {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <button className="text-[#0FC2C0] hover:text-[#0DA9A7] font-medium transition-colors">
+          <button 
+            onClick={handleViewAllServices}
+            className="text-[#0FC2C0] hover:text-[#0DA9A7] font-medium transition-colors"
+          >
             Voir tous les services →
           </button>
         </div>
