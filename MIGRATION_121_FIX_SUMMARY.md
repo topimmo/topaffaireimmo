@@ -52,7 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_artisan_services_status_city
 
 **After:**
 ```sql
--- Drop invalid index if it exists (city column may not exist in production)
+-- Drop invalid index if it exists (city column does not exist in production)
 DROP INDEX IF EXISTS public.idx_artisan_services_status_city;
 
 -- Composite index for common queries (approved services by creation date)
@@ -156,7 +156,7 @@ Before deploying to production:
 
 ## Files Changed
 
-- `supabase/migrations/121_unified_authorization_properties_services.sql` (8 insertions, 7 deletions)
+- `supabase/migrations/121_unified_authorization_properties_services.sql` (9 insertions, 8 deletions)
 
 ## Deployment Steps
 
