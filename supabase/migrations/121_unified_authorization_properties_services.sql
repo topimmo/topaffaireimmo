@@ -324,7 +324,7 @@ CREATE POLICY "artisan_services_insert_own" ON public.artisan_services
     auth.uid() IS NOT NULL AND
     auth.uid() = artisan_id AND
     -- New services must start as pending or can be marked inactive by owner
-    (status IN ('pending', 'inactive') OR status IS NULL)
+    status IN ('pending', 'inactive')
   );
 
 -- UPDATE POLICIES
@@ -339,7 +339,7 @@ CREATE POLICY "artisan_services_update_own" ON public.artisan_services
     auth.uid() = artisan_id AND
     -- Cannot change status to approved (only admin can do this)
     -- Can change from pending to inactive or vice versa
-    (status IN ('pending', 'inactive') OR status IS NULL)
+    status IN ('pending', 'inactive')
   );
 
 -- 2. Admins can update ANY service and change to any status
@@ -646,8 +646,11 @@ GRANT EXECUTE ON FUNCTION public.submit_artisan_service_for_review(UUID) TO auth
 -- =====================================================
 
 -- Update existing artisan_services records
--- Convert is_active=TRUE to status='approved' if they were already live
+-- The artisan_services table already has is_active column (from migration 100)
+-- We need to migrate existing data to use the new status field
+-- Convert is_active=TRUE to status='approved' (backward compatible: assume active services were approved)
 -- Convert is_active=FALSE to status='inactive'
+-- Set approved_at for previously active services
 
 UPDATE public.artisan_services
 SET status = CASE 
@@ -656,7 +659,7 @@ SET status = CASE
   ELSE 'pending'
 END,
 approved_at = CASE WHEN is_active = TRUE THEN created_at ELSE NULL END
-WHERE status IS NULL OR status = 'pending';
+WHERE TRUE; -- Update all existing records to migrate from is_active to status
 
 -- =====================================================
 -- VERIFICATION QUERIES
