@@ -181,14 +181,20 @@ export async function cleanupServiceWorkers(): Promise<void> {
 /**
  * Initialize session manager
  * Call this once on app startup
+ * 
+ * NOTE: This is intentionally non-blocking to prevent race conditions
+ * with AuthContext. AuthContext handles its own session initialization
+ * and validation. This utility provides additional cleanup (service workers)
+ * and validation, but shouldn't block app rendering.
  */
 export async function initSessionManager(): Promise<void> {
   console.log('[SessionManager] Initializing...');
   
-  // Cleanup any service workers
+  // Cleanup any service workers (non-blocking)
   await cleanupServiceWorkers();
   
-  // Validate session
+  // Validate session (non-blocking)
+  // AuthContext will do its own validation, so this is supplementary
   const { valid, refreshed } = await validateAndRefreshSession();
   
   if (!valid) {

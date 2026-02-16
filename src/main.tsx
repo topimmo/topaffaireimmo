@@ -70,9 +70,10 @@ if (envValidation.valid) {
       throw new Error('Root element not found');
     }
 
-    // Initialize session manager before rendering
-    // Run in background - don't block app startup
-    // Session validation happens in AuthContext anyway
+    // Initialize session manager in background (non-blocking)
+    // NOTE: This is intentionally fire-and-forget to prevent blocking app startup
+    // AuthContext handles its own session initialization independently
+    // SessionManager provides supplementary cleanup (service workers) and validation
     initSessionManager().catch(error => {
       console.error('[Main] Session manager initialization failed:', error);
       // Continue anyway - session manager failure shouldn't block the app
