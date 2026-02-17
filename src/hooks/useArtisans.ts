@@ -66,27 +66,22 @@ export function useArtisans(filters?: ArtisanFilters) {
             description_ar,
             phone,
             whatsapp,
-            cities,
             is_verified,
             is_boosted,
             created_at,
+            avatar_url,
             service_categories:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
+            artisan_profile_neighborhoods (
+              neighborhoods:neighborhood_id (
                 id,
-                name_fr,
-                name_ar
+                name,
+                city_id
               )
-            ),
-            profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
             )
           `)
           .eq('is_active', true);
@@ -95,9 +90,8 @@ export function useArtisans(filters?: ArtisanFilters) {
         if (filters?.serviceCategoryId) {
           query = query.eq('service_category_id', filters.serviceCategoryId);
         }
-        if (filters?.cityId) {
-          query = query.contains('cities', [filters.cityId]);
-        }
+        // NOTE: City filtering requires joining through neighborhoods
+        // For now, we'll filter client-side until we optimize the query
         if (filters?.isVerified !== undefined) {
           query = query.eq('is_verified', filters.isVerified);
         }
@@ -120,8 +114,18 @@ export function useArtisans(filters?: ArtisanFilters) {
           let transformedData = (data || []).map((artisan: any) => ({
             ...artisan,
             service_category: artisan.service_categories,
-            profiles: artisan.profiles?.[0] || undefined,
+            // Extract city IDs from neighborhoods for backward compatibility
+            cities: artisan.artisan_profile_neighborhoods?.map((apn: any) => 
+              apn.neighborhoods?.city_id
+            ).filter(Boolean) || [],
           }));
+
+          // Apply client-side filters
+          if (filters?.cityId) {
+            transformedData = transformedData.filter(
+              (a) => a.cities?.includes(filters.cityId!)
+            );
+          }
 
           if (filters?.minRating) {
             transformedData = transformedData.filter(
@@ -181,27 +185,22 @@ export function useArtisan(id: string) {
             description_ar,
             phone,
             whatsapp,
-            cities,
             is_verified,
             is_boosted,
             created_at,
+            avatar_url,
             service_categories:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
+            artisan_profile_neighborhoods (
+              neighborhoods:neighborhood_id (
                 id,
-                name_fr,
-                name_ar
+                name,
+                city_id
               )
-            ),
-            profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
             )
           `)
           .eq('id', id)
@@ -217,7 +216,10 @@ export function useArtisan(id: string) {
           setArtisan({
             ...data,
             service_category: data.service_categories as any,
-            profiles: data.profiles?.[0] || undefined,
+            // Extract city IDs from neighborhoods for backward compatibility
+            cities: data.artisan_profile_neighborhoods?.map((apn: any) => 
+              apn.neighborhoods?.city_id
+            ).filter(Boolean) || [],
           });
         }
       } catch (err) {
@@ -260,27 +262,22 @@ export function useFeaturedArtisans(limit: number = 6) {
             description_ar,
             phone,
             whatsapp,
-            cities,
             is_verified,
             is_boosted,
             created_at,
+            avatar_url,
             service_categories:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
+            artisan_profile_neighborhoods (
+              neighborhoods:neighborhood_id (
                 id,
-                name_fr,
-                name_ar
+                name,
+                city_id
               )
-            ),
-            profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
             )
           `)
           .eq('is_verified', true)
@@ -298,7 +295,10 @@ export function useFeaturedArtisans(limit: number = 6) {
           const transformedData = (data || []).map((artisan: any) => ({
             ...artisan,
             service_category: artisan.service_categories,
-            profiles: artisan.profiles?.[0] || undefined,
+            // Extract city IDs from neighborhoods for backward compatibility
+            cities: artisan.artisan_profile_neighborhoods?.map((apn: any) => 
+              apn.neighborhoods?.city_id
+            ).filter(Boolean) || [],
           }));
           setArtisans(transformedData);
         }

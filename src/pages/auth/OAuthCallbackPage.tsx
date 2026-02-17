@@ -65,10 +65,35 @@ export default function OAuthCallbackPage() {
           provider: session.user.app_metadata.provider
         });
 
-        // Small delay to allow AuthContext to process the session
-        // This is safer than a fixed timeout - the AuthContext subscription
-        // will handle the session update, we just give it a moment
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Wait for profile to be created/loaded
+        // Instead of hardcoded timeout, wait for actual profile data
+        let profileLoaded = false;
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        while (!profileLoaded && attempts < maxAttempts) {
+          attempts++;
+          
+          // Check if profile exists in database
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile) {
+            profileLoaded = true;
+            console.log('[OAuth Callback] ✅ Profile loaded after', attempts, 'attempts');
+          } else {
+            // Profile not ready yet, wait and retry
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+
+        if (!profileLoaded) {
+          console.warn('[OAuth Callback] ⚠️  Profile not found after max attempts');
+          // Continue anyway - the AuthContext will handle profile creation
+        }
 
         // Redirect to home page (or dashboard based on role)
         // The AuthContext will handle profile loading

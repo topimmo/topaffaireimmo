@@ -179,6 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      // CRITICAL: Default role should be 'user', not 'advertiser'
+      // Users can upgrade to advertiser role later through the app
+      const userRole = role === 'advertiser' ? 'user' : role;
+
       // First, create the auth user
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -186,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: {
           data: {
             full_name: fullName,
-            user_role: role,
+            user_role: userRole, // Use corrected role
           },
         },
       });
@@ -208,11 +212,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!existingProfile) {
           // Create profile manually if trigger didn't work
+          // Use corrected user_role (default to 'user')
           await supabase.from('profiles').insert({
             id: data.user.id,
             email: email,
             full_name: fullName,
-            user_role: role,
+            user_role: userRole, // Use corrected role
           });
         }
 
