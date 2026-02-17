@@ -219,7 +219,7 @@ export const SearchArtisansSchema = z.object({
   neighborhood_ids: z.array(IntegerIDSchema).optional(),
   search_query: z.string().max(100).optional(),
   min_rating: z.number().min(1).max(5).optional(),
-  is_boosted: z.boolean().optional(),
+  is_boosted: z.boolean().optional(), // FULL FREE MODE: Kept for API compatibility but not used
   page: z.number().int().positive().default(1),
   limit: z.number().int().min(1).max(100).default(20),
 });
