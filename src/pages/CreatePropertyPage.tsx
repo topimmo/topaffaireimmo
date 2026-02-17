@@ -16,7 +16,7 @@ import { Home, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function CreatePropertyPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { cities, loading: citiesLoading } = useCities();
   const { propertyTypes, loading: typesLoading } = usePropertyTypes();
 
@@ -81,8 +81,8 @@ export default function CreatePropertyPage() {
         contact_email: formData.contact_email || null,
         contact_whatsapp: formData.contact_whatsapp || null,
         status: 'draft', // Start as draft
-        advertiser_type: 'individual',
-        title_ar: formData.title_fr, // Use French title as fallback for Arabic
+        advertiser_type: profile?.advertiser_type || 'individual',
+        title_ar: '', // Leave empty - user can edit later
       };
 
       const { data, error } = await supabase
