@@ -508,10 +508,26 @@ export function useArtisanServices() {
     fetchServices();
   }, [user]);
 
-  const updateServices = async (subcategoryIds: string[], city: string, categoryId: string) => {
+  const updateServices = async (subcategoryIds: string[], city?: string) => {
     if (!user) return { success: false, error: 'Not authenticated' };
 
     try {
+      // Get artisan profile to find their category_id
+      const { data: profile, error: profileError } = await supabase
+        .from('artisan_profiles')
+        .select('id, service_category_id, cities')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error('Artisan profile not found');
+      }
+
+      // Use provided city or first city from profile's cities array
+      const targetCity = city || (profile.cities && profile.cities.length > 0 
+        ? String(profile.cities[0])  // Convert city ID to string for now
+        : 'Morocco');  // Fallback
+
       // Delete existing services
       await supabase
         .from('artisan_services')
@@ -519,15 +535,15 @@ export function useArtisanServices() {
         .eq('artisan_id', user.id);
 
       // Insert new services with required fields
-      if (subcategoryIds.length > 0) {
+      if (subcategoryIds.length > 0 && profile.service_category_id) {
         const { error: insertError } = await supabase
           .from('artisan_services')
           .insert(
             subcategoryIds.map(subcategoryId => ({
               artisan_id: user.id,
-              category_id: categoryId,
+              category_id: profile.service_category_id,
               subcategory_id: subcategoryId,
-              city: city,
+              city: targetCity,
               status: 'pending',
             }))
           );
