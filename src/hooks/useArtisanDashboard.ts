@@ -14,7 +14,7 @@ export interface ServiceRequest {
   client_id: string;
   status: string;
   created_at: string;
-  subcategory_id?: string;
+  service_category_id?: string;
   description?: string;
   client_name?: string;
   client_phone?: string;
@@ -50,18 +50,6 @@ export interface ServiceCategory {
   name_fr: string;
   name_ar: string;
   slug: string;
-}
-
-export interface ServiceSubcategory {
-  id: string;
-  name_fr: string;
-  name_ar: string;
-  service_category_id: string;
-}
-
-export interface ArtisanService {
-  id: string;
-  service_subcategory_id: string;
 }
 
 export function useArtisanStats() {
@@ -173,13 +161,13 @@ export function useArtisanRequests(status?: string) {
             client_id,
             status,
             created_at,
-            subcategory_id,
+            service_category_id,
             description,
             profiles:client_id (
               full_name,
               phone
             ),
-            service_subcategories:subcategory_id (
+            service_category:service_category_id (
               name_fr
             )
           `)
@@ -199,11 +187,11 @@ export function useArtisanRequests(status?: string) {
           client_id: req.client_id,
           status: req.status,
           created_at: req.created_at,
-          subcategory_id: req.subcategory_id,
+          service_category_id: req.service_category_id,
           description: req.description,
           client_name: req.profiles?.full_name,
           client_phone: req.profiles?.phone,
-          service_name: req.service_subcategories?.name_fr,
+          service_name: req.service_category?.name_fr,
         }));
 
         setRequests(transformedData);
@@ -430,129 +418,4 @@ export function useServiceCategories() {
   }, []);
 
   return { categories, loading, error };
-}
-
-export function useServiceSubcategories(categoryId?: string) {
-  const [subcategories, setSubcategories] = useState<ServiceSubcategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSubcategories = async () => {
-      try {
-        setLoading(true);
-        let query = supabase
-          .from('service_subcategories')
-          .select('id, name_fr, name_ar, service_category_id')
-          .eq('is_active', true);
-
-        if (categoryId) {
-          query = query.eq('service_category_id', categoryId);
-        }
-
-        const { data, error: fetchError } = await query.order('name_fr');
-
-        if (fetchError) throw fetchError;
-        setSubcategories(data || []);
-      } catch (err) {
-        console.error('[useServiceSubcategories] Error:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSubcategories();
-  }, [categoryId]);
-
-  return { subcategories, loading, error };
-}
-
-export function useArtisanServices() {
-  const { user } = useAuth();
-  const [services, setServices] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchServices = async () => {
-      try {
-        setLoading(true);
-
-        const { data: profile } = await supabase
-          .from('artisan_profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!profile) {
-          setServices([]);
-          return;
-        }
-
-        const { data, error: fetchError } = await supabase
-          .from('artisan_services')
-          .select('service_subcategory_id')
-          .eq('artisan_profile_id', profile.id);
-
-        if (fetchError) throw fetchError;
-
-        setServices((data || []).map(s => s.service_subcategory_id));
-      } catch (err) {
-        console.error('[useArtisanServices] Error:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchServices();
-  }, [user]);
-
-  const updateServices = async (subcategoryIds: string[]) => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const { data: profile } = await supabase
-        .from('artisan_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) throw new Error('Profile not found');
-
-      // Delete existing services
-      await supabase
-        .from('artisan_services')
-        .delete()
-        .eq('artisan_profile_id', profile.id);
-
-      // Insert new services
-      if (subcategoryIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from('artisan_services')
-          .insert(
-            subcategoryIds.map(id => ({
-              artisan_profile_id: profile.id,
-              service_subcategory_id: id,
-            }))
-          );
-
-        if (insertError) throw insertError;
-      }
-
-      setServices(subcategoryIds);
-      return { success: true };
-    } catch (err) {
-      console.error('[updateServices] Error:', err);
-      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
-    }
-  };
-
-  return { services, loading, error, updateServices };
 }

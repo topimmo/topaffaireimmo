@@ -106,10 +106,10 @@ export default function ArtisanDetailPage() {
     );
   }
 
-  const services = artisan.artisan_services?.map(s => s.service_subcategory.name_fr) || [];
-  const displayServices = services.length > 0 ? services : [artisan.service_category?.name_fr || 'Service'];
-  const rating = artisan.profiles?.rating || 0;
-  const completedJobs = artisan.profiles?.completed_jobs || 0;
+  const services = [artisan.service_category?.name_fr || 'Service'];
+  const displayServices = services;
+  const rating = 0; // Rating not available in current schema
+  const completedJobs = 0; // Completed jobs not available in current schema
   const avatarUrl = artisan.profiles?.avatar_url || '';
   const initials = artisan.business_name
     .split(' ')
@@ -156,7 +156,7 @@ export default function ArtisanDetailPage() {
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
                       <span className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
-                        {artisan.cities?.length ? `${artisan.cities.length} ville(s)` : 'Non spécifié'}
+                        {artisan.city?.name_fr || 'Non spécifié'}
                       </span>
                     </div>
                     {rating > 0 && (
