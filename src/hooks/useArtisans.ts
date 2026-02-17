@@ -21,7 +21,16 @@ export interface ArtisanProfile {
     slug: string;
   };
   artisan_services?: Array<{
-    service_subcategory: {
+    id: string;
+    category_id: string;
+    subcategory_id: string;
+    city: string;
+    service_categories?: {
+      id: string;
+      name_fr: string;
+      name_ar: string;
+    };
+    service_subcategories?: {
       id: string;
       name_fr: string;
       name_ar: string;
@@ -76,13 +85,6 @@ export function useArtisans(filters?: ArtisanFilters) {
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
-                id,
-                name_fr,
-                name_ar
-              )
-            ),
             profiles:user_id (
               rating,
               completed_jobs,
@@ -116,12 +118,51 @@ export function useArtisans(filters?: ArtisanFilters) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
+          // Fetch artisan_services separately and join client-side
+          // because artisan_services.artisan_id references auth.users, not artisan_profiles
+          const userIds = (data || []).map((a: any) => a.user_id);
+          let artisanServicesData: any[] = [];
+          
+          if (userIds.length > 0) {
+            const { data: servicesData } = await supabase
+              .from('artisan_services')
+              .select(`
+                id,
+                artisan_id,
+                category_id,
+                subcategory_id,
+                city,
+                service_categories:category_id (
+                  id,
+                  name_fr,
+                  name_ar
+                ),
+                service_subcategories:subcategory_id (
+                  id,
+                  name_fr,
+                  name_ar
+                )
+              `)
+              .in('artisan_id', userIds)
+              .eq('is_active', true);
+            
+            artisanServicesData = servicesData || [];
+          }
+
           // Transform and filter by rating if needed
-          let transformedData = (data || []).map((artisan: any) => ({
-            ...artisan,
-            service_category: artisan.service_categories,
-            profiles: artisan.profiles?.[0] || undefined,
-          }));
+          let transformedData = (data || []).map((artisan: any) => {
+            // Find artisan_services for this artisan (by user_id = artisan_id)
+            const services = artisanServicesData.filter(
+              (s: any) => s.artisan_id === artisan.user_id
+            );
+            
+            return {
+              ...artisan,
+              service_category: artisan.service_categories,
+              profiles: artisan.profiles?.[0] || undefined,
+              artisan_services: services,
+            };
+          });
 
           if (filters?.minRating) {
             transformedData = transformedData.filter(
@@ -191,13 +232,6 @@ export function useArtisan(id: string) {
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
-                id,
-                name_fr,
-                name_ar
-              )
-            ),
             profiles:user_id (
               rating,
               completed_jobs,
@@ -213,11 +247,35 @@ export function useArtisan(id: string) {
           setError(fetchError.message);
           setArtisan(null);
         } else {
+          // Fetch artisan_services separately
+          const { data: servicesData } = await supabase
+            .from('artisan_services')
+            .select(`
+              id,
+              artisan_id,
+              category_id,
+              subcategory_id,
+              city,
+              service_categories:category_id (
+                id,
+                name_fr,
+                name_ar
+              ),
+              service_subcategories:subcategory_id (
+                id,
+                name_fr,
+                name_ar
+              )
+            `)
+            .eq('artisan_id', data.user_id)
+            .eq('is_active', true);
+
           // Transform the data
           setArtisan({
             ...data,
             service_category: data.service_categories as any,
             profiles: data.profiles?.[0] || undefined,
+            artisan_services: servicesData || [],
           });
         }
       } catch (err) {
@@ -270,13 +328,6 @@ export function useFeaturedArtisans(limit: number = 6) {
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
-                id,
-                name_fr,
-                name_ar
-              )
-            ),
             profiles:user_id (
               rating,
               completed_jobs,
@@ -294,12 +345,50 @@ export function useFeaturedArtisans(limit: number = 6) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
+          // Fetch artisan_services separately
+          const userIds = (data || []).map((a: any) => a.user_id);
+          let artisanServicesData: any[] = [];
+          
+          if (userIds.length > 0) {
+            const { data: servicesData } = await supabase
+              .from('artisan_services')
+              .select(`
+                id,
+                artisan_id,
+                category_id,
+                subcategory_id,
+                city,
+                service_categories:category_id (
+                  id,
+                  name_fr,
+                  name_ar
+                ),
+                service_subcategories:subcategory_id (
+                  id,
+                  name_fr,
+                  name_ar
+                )
+              `)
+              .in('artisan_id', userIds)
+              .eq('is_active', true);
+            
+            artisanServicesData = servicesData || [];
+          }
+
           // Transform the data to match our interface
-          const transformedData = (data || []).map((artisan: any) => ({
-            ...artisan,
-            service_category: artisan.service_categories,
-            profiles: artisan.profiles?.[0] || undefined,
-          }));
+          const transformedData = (data || []).map((artisan: any) => {
+            // Find artisan_services for this artisan
+            const services = artisanServicesData.filter(
+              (s: any) => s.artisan_id === artisan.user_id
+            );
+            
+            return {
+              ...artisan,
+              service_category: artisan.service_categories,
+              profiles: artisan.profiles?.[0] || undefined,
+              artisan_services: services,
+            };
+          });
           setArtisans(transformedData);
         }
       } catch (err) {

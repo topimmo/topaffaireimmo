@@ -186,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: {
           data: {
             full_name: fullName,
-            user_role: role,
+            user_type: role === 'agency' ? 'agency' : 'advertiser',
           },
         },
       });
@@ -212,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: data.user.id,
             email: email,
             full_name: fullName,
-            user_role: role,
+            user_type: role === 'agency' ? 'agency' : 'advertiser',
           });
         }
 
