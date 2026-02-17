@@ -103,9 +103,8 @@ export function useArtisans(filters?: ArtisanFilters) {
           query = query.ilike('business_name', `%${filters.searchTerm}%`);
         }
 
-        query = query
-          .order('is_boosted', { ascending: false })
-          .order('created_at', { ascending: false });
+        // FULL FREE MODE: Removed is_boosted ordering
+        query = query.order('created_at', { ascending: false });
 
         const { data, error: fetchError } = await query;
 
@@ -277,7 +276,7 @@ export function useFeaturedArtisans(limit: number = 6) {
           `)
           .eq('is_verified', true)
           .eq('is_active', true)
-          .order('is_boosted', { ascending: false })
+          // FULL FREE MODE: Removed is_boosted ordering
           .order('created_at', { ascending: false })
           .limit(limit);
 

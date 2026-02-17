@@ -14,7 +14,7 @@ const featuredProperties = [
     bedrooms: 3,
     bathrooms: 2,
     surface: 140,
-    isBoosted: true,
+    // FULL FREE MODE: Removed isBoosted flag
     views: 1247,
   },
   {
@@ -28,7 +28,7 @@ const featuredProperties = [
     bedrooms: 5,
     bathrooms: 4,
     surface: 420,
-    isBoosted: true,
+    // FULL FREE MODE: Removed isBoosted flag
     views: 2156,
   },
   {

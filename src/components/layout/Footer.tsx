@@ -16,7 +16,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-gray-400">
-              La plateforme premium pour l'immobilier et les services professionnels au Maroc.
+              La plateforme pour l'immobilier et les services professionnels au Maroc.
             </p>
             <div className="flex items-center gap-3">
               <a href="#" className="text-gray-400 hover:text-[#0FC2C0] transition-colors">
