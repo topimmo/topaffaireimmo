@@ -85,7 +85,7 @@ export default function CreatePropertyPage() {
         title_ar: '', // Leave empty - user can edit later
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('properties')
         .insert([propertyData])
         .select()
