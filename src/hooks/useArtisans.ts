@@ -9,10 +9,11 @@ export interface ArtisanProfile {
   description_ar?: string;
   phone: string;
   whatsapp?: string;
-  cities?: number[]; // Array of city IDs from the database
+  city_id?: number; // FK to cities table
   is_verified: boolean;
   is_boosted: boolean;
   created_at: string;
+  avatar_url?: string;
   // Joined data
   service_category?: {
     id: string;
@@ -20,17 +21,10 @@ export interface ArtisanProfile {
     name_ar: string;
     slug: string;
   };
-  artisan_services?: Array<{
-    service_subcategory: {
-      id: string;
-      name_fr: string;
-      name_ar: string;
-    };
-  }>;
-  profiles?: {
-    rating?: number;
-    completed_jobs?: number;
-    avatar_url?: string;
+  city?: {
+    id: number;
+    name_fr: string;
+    name_ar: string;
   };
 }
 
@@ -66,6 +60,7 @@ export function useArtisans(filters?: ArtisanFilters) {
             description_ar,
             phone,
             whatsapp,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
@@ -76,12 +71,10 @@ export function useArtisans(filters?: ArtisanFilters) {
               name_ar,
               slug
             ),
-            artisan_profile_neighborhoods (
-              neighborhoods:neighborhood_id (
-                id,
-                name,
-                city_id
-              )
+            cities:city_id (
+              id,
+              name_fr,
+              name_ar
             )
           `)
           .eq('is_active', true);
@@ -110,20 +103,17 @@ export function useArtisans(filters?: ArtisanFilters) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
-          // Transform and filter by rating if needed
+          // Transform data
           let transformedData = (data || []).map((artisan: any) => ({
             ...artisan,
             service_category: artisan.service_categories,
-            // Extract city IDs from neighborhoods for backward compatibility
-            cities: artisan.artisan_profile_neighborhoods?.map((apn: any) => 
-              apn.neighborhoods?.city_id
-            ).filter(Boolean) || [],
+            city: artisan.cities,
           }));
 
           // Apply client-side filters
           if (filters?.cityId) {
             transformedData = transformedData.filter(
-              (a) => a.cities?.includes(filters.cityId!)
+              (a) => a.city_id === filters.cityId
             );
           }
 
@@ -185,6 +175,7 @@ export function useArtisan(id: string) {
             description_ar,
             phone,
             whatsapp,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
@@ -195,12 +186,10 @@ export function useArtisan(id: string) {
               name_ar,
               slug
             ),
-            artisan_profile_neighborhoods (
-              neighborhoods:neighborhood_id (
-                id,
-                name,
-                city_id
-              )
+            cities:city_id (
+              id,
+              name_fr,
+              name_ar
             )
           `)
           .eq('id', id)
@@ -216,10 +205,7 @@ export function useArtisan(id: string) {
           setArtisan({
             ...data,
             service_category: data.service_categories as any,
-            // Extract city IDs from neighborhoods for backward compatibility
-            cities: data.artisan_profile_neighborhoods?.map((apn: any) => 
-              apn.neighborhoods?.city_id
-            ).filter(Boolean) || [],
+            city: data.cities,
           });
         }
       } catch (err) {
@@ -262,6 +248,7 @@ export function useFeaturedArtisans(limit: number = 6) {
             description_ar,
             phone,
             whatsapp,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
@@ -272,12 +259,10 @@ export function useFeaturedArtisans(limit: number = 6) {
               name_ar,
               slug
             ),
-            artisan_profile_neighborhoods (
-              neighborhoods:neighborhood_id (
-                id,
-                name,
-                city_id
-              )
+            cities:city_id (
+              id,
+              name_fr,
+              name_ar
             )
           `)
           .eq('is_verified', true)
@@ -295,10 +280,7 @@ export function useFeaturedArtisans(limit: number = 6) {
           const transformedData = (data || []).map((artisan: any) => ({
             ...artisan,
             service_category: artisan.service_categories,
-            // Extract city IDs from neighborhoods for backward compatibility
-            cities: artisan.artisan_profile_neighborhoods?.map((apn: any) => 
-              apn.neighborhoods?.city_id
-            ).filter(Boolean) || [],
+            city: artisan.cities,
           }));
           setArtisans(transformedData);
         }
