@@ -25,12 +25,12 @@ export interface ArtisanProfile {
     category_id: string;
     subcategory_id: string;
     city: string;
-    service_categories?: {
+    service_category?: {
       id: string;
       name_fr: string;
       name_ar: string;
     };
-    service_subcategories?: {
+    service_subcategory?: {
       id: string;
       name_fr: string;
       name_ar: string;
@@ -132,12 +132,12 @@ export function useArtisans(filters?: ArtisanFilters) {
                 category_id,
                 subcategory_id,
                 city,
-                service_categories:category_id (
+                service_category:category_id (
                   id,
                   name_fr,
                   name_ar
                 ),
-                service_subcategories:subcategory_id (
+                service_subcategory:subcategory_id (
                   id,
                   name_fr,
                   name_ar
@@ -256,12 +256,12 @@ export function useArtisan(id: string) {
               category_id,
               subcategory_id,
               city,
-              service_categories:category_id (
+              service_category:category_id (
                 id,
                 name_fr,
                 name_ar
               ),
-              service_subcategories:subcategory_id (
+              service_subcategory:subcategory_id (
                 id,
                 name_fr,
                 name_ar
@@ -358,12 +358,12 @@ export function useFeaturedArtisans(limit: number = 6) {
                 category_id,
                 subcategory_id,
                 city,
-                service_categories:category_id (
+                service_category:category_id (
                   id,
                   name_fr,
                   name_ar
                 ),
-                service_subcategories:subcategory_id (
+                service_subcategory:subcategory_id (
                   id,
                   name_fr,
                   name_ar

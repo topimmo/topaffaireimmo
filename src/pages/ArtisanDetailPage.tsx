@@ -107,7 +107,7 @@ export default function ArtisanDetailPage() {
   }
 
   // Get services from artisan_services (subcategories)
-  const services = artisan.artisan_services?.map(s => s.service_subcategories?.name_fr).filter(Boolean) || [];
+  const services = artisan.artisan_services?.map(s => s.service_subcategory?.name_fr).filter(Boolean) || [];
   const displayServices = services.length > 0 ? services : [artisan.service_category?.name_fr || 'Service'];
   const rating = artisan.profiles?.rating || 0;
   const completedJobs = artisan.profiles?.completed_jobs || 0;

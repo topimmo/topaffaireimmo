@@ -512,7 +512,7 @@ export function useArtisanServices() {
     if (!user) return { success: false, error: 'Not authenticated' };
 
     try {
-      // Get artisan profile to find their category_id
+      // Get artisan profile to find their category_id and cities
       const { data: profile, error: profileError } = await supabase
         .from('artisan_profiles')
         .select('id, service_category_id, cities')
@@ -523,10 +523,21 @@ export function useArtisanServices() {
         throw new Error('Artisan profile not found');
       }
 
-      // Use provided city or first city from profile's cities array
-      const targetCity = city || (profile.cities && profile.cities.length > 0 
-        ? String(profile.cities[0])  // Convert city ID to string for now
-        : 'Morocco');  // Fallback
+      // Determine city name
+      let targetCity = city || 'Maroc';  // Default to Morocco in French
+      
+      // If profile has cities array and no city provided, fetch the first city's name
+      if (!city && profile.cities && profile.cities.length > 0) {
+        const { data: cityData } = await supabase
+          .from('cities')
+          .select('name_fr')
+          .eq('id', profile.cities[0])
+          .single();
+        
+        if (cityData) {
+          targetCity = cityData.name_fr;
+        }
+      }
 
       // Delete existing services
       await supabase
