@@ -221,7 +221,7 @@ export default function CreatePropertyPage() {
                     </SelectTrigger>
                     <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
                       {propertyTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.slug} className="text-white">
+                        <SelectItem key={type.id} value={type.code} className="text-white">
                           {type.name_fr}
                         </SelectItem>
                       ))}
