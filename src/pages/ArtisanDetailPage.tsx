@@ -253,12 +253,12 @@ export default function ArtisanDetailPage() {
             </Card>
 
             {/* Reviews */}
-            {completedJobs !== undefined && completedJobs > 0 && (
+            {completedJobs !== undefined && completedJobs > 0 && rating !== undefined && (
               <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-white">Avis clients</h2>
-                    <Badge className="bg-amber-500/20 text-amber-400">{rating?.toFixed(1)} ★ ({completedJobs})</Badge>
+                    <Badge className="bg-amber-500/20 text-amber-400">{rating.toFixed(1)} ★ ({completedJobs})</Badge>
                   </div>
 
                   <div className="space-y-4">
