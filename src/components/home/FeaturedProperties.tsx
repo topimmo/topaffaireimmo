@@ -68,7 +68,7 @@ export function FeaturedProperties() {
               Propriétés en vedette
             </h2>
             <p className="text-lg text-gray-300">
-              Découvrez une sélection de biens immobiliers premium
+              Découvrez une sélection de biens immobiliers
             </p>
           </div>
           <Button
