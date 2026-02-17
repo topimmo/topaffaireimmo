@@ -106,10 +106,10 @@ export default function ArtisanDetailPage() {
     );
   }
 
-  const services = artisan.artisan_services?.map(s => s.service_subcategory.name_fr) || [];
-  const displayServices = services.length > 0 ? services : [artisan.service_category?.name_fr || 'Service'];
-  const rating = artisan.profiles?.rating || 0;
-  const completedJobs = artisan.profiles?.completed_jobs || 0;
+  const services = [artisan.service_category?.name_fr || 'Service'];
+  const displayServices = services;
+  const rating = undefined; // Rating not yet implemented in schema - will be added later
+  const completedJobs = undefined; // Completed jobs not yet implemented - will be added later
   const avatarUrl = artisan.profiles?.avatar_url || '';
   const initials = artisan.business_name
     .split(' ')
@@ -156,10 +156,10 @@ export default function ArtisanDetailPage() {
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
                       <span className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
-                        {artisan.cities?.length ? `${artisan.cities.length} ville(s)` : 'Non spécifié'}
+                        {artisan.city?.name_fr || 'Non spécifié'}
                       </span>
                     </div>
-                    {rating > 0 && (
+                    {rating !== undefined && rating > 0 && (
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map(i => (
@@ -227,31 +227,33 @@ export default function ArtisanDetailPage() {
                 <p className="text-gray-300 leading-relaxed">
                   {artisan.description_fr || `${artisan.business_name} est un professionnel spécialisé dans ${artisan.service_category?.name_fr}. Contactez-nous pour plus d'informations sur nos services.`}
                 </p>
-                <div className="grid sm:grid-cols-3 gap-4 mt-6">
-                  {completedJobs > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0A1F2E]">
-                      <Award className="h-5 w-5 text-[#0FC2C0]" />
-                      <div>
-                        <p className="text-sm text-gray-400">Projets complétés</p>
-                        <p className="font-semibold text-white">{completedJobs}</p>
+                {(completedJobs !== undefined && completedJobs > 0) || (rating !== undefined && rating > 0) ? (
+                  <div className="grid sm:grid-cols-3 gap-4 mt-6">
+                    {completedJobs !== undefined && completedJobs > 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0A1F2E]">
+                        <Award className="h-5 w-5 text-[#0FC2C0]" />
+                        <div>
+                          <p className="text-sm text-gray-400">Projets complétés</p>
+                          <p className="font-semibold text-white">{completedJobs}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {rating > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0A1F2E]">
-                      <Star className="h-5 w-5 text-[#0FC2C0]" />
-                      <div>
-                        <p className="text-sm text-gray-400">Note moyenne</p>
-                        <p className="font-semibold text-white">{rating.toFixed(1)}/5</p>
+                    )}
+                    {rating !== undefined && rating > 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0A1F2E]">
+                        <Star className="h-5 w-5 text-[#0FC2C0]" />
+                        <div>
+                          <p className="text-sm text-gray-400">Note moyenne</p>
+                          <p className="font-semibold text-white">{rating.toFixed(1)}/5</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 
             {/* Reviews */}
-            {completedJobs > 0 && (
+            {completedJobs !== undefined && completedJobs > 0 && rating !== undefined && (
               <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-6">

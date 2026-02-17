@@ -9,7 +9,7 @@ export interface ArtisanProfile {
   description_ar?: string;
   phone: string;
   whatsapp?: string;
-  cities?: number[]; // Array of city IDs from the database
+  city_id?: number;
   is_verified: boolean;
   is_boosted: boolean;
   created_at: string;
@@ -20,17 +20,16 @@ export interface ArtisanProfile {
     name_ar: string;
     slug: string;
   };
-  artisan_services?: Array<{
-    service_subcategory: {
-      id: string;
-      name_fr: string;
-      name_ar: string;
-    };
-  }>;
+  city?: {
+    id: number;
+    name_fr: string;
+    name_ar: string;
+  };
   profiles?: {
-    rating?: number;
-    completed_jobs?: number;
+    full_name?: string;
+    phone?: string;
     avatar_url?: string;
+    role?: string;
   };
 }
 
@@ -66,27 +65,26 @@ export function useArtisans(filters?: ArtisanFilters) {
             description_ar,
             phone,
             whatsapp,
-            cities,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
-            service_categories:service_category_id (
+            service_category:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
-                id,
-                name_fr,
-                name_ar
-              )
+            city:city_id (
+              id,
+              name_fr,
+              name_ar
             ),
             profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
+              full_name,
+              phone,
+              avatar_url,
+              role
             )
           `)
           .eq('is_active', true);
@@ -96,7 +94,7 @@ export function useArtisans(filters?: ArtisanFilters) {
           query = query.eq('service_category_id', filters.serviceCategoryId);
         }
         if (filters?.cityId) {
-          query = query.contains('cities', [filters.cityId]);
+          query = query.eq('city_id', filters.cityId);
         }
         if (filters?.isVerified !== undefined) {
           query = query.eq('is_verified', filters.isVerified);
@@ -116,18 +114,13 @@ export function useArtisans(filters?: ArtisanFilters) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
-          // Transform and filter by rating if needed
-          let transformedData = (data || []).map((artisan: any) => ({
+          // Transform data - Supabase returns joined data as single objects, not arrays
+          const transformedData = (data || []).map((artisan: any) => ({
             ...artisan,
-            service_category: artisan.service_categories,
-            profiles: artisan.profiles?.[0] || undefined,
+            service_category: artisan.service_category || undefined,
+            city: artisan.city || undefined,
+            profiles: artisan.profiles || undefined,
           }));
-
-          if (filters?.minRating) {
-            transformedData = transformedData.filter(
-              (a) => (a.profiles?.rating || 0) >= filters.minRating!
-            );
-          }
 
           setArtisans(transformedData);
         }
@@ -181,27 +174,26 @@ export function useArtisan(id: string) {
             description_ar,
             phone,
             whatsapp,
-            cities,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
-            service_categories:service_category_id (
+            service_category:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
-                id,
-                name_fr,
-                name_ar
-              )
+            city:city_id (
+              id,
+              name_fr,
+              name_ar
             ),
             profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
+              full_name,
+              phone,
+              avatar_url,
+              role
             )
           `)
           .eq('id', id)
@@ -213,11 +205,12 @@ export function useArtisan(id: string) {
           setError(fetchError.message);
           setArtisan(null);
         } else {
-          // Transform the data
+          // Transform the data - Supabase returns joined data as single objects
           setArtisan({
             ...data,
-            service_category: data.service_categories as any,
-            profiles: data.profiles?.[0] || undefined,
+            service_category: (data.service_category as any) || undefined,
+            city: (data.city as any) || undefined,
+            profiles: (data.profiles as any) || undefined,
           });
         }
       } catch (err) {
@@ -260,27 +253,26 @@ export function useFeaturedArtisans(limit: number = 6) {
             description_ar,
             phone,
             whatsapp,
-            cities,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
-            service_categories:service_category_id (
+            service_category:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
-            artisan_services (
-              service_subcategory:service_subcategory_id (
-                id,
-                name_fr,
-                name_ar
-              )
+            city:city_id (
+              id,
+              name_fr,
+              name_ar
             ),
             profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
+              full_name,
+              phone,
+              avatar_url,
+              role
             )
           `)
           .eq('is_verified', true)
@@ -294,11 +286,12 @@ export function useFeaturedArtisans(limit: number = 6) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
-          // Transform the data to match our interface
+          // Transform the data to match our interface - Supabase returns joined data as single objects
           const transformedData = (data || []).map((artisan: any) => ({
             ...artisan,
-            service_category: artisan.service_categories,
-            profiles: artisan.profiles?.[0] || undefined,
+            service_category: artisan.service_category || undefined,
+            city: artisan.city || undefined,
+            profiles: artisan.profiles || undefined,
           }));
           setArtisans(transformedData);
         }

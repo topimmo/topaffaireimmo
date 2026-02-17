@@ -178,18 +178,16 @@ function ArtisanCardSkeleton() {
 }
 
 function transformArtisanToCardProps(artisan: ArtisanProfile) {
-  const services = artisan.artisan_services?.map(s => s.service_subcategory.name_fr) || [];
-  const rating = artisan.profiles?.rating || 0;
-  const reviewCount = artisan.profiles?.completed_jobs || 0;
+  const services = [artisan.service_category?.name_fr || 'Service'];
   
   return {
     id: artisan.id,
     name: artisan.business_name,
     avatar: artisan.profiles?.avatar_url || '',
-    services: services.length > 0 ? services : [artisan.service_category?.name_fr || 'Service'],
-    location: artisan.cities?.length ? `${artisan.cities.length} ville(s)` : 'Non spécifié',
-    rating,
-    reviewCount,
+    services: services,
+    location: artisan.city?.name_fr || 'Non spécifié',
+    rating: undefined, // Rating not available - will be hidden in card
+    reviewCount: 0,
     isVerified: artisan.is_verified,
     isAvailable: true,
     yearsExperience: undefined,
