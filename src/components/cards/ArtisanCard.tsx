@@ -11,7 +11,7 @@ interface ArtisanCardProps {
   avatar: string;
   services: string[];
   location: string;
-  rating: number;
+  rating?: number;
   reviewCount: number;
   isVerified: boolean;
   isAvailable: boolean;
@@ -78,13 +78,15 @@ export function ArtisanCard({
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span className="font-medium text-white">{rating.toFixed(1)}</span>
+            {rating !== undefined && (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  <span className="font-medium text-white">{rating.toFixed(1)}</span>
+                </div>
+                <span className="text-sm text-gray-400">({reviewCount} avis)</span>
               </div>
-              <span className="text-sm text-gray-400">({reviewCount} avis)</span>
-            </div>
+            )}
 
             {/* Location */}
             <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">

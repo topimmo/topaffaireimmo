@@ -186,8 +186,8 @@ function transformArtisanToCardProps(artisan: ArtisanProfile) {
     avatar: artisan.profiles?.avatar_url || '',
     services: services,
     location: artisan.city?.name_fr || 'Non spécifié',
-    rating: 0, // Rating not available in this schema
-    reviewCount: 0, // Review count not available in this schema
+    rating: undefined, // Rating not available - will be hidden in card
+    reviewCount: 0,
     isVerified: artisan.is_verified,
     isAvailable: true,
     yearsExperience: undefined,
