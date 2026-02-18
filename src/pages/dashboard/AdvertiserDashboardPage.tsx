@@ -206,7 +206,7 @@ function ListingsSection() {
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-white">{listing.title_fr}</h3>
-                          <StatusBadge status={listing.status || 'draft'} />
+                          <StatusBadge status={(listing.status || 'draft') as 'draft' | 'pending' | 'approved' | 'published' | 'rejected' | 'expired'} />
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-400">
                           <MapPin className="h-3 w-3" />
