@@ -83,12 +83,17 @@ const matches: Match[] = [];
 
 function searchPattern(pattern: DangerousPattern): void {
   try {
+    // Escape pattern for safe shell execution
+    const escapedPattern = pattern.pattern.replace(/'/g, "'\\''");
+    
     // Use ripgrep for fast searching, fallback to grep
-    const grepCmd = `rg -n "${pattern.pattern}" --type-not markdown --type-not sql src/ api/ lib/ supabase/functions/ 2>/dev/null || grep -rn -E "${pattern.pattern}" src/ api/ lib/ supabase/functions/ 2>/dev/null || true`;
+    // Note: Using single quotes to prevent shell expansion
+    const grepCmd = `rg -n '${escapedPattern}' --type-not markdown --type-not sql src/ api/ lib/ supabase/functions/ 2>/dev/null || grep -rn -E '${escapedPattern}' src/ api/ lib/ supabase/functions/ 2>/dev/null || true`;
     
     const output = execSync(grepCmd, { 
       encoding: 'utf-8',
-      maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+      shell: '/bin/bash' // Explicit shell for consistency
     });
 
     if (output.trim()) {
@@ -135,9 +140,12 @@ function checkMigrationReferences(): void {
       return; // Skip checking old migrations if fix is present
     }
     
-    // Check for references to city column in artisan_services indexes
-    const grepCmd = `grep -rn "idx_artisan_services.*city\\|artisan_services.*city" supabase/migrations/*.sql 2>/dev/null || true`;
-    const output = execSync(grepCmd, { encoding: 'utf-8' });
+    // Use safe pattern with single quotes to prevent shell expansion
+    const grepCmd = `grep -rn 'idx_artisan_services.*city\\|artisan_services.*city' supabase/migrations/*.sql 2>/dev/null || true`;
+    const output = execSync(grepCmd, { 
+      encoding: 'utf-8',
+      shell: '/bin/bash'
+    });
     
     if (output.trim()) {
       const lines = output.trim().split('\n');
