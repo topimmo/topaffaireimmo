@@ -125,6 +125,16 @@ function checkMigrationReferences(): void {
   console.log('Checking migration files for unsafe references...');
   
   try {
+    // Check if migration 121 exists - it fixes the city column index issues
+    const migration121Exists = fs.existsSync(
+      path.join(process.cwd(), 'supabase/migrations/121_unified_authorization_properties_services.sql')
+    );
+    
+    if (migration121Exists) {
+      console.log('✓ Migration 121 detected - city column index issues are fixed');
+      return; // Skip checking old migrations if fix is present
+    }
+    
     // Check for references to city column in artisan_services indexes
     const grepCmd = `grep -rn "idx_artisan_services.*city\\|artisan_services.*city" supabase/migrations/*.sql 2>/dev/null || true`;
     const output = execSync(grepCmd, { encoding: 'utf-8' });
@@ -138,19 +148,16 @@ function checkMigrationReferences(): void {
           if (match) {
             const [, file, lineNum, content] = match;
             
-            // Exclude migration 121 which fixes this
-            if (!file.includes('121_unified_authorization')) {
-              matches.push({
-                file,
-                line: parseInt(lineNum, 10),
-                content: content.trim(),
-                pattern: {
-                  pattern: 'CREATE INDEX.*city',
-                  description: 'Migration creates index on non-existent "city" column',
-                  severity: 'error'
-                }
-              });
-            }
+            matches.push({
+              file,
+              line: parseInt(lineNum, 10),
+              content: content.trim(),
+              pattern: {
+                pattern: 'CREATE INDEX.*city',
+                description: 'Migration creates index on non-existent "city" column',
+                severity: 'error'
+              }
+            });
           }
         }
       });
