@@ -71,27 +71,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Use onAuthStateChange as the single source of truth for auth state.
-    // Supabase v2 fires INITIAL_SESSION immediately upon subscription with the
-    // current session (or null if unauthenticated). Calling setLoading(false)
-    // here — rather than inside a separate getSession() promise — eliminates
-    // the race condition where getSession() could resolve with a stale null
-    // value and override a valid session that onAuthStateChange already has.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Closure-local flag shared between onAuthStateChange and getSession().
+    // JavaScript is single-threaded, so read-modify-write is atomic: only one
+    // callback can execute at a time, making this safe without a lock.
+    let loadingResolved = false;
+
+    // Shared helper — apply a session snapshot to React state.
+    // Called by both the primary (onAuthStateChange) and fallback (getSession)
+    // paths so the state-update logic is identical in both.
+    const applySession = (session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
-
       if (session?.user) {
         loadProfile(session.user.id).then(setProfile);
       } else {
         setProfile(null);
       }
+    };
 
-      // Resolve loading after every auth state event so that the very first
-      // event (INITIAL_SESSION) unblocks the UI with the correct user state.
+    // PRIMARY: onAuthStateChange is the source of truth for all auth events.
+    // Supabase v2 fires INITIAL_SESSION immediately upon subscription with
+    // the current session (or null). This is the preferred resolution path.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+
+      // Resolve loading on the first event (INITIAL_SESSION). Subsequent
+      // events (SIGNED_IN, SIGNED_OUT, etc.) don't need to touch loading.
+      if (!loadingResolved) {
+        loadingResolved = true;
+        setLoading(false);
+      }
+    });
+
+    // FALLBACK: getSession() handles cases where INITIAL_SESSION is delayed
+    // on mobile (e.g. slow localStorage read on first paint). Only applies
+    // if onAuthStateChange has not already resolved loading.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (loadingResolved) return; // onAuthStateChange already won the race
+      loadingResolved = true;
+      applySession(session);
       setLoading(false);
+    }).catch(() => {
+      // Ensure loading is always resolved even if getSession() fails
+      // (e.g. network error, storage corruption).
+      if (!loadingResolved) {
+        loadingResolved = true;
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
