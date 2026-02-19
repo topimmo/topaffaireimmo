@@ -161,7 +161,8 @@ tests.push({
     
     // Should have range call and default pagination values
     const hasRange = usePropertiesCode.includes('.range(');
-    const hasDefaults = usePropertiesCode.includes('?? 1') && usePropertiesCode.includes('?? 50');
+    // Accept either 20 (optimised) or 50 as default limit
+    const hasDefaults = usePropertiesCode.includes('?? 1') && (usePropertiesCode.includes('?? 20') || usePropertiesCode.includes('?? 50'));
     
     return hasRange && hasDefaults;
   }

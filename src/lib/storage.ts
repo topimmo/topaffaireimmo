@@ -72,6 +72,19 @@ export async function uploadFile({ bucket, file, userId, folder }: UploadOptions
   const maxRetries = 2;
   let lastError: Error | null = null;
 
+  // ── Client-side validation (size + type) before touching the network ──
+  const bucketCfg = BUCKET_CONFIG[bucket];
+  if (bucketCfg) {
+    const validation = validateFile(file, {
+      maxSize: bucketCfg.maxSize,
+      allowedTypes: bucketCfg.allowedTypes,
+    });
+    if (!validation.valid) {
+      console.error(`[Storage] Pre-upload validation failed for ${file.name}:`, validation.error);
+      return { url: '', path: '', error: validation.error ?? 'Fichier invalide.', fileName: file.name, size: file.size, mimeType: file.type };
+    }
+  }
+
   // Check if bucket exists (with caching to avoid repeated checks)
   const bucketExists = await checkBucketExists(bucket);
   if (!bucketExists) {
