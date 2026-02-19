@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   verify-schema-safety:
     runs-on: ubuntu-latest
