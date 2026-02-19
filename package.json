@@ -28,7 +28,9 @@
     "diagnose:frontend": "node scripts/diagnose-frontend.cjs",
     "verify:ga4": "node scripts/verify-ga4.js",
     "verify:auth-fix": "node scripts/verify-auth-fix.js",
-    "setup:storage-buckets": "node scripts/setup-storage-buckets.js"
+    "setup:storage-buckets": "node scripts/setup-storage-buckets.js",
+    "health-check:schema": "npx tsx scripts/health-check-schema.ts",
+    "verify:schema": "npx tsx scripts/verify-schema-safety.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
