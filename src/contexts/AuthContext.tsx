@@ -71,30 +71,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        loadProfile(session.user.id).then(setProfile);
-      }
-      
-      setLoading(false);
-    });
-
-    // Listen for auth changes
+    // Use onAuthStateChange as the single source of truth for auth state.
+    // Supabase v2 fires INITIAL_SESSION immediately upon subscription with the
+    // current session (or null if unauthenticated). Calling setLoading(false)
+    // here — rather than inside a separate getSession() promise — eliminates
+    // the race condition where getSession() could resolve with a stale null
+    // value and override a valid session that onAuthStateChange already has.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         loadProfile(session.user.id).then(setProfile);
       } else {
         setProfile(null);
       }
+
+      // Resolve loading after every auth state event so that the very first
+      // event (INITIAL_SESSION) unblocks the UI with the correct user state.
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
