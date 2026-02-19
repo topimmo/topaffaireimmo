@@ -1,25 +1,28 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import type { City, Neighborhood, PropertyType, SiteSetting } from '@/types/supabase';
 
 export function useCities() {
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCities = async () => {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('cities')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order');
+        .select('id,name_fr,name_ar')
+        .order('name_fr', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching cities:', error);
-        // Handle errors gracefully - set empty array
+      if (fetchError) {
+        console.error('Error fetching cities:', fetchError);
+        toast.error('Impossible de charger la liste des villes');
+        setError(fetchError.message);
         setCities([]);
       } else {
-        setCities(data || []);
+        setCities((data as City[]) || []);
+        setError(null);
       }
       setLoading(false);
     };
@@ -27,7 +30,7 @@ export function useCities() {
     fetchCities();
   }, []);
 
-  return { cities, loading };
+  return { cities, loading, error };
 }
 
 export function useNeighborhoods(cityId?: number) {
