@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
@@ -31,6 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  // Stable ref that survives re-renders and is shared between the
+  // onAuthStateChange and getSession() callbacks without risk of stale closures.
+  const loadingResolvedRef = useRef(false);
 
   // Load profile from database
   const loadProfile = async (userId: string) => {
@@ -71,29 +74,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        loadProfile(session.user.id).then(setProfile);
-      }
-      
-      setLoading(false);
-    });
+    // loadingResolvedRef is a stable ref (declared at provider level) shared
+    // between onAuthStateChange and getSession(). JavaScript is single-threaded,
+    // so read-modify-write is atomic: only one callback can execute at a time.
+    // Using a ref instead of a closure-local variable ensures the flag persists
+    // across re-renders and is never captured as a stale value in either callback.
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Shared helper — apply a session snapshot to React state.
+    // Called by both the primary (onAuthStateChange) and fallback (getSession)
+    // paths so the state-update logic is identical in both.
+    const applySession = (session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
       if (session?.user) {
         loadProfile(session.user.id).then(setProfile);
       } else {
         setProfile(null);
+      }
+    };
+
+    // PRIMARY: onAuthStateChange is the source of truth for all auth events.
+    // Supabase v2 fires INITIAL_SESSION immediately upon subscription with
+    // the current session (or null). This is the preferred resolution path.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+
+      // Resolve loading on the first event (INITIAL_SESSION). Subsequent
+      // events (SIGNED_IN, SIGNED_OUT, etc.) don't need to touch loading.
+      if (!loadingResolvedRef.current) {
+        loadingResolvedRef.current = true;
+        setLoading(false);
+      }
+    });
+
+    // FALLBACK: getSession() handles cases where INITIAL_SESSION is delayed
+    // on mobile (e.g. slow localStorage read on first paint). Only applies
+    // if onAuthStateChange has not already resolved loading.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (loadingResolvedRef.current) return; // onAuthStateChange already won the race
+      loadingResolvedRef.current = true;
+      applySession(session);
+      setLoading(false);
+    }).catch(() => {
+      // Ensure loading is always resolved even if getSession() fails
+      // (e.g. network error, storage corruption).
+      if (!loadingResolvedRef.current) {
+        loadingResolvedRef.current = true;
+        setLoading(false);
       }
     });
 
