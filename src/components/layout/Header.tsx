@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
 
 export function Header() {
-  const { user, role, signOut } = useAuth();
+  const { user, role, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdmin();
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -186,48 +186,52 @@ export function Header() {
                   ))}
                   <div className="h-px bg-[#2A3F4C] my-4" />
                   
-                  {user ? (
-                    <>
-                      <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Mon espace</p>
-                      <Link to={getDashboardLink()} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
-                        <LayoutDashboard className="h-4 w-4" />
-                        Tableau de bord
-                      </Link>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-red-400 hover:bg-[#1B2F3C]"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Déconnexion
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Connexion</p>
-                      <Link to="/login" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
-                        <LogIn className="h-4 w-4" />
-                        Se connecter
-                      </Link>
-                      <Link to="/register" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm bg-[#0FC2C0]/15 text-[#0FC2C0] font-medium">
-                        Créer un compte
-                      </Link>
-                    </>
+                  {!authLoading && (
+                    user ? (
+                      <>
+                        <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Mon espace</p>
+                        <Link to={getDashboardLink()} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
+                          <LayoutDashboard className="h-4 w-4" />
+                          Tableau de bord
+                        </Link>
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-red-400 hover:bg-[#1B2F3C]"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Déconnexion
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="px-3 text-xs text-gray-500 uppercase tracking-wider mb-2">Connexion</p>
+                        <Link to="/login" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-gray-400 hover:bg-[#1B2F3C] hover:text-white">
+                          <LogIn className="h-4 w-4" />
+                          Se connecter
+                        </Link>
+                        <Link to="/register" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm bg-[#0FC2C0]/15 text-[#0FC2C0] font-medium">
+                          Créer un compte
+                        </Link>
+                      </>
+                    )
                   )}
                 </nav>
 
                 {/* Mobile Auth */}
-                <div className="p-4 border-t border-[#2A3F4C] space-y-2">
-                  <Link to="/login" className="block">
-                    <Button variant="outline" className="w-full border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C] hover:text-white">
-                      <LogIn className="h-4 w-4 mr-2" />Connexion
-                    </Button>
-                  </Link>
-                  <Link to="/register" className="block">
-                    <Button className="w-full bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
-                      Publier une annonce
-                    </Button>
-                  </Link>
-                </div>
+                {!authLoading && !user && (
+                  <div className="p-4 border-t border-[#2A3F4C] space-y-2">
+                    <Link to="/login" className="block">
+                      <Button variant="outline" className="w-full border-[#2A3F4C] text-gray-300 hover:bg-[#1B2F3C] hover:text-white">
+                        <LogIn className="h-4 w-4 mr-2" />Connexion
+                      </Button>
+                    </Link>
+                    <Link to="/register" className="block">
+                      <Button className="w-full bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white">
+                        Publier une annonce
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </SheetContent>
           </Sheet>
