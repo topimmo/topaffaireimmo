@@ -27,6 +27,7 @@ export default function CreatePropertyPage() {
     transaction_type: 'sale' as 'sale' | 'rent',
     property_type: '',
     city_id: '',
+    quartier: '',
     neighborhood_id: '',
     price: '',
     area: '',
@@ -44,7 +45,7 @@ export default function CreatePropertyPage() {
   const handleCityChange = (value: string) => {
     const cityId = parseInt(value);
     setSelectedCityId(cityId);
-    setFormData(prev => ({ ...prev, city_id: value, neighborhood_id: '' }));
+    setFormData(prev => ({ ...prev, city_id: value, quartier: '', neighborhood_id: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,6 +63,11 @@ export default function CreatePropertyPage() {
       return;
     }
 
+    if (!formData.quartier) {
+      toast.error('Veuillez indiquer le quartier');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -73,6 +79,8 @@ export default function CreatePropertyPage() {
         property_type: formData.property_type,
         city_id: parseInt(formData.city_id),
         neighborhood_id: formData.neighborhood_id ? parseInt(formData.neighborhood_id) : null,
+        custom_neighborhood: formData.quartier || null,
+        quartier: formData.quartier || null,
         price: parseFloat(formData.price),
         area: formData.area ? parseFloat(formData.area) : null,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
@@ -237,12 +245,12 @@ export default function CreatePropertyPage() {
                   <Select
                     value={formData.city_id}
                     onValueChange={handleCityChange}
-                    disabled={loading}
+                    disabled={citiesLoading}
                   >
                     <SelectTrigger className="bg-[#0A1F2E] border-[#2A3F4C] text-white">
-                      <SelectValue placeholder="Sélectionnez une ville" />
+                      <SelectValue placeholder={citiesLoading ? 'Chargement...' : 'Sélectionnez une ville'} />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C]">
+                    <SelectContent className="bg-[#1B2F3C] border-[#2A3F4C] z-[9999]">
                       {cities.map((city) => (
                         <SelectItem key={city.id} value={city.id.toString()} className="text-white">
                           {city.name_fr}
@@ -252,11 +260,28 @@ export default function CreatePropertyPage() {
                   </Select>
                 </div>
 
+                {/* Quartier */}
+                {formData.city_id && (
+                  <div className="space-y-2">
+                    <Label htmlFor="quartier" className="text-white">
+                      Quartier / حي <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="quartier"
+                      value={formData.quartier}
+                      onChange={(e) => setFormData({ ...formData, quartier: e.target.value })}
+                      placeholder="Ex: Maarif, Hay Riad, Gueliz..."
+                      className="bg-[#0A1F2E] border-[#2A3F4C] text-white"
+                      required
+                    />
+                  </div>
+                )}
+
                 {/* Neighborhood */}
                 {selectedCityId && (
                   <div className="space-y-2">
                     <Label htmlFor="neighborhood" className="text-white">
-                      Quartier
+                      Quartier (liste optionnelle)
                     </Label>
                     <Select
                       value={formData.neighborhood_id}
