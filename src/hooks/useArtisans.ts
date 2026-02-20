@@ -33,6 +33,24 @@ export interface ArtisanProfile {
     name_fr: string;
     name_ar: string;
   };
+  // Joined artisan services (subcategories)
+  artisan_services?: Array<{
+    id?: string;
+    artisan_id?: string;
+    category_id?: string;
+    subcategory_id?: string;
+    service_subcategory?: {
+      id?: string;
+      name_fr?: string;
+      name_ar?: string;
+    };
+  }>;
+  // Joined profile data
+  profiles?: {
+    rating?: number;
+    completed_jobs?: number;
+    avatar_url?: string;
+  };
 }
 
 export interface ArtisanFilters {
@@ -262,7 +280,6 @@ export function useArtisan(id: string) {
               artisan_id,
               category_id,
               subcategory_id,
-              city,
               service_category:category_id (
                 id,
                 name_fr,
@@ -277,11 +294,16 @@ export function useArtisan(id: string) {
             .eq('artisan_id', data.user_id)
             .eq('is_active', true);
 
-          // Transform the data
+          // Transform the data.
+          // NOTE: Supabase PostgREST returns joined tables as arrays for 1-to-many
+          // relationships even when the FK guarantees a single row. The `as any` casts
+          // bridge the gap between Supabase's inferred array types and our single-object
+          // interface until we adopt generated Database types across the codebase.
           setArtisan({
             ...data,
             service_category: data.service_categories as any,
-            city: data.cities,
+            city: data.cities as any,
+            artisan_services: (servicesData ?? undefined) as any,
           });
         }
       } catch (err) {
