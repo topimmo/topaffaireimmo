@@ -52,6 +52,13 @@ export interface ServiceCategory {
   slug: string;
 }
 
+export interface ServiceSubcategory {
+  id: string;
+  category_id: string;
+  name_fr: string;
+  name_ar: string;
+  slug: string;
+}
 
 export function useArtisanStats() {
   const { user } = useAuth();
@@ -423,6 +430,26 @@ export function useServiceCategories() {
 
 export function useServiceSubcategories(categoryId?: string) {
   const [subcategories, setSubcategories] = useState<ServiceSubcategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!categoryId) {
+      setSubcategories([]);
+      setLoading(false);
+      return;
+    }
+
+    const fetchSubcategories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data, error: fetchError } = await supabase
+          .from('service_subcategories')
+          .select('id, category_id, name_fr, name_ar, slug')
+          .eq('category_id', categoryId)
+          .eq('is_active', true)
+          .order('name_fr');
 
         if (fetchError) throw fetchError;
         setSubcategories(data || []);
