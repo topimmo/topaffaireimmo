@@ -178,7 +178,10 @@ function ArtisanCardSkeleton() {
 }
 
 function transformArtisanToCardProps(artisan: ArtisanProfile) {
-  const services = [artisan.service_category?.name_fr || 'Service'];
+  // Get services from artisan_services (subcategories)
+  const services = artisan.artisan_services?.map(s => s.service_subcategory?.name_fr).filter(Boolean) || [];
+  const rating = artisan.profiles?.rating || 0;
+  const reviewCount = artisan.profiles?.completed_jobs || 0;
   
   return {
     id: artisan.id,

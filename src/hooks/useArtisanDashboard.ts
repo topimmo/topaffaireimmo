@@ -52,6 +52,7 @@ export interface ServiceCategory {
   slug: string;
 }
 
+
 export function useArtisanStats() {
   const { user } = useAuth();
   const [stats, setStats] = useState<ArtisanStats | null>(null);
@@ -418,4 +419,125 @@ export function useServiceCategories() {
   }, []);
 
   return { categories, loading, error };
+}
+
+export function useServiceSubcategories(categoryId?: string) {
+  const [subcategories, setSubcategories] = useState<ServiceSubcategory[]>([]);
+
+        if (fetchError) throw fetchError;
+        setSubcategories(data || []);
+      } catch (err) {
+        console.error('[useServiceSubcategories] Error:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubcategories();
+  }, [categoryId]);
+
+  return { subcategories, loading, error };
+}
+
+export function useArtisanServices() {
+  const { user } = useAuth();
+  const [services, setServices] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+
+        // artisan_services uses artisan_id which references auth.users.id directly
+        const { data, error: fetchError } = await supabase
+          .from('artisan_services')
+          .select('id, subcategory_id')
+          .eq('artisan_id', user.id)
+          .eq('is_active', true);
+
+        if (fetchError) throw fetchError;
+
+        setServices((data || []).map(s => s.subcategory_id).filter(Boolean));
+      } catch (err) {
+        console.error('[useArtisanServices] Error:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, [user]);
+
+  const updateServices = async (subcategoryIds: string[], city?: string) => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    try {
+      // Get artisan profile to find their category_id and cities
+      const { data: profile, error: profileError } = await supabase
+        .from('artisan_profiles')
+        .select('id, service_category_id, cities')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error('Artisan profile not found');
+      }
+
+      // Determine city name
+      let targetCity = city || 'Maroc';  // Default to Morocco in French
+      
+      // If profile has cities array and no city provided, fetch the first city's name
+      if (!city && profile.cities && profile.cities.length > 0) {
+        const { data: cityData } = await supabase
+          .from('cities')
+          .select('name_fr')
+          .eq('id', profile.cities[0])
+          .single();
+        
+        if (cityData) {
+          targetCity = cityData.name_fr;
+        }
+      }
+
+      // Delete existing services
+      await supabase
+        .from('artisan_services')
+        .delete()
+        .eq('artisan_id', user.id);
+
+      // Insert new services with required fields
+      if (subcategoryIds.length > 0 && profile.service_category_id) {
+        const { error: insertError } = await supabase
+          .from('artisan_services')
+          .insert(
+            subcategoryIds.map(subcategoryId => ({
+              artisan_id: user.id,
+              category_id: profile.service_category_id,
+              subcategory_id: subcategoryId,
+              city: targetCity,
+              status: 'pending',
+            }))
+          );
+
+        if (insertError) throw insertError;
+      }
+
+      setServices(subcategoryIds);
+      return { success: true };
+    } catch (err) {
+      console.error('[updateServices] Error:', err);
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  };
+
+  return { services, loading, error, updateServices };
 }

@@ -106,10 +106,11 @@ export default function ArtisanDetailPage() {
     );
   }
 
-  const services = [artisan.service_category?.name_fr || 'Service'];
-  const displayServices = services;
-  const rating = undefined; // Rating not yet implemented in schema - will be added later
-  const completedJobs = undefined; // Completed jobs not yet implemented - will be added later
+  // Get services from artisan_services (subcategories)
+  const services = artisan.artisan_services?.map(s => s.service_subcategory?.name_fr).filter(Boolean) || [];
+  const displayServices = services.length > 0 ? services : [artisan.service_category?.name_fr || 'Service'];
+  const rating = artisan.profiles?.rating || 0;
+  const completedJobs = artisan.profiles?.completed_jobs || 0;
   const avatarUrl = artisan.profiles?.avatar_url || '';
   const initials = artisan.business_name
     .split(' ')

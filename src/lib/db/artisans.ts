@@ -41,7 +41,6 @@ export async function getArtisanProfile(
     .select(`
       *,
       service_category:service_categories(*),
-      city:cities(*),
       neighborhoods:artisan_profile_neighborhoods(
         neighborhood:neighborhoods(*)
       ),
@@ -64,6 +63,7 @@ export async function getArtisanProfile(
 
   return {
     ...data,
+    city: null as any, // artisan_profiles uses cities array, not city_id FK
     neighborhoods: Array.isArray(data.neighborhoods) 
       ? data.neighborhoods.map((n: any) => n.neighborhood).filter(Boolean)
       : [],

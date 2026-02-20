@@ -27,11 +27,7 @@ export interface ArtisanProfile {
     name_ar: string;
     slug: string;
   };
-  city?: {
-    id: number;
-    name_fr: string;
-    name_ar: string;
-  };
+
   profiles?: {
     full_name?: string;
     phone?: string;
@@ -112,11 +108,7 @@ export function useArtisans(filters?: ArtisanFilters) {
               name_ar,
               slug
             ),
-            city:city_id (
-              id,
-              name_fr,
-              name_ar
-            ),
+
             profiles:user_id (
               full_name,
               phone,
@@ -157,13 +149,7 @@ export function useArtisans(filters?: ArtisanFilters) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
-          // Transform data - Supabase returns joined data as single objects, not arrays
-          const transformedData = (data || []).map((artisan: any) => ({
-            ...artisan,
-            service_category: artisan.service_category || undefined,
-            city: artisan.city || undefined,
-            profiles: artisan.profiles || undefined,
-          }));
+
 
           // Store in cache
           artisanCache.set(cacheKey, { data: transformedData, ts: Date.now() });
@@ -236,11 +222,6 @@ export function useArtisan(id: string) {
               name_ar,
               slug
             ),
-            city:city_id (
-              id,
-              name_fr,
-              name_ar
-            ),
             profiles:user_id (
               full_name,
               phone,
@@ -257,12 +238,35 @@ export function useArtisan(id: string) {
           setError(fetchError.message);
           setArtisan(null);
         } else {
-          // Transform the data - Supabase returns joined data as single objects
+          // Fetch artisan_services separately
+          const { data: servicesData } = await supabase
+            .from('artisan_services')
+            .select(`
+              id,
+              artisan_id,
+              category_id,
+              subcategory_id,
+              city,
+              service_category:category_id (
+                id,
+                name_fr,
+                name_ar
+              ),
+              service_subcategory:subcategory_id (
+                id,
+                name_fr,
+                name_ar
+              )
+            `)
+            .eq('artisan_id', data.user_id)
+            .eq('is_active', true);
+
+          // Transform the data
           setArtisan({
             ...data,
-            service_category: (data.service_category as any) || undefined,
-            city: (data.city as any) || undefined,
-            profiles: (data.profiles as any) || undefined,
+            service_category: data.service_categories as any,
+            profiles: data.profiles?.[0] || undefined,
+            artisan_services: servicesData || [],
           });
         }
       } catch (err) {
@@ -315,11 +319,7 @@ export function useFeaturedArtisans(limit: number = 6) {
               name_ar,
               slug
             ),
-            city:city_id (
-              id,
-              name_fr,
-              name_ar
-            ),
+
             profiles:user_id (
               full_name,
               phone,
@@ -338,13 +338,7 @@ export function useFeaturedArtisans(limit: number = 6) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
-          // Transform the data to match our interface - Supabase returns joined data as single objects
-          const transformedData = (data || []).map((artisan: any) => ({
-            ...artisan,
-            service_category: artisan.service_category || undefined,
-            city: artisan.city || undefined,
-            profiles: artisan.profiles || undefined,
-          }));
+
           setArtisans(transformedData);
         }
       } catch (err) {
