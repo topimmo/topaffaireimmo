@@ -1,5 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+
+/** In-memory cache for artisan search results. Key: stable JSON of filters. */
+const artisanCache = new Map<string, { data: ArtisanProfile[]; ts: number }>();
+/** Cache TTL in milliseconds (60 s). */
+const CACHE_TTL_MS = 60_000;
+/** Minimum search-term length before triggering a DB query. */
+export const MIN_SEARCH_LENGTH = 2;
 
 export interface ArtisanProfile {
   id: string;
@@ -48,8 +55,38 @@ export function useArtisans(filters?: ArtisanFilters) {
   const [artisans, setArtisans] = useState<ArtisanProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Enforce minimum search term length to avoid overly broad queries
+    if (filters?.searchTerm !== undefined && filters.searchTerm.length > 0 && filters.searchTerm.length < MIN_SEARCH_LENGTH) {
+      setArtisans([]);
+      setLoading(false);
+      return;
+    }
+
+    // Build a stable cache key from the current filters
+    const cacheKey = JSON.stringify({
+      serviceCategoryId: filters?.serviceCategoryId,
+      cityId: filters?.cityId,
+      isVerified: filters?.isVerified,
+      minRating: filters?.minRating,
+      searchTerm: filters?.searchTerm,
+    });
+
+    // Return cached results if they are still fresh
+    const cached = artisanCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      setArtisans(cached.data);
+      setLoading(false);
+      return;
+    }
+
+    // Cancel any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     const fetchArtisans = async () => {
       try {
         setLoading(true);
@@ -87,7 +124,8 @@ export function useArtisans(filters?: ArtisanFilters) {
               role
             )
           `)
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .limit(50); // Cap results to prevent unbounded queries
 
         // Apply filters
         if (filters?.serviceCategoryId) {
@@ -106,7 +144,13 @@ export function useArtisans(filters?: ArtisanFilters) {
         // FULL FREE MODE: Removed is_boosted ordering
         query = query.order('created_at', { ascending: false });
 
-        const { data, error: fetchError } = await query;
+        // Guard: abort before network call if already superseded
+        if (controller.signal.aborted) return;
+
+        const { data, error: fetchError } = await query.abortSignal(controller.signal);
+
+        // Ignore results if this request was superseded
+        if (controller.signal.aborted) return;
 
         if (fetchError) {
           console.error('[useArtisans] Error fetching artisans:', fetchError);
@@ -121,18 +165,27 @@ export function useArtisans(filters?: ArtisanFilters) {
             profiles: artisan.profiles || undefined,
           }));
 
+          // Store in cache
+          artisanCache.set(cacheKey, { data: transformedData, ts: Date.now() });
           setArtisans(transformedData);
         }
       } catch (err) {
+        if (controller.signal.aborted) return; // Request was cancelled – not an error
         console.error('[useArtisans] Unexpected error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
         setArtisans([]);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchArtisans();
+
+    return () => {
+      controller.abort();
+    };
   }, [
     filters?.serviceCategoryId,
     filters?.cityId,

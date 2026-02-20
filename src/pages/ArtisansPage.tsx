@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ArtisanCard } from '@/components/cards/ArtisanCard';
@@ -206,6 +206,7 @@ export default function ArtisansPage() {
     searchTerm: '',
   });
   const [appliedFilters, setAppliedFilters] = useState<ArtisanFilters>({});
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { artisans, loading, error } = useArtisans(appliedFilters);
 
@@ -222,6 +223,28 @@ export default function ArtisansPage() {
     };
     fetchData();
   }, []);
+
+  // Debounce searchTerm updates (500 ms) and enforce min length >= 2
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    const term = filterState.searchTerm;
+
+    searchDebounceRef.current = setTimeout(() => {
+      setAppliedFilters(prev => {
+        if (!term || term.length < 2) {
+          // Remove searchTerm from applied filters
+          const { searchTerm: _removed, ...rest } = prev;
+          return rest;
+        }
+        return { ...prev, searchTerm: term };
+      });
+    }, 500);
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [filterState.searchTerm]);
 
   const handleFilterChange = (key: keyof FilterState, value: any) => {
     setFilterState(prev => ({ ...prev, [key]: value }));

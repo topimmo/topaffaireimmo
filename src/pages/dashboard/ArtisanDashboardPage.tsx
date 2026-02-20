@@ -21,6 +21,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadArtisanAvatar, validateFile } from '@/lib/storage';
+import { compressImage } from '@/lib/imageUtils';
 import {
   useArtisanStats,
   useArtisanRequests,
@@ -325,7 +326,8 @@ function ProfileSection() {
 
     setUploadingAvatar(true);
     try {
-      const result = await uploadArtisanAvatar(file, user.id);
+      const compressed = await compressImage(file);
+      const result = await uploadArtisanAvatar(compressed, user.id);
       
       if (result.error) {
         toast.error(result.error);
