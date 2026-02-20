@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 // Lazy load pages
 const PropertiesPage = lazy(() => import("./pages/PropertiesPage"));
 const PropertyDetailPage = lazy(() => import("./pages/PropertyDetailPage"));
+const CreatePropertyPage = lazy(() => import("./pages/CreatePropertyPage"));
 const ArtisansPage = lazy(() => import("./pages/ArtisansPage"));
 const ArtisanDetailPage = lazy(() => import("./pages/ArtisanDetailPage"));
 
@@ -55,6 +56,16 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/email-confirmation" element={<EmailConfirmationPage />} />
         <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+
+        {/* Property Management */}
+        <Route 
+          path="/create-property" 
+          element={
+            <ProtectedRoute allowedRoles={['advertiser', 'admin']}>
+              <CreatePropertyPage />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Dashboards */}
         <Route 

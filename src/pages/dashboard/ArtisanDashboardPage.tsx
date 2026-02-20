@@ -21,14 +21,13 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadArtisanAvatar, validateFile } from '@/lib/storage';
+import { compressImage } from '@/lib/imageUtils';
 import {
   useArtisanStats,
   useArtisanRequests,
   useArtisanReviews,
   useArtisanProfile,
   useServiceCategories,
-  useServiceSubcategories,
-  useArtisanServices,
 } from '@/hooks/useArtisanDashboard';
 import { toast } from 'sonner';
 
@@ -327,7 +326,8 @@ function ProfileSection() {
 
     setUploadingAvatar(true);
     try {
-      const result = await uploadArtisanAvatar(file, user.id);
+      const compressed = await compressImage(file);
+      const result = await uploadArtisanAvatar(compressed, user.id);
       
       if (result.error) {
         toast.error(result.error);
@@ -489,98 +489,46 @@ function ProfileSection() {
 
 // Services Section
 function ServicesSection() {
-  const { subcategories, loading: subcategoriesLoading } = useServiceSubcategories();
-  const { services, loading: servicesLoading, updateServices } = useArtisanServices();
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
-  const maxServices = 5;
+  const { profile, loading: profileLoading } = useArtisanProfile();
+  const { categories, loading: categoriesLoading } = useServiceCategories();
 
-  useEffect(() => {
-    if (!servicesLoading) {
-      setSelectedServices(services);
-    }
-  }, [services, servicesLoading]);
-
-  const toggleService = (serviceId: string) => {
-    if (selectedServices.includes(serviceId)) {
-      setSelectedServices(prev => prev.filter(s => s !== serviceId));
-    } else if (selectedServices.length < maxServices) {
-      setSelectedServices(prev => [...prev, serviceId]);
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    const result = await updateServices(selectedServices);
-    setSaving(false);
-
-    if (result.success) {
-      toast.success('Services mis à jour');
-    } else {
-      toast.error('Erreur lors de la mise à jour');
-    }
-  };
-
-  if (servicesLoading || subcategoriesLoading) {
+  if (profileLoading || categoriesLoading) {
     return <Skeleton className="h-64 w-full bg-gray-700" />;
   }
 
+  const currentCategory = categories.find(c => c.id === profile?.service_category_id);
+
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Mes Services</h2>
-        <Button
-          className="bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-          Enregistrer
-        </Button>
-      </div>
+      <h2 className="text-xl font-bold text-white">Mon Service</h2>
 
       <Card className="bg-[#1B2F3C] border-[#2A3F4C]">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white text-lg">Sélectionnez vos services</CardTitle>
-            <span className={cn(
-              'text-xs font-medium px-2 py-1 rounded-full',
-              selectedServices.length >= maxServices
-                ? 'bg-red-500/20 text-red-400'
-                : 'bg-[#0FC2C0]/20 text-[#0FC2C0]'
-            )}>
-              {selectedServices.length}/{maxServices} max
-            </span>
-          </div>
+          <CardTitle className="text-white text-lg">Catégorie de service</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {subcategories.map(subcategory => {
-              const selected = selectedServices.includes(subcategory.id);
-              const disabled = !selected && selectedServices.length >= maxServices;
-              return (
-                <button
-                  key={subcategory.id}
-                  onClick={() => toggleService(subcategory.id)}
-                  disabled={disabled}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-sm transition-all border',
-                    selected
-                      ? 'bg-[#0FC2C0] text-white border-[#0FC2C0]'
-                      : disabled
-                        ? 'bg-[#0A1F2E] text-gray-600 border-[#2A3F4C] cursor-not-allowed opacity-50'
-                        : 'bg-[#0A1F2E] text-gray-300 border-[#2A3F4C] hover:border-[#0FC2C0] hover:text-[#0FC2C0]'
-                  )}
-                >
-                  {selected && <X className="h-3 w-3 inline mr-1" />}
-                  {subcategory.name_fr}
-                </button>
-              );
-            })}
+          <div className="space-y-4">
+            <div>
+              <Label className="text-gray-300">Catégorie actuelle</Label>
+              <div className="mt-2 p-4 bg-[#0A1F2E] border border-[#2A3F4C] rounded-lg">
+                <p className="text-white font-medium">
+                  {currentCategory?.name_fr || 'Non défini'}
+                </p>
+              </div>
+            </div>
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-300">
+                  <p className="font-medium mb-1">Note importante</p>
+                  <p>
+                    La catégorie de service est définie lors de la création de votre profil artisan. 
+                    Pour modifier votre catégorie, veuillez contacter le support.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          {subcategories.length === 0 && (
-            <p className="text-center text-gray-400 py-8">Aucun service disponible</p>
-          )}
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+
+/** In-memory cache for artisan search results. Key: stable JSON of filters. */
+const artisanCache = new Map<string, { data: ArtisanProfile[]; ts: number }>();
+/** Cache TTL in milliseconds (60 s). */
+const CACHE_TTL_MS = 60_000;
+/** Minimum search-term length before triggering a DB query. */
+export const MIN_SEARCH_LENGTH = 2;
 
 export interface ArtisanProfile {
   id: string;
@@ -9,7 +16,7 @@ export interface ArtisanProfile {
   description_ar?: string;
   phone: string;
   whatsapp?: string;
-  cities?: number[]; // Array of city IDs from the database
+  city_id?: number;
   is_verified: boolean;
   is_boosted: boolean;
   created_at: string;
@@ -20,26 +27,12 @@ export interface ArtisanProfile {
     name_ar: string;
     slug: string;
   };
-  artisan_services?: Array<{
-    id: string;
-    category_id: string;
-    subcategory_id: string;
-    city: string;
-    service_category?: {
-      id: string;
-      name_fr: string;
-      name_ar: string;
-    };
-    service_subcategory?: {
-      id: string;
-      name_fr: string;
-      name_ar: string;
-    };
-  }>;
+
   profiles?: {
-    rating?: number;
-    completed_jobs?: number;
+    full_name?: string;
+    phone?: string;
     avatar_url?: string;
+    role?: string;
   };
 }
 
@@ -58,8 +51,38 @@ export function useArtisans(filters?: ArtisanFilters) {
   const [artisans, setArtisans] = useState<ArtisanProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Enforce minimum search term length to avoid overly broad queries
+    if (filters?.searchTerm !== undefined && filters.searchTerm.length > 0 && filters.searchTerm.length < MIN_SEARCH_LENGTH) {
+      setArtisans([]);
+      setLoading(false);
+      return;
+    }
+
+    // Build a stable cache key from the current filters
+    const cacheKey = JSON.stringify({
+      serviceCategoryId: filters?.serviceCategoryId,
+      cityId: filters?.cityId,
+      isVerified: filters?.isVerified,
+      minRating: filters?.minRating,
+      searchTerm: filters?.searchTerm,
+    });
+
+    // Return cached results if they are still fresh
+    const cached = artisanCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      setArtisans(cached.data);
+      setLoading(false);
+      return;
+    }
+
+    // Cancel any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     const fetchArtisans = async () => {
       try {
         setLoading(true);
@@ -75,30 +98,33 @@ export function useArtisans(filters?: ArtisanFilters) {
             description_ar,
             phone,
             whatsapp,
-            cities,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
-            service_categories:service_category_id (
+            service_category:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
+
             profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
+              full_name,
+              phone,
+              avatar_url,
+              role
             )
           `)
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .limit(50); // Cap results to prevent unbounded queries
 
         // Apply filters
         if (filters?.serviceCategoryId) {
           query = query.eq('service_category_id', filters.serviceCategoryId);
         }
         if (filters?.cityId) {
-          query = query.contains('cities', [filters.cityId]);
+          query = query.eq('city_id', filters.cityId);
         }
         if (filters?.isVerified !== undefined) {
           query = query.eq('is_verified', filters.isVerified);
@@ -107,81 +133,45 @@ export function useArtisans(filters?: ArtisanFilters) {
           query = query.ilike('business_name', `%${filters.searchTerm}%`);
         }
 
-        query = query
-          .order('is_boosted', { ascending: false })
-          .order('created_at', { ascending: false });
+        // FULL FREE MODE: Removed is_boosted ordering
+        query = query.order('created_at', { ascending: false });
 
-        const { data, error: fetchError } = await query;
+        // Guard: abort before network call if already superseded
+        if (controller.signal.aborted) return;
+
+        const { data, error: fetchError } = await query.abortSignal(controller.signal);
+
+        // Ignore results if this request was superseded
+        if (controller.signal.aborted) return;
 
         if (fetchError) {
           console.error('[useArtisans] Error fetching artisans:', fetchError);
           setError(fetchError.message);
           setArtisans([]);
         } else {
-          // Fetch artisan_services separately and join client-side
-          // because artisan_services.artisan_id references auth.users, not artisan_profiles
-          const userIds = (data || []).map((a: any) => a.user_id);
-          let artisanServicesData: any[] = [];
-          
-          if (userIds.length > 0) {
-            const { data: servicesData } = await supabase
-              .from('artisan_services')
-              .select(`
-                id,
-                artisan_id,
-                category_id,
-                subcategory_id,
-                city,
-                service_category:category_id (
-                  id,
-                  name_fr,
-                  name_ar
-                ),
-                service_subcategory:subcategory_id (
-                  id,
-                  name_fr,
-                  name_ar
-                )
-              `)
-              .in('artisan_id', userIds)
-              .eq('is_active', true);
-            
-            artisanServicesData = servicesData || [];
-          }
 
-          // Transform and filter by rating if needed
-          let transformedData = (data || []).map((artisan: any) => {
-            // Find artisan_services for this artisan (by user_id = artisan_id)
-            const services = artisanServicesData.filter(
-              (s: any) => s.artisan_id === artisan.user_id
-            );
-            
-            return {
-              ...artisan,
-              service_category: artisan.service_categories,
-              profiles: artisan.profiles?.[0] || undefined,
-              artisan_services: services,
-            };
-          });
 
-          if (filters?.minRating) {
-            transformedData = transformedData.filter(
-              (a) => (a.profiles?.rating || 0) >= filters.minRating!
-            );
-          }
-
+          // Store in cache
+          artisanCache.set(cacheKey, { data: transformedData, ts: Date.now() });
           setArtisans(transformedData);
         }
       } catch (err) {
+        if (controller.signal.aborted) return; // Request was cancelled – not an error
         console.error('[useArtisans] Unexpected error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
         setArtisans([]);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchArtisans();
+
+    return () => {
+      controller.abort();
+    };
   }, [
     filters?.serviceCategoryId,
     filters?.cityId,
@@ -222,20 +212,21 @@ export function useArtisan(id: string) {
             description_ar,
             phone,
             whatsapp,
-            cities,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
-            service_categories:service_category_id (
+            service_category:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
             profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
+              full_name,
+              phone,
+              avatar_url,
+              role
             )
           `)
           .eq('id', id)
@@ -318,25 +309,27 @@ export function useFeaturedArtisans(limit: number = 6) {
             description_ar,
             phone,
             whatsapp,
-            cities,
+            city_id,
             is_verified,
             is_boosted,
             created_at,
-            service_categories:service_category_id (
+            service_category:service_category_id (
               id,
               name_fr,
               name_ar,
               slug
             ),
+
             profiles:user_id (
-              rating,
-              completed_jobs,
-              avatar_url
+              full_name,
+              phone,
+              avatar_url,
+              role
             )
           `)
           .eq('is_verified', true)
           .eq('is_active', true)
-          .order('is_boosted', { ascending: false })
+          // FULL FREE MODE: Removed is_boosted ordering
           .order('created_at', { ascending: false })
           .limit(limit);
 
@@ -345,50 +338,7 @@ export function useFeaturedArtisans(limit: number = 6) {
           setError(fetchError.message);
           setArtisans([]);
         } else {
-          // Fetch artisan_services separately
-          const userIds = (data || []).map((a: any) => a.user_id);
-          let artisanServicesData: any[] = [];
-          
-          if (userIds.length > 0) {
-            const { data: servicesData } = await supabase
-              .from('artisan_services')
-              .select(`
-                id,
-                artisan_id,
-                category_id,
-                subcategory_id,
-                city,
-                service_category:category_id (
-                  id,
-                  name_fr,
-                  name_ar
-                ),
-                service_subcategory:subcategory_id (
-                  id,
-                  name_fr,
-                  name_ar
-                )
-              `)
-              .in('artisan_id', userIds)
-              .eq('is_active', true);
-            
-            artisanServicesData = servicesData || [];
-          }
 
-          // Transform the data to match our interface
-          const transformedData = (data || []).map((artisan: any) => {
-            // Find artisan_services for this artisan
-            const services = artisanServicesData.filter(
-              (s: any) => s.artisan_id === artisan.user_id
-            );
-            
-            return {
-              ...artisan,
-              service_category: artisan.service_categories,
-              profiles: artisan.profiles?.[0] || undefined,
-              artisan_services: services,
-            };
-          });
           setArtisans(transformedData);
         }
       } catch (err) {

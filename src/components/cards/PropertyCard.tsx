@@ -40,7 +40,7 @@ export function PropertyCard({
     <Card
       className={cn(
         'group overflow-hidden bg-[#1B2F3C] border-[#2A3F4C] card-hover cursor-pointer',
-        isBoosted && 'premium-glow premium-glow-pulse',
+        // FULL FREE MODE: Removed premium-glow styling
         className
       )}
     >
@@ -58,11 +58,7 @@ export function PropertyCard({
             <Badge className="bg-[#0FC2C0] text-white font-semibold">
               {status === 'sale' ? 'Vente' : 'Location'}
             </Badge>
-            {isBoosted && (
-              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold">
-                ⭐ Premium
-              </Badge>
-            )}
+            {/* FULL FREE MODE: Removed Premium badge */}
           </div>
 
           {/* Favorite Button */}

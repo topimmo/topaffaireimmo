@@ -18,7 +18,7 @@ const mockNotifications: Notification[] = [
   { id: '1', type: 'lead', title: 'Nouvelle demande de contact', description: 'Un acheteur a demandé vos coordonnées pour l\'appartement à Casablanca', time: 'Il y a 5 min', read: false },
   { id: '2', type: 'approval', title: 'Annonce approuvée', description: 'Votre annonce "Villa de luxe Marrakech" a été approuvée et est maintenant en ligne', time: 'Il y a 2h', read: false },
   { id: '3', type: 'review', title: 'Nouvel avis reçu', description: 'Un client vous a donné 5 étoiles !', time: 'Il y a 4h', read: false },
-  { id: '4', type: 'system', title: 'Boost expiré', description: 'Le boost de votre annonce a expiré. Renouvelez pour maintenir la visibilité.', time: 'Il y a 1 jour', read: true },
+  // FULL FREE MODE: Removed boost notification
   { id: '5', type: 'message', title: 'Nouveau message', description: 'Mohamed A. vous a envoyé un message', time: 'Il y a 2 jours', read: true },
 ];
 

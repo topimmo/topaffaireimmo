@@ -140,9 +140,8 @@ export async function searchArtisans(
     // For now, we'll fetch all and filter client-side (not ideal for large datasets)
   }
 
-  // Order: boosted first, then by created date
+  // FULL FREE MODE: Removed boosted ordering, sort by created date only
   query = query
-    .order('is_boosted', { ascending: false })
     .order('created_at', { ascending: false })
     .range((page - 1) * limit, page * limit - 1);
 

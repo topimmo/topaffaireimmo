@@ -63,7 +63,7 @@ export function SearchHero() {
               idéale au Maroc
             </h1>
             <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-              La plateforme premium pour l'immobilier et les services professionnels vérifiés
+              La plateforme pour l'immobilier et les services professionnels vérifiés
             </p>
           </div>
 

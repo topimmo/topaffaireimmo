@@ -14,7 +14,7 @@ export interface ServiceRequest {
   client_id: string;
   status: string;
   created_at: string;
-  subcategory_id?: string;
+  service_category_id?: string;
   description?: string;
   client_name?: string;
   client_phone?: string;
@@ -52,20 +52,6 @@ export interface ServiceCategory {
   slug: string;
 }
 
-export interface ServiceSubcategory {
-  id: string;
-  name_fr: string;
-  name_ar: string;
-  category_id: string;
-}
-
-export interface ArtisanService {
-  id: string;
-  artisan_id: string;
-  category_id: string;
-  subcategory_id: string;
-  city: string;
-}
 
 export function useArtisanStats() {
   const { user } = useAuth();
@@ -176,13 +162,13 @@ export function useArtisanRequests(status?: string) {
             client_id,
             status,
             created_at,
-            subcategory_id,
+            service_category_id,
             description,
             profiles:client_id (
               full_name,
               phone
             ),
-            service_subcategories:subcategory_id (
+            service_category:service_category_id (
               name_fr
             )
           `)
@@ -202,11 +188,11 @@ export function useArtisanRequests(status?: string) {
           client_id: req.client_id,
           status: req.status,
           created_at: req.created_at,
-          subcategory_id: req.subcategory_id,
+          service_category_id: req.service_category_id,
           description: req.description,
           client_name: req.profiles?.full_name,
           client_phone: req.profiles?.phone,
-          service_name: req.service_subcategories?.name_fr,
+          service_name: req.service_category?.name_fr,
         }));
 
         setRequests(transformedData);
@@ -437,23 +423,6 @@ export function useServiceCategories() {
 
 export function useServiceSubcategories(categoryId?: string) {
   const [subcategories, setSubcategories] = useState<ServiceSubcategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSubcategories = async () => {
-      try {
-        setLoading(true);
-        let query = supabase
-          .from('service_subcategories')
-          .select('id, name_fr, name_ar, category_id')
-          .eq('is_active', true);
-
-        if (categoryId) {
-          query = query.eq('category_id', categoryId);
-        }
-
-        const { data, error: fetchError } = await query.order('name_fr');
 
         if (fetchError) throw fetchError;
         setSubcategories(data || []);

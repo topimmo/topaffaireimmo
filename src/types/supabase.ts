@@ -840,6 +840,7 @@ export type Database = {
           updated_at: string | null
           views_count: number | null
           year_built: number | null
+          quartier: string | null
         }
         Insert: {
           address?: string | null
@@ -897,6 +898,7 @@ export type Database = {
           updated_at?: string | null
           views_count?: number | null
           year_built?: number | null
+          quartier?: string | null
         }
         Update: {
           address?: string | null
@@ -954,6 +956,7 @@ export type Database = {
           updated_at?: string | null
           views_count?: number | null
           year_built?: number | null
+          quartier?: string | null
         }
         Relationships: [
           {
