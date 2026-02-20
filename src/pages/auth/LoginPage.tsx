@@ -1,13 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+
+/** Maximum failed attempts before a timed lockout. */
+const MAX_ATTEMPTS = 5;
+/** Number of failed attempts that triggers the captcha placeholder. */
+const CAPTCHA_THRESHOLD = 3;
+/** Lockout duration in milliseconds (10 minutes). */
+const LOCKOUT_DURATION_MS = 10 * 60 * 1000;
+/** sessionStorage key for persisting attempt data across page refreshes. */
+const ATTEMPTS_STORAGE_KEY = 'login_attempts';
+
+interface AttemptData {
+  count: number;
+  lockedUntil: number | null;
+}
+
+function readAttemptData(): AttemptData {
+  try {
+    const raw = sessionStorage.getItem(ATTEMPTS_STORAGE_KEY);
+    if (!raw) return { count: 0, lockedUntil: null };
+    return JSON.parse(raw) as AttemptData;
+  } catch {
+    return { count: 0, lockedUntil: null };
+  }
+}
+
+function writeAttemptData(data: AttemptData) {
+  try {
+    sessionStorage.setItem(ATTEMPTS_STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // sessionStorage unavailable – degrade gracefully
+  }
+}
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,10 +48,51 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [attemptData, setAttemptData] = useState<AttemptData>(readAttemptData);
+  const [lockoutSecondsLeft, setLockoutSecondsLeft] = useState(0);
   
   const { signIn, signInWithOAuth, role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (!attemptData.lockedUntil) return;
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((attemptData.lockedUntil! - Date.now()) / 1000));
+      setLockoutSecondsLeft(remaining);
+      if (remaining === 0) {
+        const reset: AttemptData = { count: 0, lockedUntil: null };
+        setAttemptData(reset);
+        writeAttemptData(reset);
+      }
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [attemptData.lockedUntil]);
+
+  const isLocked = !!attemptData.lockedUntil && Date.now() < attemptData.lockedUntil;
+  const showCaptchaPlaceholder = attemptData.count >= CAPTCHA_THRESHOLD && !isLocked;
+
+  const formatLockout = (seconds: number) =>
+    `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+
+  const recordFailedAttempt = () => {
+    setAttemptData(prev => {
+      const newCount = prev.count + 1;
+      const lockedUntil = newCount >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_DURATION_MS : null;
+      const next: AttemptData = { count: newCount, lockedUntil };
+      writeAttemptData(next);
+      return next;
+    });
+  };
+
+  const resetAttempts = () => {
+    const reset: AttemptData = { count: 0, lockedUntil: null };
+    setAttemptData(reset);
+    writeAttemptData(reset);
+  };
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -33,6 +106,9 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isLocked) return; // Should be prevented by disabled button, but guard anyway
+
     if (!validate()) return;
     
     setIsLoading(true);
@@ -42,10 +118,14 @@ export default function LoginPage() {
       const { error } = await signIn(email, password);
       
       if (error) {
+        recordFailedAttempt();
+        // Use a generic message to avoid leaking whether the email exists
         setErrors({ general: 'Email ou mot de passe incorrect' });
         setIsLoading(false);
         return;
       }
+
+      resetAttempts();
 
       // Get the redirect path from location state or default based on role
       const from = (location.state as any)?.from?.pathname;
@@ -62,6 +142,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('Login error:', error);
+      recordFailedAttempt();
       setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
       setIsLoading(false);
     }
@@ -119,11 +200,31 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Lockout Banner */}
+              {isLocked && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start space-x-3">
+                  <ShieldAlert className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-400">Compte temporairement verrouillé</p>
+                    <p className="text-xs text-red-400/80 mt-1">
+                      Trop de tentatives échouées. Réessayez dans {formatLockout(lockoutSecondsLeft)}.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* General Error */}
-              {errors.general && (
+              {errors.general && !isLocked && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start space-x-2">
                   <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-400">{errors.general}</p>
+                  <div className="flex-1">
+                    <p className="text-sm text-red-400">{errors.general}</p>
+                    {attemptData.count >= CAPTCHA_THRESHOLD && (
+                      <p className="text-xs text-amber-400 mt-1">
+                        {MAX_ATTEMPTS - attemptData.count} tentative(s) restante(s) avant verrouillage.
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -138,6 +239,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors(p => ({ ...p, email: undefined })); }}
                     placeholder="votre@email.com"
+                    disabled={isLocked}
                     className={cn(
                       'pl-10 bg-[#0A1F2E] border-[#2A3F4C] text-white placeholder:text-gray-500 focus:border-[#0FC2C0] focus:ring-[#0FC2C0]',
                       errors.email && 'border-red-500 focus:border-red-500 focus:ring-red-500'
@@ -163,6 +265,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors(p => ({ ...p, password: undefined })); }}
                     placeholder="••••••••"
+                    disabled={isLocked}
                     className={cn(
                       'pl-10 pr-10 bg-[#0A1F2E] border-[#2A3F4C] text-white placeholder:text-gray-500 focus:border-[#0FC2C0] focus:ring-[#0FC2C0]',
                       errors.password && 'border-red-500 focus:border-red-500 focus:ring-red-500'
@@ -179,17 +282,29 @@ export default function LoginPage() {
                 {errors.password && <p className="text-xs text-red-400">{errors.password}</p>}
               </div>
 
+              {/* Captcha placeholder – shown after CAPTCHA_THRESHOLD failures */}
+              {showCaptchaPlaceholder && (
+                <div className="border border-amber-500/30 bg-amber-500/10 rounded-lg p-3 flex items-center gap-3">
+                  <ShieldAlert className="h-5 w-5 text-amber-400 flex-shrink-0" />
+                  <p className="text-xs text-amber-400">
+                    Vérification de sécurité requise. Un captcha sera affiché ici en production.
+                  </p>
+                </div>
+              )}
+
               {/* Submit */}
               <Button
                 type="submit"
-                disabled={isLoading}
-                className="w-full bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
+                disabled={isLoading || isLocked}
+                className="w-full bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white font-semibold h-11 shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Connexion...
                   </>
+                ) : isLocked ? (
+                  `Verrouillé (${formatLockout(lockoutSecondsLeft)})`
                 ) : (
                   'Se connecter'
                 )}
@@ -211,7 +326,7 @@ export default function LoginPage() {
               <Button 
                 type="button"
                 onClick={() => handleOAuthLogin('google')}
-                disabled={isOAuthLoading || isLoading}
+                disabled={isOAuthLoading || isLoading || isLocked}
                 variant="outline" 
                 className="border-[#2A3F4C] text-gray-300 hover:bg-[#0A1F2E] hover:text-white h-11"
               >
@@ -230,7 +345,7 @@ export default function LoginPage() {
               <Button 
                 type="button"
                 onClick={() => handleOAuthLogin('facebook')}
-                disabled={isOAuthLoading || isLoading}
+                disabled={isOAuthLoading || isLoading || isLocked}
                 variant="outline" 
                 className="border-[#2A3F4C] text-gray-300 hover:bg-[#0A1F2E] hover:text-white h-11"
               >

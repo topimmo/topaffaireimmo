@@ -140,12 +140,16 @@ export function usePendingProperties() {
         .from('properties')
         .select(`
           id,
-          title,
+          title_fr,
           user_id,
           status,
           created_at,
-          city,
+          city_id,
           price,
+          cities:city_id (
+            id,
+            name_fr
+          ),
           profiles:user_id (
             full_name,
             email
@@ -158,11 +162,11 @@ export function usePendingProperties() {
 
       const transformedData = (data || []).map((prop: any) => ({
         id: prop.id,
-        title: prop.title,
+        title: prop.title_fr,
         user_id: prop.user_id,
         status: prop.status,
         created_at: prop.created_at,
-        city: prop.city,
+        city: prop.cities?.name_fr || 'N/A',
         price: prop.price,
         author_name: prop.profiles?.full_name,
         author_email: prop.profiles?.email,

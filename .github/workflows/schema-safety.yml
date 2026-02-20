@@ -1,0 +1,138 @@
+name: Schema Safety Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify-schema-safety:
+    runs-on: ubuntu-latest
+    name: Verify Schema Safety
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run schema safety verification
+        run: npm run verify:schema
+        continue-on-error: false
+
+      - name: Search for deprecated 'listings' table references
+        run: |
+          echo "Searching for references to deprecated 'listings' table..."
+          
+          # Search in TypeScript/JavaScript files
+          if grep -rn "from(\"listings\")\|from(\`listings\`)" src/ api/ lib/ --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules 2>/dev/null; then
+            echo "❌ ERROR: Found references to 'listings' table in code"
+            exit 1
+          fi
+          
+          # Search for public.listings in SQL/migrations
+          if grep -rn "FROM.*public\.listings\|JOIN.*public\.listings" supabase/migrations/*.sql 2>/dev/null | grep -v "does not exist\|NOT exist\|should NOT exist" ; then
+            echo "❌ ERROR: Found SQL references to public.listings in migrations"
+            exit 1
+          fi
+          
+          echo "✅ No references to deprecated 'listings' table found"
+
+      - name: Search for /api/listings endpoint references
+        run: |
+          echo "Searching for /api/listings endpoint references..."
+          
+          if grep -rn "/api/listings" src/ api/ lib/ --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules --exclude="*.md" 2>/dev/null; then
+            echo "❌ ERROR: Found references to /api/listings endpoint"
+            exit 1
+          fi
+          
+          echo "✅ No references to /api/listings endpoint found"
+
+      - name: Search for 'city' column in artisan_services
+        run: |
+          echo "Searching for 'city' column references in artisan_services..."
+          
+          # This is a warning, not an error, as there might be valid migration cleanup
+          if grep -rn "artisan_services.*city\|city.*artisan_services" src/ api/ lib/ --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules --exclude="health-check-schema.ts" --exclude="verify-schema-safety.ts" 2>/dev/null; then
+            echo "⚠️  WARNING: Found potential references to 'city' column in artisan_services"
+            echo "This may be intentional (e.g., migration cleanup), but should be reviewed."
+          else
+            echo "✅ No references to 'city' column in artisan_services found"
+          fi
+
+      - name: Verify SQL verification script exists
+        run: |
+          if [ ! -f "supabase/SCHEMA_VERIFICATION.sql" ]; then
+            echo "❌ ERROR: Schema verification SQL script not found"
+            exit 1
+          fi
+          echo "✅ Schema verification SQL script exists"
+
+      - name: Verify health check script exists
+        run: |
+          if [ ! -f "scripts/health-check-schema.ts" ]; then
+            echo "❌ ERROR: Health check script not found"
+            exit 1
+          fi
+          echo "✅ Health check script exists"
+
+      - name: Verify sorting uses created_at
+        run: |
+          echo "Verifying sorting uses created_at DESC..."
+          
+          # Check if orderBy or sort uses created_at in properties queries
+          if ! grep -rn "orderBy.*created_at\|sort.*created_at" src/ --include="*.ts" --include="*.tsx" 2>/dev/null; then
+            echo "⚠️  WARNING: Could not verify created_at sorting usage"
+            echo "Please ensure properties are sorted by created_at DESC"
+          else
+            echo "✅ Found references to created_at sorting"
+          fi
+
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "✅ SCHEMA SAFETY VERIFICATION PASSED"
+          echo "=========================================="
+          echo ""
+          echo "All schema safety checks passed:"
+          echo "  ✅ No references to deprecated 'listings' table"
+          echo "  ✅ No references to /api/listings endpoint"
+          echo "  ✅ Schema verification scripts exist"
+          echo "  ✅ Health check script exists"
+          echo ""
+          echo "Safe to merge!"
+          echo ""
+
+      - name: Failure summary
+        if: failure()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "❌ SCHEMA SAFETY VERIFICATION FAILED"
+          echo "=========================================="
+          echo ""
+          echo "One or more schema safety checks failed."
+          echo "Please review the errors above and fix them before merging."
+          echo ""
+          echo "Common issues:"
+          echo "  - References to deprecated 'listings' table"
+          echo "  - References to /api/listings endpoint"
+          echo "  - References to non-existent 'city' column"
+          echo ""

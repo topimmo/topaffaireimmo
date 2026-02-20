@@ -23,7 +23,7 @@ const sidebarItems: SidebarItem[] = [
   { icon: <Home className="h-4 w-4" />, label: 'Mes annonces', id: 'listings' },
   { icon: <Users className="h-4 w-4" />, label: 'Leads', id: 'leads' },
   { icon: <BarChart3 className="h-4 w-4" />, label: 'Analytiques', id: 'analytics' },
-  { icon: <Zap className="h-4 w-4" />, label: 'Boost', id: 'boost' },
+  // FULL FREE MODE: Removed Boost section
   { icon: <Settings className="h-4 w-4" />, label: 'Paramètres', id: 'settings' },
 ];
 
@@ -192,25 +192,21 @@ function ListingsSection() {
             return (
               <Card key={listing.id} className={cn(
                 'bg-[#1B2F3C] border-[#2A3F4C] overflow-hidden',
-                isBoosted && 'premium-glow'
+                // FULL FREE MODE: Removed premium-glow
               )}>
                 <CardContent className="p-0">
                   <div className="flex flex-col sm:flex-row">
                     {/* Image */}
                     <div className="relative sm:w-48 h-32 sm:h-auto flex-shrink-0">
                       <img src={image} alt={listing.title_fr || ''} className="w-full h-full object-cover" />
-                      {isBoosted && (
-                        <div className="absolute top-2 left-2">
-                          <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px]">⭐ Premium</Badge>
-                        </div>
-                      )}
+                      {/* FULL FREE MODE: Removed Premium badge */}
                     </div>
                     {/* Content */}
                     <div className="flex-1 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-white">{listing.title_fr}</h3>
-                          <StatusBadge status={listing.status || 'draft'} />
+                          <StatusBadge status={(listing.status || 'draft') as 'draft' | 'pending' | 'approved' | 'published' | 'rejected' | 'expired'} />
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-400">
                           <MapPin className="h-3 w-3" />
@@ -236,16 +232,7 @@ function ListingsSection() {
                         >
                           <Edit className="h-3 w-3 mr-1" />Éditer
                         </Button>
-                        {!isBoosted && listing.status === 'published' && (
-                          <Button 
-                            size="sm" 
-                            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white h-8" 
-                            disabled
-                            title="Fonctionnalité bientôt disponible"
-                          >
-                            <Zap className="h-3 w-3 mr-1" />Booster
-                          </Button>
-                        )}
+                        {/* FULL FREE MODE: Removed Booster button */}
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -521,63 +508,23 @@ function AnalyticsSection() {
 }
 
 // Boost Section
-function BoostSection() {
-  const plans = [
-    { name: 'Starter', price: '99', duration: '7 jours', features: ['Position améliorée', 'Badge Premium', 'Statistiques basiques'] },
-    { name: 'Pro', price: '249', duration: '30 jours', features: ['Top des résultats', 'Badge Premium + Glow', 'Statistiques avancées', 'Support prioritaire'], recommended: true },
-    { name: 'Elite', price: '499', duration: '60 jours', features: ['Top absolu', 'Badge Elite + Glow animé', 'Analytics complets', 'Support VIP', 'Partage réseaux sociaux'] },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-white">Booster vos annonces</h2>
-        <p className="text-sm text-gray-400 mt-1">Augmentez la visibilité de vos biens</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map(plan => (
-          <Card key={plan.name} className={cn(
-            'bg-[#1B2F3C] border-[#2A3F4C] relative overflow-hidden',
-            plan.recommended && 'premium-glow'
-          )}>
-            {plan.recommended && (
-              <div className="absolute top-0 right-0 bg-[#0FC2C0] text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                Recommandé
-              </div>
-            )}
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                <p className="text-sm text-gray-400">{plan.duration}</p>
-              </div>
-              <div>
-                <span className="text-3xl font-bold text-[#0FC2C0]">{plan.price}</span>
-                <span className="text-gray-400 ml-1">DH</span>
-              </div>
-              <ul className="space-y-2">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                    <Check className="h-4 w-4 text-[#0FC2C0] flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Button className={cn(
-                'w-full',
-                plan.recommended
-                  ? 'bg-[#0FC2C0] hover:bg-[#0DA9A7] text-white'
-                  : 'bg-[#0A1F2E] hover:bg-[#0FC2C0]/20 text-white border border-[#2A3F4C]'
-              )}>
-                Choisir {plan.name}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
+// FULL FREE MODE: BoostSection disabled
+// function BoostSection() {
+//   const plans = [
+//     { name: 'Starter', price: '99', duration: '7 jours', features: ['Position améliorée', 'Badge Premium', 'Statistiques basiques'] },
+//     { name: 'Pro', price: '249', duration: '30 jours', features: ['Top des résultats', 'Badge Premium + Glow', 'Statistiques avancées', 'Support prioritaire'], recommended: true },
+//     { name: 'Elite', price: '499', duration: '60 jours', features: ['Top absolu', 'Badge Elite + Glow animé', 'Analytics complets', 'Support VIP', 'Partage réseaux sociaux'] },
+//   ];
+//   return (
+//     <div className="space-y-6">
+//       <div>
+//         <h2 className="text-xl font-bold text-white">Booster vos annonces</h2>
+//         <p className="text-sm text-gray-400 mt-1">Augmentez la visibilité de vos biens</p>
+//       </div>
+//       {/* Disabled in FULL FREE MODE */}
+//     </div>
+//   );
+// }
 
 export default function AdvertiserDashboardPage() {
   const [activeItem, setActiveItem] = useState('overview');
@@ -588,7 +535,7 @@ export default function AdvertiserDashboardPage() {
       case 'listings': return <ListingsSection />;
       case 'leads': return <LeadsSection />;
       case 'analytics': return <AnalyticsSection />;
-      case 'boost': return <BoostSection />;
+      // FULL FREE MODE: Removed boost case
       default: return <OverviewSection />;
     }
   };

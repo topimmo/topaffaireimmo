@@ -14,7 +14,7 @@ export interface ServiceRequest {
   client_id: string;
   status: string;
   created_at: string;
-  subcategory_id?: string;
+  service_category_id?: string;
   description?: string;
   client_name?: string;
   client_phone?: string;
@@ -52,17 +52,6 @@ export interface ServiceCategory {
   slug: string;
 }
 
-export interface ServiceSubcategory {
-  id: string;
-  name_fr: string;
-  name_ar: string;
-  service_category_id: string;
-}
-
-export interface ArtisanService {
-  id: string;
-  service_subcategory_id: string;
-}
 
 export function useArtisanStats() {
   const { user } = useAuth();
@@ -173,13 +162,13 @@ export function useArtisanRequests(status?: string) {
             client_id,
             status,
             created_at,
-            subcategory_id,
+            service_category_id,
             description,
             profiles:client_id (
               full_name,
               phone
             ),
-            service_subcategories:subcategory_id (
+            service_category:service_category_id (
               name_fr
             )
           `)
@@ -199,11 +188,11 @@ export function useArtisanRequests(status?: string) {
           client_id: req.client_id,
           status: req.status,
           created_at: req.created_at,
-          subcategory_id: req.subcategory_id,
+          service_category_id: req.service_category_id,
           description: req.description,
           client_name: req.profiles?.full_name,
           client_phone: req.profiles?.phone,
-          service_name: req.service_subcategories?.name_fr,
+          service_name: req.service_category?.name_fr,
         }));
 
         setRequests(transformedData);
@@ -434,23 +423,6 @@ export function useServiceCategories() {
 
 export function useServiceSubcategories(categoryId?: string) {
   const [subcategories, setSubcategories] = useState<ServiceSubcategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSubcategories = async () => {
-      try {
-        setLoading(true);
-        let query = supabase
-          .from('service_subcategories')
-          .select('id, name_fr, name_ar, service_category_id')
-          .eq('is_active', true);
-
-        if (categoryId) {
-          query = query.eq('service_category_id', categoryId);
-        }
-
-        const { data, error: fetchError } = await query.order('name_fr');
 
         if (fetchError) throw fetchError;
         setSubcategories(data || []);
@@ -484,25 +456,16 @@ export function useArtisanServices() {
       try {
         setLoading(true);
 
-        const { data: profile } = await supabase
-          .from('artisan_profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!profile) {
-          setServices([]);
-          return;
-        }
-
+        // artisan_services uses artisan_id which references auth.users.id directly
         const { data, error: fetchError } = await supabase
           .from('artisan_services')
-          .select('service_subcategory_id')
-          .eq('artisan_profile_id', profile.id);
+          .select('id, subcategory_id')
+          .eq('artisan_id', user.id)
+          .eq('is_active', true);
 
         if (fetchError) throw fetchError;
 
-        setServices((data || []).map(s => s.service_subcategory_id));
+        setServices((data || []).map(s => s.subcategory_id).filter(Boolean));
       } catch (err) {
         console.error('[useArtisanServices] Error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -514,32 +477,54 @@ export function useArtisanServices() {
     fetchServices();
   }, [user]);
 
-  const updateServices = async (subcategoryIds: string[]) => {
+  const updateServices = async (subcategoryIds: string[], city?: string) => {
     if (!user) return { success: false, error: 'Not authenticated' };
 
     try {
-      const { data: profile } = await supabase
+      // Get artisan profile to find their category_id and cities
+      const { data: profile, error: profileError } = await supabase
         .from('artisan_profiles')
-        .select('id')
+        .select('id, service_category_id, cities')
         .eq('user_id', user.id)
         .single();
 
-      if (!profile) throw new Error('Profile not found');
+      if (profileError || !profile) {
+        throw new Error('Artisan profile not found');
+      }
+
+      // Determine city name
+      let targetCity = city || 'Maroc';  // Default to Morocco in French
+      
+      // If profile has cities array and no city provided, fetch the first city's name
+      if (!city && profile.cities && profile.cities.length > 0) {
+        const { data: cityData } = await supabase
+          .from('cities')
+          .select('name_fr')
+          .eq('id', profile.cities[0])
+          .single();
+        
+        if (cityData) {
+          targetCity = cityData.name_fr;
+        }
+      }
 
       // Delete existing services
       await supabase
         .from('artisan_services')
         .delete()
-        .eq('artisan_profile_id', profile.id);
+        .eq('artisan_id', user.id);
 
-      // Insert new services
-      if (subcategoryIds.length > 0) {
+      // Insert new services with required fields
+      if (subcategoryIds.length > 0 && profile.service_category_id) {
         const { error: insertError } = await supabase
           .from('artisan_services')
           .insert(
-            subcategoryIds.map(id => ({
-              artisan_profile_id: profile.id,
-              service_subcategory_id: id,
+            subcategoryIds.map(subcategoryId => ({
+              artisan_id: user.id,
+              category_id: profile.service_category_id,
+              subcategory_id: subcategoryId,
+              city: targetCity,
+              status: 'pending',
             }))
           );
 

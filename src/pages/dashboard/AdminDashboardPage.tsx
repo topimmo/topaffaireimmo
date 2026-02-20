@@ -498,7 +498,7 @@ function UsersSection() {
 function LogsSection() {
   const logs = [
     { time: '14:23:15', severity: 'info', message: 'Nouvelle annonce soumise: Appartement Casablanca', entity: 'property' },
-    { time: '14:20:42', severity: 'success', message: 'Paiement boost validé: Villa Marrakech (#2)', entity: 'payment' },
+    // FULL FREE MODE: Removed payment boost log
     { time: '14:18:05', severity: 'warning', message: 'Tentative de connexion échouée: user@spam.com (3ème essai)', entity: 'auth' },
     { time: '14:15:33', severity: 'error', message: 'Échec upload image: taille dépassée (15MB)', entity: 'upload' },
     { time: '14:12:19', severity: 'info', message: 'Profil artisan mis à jour: Mohamed E. (#45)', entity: 'artisan' },

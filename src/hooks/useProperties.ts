@@ -62,7 +62,7 @@ export function useProperties(filters?: PropertyFilters) {
     try {
       // Default pagination values to prevent unbounded queries
       const page = filters?.page ?? 1;
-      const limit = filters?.limit ?? 50;
+      const limit = filters?.limit ?? 20;
 
       let query = supabase
         .from('properties')
@@ -126,7 +126,15 @@ export function useProperties(filters?: PropertyFilters) {
       // Apply pagination using range for efficient queries
       query = query.range((page - 1) * limit, page * limit - 1);
 
+      const t0 = Date.now();
       const { data, error: fetchError, count: totalCount } = await query;
+      const duration = Date.now() - t0;
+
+      if (duration > 2000) {
+        console.warn(`⚠️ [useProperties] Slow /listings query: ${duration}ms (page=${page}, limit=${limit})`);
+      } else {
+        console.log(`⏱️ [useProperties] /listings query completed in ${duration}ms (page=${page}, limit=${limit})`);
+      }
 
       if (fetchError) throw fetchError;
 
