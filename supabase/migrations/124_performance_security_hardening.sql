@@ -20,17 +20,25 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- =====================================================
--- 2. TRIGRAM INDEX ON artisan_profiles.business_name
+-- 2. TRIGRAM INDEXES ON artisan_profiles (specialty, description)
 --    Used by: useArtisans.ts ILIKE '%searchTerm%' query
 -- =====================================================
 
-CREATE INDEX IF NOT EXISTS idx_artisan_profiles_business_name_trgm
+CREATE INDEX IF NOT EXISTS idx_artisan_profiles_specialty_trgm
   ON public.artisan_profiles
-  USING gin(business_name gin_trgm_ops)
-  WHERE is_active = TRUE;
+  USING gin(specialty gin_trgm_ops)
+  WHERE is_verified = TRUE;
 
-COMMENT ON INDEX idx_artisan_profiles_business_name_trgm IS
-  'Performance: Fast ILIKE search on active artisan business names';
+COMMENT ON INDEX idx_artisan_profiles_specialty_trgm IS
+  'Performance: Fast ILIKE search on verified artisan specialties';
+
+CREATE INDEX IF NOT EXISTS idx_artisan_profiles_description_trgm
+  ON public.artisan_profiles
+  USING gin(description gin_trgm_ops)
+  WHERE is_verified = TRUE;
+
+COMMENT ON INDEX idx_artisan_profiles_description_trgm IS
+  'Performance: Fast ILIKE search on verified artisan descriptions';
 
 -- =====================================================
 -- 3. COMPOSITE INDEX ON property_types FOR ORDERED LISTING
